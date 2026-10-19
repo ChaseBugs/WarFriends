@@ -23,10 +23,14 @@ function Start-OwnedUnity([string]$project, [string]$identity, [string]$label) {
     $report = Join-Path $project 'normal-client-boot.json'
     if (Test-Path -LiteralPath $report) { Remove-Item -LiteralPath $report }
     $arguments = @(
-        '-batchmode', '-nographics', '-noUpm', '-projectPath', ('"' + $project + '"'),
+        '-noUpm', '-projectPath', ('"' + $project + '"'),
         '-executeMethod', 'UnityNormalClientBootAudit.Run',
         '-logFile', ('"' + (Join-Path $RunRoot ($label + '.log')) + '"')
     )
+    # Recovered RadicalRoutine requires frame-end rendering during normal battle loading.
+    if (!$env:WAR_NORMAL_BATTLE_SELF) {
+        $arguments = @('-batchmode', '-nographics') + $arguments
+    }
     return Start-Process $UnityExecutable -ArgumentList $arguments -WindowStyle Hidden -PassThru
 }
 function Complete-OwnedUnity($process, [string]$project, [string]$label) {

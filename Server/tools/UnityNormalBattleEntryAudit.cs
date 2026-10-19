@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -25,6 +26,7 @@ namespace WarFriends.Validation
         private static string _assignedMatchId;
         private static string _loadingFailureType;
         private static string _loadingFailureSource;
+        private static readonly Dictionary<string, double> LoadingStages = new Dictionary<string, double>();
 
         /// <summary>Gets whether this disposable process participates in the normal two-Unity battle gate.</summary>
         public static bool IsEnabled
@@ -39,6 +41,49 @@ namespace WarFriends.Validation
             {
                 return _hasReachedRunning && File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_PEER"));
             }
+        }
+
+        /// <summary>Records only known source milestones, without copying message bodies or session values.</summary>
+        public static void RecordStageLog(string condition)
+        {
+            if (!IsEnabled || string.IsNullOrEmpty(condition))
+            {
+                return;
+            }
+            string stage = ResolveStageName(condition);
+            if (stage != null && !LoadingStages.ContainsKey(stage))
+            {
+                LoadingStages.Add(stage, Time.realtimeSinceStartup);
+            }
+        }
+
+        private static string ResolveStageName(string condition)
+        {
+            if (condition == "ALL PLAYERS CONNECTED")
+            {
+                return "playersConnected";
+            }
+            if (condition == "StopMessageQueue")
+            {
+                return "cardsAccepted";
+            }
+            if (condition.StartsWith("Aquiire map id ", StringComparison.Ordinal))
+            {
+                return "mapSelected";
+            }
+            if (condition == "Map Loaded")
+            {
+                return "mapLoaded";
+            }
+            if (condition.StartsWith("Set time to: ", StringComparison.Ordinal))
+            {
+                return "pvpSetupStarted";
+            }
+            if (condition.StartsWith("Create player instance at ", StringComparison.Ordinal))
+            {
+                return "localPlayerPlaced";
+            }
+            return null;
         }
 
         /// <summary>Starts source matchmaking and waits for source loading plus authoritative running state.</summary>
@@ -122,6 +167,7 @@ namespace WarFriends.Validation
                 mapRevision = _assignedMapRevision,
                 loadingFailureType = _loadingFailureType,
                 loadingFailureSource = _loadingFailureSource,
+                loadingStages = LoadingStages,
                 phase = client == null || client.State == null ? null : client.State.Phase.ToString(),
                 matchState = MatchManager.matchState.ToString(),
                 players = PlayerController.players.Count

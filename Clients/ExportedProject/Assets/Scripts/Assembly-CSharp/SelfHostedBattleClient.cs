@@ -758,6 +758,22 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
     public Task Ready() { return ExecuteReady(); }
     public Task ReadyAsync() { return Ready(); }
 
+    /// <summary>Keeps readiness rejection and retired-owner replies inside the managed battle loading scope.</summary>
+    public IEnumerator ReadyRoutine()
+    {
+        MatchConnection expectedConnection = connection;
+        Task readiness = Ready();
+        while (!readiness.IsCompleted)
+        {
+            yield return null;
+        }
+        readiness.GetAwaiter().GetResult();
+        if (!IsConnected || expectedConnection != connection)
+        {
+            throw new OperationCanceledException("Readiness belongs to a retired battle connection.");
+        }
+    }
+
     /// <summary>Starts an observed reliable report without delaying the recovered local camera callback.</summary>
     public void ReportStartCameraAnimationFinished()
     {
@@ -969,9 +985,16 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
         }
 
         if (!IsConnected || roomLifecycle == null) throw new InvalidOperationException("No self-hosted room is connected.");
-        var active = connection;
-        var reply = await roomLifecycle.MarkReadyAsync(lifetime.Token);
-        if (IsConnected && active == connection) Apply(reply);
+        MatchConnection expectedConnection = connection;
+        SelfHostedRoomLifecycle expectedLifecycle = roomLifecycle;
+        CancellationToken cancellationToken = lifetime.Token;
+        MatchReply reply = await expectedLifecycle.MarkReadyAsync(cancellationToken);
+        RequireConnectionOwner(expectedConnection, cancellationToken);
+        if (!IsConnected || expectedLifecycle != roomLifecycle)
+        {
+            throw new OperationCanceledException("Readiness belongs to a retired battle lifecycle.");
+        }
+        Apply(reply);
     }
     public Task Fire(Vector3 target) { return Execute(c => c.FireAsync(target.x, target.y, target.z, lifetime.Token)); }
     public Task MinigunHold(bool pressed,Vector3 target) { return Execute(c => c.MinigunHoldAsync(pressed,target.x,target.y,target.z,lifetime.Token)); }

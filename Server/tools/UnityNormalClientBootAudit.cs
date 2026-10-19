@@ -52,7 +52,24 @@ public static class UnityNormalClientBootAudit
         EditorSceneManager.OpenScene("Assets/Scenes/SplashScene.unity");
         SessionState.SetBool(SessionKey, true);
         Attach();
+        if (WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled)
+        {
+            RequireRenderedGameView();
+        }
         EditorApplication.isPlaying = true;
+    }
+
+    private static void RequireRenderedGameView()
+    {
+        if (Application.isBatchMode)
+        {
+            throw new InvalidOperationException("Normal battle loading requires a non-batch Editor Game view.");
+        }
+
+        // Original RadicalRoutine yields WaitForEndOfFrame; a batch Editor cannot resume it.
+        PlayerSettings.runInBackground = true;
+        Type gameViewType = typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView", true);
+        EditorWindow.GetWindow(gameViewType).Show();
     }
 
     private static void Attach()
@@ -68,6 +85,7 @@ public static class UnityNormalClientBootAudit
 
     private static void ObserveLog(string condition, string stackTrace, LogType type)
     {
+        WarFriends.Validation.UnityNormalBattleEntryAudit.RecordStageLog(condition);
         if (type == LogType.Error || type == LogType.Assert)
         {
             _errors++;

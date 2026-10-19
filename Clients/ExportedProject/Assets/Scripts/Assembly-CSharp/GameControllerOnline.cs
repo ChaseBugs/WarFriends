@@ -220,8 +220,11 @@ public abstract partial class GameControllerOnline : IGameController
 		if (PhotonConnectionManager.IsSelfHostedActive)
 		{
 			SelfHostedBattleClient selfHosted = PhotonConnectionManager.GetOwnedSelfHostedClient();
-			if (selfHosted == null || !selfHosted.DispatchRpc("LoadingFinishedRPC"))
-				Debug.LogError("Self-hosted loading readiness could not be submitted.");
+            if (selfHosted == null)
+            {
+                throw new InvalidOperationException("The battle connection closed before loading readiness.");
+            }
+            yield return BattleResourceLoadScope.StartNested(this, selfHosted.ReadyRoutine());
 			while (selfHosted != null && selfHosted.IsConnected &&
 				(selfHosted.State == null || selfHosted.State.Phase != War.Protocol.BattlePhase.Running))
 				yield return null;

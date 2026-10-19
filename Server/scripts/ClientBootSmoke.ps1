@@ -6,7 +6,8 @@ param(
     [switch]$ExportStarterLoadout,
     [switch]$VerifyReturningPlayer,
     [switch]$VerifyNormalQueue,
-    [string]$SecondUnityProject
+    [string]$SecondUnityProject,
+    [ValidateRange(5, 120)][int]$PairAdmissionSeconds = 10
 )
 $ErrorActionPreference = 'Stop'
 if ($VerifyNormalQueue) { $VerifyReturningPlayer = $true }
@@ -57,6 +58,17 @@ function New-SigningKey {
     finally { $generator.Dispose() }
     return [Convert]::ToBase64String($bytes)
 }
+function Get-FreeUdpPort {
+    $socket = [Net.Sockets.Socket]::new(
+        [Net.Sockets.AddressFamily]::InterNetwork,
+        [Net.Sockets.SocketType]::Dgram,
+        [Net.Sockets.ProtocolType]::Udp)
+    try {
+        $socket.Bind([Net.IPEndPoint]::new([Net.IPAddress]::Any, 0))
+        return $socket.LocalEndPoint.Port
+    }
+    finally { $socket.Dispose() }
+}
 try {
     dotnet build (Join-Path $serverRoot 'WarFriendsServer.sln') -c Release --no-restore --nologo -v minimal
     if ($LASTEXITCODE -ne 0) { throw 'Release build failed.' }
@@ -83,12 +95,23 @@ try {
     if ($VerifyNormalQueue -or $SecondUnityProject) {
         $env:Battle__MatchmakingCompatibilityKey = 'unscored-starter.fixture'
         $env:Battle__MatchManifestTemplatePath = Join-Path $serverRoot 'content/local-starter-match-template.json'
+        if ($SecondUnityProject -and $PairAdmissionSeconds -ne 10) {
+            $template = [System.Text.Json.Nodes.JsonNode]::Parse(
+                [IO.File]::ReadAllText($env:Battle__MatchManifestTemplatePath))
+            $template['AdmissionSeconds'] = [System.Text.Json.Nodes.JsonNode]::Parse(
+                $PairAdmissionSeconds.ToString([Globalization.CultureInfo]::InvariantCulture))
+            $diagnosticTemplate = Join-Path $runRoot 'diagnostic-starter-template.json'
+            [IO.File]::WriteAllText($diagnosticTemplate, $template.ToJsonString() + "`n",
+                [Text.UTF8Encoding]::new($false))
+            $env:Battle__MatchManifestTemplatePath = $diagnosticTemplate
+            Write-Output "Diagnostic pair admission window: $PairAdmissionSeconds seconds; repository template unchanged."
+        }
         foreach ($family in $battleContentFiles.Keys) {
             $manifest = Join-Path $serverRoot ("content/" + $battleContentFiles[$family] + '-content-manifest.json')
             [Environment]::SetEnvironmentVariable("Battle__${family}ContentManifestPath", $manifest, 'Process')
         }
         if ($SecondUnityProject) {
-            $env:Battle__Port = Get-FreePort
+            $env:Battle__Port = Get-FreeUdpPort
             do { $env:Battle__ControlPort = Get-FreePort }
             while ($env:Battle__ControlPort -eq $env:Battle__Port)
             $env:Battle__ControlEndpoint = "http://127.0.0.1:$($env:Battle__ControlPort)/internal/matches"

@@ -71,3 +71,49 @@ reason `admission-timeout`, two admitted participants and zero ready participant
 30 Hz tick rate, this is the starter template's ten-second admission limit. Next, trace when the
 ordinary loading path actually submits readiness and inspect the recovered loading waits before
 changing policy. Increasing a timeout alone is not evidence that readiness or gameplay works.
+
+## Readiness and frame-end follow-up
+
+The scoped readiness call now awaits the host reply and propagates rejection/cancellation through
+`BattleResourceLoadScope`. Connection and lifecycle ownership are checked before applying the reply;
+the coroutine also checks connection ownership before resuming the caller.
+
+The default-limit run `.local/client-boot-999b323a418446ccbe24db1883b0e2bf` records source milestones
+on each side. Local player placement occurs 9.25 and 9.58 seconds after players connect, leaving
+little room inside the ten-second admission window. The original pooled-resource warmup remains
+intact. These timestamps are process-relative; only within-process deltas are comparable.
+
+`ClientBootSmoke.ps1 -SecondUnityProject ... -PairAdmissionSeconds 30` creates a diagnostic manifest
+copy under its isolated run directory. It does not edit the repository starter template. In
+`.local/client-boot-517879b51fb04e8ea2eee04241b0183d`, both participants observe host Running and
+complete their local camera callback, but remain GameLoading. Both report zero exceptions and no
+observed managed loading failure; they still log 106/105 error-level diagnostics. This is a failed
+normal-entry gate, not a gameplay pass or a basis for changing production admission policy.
+
+`GameControllerPVP.StartGame` then waits through `WaitForRealSeconds`, whose `RadicalRoutine`
+implementation yields `WaitForEndOfFrame`. The [Unity 2018.3 coroutine compatibility manual](https://docs.unity3d.com/cn/2018.3/Manual/CLIBatchmodeCoroutines.html)
+states that this yield is unsupported in a batch Editor. Paired battle launches now use a normal
+Editor with a Game view and background execution enabled in the disposable project. Account-only
+boot checks retain batch mode. No runtime wait is replaced to accommodate the test environment.
+The rendered gate must pass independently; this diagnosis does not establish combat completion.
+
+The first rendered-harness attempt, `.local/client-boot-be5d58c8b7c84ee685f2d51530eec002`,
+completed both account boots but stopped before paired battle launch: the Worker UDP bind failed
+with Windows socket error 10013. The harness previously selected its UDP port using a TCP
+listener. It now selects that port by binding an actual IPv4 UDP socket to port zero. TCP control
+ports keep their TCP probe. This reduces protocol-specific allocation failures; closing a probe
+does not reserve the port, so Worker startup/readiness must still succeed before launching peers.
+
+The corrected run `.local/client-boot-6bc86c8508804841abfd366f4fcbc74e` completed with exit code zero.
+Both normal controllers submitted cards, loaded City, completed the camera callback, and observed
+host Running plus local `gameIsRunning` in match `me82ea7ac285c4235b3084190e1beef38`. Each saw two
+players and the same pinned map revision. Both reports contain zero exceptions and no managed
+loading failure, with 143/142 error-level diagnostics. Retained `MatchManager.matchState` still
+reads GameLoading; it is not substituted for the actual local gameplay-running flag in this gate.
+Reports are `Unity-first-battle.json` and `Unity-second-battle.json` in that run directory. Both
+package manifest hashes remain `7212bb6d4ae5db21b4fe5d10a4a0666d1f2c63618d8277b692254dd1c2c815a3`.
+
+This proves diagnostic two-Unity entry on Unity 2018.3 with a thirty-second admission window.
+The repository ten-second default, normal input/combat/entity presentation, reconnect during
+gameplay, results, clean rendering, original Unity 5.2 parity and Android remain separate gates.
+Do not describe this as full BattleServer completion or a zero-error gameplay run.

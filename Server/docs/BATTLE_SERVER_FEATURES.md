@@ -23,13 +23,19 @@ by Editor bootstrap success or by retaining Photon only for serialized type comp
 ## Dependency-ordered work
 
 The two-normal-Unity gate now executes via `ClientBootSmoke.ps1 -SecondUnityProject ...` and
-currently fails before Running. Start acknowledgements 64/65 and trusted map identity/revision
+passes entry with a diagnostic thirty-second admission window. Start acknowledgements 64/65 and trusted map identity/revision
 delivery now work through the normal controllers: both participants select the source map index 2
 and load `City_Multiplayer`. Grants, durable reads and reconnect replacements bind metadata to the
-frozen manifest. The current two-Unity run ends at host tick 300 with `admission-timeout`, two
-admitted participants and zero ready participants. Next, trace source loading/readiness order and
-its timing before changing the ten-second prototype policy. Do not bypass the waits or count
-timeout changes as gameplay verification. See [map assignment evidence](BATTLE_MAP_ASSIGNMENT.md)
+frozen manifest. The default ten-second admission run expires during normal loading. A separate
+thirty-second diagnostic run admits both ready participants and reaches host Running, but local
+controllers remain GameLoading. The source routine uses `WaitForEndOfFrame`, which is unsupported
+in the batch Editor used by the previous harness. The paired battle gate now launches a non-batch
+Editor Game view. Both normal controllers now reach host Running and local `gameIsRunning`
+in the same match, with zero exceptions but 143/142 error-level diagnostics. This closes only
+the diagnostic normal-entry gate; the default ten-second policy and full combat acceptance remain open.
+Neither the repository admission policy nor the original loading waits were changed. Readiness
+now awaits its actual reply inside the managed loading scope and rejects retired-owner replies.
+Do not count diagnostic timeout changes as gameplay verification. See [map assignment evidence](BATTLE_MAP_ASSIGNMENT.md)
 and the [original entry failure](CLIENT_LOBBY_BOOTSTRAP.md#two-normal-unity-participants-current-failed-entry-gate).
 
 Normal recovered DeathMatch now has a real Unity-to-Backend queue admission gate via
