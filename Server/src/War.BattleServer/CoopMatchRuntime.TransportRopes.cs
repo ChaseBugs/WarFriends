@@ -40,6 +40,7 @@ internal sealed partial class CoopMatchRuntime
                     TransportLandingFor(entry.Key))).ToArray();
             HelicopterPhysicsWorldSnapshot snapshot = _transportRopes.Render(
                 (float)ObservedRealTimeSeconds, scaledDeltaTime, mode, members);
+            CaptureTransportCrewDrops(snapshot);
             _lastTransportRenderTick = tick;
             return snapshot;
         }

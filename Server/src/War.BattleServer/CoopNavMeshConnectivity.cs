@@ -114,6 +114,17 @@ public sealed class CoopNavMeshConnectivity
         return HelicopterRopeLanding.Resolve(query, _landingSamplers[index].Sample);
     }
 
+    internal Vector3? SampleHelicopterCrewLanding(MissionCatalog missions, int missionIndex, Vector3 ropeMarker)
+    {
+        int index = MapIndex(missions, missionIndex);
+        if (_landingSamplers == null)
+        {
+            throw new InvalidOperationException("Helicopter crew landing requires validated polygon/detail geometry.");
+        }
+        // SpawnFromHelicopter samples the crew marker directly; it does not project onto the player's plane.
+        return _landingSamplers[index].Sample(ropeMarker, HelicopterRopeLanding.SourceSampleRadius);
+    }
+
     public ArmyNavMeshCorridor? PlanCorridor(MissionCatalog missions,
         int missionIndex, Vector3 start, Vector3 end)
     {

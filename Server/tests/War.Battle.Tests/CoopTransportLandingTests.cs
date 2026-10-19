@@ -7,6 +7,8 @@ internal static class CoopTransportLandingTests
 {
     private const float SourceActivationDelaySeconds = 2f;
     private const ulong NativeRegistryCapacity = 64;
+    private const ulong SourceFirstDropDelayTicks = 5UL * MatchManifest.TickRate;
+    private const ulong SourceDropSpacingTicks = 2UL * MatchManifest.TickRate;
     internal static void Bind(CoopMatchRuntime runtime, string directory, MissionCatalog missions)
     {
         CoopNavMeshSourceCatalog sources = CoopNavMeshSourceCatalog.Load(
@@ -43,7 +45,7 @@ internal static class CoopTransportLandingTests
         }
     }
 
-    internal static void AdvanceAndVerify(CoopMatchRuntime runtime, BattleCoopEnemySpawn initial,
+    internal static ulong AdvanceAndVerify(CoopMatchRuntime runtime, BattleCoopEnemySpawn initial,
         ulong endTick, HelicopterRopeDefinition rope)
     {
         BattleCoopEnemySpawn previous = initial;
@@ -71,12 +73,18 @@ internal static class CoopTransportLandingTests
                 {
                     throw new Exception("Co-op arrival did not use the previous aircraft pose and a real surface.");
                 }
+                if (runtime.HasNativeTransportRopes)
+                {
+                    ulong slots = (ulong)runtime.TransportCrewMembers(initial.EntityId).Count;
+                    endTick = Math.Max(endTick, landing.StopTick + SourceFirstDropDelayTicks +
+                        SourceDropSpacingTicks * (slots - 1));
+                }
                 AdvanceTo(runtime, endTick);
                 if (runtime.TransportLandingFor(initial.EntityId) != landing)
                 {
                     throw new Exception("Co-op arrival decision changed on a later flight frame.");
                 }
-                return;
+                return endTick;
             }
             previous = runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == initial.EntityId);
         }
@@ -104,7 +112,8 @@ internal static class CoopTransportLandingTests
         {
             return;
         }
-        if (runtime.TransportRopeSnapshot?.Members.Any(member => member.Lease.EntityId == entityId) != false)
+        if (runtime.TransportRopeSnapshot?.Members.Any(member => member.Lease.EntityId == entityId) != false ||
+            runtime.TransportCrewDrops(entityId).Count != 0)
         {
             throw new Exception("Transport death retained its native scene.");
         }
@@ -122,5 +131,38 @@ internal static class CoopTransportLandingTests
             replacement.Add(identity, definition.CreateInitial(aircraft), aircraft, definition.CreationRestRotation);
         }
         Console.WriteLine("PASS: co-op native activation, arrival, death, disposal and complete registry reuse.");
+    }
+
+    internal static void VerifyCrewDrops(CoopMatchRuntime runtime, ulong entityId, HelicopterCrewPointCatalog points)
+    {
+        if (!runtime.HasNativeTransportRopes)
+        {
+            return;
+        }
+        IReadOnlyList<CoopMatchRuntime.TransportCrewDrop> drops = runtime.TransportCrewDrops(entityId);
+        IReadOnlyList<HelicopterCrewDescentSnapshot> descents = runtime.TransportCrewDescents(entityId);
+        HelicopterPhysicsWorldSnapshot physics = runtime.TransportRopeSnapshot
+            ?? throw new Exception("Crew drop fixture lost native world state.");
+        HelicopterPhysicsMemberSnapshot rope = physics.Members.Single(member => member.Lease.EntityId == entityId);
+        if (drops.Count == 0 || drops.Count != descents.Count)
+        {
+            throw new Exception($"Crew drop boundary mismatch: captured {drops.Count}, descents {descents.Count}.");
+        }
+        foreach (CoopMatchRuntime.TransportCrewDrop drop in drops)
+        {
+            HelicopterCrewPoint slot = points.Slots[drop.Slot];
+            Vector3 marker = drop.Aircraft.Position +
+                Vector3.Transform(slot.RopeRestPosition, drop.Aircraft.Rotation);
+            Vector3 root = drop.Aircraft.Position + Vector3.Transform(slot.RestPosition, drop.Aircraft.Rotation);
+            if (drop.StartTick != descents.Single(descent => descent.Slot == drop.Slot).StartTick ||
+                Vector3.Distance(drop.RopeMarker, marker) > 0.000001f ||
+                Vector3.Distance(drop.Soldier.Position, root) > 0.000001f || drop.LandingSurface == null ||
+                drop.RopeLease != rope.Lease || drop.PhysicsSequence == 0 ||
+                drop.PhysicsSequence > physics.PhysicsSteps)
+            {
+                throw new Exception("Crew drop lost its marker, initial root, surface or live rope binding.");
+            }
+        }
+        Console.WriteLine($"PASS: {drops.Count} source crew drop inputs bound to native rope and direct surface lookup.");
     }
 }

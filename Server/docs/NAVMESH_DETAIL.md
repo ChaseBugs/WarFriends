@@ -205,3 +205,32 @@ Source `QuickRope2.OnEnable` reconstructs joints, while the prefab/pool can have
 earlier enable before `OnInstancied` disables the rope. A full source pooling/activation
 capture is still required to audit that pre-activation joint state; this runtime
 checkpoint does not establish parity for that interval or all possible short routes.
+
+## Crew drop query and input binding
+
+`EnemyController.SpawnFromHelicopter` differs from `Helicopter.ShowRope`: it calls
+SamplePosition at the crew's `ropePosition` marker, radius ten/mask one, without
+a player-height projection. `SampleHelicopterCrewLanding` now implements that
+separate direct query over the bound detail sampler. A captured Unity direct query
+verifies the entry point independently of the body-rope target path.
+
+At actual regular-crew drop ticks, the native-enabled runtime records slot/tick,
+the host's current attached-source soldier and aircraft poses, marker, nullable
+surface, active native lease and physical sequence. The records are read-only and
+do not get recomputed after the frame. They are cleared on transport removal or
+runtime termination. They do not instantiate an independent soldier, award spawn
+credit, or expose a damage target. A missing surface is retained as missing; no
+zero-height fallback is selected.
+
+The mission fixture extends through the first regular crew wave rather than
+checking a zero drop mask before the five-second wait ends. Two captured slots
+match their source schedule, initial marker/root placement and current rope lease.
+The direct surface and physics-sequence checks pass before aircraft death, and
+death/disposal removes the records along with the native scenes.
+
+Remaining: verify actual source Driving/Spawning script and coroutine phase order,
+recover each soldier's current animation mixer/palm before descent, consume fresh
+rope poses each frame, and transfer completed units into independent navigation
+and collision ownership. In particular, the attached-source placement recorded
+here is not proof of the precise animated EnemyController root at coroutine resume.
+Animation progress reaching one alone cannot authorize landing or a combat entity.

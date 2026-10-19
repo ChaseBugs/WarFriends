@@ -44,6 +44,16 @@ internal static class NavigationDetailSamplerTests
         {
             throw new Exception("Co-op landing did not use its digest-bound detail map.");
         }
+        using JsonDocument reference = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,
+            "recovered-helicopter-landing-unity-reference.json")));
+        JsonElement directQuery = reference.RootElement.GetProperty("rows")[2];
+        Vector3? crewSurface = connectivity.SampleHelicopterCrewLanding(
+            missions, 0, Vector(directQuery.GetProperty("origin")));
+        if (crewSurface == null || Vector3.Distance(crewSurface.Value,
+            Vector(directQuery.GetProperty("position"))) > SurfaceTolerance)
+        {
+            throw new Exception("Crew landing did not use its direct marker query.");
+        }
         try
         {
             CoopNavMeshConnectivity.Build(triangles).SampleHelicopterLanding(missions, 0, query);
@@ -51,7 +61,7 @@ internal static class NavigationDetailSamplerTests
         }
         catch (InvalidOperationException)
         {
-            return 2;
+            return 3;
         }
     }
 

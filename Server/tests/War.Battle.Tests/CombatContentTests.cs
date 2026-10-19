@@ -5438,7 +5438,7 @@ internal static class CombatContentTests
             transportRuntime.PlaceTransportHelicopterTargets(999).Count != 0)
             throw new Exception("Co-op transport Helicopter needs eleven enemy body boxes.");
         ulong afterFlight = transportTick + 15 * MatchManifest.TickRate;
-        CoopTransportLandingTests.AdvanceAndVerify(transportRuntime, transport, afterFlight,
+        afterFlight = CoopTransportLandingTests.AdvanceAndVerify(transportRuntime, transport, afterFlight,
             content.HelicopterRope);
         BattleCoopEnemySpawn flownTransport = transportRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.EntityId == transport.EntityId);
@@ -5455,6 +5455,7 @@ internal static class CombatContentTests
                 expectedDropMask |= 1u << slot;
         IReadOnlyList<HelicopterCrewDescentSnapshot> descents =
             transportRuntime.TransportCrewDescents(transport.EntityId);
+        CoopTransportLandingTests.VerifyCrewDrops(transportRuntime, transport.EntityId, content.HelicopterCrewPoints);
         if (transportRuntime.ReservedAirPath(transport.EntityId) is not > 0 ||
             flownTransport.PoseTick != afterFlight ||
             flownTransport.SpawnTick != transportTick ||

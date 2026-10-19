@@ -36,6 +36,27 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Actual native runtime drop boundaries now capture each regular crew slot's start
+tick, attached-source root pose, crew rope marker, direct sampled surface, active
+rope lease and physics sequence. `SpawnFromHelicopter` samples the crew marker
+directly; it must not reuse ShowRope's player-plane projection. The capture occurs
+after native rendering and is immutable input evidence, not a descended/landed
+combat soldier. Aircraft death and terminal cleanup release these records.
+
+The native mission fixture now advances through the complete first regular crew
+wave, avoiding a vacuous zero-drop test. It verifies two actual drop records,
+ordered start ticks, marker/root placement, successful surfaces and live rope
+binding, then death/disposal cleanup. Animation mixer phase, source script/coroutine
+ordering, fresh-pose descent, independent landed entity ownership and navigation
+transition remain open. No crew collision target or combat/economy progress is
+authorized merely by these input records.
+Windows and actual Ubuntu WSL each pass 6,757 native/query checks and the
+native-enabled full combat-content run (28,059 reported assertions plus drop and
+lifecycle checks). Both runs explicitly confirm two captured crew slots. Build
+has zero warnings/errors. Logs: `.local/transport-crew-drop-native.log`,
+`.local/transport-crew-drop-linux-native.log`, `.local/transport-crew-drop-content.log`,
+and `.local/transport-crew-drop-linux-content.log`.
+
 Co-op native ownership now connects to the real mission runtime behind explicit
 pre-admission `EnableTransportRopes`. The runtime records each spawn's observed
 realtime, requires one rendered native frame per newly executed host tick, and

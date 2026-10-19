@@ -2876,6 +2876,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
                 transportHelicopterOrientations.Remove(entityId);
                 transportHelicopterCrew.Remove(entityId);
                 _transportLandings.Remove(entityId);
+                RemoveTransportCrewDrops(entityId);
                 _transportRopes?.Remove(entityId);
                 _transportSpawnRealtime.Remove(entityId);
                 transportCrewSchedules.Remove(entityId);
@@ -3926,6 +3927,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         _transportRopes = null;
         _transportSpawnRealtime.Clear();
         _transportLandings.Clear();
+        _transportCrewDrops.Clear();
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
         infantryPointArrivals.Clear();
