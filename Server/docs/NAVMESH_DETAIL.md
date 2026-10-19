@@ -65,3 +65,18 @@ the original 18 mismatches and all offset/height probes. Build a validated immut
 successful/failed query result to native-world arrival and Worker lifetime. Keep
 the current mismatches visible until that sampler passes the actual query fixtures.
 The capture runtime is Unity 2018.3.0f2, not original Unity 5.2.5 parity.
+
+## Immutable .NET loader
+
+`NavigationDetailCatalog.Load` now loads the pinned manifest and all five map
+artifacts, checks the original asset and tile-payload digests, verifies complete
+tile/polygon/detail-triangle totals and builds read-only polygon boundaries and
+detail triangles. The catalog is returned only after the complete set succeeds.
+No decoded geometry collection exposes its mutable construction list or array.
+
+The .NET tests load all 5,693 polygons and 26,081 detail triangles, reject a damaged
+artifact before publication, reject collection mutation, and locate all 275 Unity
+sample heights on the loaded detail triangles within 0.0001 units. This validates
+loading and represented heights, not query-to-polygon selection. The native runner
+still reports the eighteen old sampler discrepancies separately. No Worker routing
+or deployment packaging is changed by this loader.

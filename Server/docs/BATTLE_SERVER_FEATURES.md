@@ -36,6 +36,16 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The immutable .NET `NavigationDetailCatalog` now loads all five pinned detail maps
+and their source payloads, conserves 5,693 polygons/26,081 detail triangles, rejects
+damaged artifacts before publication and keeps published geometry read-only.
+All 275 captured Unity heights are represented in the .NET detail surfaces. This
+is a loader/height coverage checkpoint; general polygon selection and Worker usage
+remain pending, and the eighteen current sampler differences remain visible.
+Windows and actual Ubuntu WSL each pass 6,296 accepted native/detail checks.
+The focused build has zero warnings/errors. Logs: `.local/navigation-detail-windows.log`
+and `.local/navigation-detail-linux.log`.
+
 Decoded navigation detail is now source-bound across all five co-op maps: 655 VAND
 version-16 tiles with polygon, detail-vertex and detail-triangle arrays. Each payload
 is located byte-for-byte in its original binary asset or YAML hex field. The generated
