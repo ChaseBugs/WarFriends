@@ -785,3 +785,36 @@ unchanged 0.00001 quaternion tolerance. Additional zero-delta checks retain the
 initial rotation. Windows and actual Ubuntu WSL pass 9,451 native ownership/motion
 checks at `.local/crew-entry-scaled-windows.log` and `.local/crew-entry-scaled-linux.log`.
 Normal runtime mode selection, OnEnable/Start order and pooled endpoints remain pending.
+
+### Automatic source tween dispatch
+
+`UnityCrewEntryLifecycleExport` and `CrewEntryLifecycleProbe` observe source
+TweenRotation under normal Unity Start/Update dispatch in an empty disposable
+Play Mode scene. The probe overrides Update only to invoke the original base
+implementation and record its result. It records the exact source OnEnable
+clock origin and source realTime value instead of a later realtime read.
+No actor, pool, network, gameplay scene or physics owner is created.
+
+Six objects cover three parent rotations and both time modes. Each object is
+reused after its first tween completes, preserving the same source clock.
+Time.captureFramerate is 30, while unscaled time follows the actual process
+clock. The result contains 282 unscaled and 60 scaled observations, 342 total.
+Fresh objects produce two Update observations in their first frame because
+UITweener.Start invokes Update before normal Update dispatch. A single update
+per host frame would therefore omit source work at this boundary.
+
+The final accepted Unity process exits zero at
+`.local/crew-entry-lifecycle-unity-final.log`. The LF reference SHA-256 is
+`544867587054596fec9d31fa32996ada4f56a6a06c07ddf4712919b21773bc1b`.
+It also pins the three original tween/clock source hashes. The earlier successful
+capture lacked exact clock-origin metadata and is superseded by this final run.
+Tests replay all 342 observations through the same composed entry instance per
+object, including observed OnEnable origins and fresh/reused endpoints. World
+rotation and completion match at the unchanged 0.00001 quaternion tolerance;
+maximum error is about 0.000000134. Windows and actual Ubuntu WSL pass 9,793
+native ownership/motion checks at `.local/crew-entry-lifecycle-windows.log` and
+`.local/crew-entry-lifecycle-linux.log`, with zero build warnings/errors.
+
+This establishes automatic lifecycle of these tween-only fixtures in Unity 2018.3.
+It does not establish original Unity 5.2 parity, actual actor/pool callback order,
+camera/animation scheduling or a normal host-to-client crew descent integration.

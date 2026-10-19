@@ -1,0 +1,7127 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "unity": "2018.3.0f2",
+  "fixture": "Automatic Unity Start/Update on source TweenRotation subclass; no actor or pool lifecycle.",
+  "tweenSha256": "b413504f45103aa0cadaefb89141caa4b43d705953ee0b7450388a1e0551d375",
+  "updateSha256": "9701b22bdb46bb2cf6e42f9d155dd5ad9453ce255b5a2bddd7a2d81ea576fef7",
+  "clockSha256": "176759d03696dd5f7a165b4d131fe5c2466f683935b8d3c50d510c6045911576",
+  "scenarios": [
+    {
+      "parent": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "first": {
+        "from": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "target": [
+          0.0,
+          0.1736482,
+          0.0,
+          0.9848077
+        ],
+        "beginRealtime": 1.40380859,
+        "ignoreTimeScale": true,
+        "enabledAt": 1.40267682,
+        "rows": [
+          {
+            "frame": 4,
+            "realtime": 1.40488291,
+            "delta": 0.002,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.006666667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              3.38484682E-07,
+              0.0,
+              1.0
+            ],
+            "rotation": [
+              0.0,
+              3.38484682E-07,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "frame": 4,
+            "realtime": 1.40595782,
+            "delta": 0.001,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.01,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              1.14231682E-06,
+              0.0,
+              1.0
+            ],
+            "rotation": [
+              0.0,
+              1.14231682E-06,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "frame": 5,
+            "realtime": 1.406429,
+            "delta": 0.001,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0133333327,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              2.707301E-06,
+              0.0,
+              1.0
+            ],
+            "rotation": [
+              0.0,
+              2.707301E-06,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "frame": 6,
+            "realtime": 1.410397,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0266666654,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              2.16359349E-05,
+              0.0,
+              1.0
+            ],
+            "rotation": [
+              0.0,
+              2.16359349E-05,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "frame": 7,
+            "realtime": 1.418341,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.05333333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.00017236275,
+              0.0,
+              1.0
+            ],
+            "rotation": [
+              0.0,
+              0.00017236275,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "frame": 8,
+            "realtime": 1.42594111,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.07666667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.000508952944,
+              0.0,
+              0.9999999
+            ],
+            "rotation": [
+              0.0,
+              0.000508952944,
+              0.0,
+              0.9999999
+            ]
+          },
+          {
+            "frame": 9,
+            "realtime": 1.43025756,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0933333337,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0009131723,
+              0.0,
+              0.9999996
+            ],
+            "rotation": [
+              0.0,
+              0.0009131723,
+              0.0,
+              0.9999996
+            ]
+          },
+          {
+            "frame": 10,
+            "realtime": 1.43825674,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.12,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.00191929471,
+              0.0,
+              0.999998152
+            ],
+            "rotation": [
+              0.0,
+              0.00191929471,
+              0.0,
+              0.999998152
+            ]
+          },
+          {
+            "frame": 11,
+            "realtime": 1.44564676,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.143333331,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.00323156058,
+              0.0,
+              0.9999948
+            ],
+            "rotation": [
+              0.0,
+              0.00323156058,
+              0.0,
+              0.9999948
+            ]
+          },
+          {
+            "frame": 12,
+            "realtime": 1.45311284,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.166666672,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.005009181,
+              0.0,
+              0.9999875
+            ],
+            "rotation": [
+              0.0,
+              0.005009181,
+              0.0,
+              0.9999875
+            ]
+          },
+          {
+            "frame": 13,
+            "realtime": 1.46005237,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.190000013,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.007301422,
+              0.0,
+              0.999973357
+            ],
+            "rotation": [
+              0.0,
+              0.007301422,
+              0.0,
+              0.999973357
+            ]
+          },
+          {
+            "frame": 14,
+            "realtime": 1.46794176,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.216666684,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0105999717,
+              0.0,
+              0.999943852
+            ],
+            "rotation": [
+              0.0,
+              0.0105999717,
+              0.0,
+              0.999943852
+            ]
+          },
+          {
+            "frame": 15,
+            "realtime": 1.47200191,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.230000019,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.01253279,
+              0.0,
+              0.9999215
+            ],
+            "rotation": [
+              0.0,
+              0.01253279,
+              0.0,
+              0.9999215
+            ]
+          },
+          {
+            "frame": 16,
+            "realtime": 1.479878,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.2566667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.01697973,
+              0.0,
+              0.9998559
+            ],
+            "rotation": [
+              0.0,
+              0.01697973,
+              0.0,
+              0.9998559
+            ]
+          },
+          {
+            "frame": 17,
+            "realtime": 1.48770535,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.283333361,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0222048927,
+              0.0,
+              0.9997535
+            ],
+            "rotation": [
+              0.0,
+              0.0222048927,
+              0.0,
+              0.9997535
+            ]
+          },
+          {
+            "frame": 18,
+            "realtime": 1.49172437,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.296666682,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0251053683,
+              0.0,
+              0.9996848
+            ],
+            "rotation": [
+              0.0,
+              0.0251053683,
+              0.0,
+              0.9996848
+            ]
+          },
+          {
+            "frame": 19,
+            "realtime": 1.49915326,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.320000023,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0306283068,
+              0.0,
+              0.999530852
+            ],
+            "rotation": [
+              0.0,
+              0.0306283068,
+              0.0,
+              0.999530852
+            ]
+          },
+          {
+            "frame": 20,
+            "realtime": 1.5066514,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3466667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.03760083,
+              0.0,
+              0.99929285
+            ],
+            "rotation": [
+              0.0,
+              0.03760083,
+              0.0,
+              0.99929285
+            ]
+          },
+          {
+            "frame": 21,
+            "realtime": 1.51401913,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.370000035,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0442308672,
+              0.0,
+              0.999021351
+            ],
+            "rotation": [
+              0.0,
+              0.0442308672,
+              0.0,
+              0.999021351
+            ]
+          },
+          {
+            "frame": 22,
+            "realtime": 1.51845264,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.386666715,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.04923733,
+              0.0,
+              0.9987871
+            ],
+            "rotation": [
+              0.0,
+              0.04923733,
+              0.0,
+              0.9987871
+            ]
+          },
+          {
+            "frame": 23,
+            "realtime": 1.52592826,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.410000056,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.05657594,
+              0.0,
+              0.9983983
+            ],
+            "rotation": [
+              0.0,
+              0.05657594,
+              0.0,
+              0.9983983
+            ]
+          },
+          {
+            "frame": 24,
+            "realtime": 1.532883,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.4333334,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.06423413,
+              0.0,
+              0.9979349
+            ],
+            "rotation": [
+              0.0,
+              0.06423413,
+              0.0,
+              0.9979349
+            ]
+          },
+          {
+            "frame": 25,
+            "realtime": 1.53984773,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.456666738,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.07213357,
+              0.0,
+              0.997395
+            ],
+            "rotation": [
+              0.0,
+              0.07213357,
+              0.0,
+              0.997395
+            ]
+          },
+          {
+            "frame": 26,
+            "realtime": 1.54728448,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.4833334,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.08134933,
+              0.0,
+              0.9966857
+            ],
+            "rotation": [
+              0.0,
+              0.08134933,
+              0.0,
+              0.9966857
+            ]
+          },
+          {
+            "frame": 27,
+            "realtime": 1.55481243,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5066667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.08947935,
+              0.0,
+              0.995988667
+            ],
+            "rotation": [
+              0.0,
+              0.08947935,
+              0.0,
+              0.995988667
+            ]
+          },
+          {
+            "frame": 28,
+            "realtime": 1.56173837,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.530000031,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0975782,
+              0.0,
+              0.9952279
+            ],
+            "rotation": [
+              0.0,
+              0.0975782,
+              0.0,
+              0.9952279
+            ]
+          },
+          {
+            "frame": 29,
+            "realtime": 1.56905472,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.553333342,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.105557919,
+              0.0,
+              0.994413137
+            ],
+            "rotation": [
+              0.0,
+              0.105557919,
+              0.0,
+              0.994413137
+            ]
+          },
+          {
+            "frame": 30,
+            "realtime": 1.57311344,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.566666663,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.110031351,
+              0.0,
+              0.993928134
+            ],
+            "rotation": [
+              0.0,
+              0.110031351,
+              0.0,
+              0.993928134
+            ]
+          },
+          {
+            "frame": 31,
+            "realtime": 1.58009315,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.59,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.117653653,
+              0.0,
+              0.9930547
+            ],
+            "rotation": [
+              0.0,
+              0.117653653,
+              0.0,
+              0.9930547
+            ]
+          },
+          {
+            "frame": 32,
+            "realtime": 1.58661807,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6133333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.124948293,
+              0.0,
+              0.9921633
+            ],
+            "rotation": [
+              0.0,
+              0.124948293,
+              0.0,
+              0.9921633
+            ]
+          },
+          {
+            "frame": 33,
+            "realtime": 1.59342849,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6366666,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.131845877,
+              0.0,
+              0.991270244
+            ],
+            "rotation": [
+              0.0,
+              0.131845877,
+              0.0,
+              0.991270244
+            ]
+          },
+          {
+            "frame": 34,
+            "realtime": 1.60013688,
+            "delta": 0.006,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6566666,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.137396038,
+              0.0,
+              0.9905162
+            ],
+            "rotation": [
+              0.0,
+              0.137396038,
+              0.0,
+              0.9905162
+            ]
+          },
+          {
+            "frame": 35,
+            "realtime": 1.60715473,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6799999,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.143403709,
+              0.0,
+              0.9896643
+            ],
+            "rotation": [
+              0.0,
+              0.143403709,
+              0.0,
+              0.9896643
+            ]
+          },
+          {
+            "frame": 36,
+            "realtime": 1.61405683,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7033332,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.14886947,
+              0.0,
+              0.988856852
+            ],
+            "rotation": [
+              0.0,
+              0.14886947,
+              0.0,
+              0.988856852
+            ]
+          },
+          {
+            "frame": 37,
+            "realtime": 1.61827159,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.71999985,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.152425274,
+              0.0,
+              0.988315
+            ],
+            "rotation": [
+              0.0,
+              0.152425274,
+              0.0,
+              0.988315
+            ]
+          },
+          {
+            "frame": 38,
+            "realtime": 1.62573338,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.743333161,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.156901374,
+              0.0,
+              0.987614334
+            ],
+            "rotation": [
+              0.0,
+              0.156901374,
+              0.0,
+              0.987614334
+            ]
+          },
+          {
+            "frame": 39,
+            "realtime": 1.63311148,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7666665,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.1607855,
+              0.0,
+              0.9869894
+            ],
+            "rotation": [
+              0.0,
+              0.1607855,
+              0.0,
+              0.9869894
+            ]
+          },
+          {
+            "frame": 40,
+            "realtime": 1.6401248,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7899998,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.164082229,
+              0.0,
+              0.9864467
+            ],
+            "rotation": [
+              0.0,
+              0.164082229,
+              0.0,
+              0.9864467
+            ]
+          },
+          {
+            "frame": 41,
+            "realtime": 1.64701486,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8133331,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.166808575,
+              0.0,
+              0.985989332
+            ],
+            "rotation": [
+              0.0,
+              0.166808575,
+              0.0,
+              0.985989332
+            ]
+          },
+          {
+            "frame": 42,
+            "realtime": 1.65383959,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8366664,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.16899325,
+              0.0,
+              0.9856172
+            ],
+            "rotation": [
+              0.0,
+              0.16899325,
+              0.0,
+              0.9856172
+            ]
+          },
+          {
+            "frame": 43,
+            "realtime": 1.65843093,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.853333056,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.170243889,
+              0.0,
+              0.985402
+            ],
+            "rotation": [
+              0.0,
+              0.170243889,
+              0.0,
+              0.985402
+            ]
+          },
+          {
+            "frame": 44,
+            "realtime": 1.66598725,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.876666367,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.171599016,
+              0.0,
+              0.9851669
+            ],
+            "rotation": [
+              0.0,
+              0.171599016,
+              0.0,
+              0.9851669
+            ]
+          },
+          {
+            "frame": 45,
+            "realtime": 1.67286885,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8999997,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.172544777,
+              0.0,
+              0.9850017
+            ],
+            "rotation": [
+              0.0,
+              0.172544777,
+              0.0,
+              0.9850017
+            ]
+          },
+          {
+            "frame": 46,
+            "realtime": 1.67983,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.923333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.173146933,
+              0.0,
+              0.984896
+            ],
+            "rotation": [
+              0.0,
+              0.173146933,
+              0.0,
+              0.984896
+            ]
+          },
+          {
+            "frame": 47,
+            "realtime": 1.68782854,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.94999963,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.173508242,
+              0.0,
+              0.984832466
+            ],
+            "rotation": [
+              0.0,
+              0.173508242,
+              0.0,
+              0.984832466
+            ]
+          },
+          {
+            "frame": 48,
+            "realtime": 1.6917901,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.963332951,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.17359288,
+              0.0,
+              0.9848175
+            ],
+            "rotation": [
+              0.0,
+              0.17359288,
+              0.0,
+              0.9848175
+            ]
+          },
+          {
+            "frame": 49,
+            "realtime": 1.70005381,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.9899996,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.173647061,
+              0.0,
+              0.984807968
+            ],
+            "rotation": [
+              0.0,
+              0.173647061,
+              0.0,
+              0.984807968
+            ]
+          },
+          {
+            "frame": 50,
+            "realtime": 1.7078656,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.173648208,
+              0.0,
+              0.9848078
+            ],
+            "rotation": [
+              0.0,
+              0.173648208,
+              0.0,
+              0.9848078
+            ]
+          }
+        ]
+      },
+      "reused": {
+        "from": [
+          0.0,
+          0.173648208,
+          0.0,
+          0.9848077
+        ],
+        "target": [
+          0.0,
+          0.382683456,
+          0.0,
+          0.9238795
+        ],
+        "beginRealtime": 1.71627343,
+        "ignoreTimeScale": true,
+        "enabledAt": 1.71624255,
+        "rows": [
+          {
+            "frame": 51,
+            "realtime": 1.71643853,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.173648223,
+              0.0,
+              0.9848078
+            ],
+            "rotation": [
+              0.0,
+              0.173648223,
+              0.0,
+              0.9848078
+            ]
+          },
+          {
+            "frame": 52,
+            "realtime": 1.72035229,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0133333337,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.173651546,
+              0.0,
+              0.9848072
+            ],
+            "rotation": [
+              0.0,
+              0.173651546,
+              0.0,
+              0.9848072
+            ]
+          },
+          {
+            "frame": 53,
+            "realtime": 1.72433031,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0266666673,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.173674777,
+              0.0,
+              0.9848031
+            ],
+            "rotation": [
+              0.0,
+              0.173674777,
+              0.0,
+              0.9848031
+            ]
+          },
+          {
+            "frame": 54,
+            "realtime": 1.73199534,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0533333346,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.17385979,
+              0.0,
+              0.9847704
+            ],
+            "rotation": [
+              0.0,
+              0.17385979,
+              0.0,
+              0.9847704
+            ]
+          },
+          {
+            "frame": 55,
+            "realtime": 1.73904431,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.07666667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.17427294,
+              0.0,
+              0.9846974
+            ],
+            "rotation": [
+              0.0,
+              0.17427294,
+              0.0,
+              0.9846974
+            ]
+          },
+          {
+            "frame": 56,
+            "realtime": 1.74608541,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.1,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.1750233,
+              0.0,
+              0.9845643
+            ],
+            "rotation": [
+              0.0,
+              0.1750233,
+              0.0,
+              0.9845643
+            ]
+          },
+          {
+            "frame": 57,
+            "realtime": 1.75349045,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.123333335,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.176201582,
+              0.0,
+              0.984354138
+            ],
+            "rotation": [
+              0.0,
+              0.176201582,
+              0.0,
+              0.984354138
+            ]
+          },
+          {
+            "frame": 58,
+            "realtime": 1.75843334,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.14,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.17735073,
+              0.0,
+              0.9841477
+            ],
+            "rotation": [
+              0.0,
+              0.17735073,
+              0.0,
+              0.9841477
+            ]
+          },
+          {
+            "frame": 59,
+            "realtime": 1.76586366,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.166666672,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.179795027,
+              0.0,
+              0.98370415
+            ],
+            "rotation": [
+              0.0,
+              0.179795027,
+              0.0,
+              0.98370415
+            ]
+          },
+          {
+            "frame": 60,
+            "realtime": 1.77288985,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.190000013,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.182606518,
+              0.0,
+              0.9831861
+            ],
+            "rotation": [
+              0.0,
+              0.182606518,
+              0.0,
+              0.9831861
+            ]
+          },
+          {
+            "frame": 61,
+            "realtime": 1.77983129,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.213333353,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.186095089,
+              0.0,
+              0.9825318
+            ],
+            "rotation": [
+              0.0,
+              0.186095089,
+              0.0,
+              0.9825318
+            ]
+          },
+          {
+            "frame": 62,
+            "realtime": 1.78781939,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.240000024,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.190951169,
+              0.0,
+              0.981599569
+            ],
+            "rotation": [
+              0.0,
+              0.190951169,
+              0.0,
+              0.981599569
+            ]
+          },
+          {
+            "frame": 63,
+            "realtime": 1.79572868,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.266666681,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.196755424,
+              0.0,
+              0.9804526
+            ],
+            "rotation": [
+              0.0,
+              0.196755424,
+              0.0,
+              0.9804526
+            ]
+          },
+          {
+            "frame": 64,
+            "realtime": 1.79976428,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.28,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.200012848,
+              0.0,
+              0.9797933
+            ],
+            "rotation": [
+              0.0,
+              0.200012848,
+              0.0,
+              0.9797933
+            ]
+          },
+          {
+            "frame": 65,
+            "realtime": 1.80676556,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.303333342,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.206271842,
+              0.0,
+              0.978494763
+            ],
+            "rotation": [
+              0.0,
+              0.206271842,
+              0.0,
+              0.978494763
+            ]
+          },
+          {
+            "frame": 66,
+            "realtime": 1.81370819,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.326666683,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.213215351,
+              0.0,
+              0.977005243
+            ],
+            "rotation": [
+              0.0,
+              0.213215351,
+              0.0,
+              0.977005243
+            ]
+          },
+          {
+            "frame": 67,
+            "realtime": 1.82026327,
+            "delta": 0.006,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3466667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.2196785,
+              0.0,
+              0.975572348
+            ],
+            "rotation": [
+              0.0,
+              0.2196785,
+              0.0,
+              0.975572348
+            ]
+          },
+          {
+            "frame": 68,
+            "realtime": 1.82717741,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.370000035,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.227764487,
+              0.0,
+              0.973716259
+            ],
+            "rotation": [
+              0.0,
+              0.227764487,
+              0.0,
+              0.973716259
+            ]
+          },
+          {
+            "frame": 69,
+            "realtime": 1.83463013,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3966667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.237638041,
+              0.0,
+              0.9713538
+            ],
+            "rotation": [
+              0.0,
+              0.237638041,
+              0.0,
+              0.9713538
+            ]
+          },
+          {
+            "frame": 70,
+            "realtime": 1.84213018,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.420000046,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.246737733,
+              0.0,
+              0.9690823
+            ],
+            "rotation": [
+              0.0,
+              0.246737733,
+              0.0,
+              0.9690823
+            ]
+          },
+          {
+            "frame": 71,
+            "realtime": 1.84941065,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.4433334,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.256169677,
+              0.0,
+              0.9666319
+            ],
+            "rotation": [
+              0.0,
+              0.256169677,
+              0.0,
+              0.9666319
+            ]
+          },
+          {
+            "frame": 72,
+            "realtime": 1.85676861,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.470000058,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.267226338,
+              0.0,
+              0.963633835
+            ],
+            "rotation": [
+              0.0,
+              0.267226338,
+              0.0,
+              0.963633835
+            ]
+          },
+          {
+            "frame": 73,
+            "realtime": 1.86375093,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.4933334,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.2770245,
+              0.0,
+              0.9608629
+            ],
+            "rotation": [
+              0.0,
+              0.2770245,
+              0.0,
+              0.9608629
+            ]
+          },
+          {
+            "frame": 74,
+            "realtime": 1.87096918,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5166667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.286824554,
+              0.0,
+              0.957983136
+            ],
+            "rotation": [
+              0.0,
+              0.286824554,
+              0.0,
+              0.957983136
+            ]
+          },
+          {
+            "frame": 75,
+            "realtime": 1.87844646,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.54,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.296518564,
+              0.0,
+              0.9550271
+            ],
+            "rotation": [
+              0.0,
+              0.296518564,
+              0.0,
+              0.9550271
+            ]
+          },
+          {
+            "frame": 76,
+            "realtime": 1.885489,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.563333333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.306001782,
+              0.0,
+              0.952030957
+            ],
+            "rotation": [
+              0.0,
+              0.306001782,
+              0.0,
+              0.952030957
+            ]
+          },
+          {
+            "frame": 77,
+            "realtime": 1.89288425,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.59,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3164546,
+              0.0,
+              0.9486077
+            ],
+            "rotation": [
+              0.0,
+              0.3164546,
+              0.0,
+              0.9486077
+            ]
+          },
+          {
+            "frame": 78,
+            "realtime": 1.89990115,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6133333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.325161785,
+              0.0,
+              0.945658445
+            ],
+            "rotation": [
+              0.0,
+              0.325161785,
+              0.0,
+              0.945658445
+            ]
+          },
+          {
+            "frame": 79,
+            "realtime": 1.90781367,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6399999,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3345034,
+              0.0,
+              0.942394555
+            ],
+            "rotation": [
+              0.0,
+              0.3345034,
+              0.0,
+              0.942394555
+            ]
+          },
+          {
+            "frame": 80,
+            "realtime": 1.91571927,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.666666567,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3430983,
+              0.0,
+              0.9392995
+            ],
+            "rotation": [
+              0.0,
+              0.3430983,
+              0.0,
+              0.9392995
+            ]
+          },
+          {
+            "frame": 81,
+            "realtime": 1.919923,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6799999,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.34709,
+              0.0,
+              0.9378318
+            ],
+            "rotation": [
+              0.0,
+              0.34709,
+              0.0,
+              0.9378318
+            ]
+          },
+          {
+            "frame": 82,
+            "realtime": 1.92786765,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7066665,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3544231,
+              0.0,
+              0.9350852
+            ],
+            "rotation": [
+              0.0,
+              0.3544231,
+              0.0,
+              0.9350852
+            ]
+          },
+          {
+            "frame": 83,
+            "realtime": 1.934932,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.72999984,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.360101163,
+              0.0,
+              0.932913244
+            ],
+            "rotation": [
+              0.0,
+              0.360101163,
+              0.0,
+              0.932913244
+            ]
+          },
+          {
+            "frame": 84,
+            "realtime": 1.94174445,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.753333151,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.365075052,
+              0.0,
+              0.9309781
+            ],
+            "rotation": [
+              0.0,
+              0.365075052,
+              0.0,
+              0.9309781
+            ]
+          },
+          {
+            "frame": 85,
+            "realtime": 1.94595957,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7666665,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.367600679,
+              0.0,
+              0.929983735
+            ],
+            "rotation": [
+              0.0,
+              0.367600679,
+              0.0,
+              0.929983735
+            ]
+          },
+          {
+            "frame": 86,
+            "realtime": 1.95004773,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7799998,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3698984,
+              0.0,
+              0.9290722
+            ],
+            "rotation": [
+              0.0,
+              0.3698984,
+              0.0,
+              0.9290722
+            ]
+          },
+          {
+            "frame": 87,
+            "realtime": 1.95704174,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8033331,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.373383164,
+              0.0,
+              0.9276772
+            ],
+            "rotation": [
+              0.0,
+              0.373383164,
+              0.0,
+              0.9276772
+            ]
+          },
+          {
+            "frame": 88,
+            "realtime": 1.96413982,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8266664,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3762125,
+              0.0,
+              0.9265334
+            ],
+            "rotation": [
+              0.0,
+              0.3762125,
+              0.0,
+              0.9265334
+            ]
+          },
+          {
+            "frame": 89,
+            "realtime": 1.9711715,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8499997,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.37842986,
+              0.0,
+              0.92563
+            ],
+            "rotation": [
+              0.0,
+              0.37842986,
+              0.0,
+              0.92563
+            ]
+          },
+          {
+            "frame": 90,
+            "realtime": 1.978059,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.873333037,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.380090654,
+              0.0,
+              0.9249492
+            ],
+            "rotation": [
+              0.0,
+              0.380090654,
+              0.0,
+              0.9249492
+            ]
+          },
+          {
+            "frame": 91,
+            "realtime": 1.9856813,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8999997,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.381392926,
+              0.0,
+              0.924413
+            ],
+            "rotation": [
+              0.0,
+              0.381392926,
+              0.0,
+              0.924413
+            ]
+          },
+          {
+            "frame": 92,
+            "realtime": 1.99305236,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.923333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.382097274,
+              0.0,
+              0.924122155
+            ],
+            "rotation": [
+              0.0,
+              0.382097274,
+              0.0,
+              0.924122155
+            ]
+          },
+          {
+            "frame": 93,
+            "realtime": 2.00010157,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.9466663,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.382484972,
+              0.0,
+              0.923961759
+            ],
+            "rotation": [
+              0.0,
+              0.382484972,
+              0.0,
+              0.923961759
+            ]
+          },
+          {
+            "frame": 94,
+            "realtime": 2.0079453,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.973332942,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.382658571,
+              0.0,
+              0.9238899
+            ],
+            "rotation": [
+              0.0,
+              0.382658571,
+              0.0,
+              0.9238899
+            ]
+          },
+          {
+            "frame": 95,
+            "realtime": 2.015913,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.9999996,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.382683456,
+              0.0,
+              0.9238795
+            ],
+            "rotation": [
+              0.0,
+              0.382683456,
+              0.0,
+              0.9238795
+            ]
+          },
+          {
+            "frame": 96,
+            "realtime": 2.01994371,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.382683456,
+              0.0,
+              0.9238795
+            ],
+            "rotation": [
+              0.0,
+              0.382683456,
+              0.0,
+              0.9238795
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "parent": [
+        0.0413652956,
+        0.317002654,
+        -0.0138406334,
+        0.9474211
+      ],
+      "first": {
+        "from": [
+          -0.04136526,
+          -0.317002684,
+          0.0138406465,
+          0.9474211
+        ],
+        "target": [
+          0.0,
+          0.707106769,
+          0.0,
+          0.707106769
+        ],
+        "beginRealtime": 1.40398455,
+        "ignoreTimeScale": true,
+        "enabledAt": 1.40395272,
+        "rows": [
+          {
+            "frame": 4,
+            "realtime": 1.405866,
+            "delta": 0.002,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.006666667,
+            "enabled": true,
+            "localRotation": [
+              -0.0413652137,
+              -0.317000657,
+              0.0138406316,
+              0.9474218
+            ],
+            "rotation": [
+              1.34110451E-07,
+              2.115965E-06,
+              4.47034836E-08,
+              1.00000012
+            ]
+          },
+          {
+            "frame": 4,
+            "realtime": 1.40596128,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.006666667,
+            "enabled": true,
+            "localRotation": [
+              -0.0413652137,
+              -0.317000657,
+              0.0138406316,
+              0.9474218
+            ],
+            "rotation": [
+              1.34110451E-07,
+              2.115965E-06,
+              4.47034836E-08,
+              1.00000012
+            ]
+          },
+          {
+            "frame": 5,
+            "realtime": 1.406437,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.006666667,
+            "enabled": true,
+            "localRotation": [
+              -0.0413652137,
+              -0.317000657,
+              0.0138406316,
+              0.9474218
+            ],
+            "rotation": [
+              1.34110451E-07,
+              2.115965E-06,
+              4.47034836E-08,
+              1.00000012
+            ]
+          },
+          {
+            "frame": 6,
+            "realtime": 1.41041,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.02,
+            "enabled": true,
+            "localRotation": [
+              -0.0413640551,
+              -0.316947371,
+              0.0138402442,
+              0.947439551
+            ],
+            "rotation": [
+              2.577901E-06,
+              5.82337379E-05,
+              1.26939267E-06,
+              0.99999994
+            ]
+          },
+          {
+            "frame": 7,
+            "realtime": 1.41835368,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0466666669,
+            "enabled": true,
+            "localRotation": [
+              -0.04135004,
+              -0.3163029,
+              0.013835554,
+              0.9476557
+            ],
+            "rotation": [
+              3.22274864E-05,
+              0.000737339258,
+              1.60504133E-05,
+              0.999999762
+            ]
+          },
+          {
+            "frame": 8,
+            "realtime": 1.42595315,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.07333333,
+            "enabled": true,
+            "localRotation": [
+              -0.0413064547,
+              -0.314303339,
+              0.01382097,
+              0.948322833
+            ],
+            "rotation": [
+              0.0001241751,
+              0.00284326077,
+              6.189477E-05,
+              0.999995947
+            ]
+          },
+          {
+            "frame": 9,
+            "realtime": 1.43027091,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.086666666,
+            "enabled": true,
+            "localRotation": [
+              -0.0412684232,
+              -0.312564433,
+              0.0138082458,
+              0.948899269
+            ],
+            "rotation": [
+              0.0002040863,
+              0.004673451,
+              0.000101736747,
+              0.999989033
+            ]
+          },
+          {
+            "frame": 10,
+            "realtime": 1.43826854,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.11333333,
+            "enabled": true,
+            "localRotation": [
+              -0.0411497653,
+              -0.307172537,
+              0.0137685426,
+              0.9506641
+            ],
+            "rotation": [
+              0.0004515536,
+              0.0103413165,
+              0.000225115567,
+              0.9999465
+            ]
+          },
+          {
+            "frame": 11,
+            "realtime": 1.44566107,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.14,
+            "enabled": true,
+            "localRotation": [
+              -0.04096091,
+              -0.2986923,
+              0.0137053533,
+              0.9533715
+            ],
+            "rotation": [
+              0.0008398071,
+              0.019233942,
+              0.000418696553,
+              0.99981457
+            ]
+          },
+          {
+            "frame": 12,
+            "realtime": 1.45318019,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.163333341,
+            "enabled": true,
+            "localRotation": [
+              -0.0407253541,
+              -0.2882812,
+              0.0136265364,
+              0.956582367
+            ],
+            "rotation": [
+              0.00131490827,
+              0.0301154554,
+              0.000655571,
+              0.9995454
+            ]
+          },
+          {
+            "frame": 13,
+            "realtime": 1.46006429,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.186666682,
+            "enabled": true,
+            "localRotation": [
+              -0.0404125974,
+              -0.2747254,
+              0.0135218883,
+              0.960577965
+            ],
+            "rotation": [
+              0.00193094462,
+              0.0442251265,
+              0.0009627184,
+              0.9990193
+            ]
+          },
+          {
+            "frame": 14,
+            "realtime": 1.46795344,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.213333353,
+            "enabled": true,
+            "localRotation": [
+              -0.039946083,
+              -0.2550276,
+              0.0133657968,
+              0.9660159
+            ],
+            "rotation": [
+              0.00282102078,
+              0.06461108,
+              0.00140648708,
+              0.997905552
+            ]
+          },
+          {
+            "frame": 15,
+            "realtime": 1.47201371,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.226666689,
+            "enabled": true,
+            "localRotation": [
+              -0.0396640934,
+              -0.2434,
+              0.0132714435,
+              0.9690238
+            ],
+            "rotation": [
+              0.00334363058,
+              0.07658084,
+              0.00166705251,
+              0.9970565
+            ]
+          },
+          {
+            "frame": 16,
+            "realtime": 1.47989273,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.25333336,
+            "enabled": true,
+            "localRotation": [
+              -0.0389918722,
+              -0.2164478,
+              0.0130465208,
+              0.975428
+            ],
+            "rotation": [
+              0.00454715267,
+              0.104146048,
+              0.00226710644,
+              0.994549036
+            ]
+          },
+          {
+            "frame": 17,
+            "realtime": 1.48772025,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.280000031,
+            "enabled": true,
+            "localRotation": [
+              -0.0381614,
+              -0.184478149,
+              0.0127686495,
+              0.9820125
+            ],
+            "rotation": [
+              0.00596072152,
+              0.136522084,
+              0.00297188526,
+              0.9906147
+            ]
+          },
+          {
+            "frame": 18,
+            "realtime": 1.49173617,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.293333352,
+            "enabled": true,
+            "localRotation": [
+              -0.0376819372,
+              -0.166613072,
+              0.0126082217,
+              0.985221446
+            ],
+            "rotation": [
+              0.006744124,
+              0.154465079,
+              0.003362482,
+              0.987969637
+            ]
+          },
+          {
+            "frame": 19,
+            "realtime": 1.499169,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3166667,
+            "enabled": true,
+            "localRotation": [
+              -0.0367333144,
+              -0.132398188,
+              0.0122908158,
+              0.9904395
+            ],
+            "rotation": [
+              0.008231655,
+              0.188535109,
+              0.004104137,
+              0.9820234
+            ]
+          },
+          {
+            "frame": 20,
+            "realtime": 1.5066644,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.343333364,
+            "enabled": true,
+            "localRotation": [
+              -0.0354706123,
+              -0.0889026448,
+              0.0118683223,
+              0.9953378
+            ],
+            "rotation": [
+              0.0100986566,
+              0.23129648,
+              0.00503498735,
+              0.9728179
+            ]
+          },
+          {
+            "frame": 21,
+            "realtime": 1.5140332,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3666667,
+            "enabled": true,
+            "localRotation": [
+              -0.03420463,
+              -0.0473140255,
+              0.0114447288,
+              0.998228669
+            ],
+            "rotation": [
+              0.0118589923,
+              0.27161485,
+              0.00591265969,
+              0.9623149
+            ]
+          },
+          {
+            "frame": 22,
+            "realtime": 1.51846266,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.383333385,
+            "enabled": true,
+            "localRotation": [
+              -0.0332077667,
+              -0.01580952,
+              0.0111111822,
+              0.9992617
+            ],
+            "rotation": [
+              0.0131764784,
+              0.301790357,
+              0.00656953733,
+              0.95326066
+            ]
+          },
+          {
+            "frame": 23,
+            "realtime": 1.52594256,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.406666726,
+            "enabled": true,
+            "localRotation": [
+              -0.03168502,
+              0.0304524433,
+              0.0106016789,
+              0.998977661
+            ],
+            "rotation": [
+              0.0150861926,
+              0.345529884,
+              0.00752168056,
+              0.9382564
+            ]
+          },
+          {
+            "frame": 24,
+            "realtime": 1.53289568,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.430000067,
+            "enabled": true,
+            "localRotation": [
+              -0.0300208479,
+              0.07873686,
+              0.0100448523,
+              0.9963927
+            ],
+            "rotation": [
+              0.017047707,
+              0.39045608,
+              0.00849966,
+              0.920424461
+            ]
+          },
+          {
+            "frame": 25,
+            "realtime": 1.53986192,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.4533334,
+            "enabled": true,
+            "localRotation": [
+              -0.0282274466,
+              0.1284348,
+              0.009444787,
+              0.9912712
+            ],
+            "rotation": [
+              0.01903259,
+              0.435917437,
+              0.009489288,
+              0.899735451
+            ]
+          },
+          {
+            "frame": 26,
+            "realtime": 1.54729819,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.476666749,
+            "enabled": true,
+            "localRotation": [
+              -0.0263219345,
+              0.178887784,
+              0.008807211,
+              0.98347795
+            ],
+            "rotation": [
+              0.0210117325,
+              0.4812472,
+              0.01047605,
+              0.876270533
+            ]
+          },
+          {
+            "frame": 27,
+            "realtime": 1.55482483,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5033334,
+            "enabled": true,
+            "localRotation": [
+              -0.0240349248,
+              0.236595243,
+              0.008041988,
+              0.9712777
+            ],
+            "rotation": [
+              0.0232299529,
+              0.532052934,
+              0.0115820179,
+              0.8463132
+            ]
+          },
+          {
+            "frame": 28,
+            "realtime": 1.56175244,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5266667,
+            "enabled": true,
+            "localRotation": [
+              -0.0219671074,
+              0.286365539,
+              0.0073501044,
+              0.9578404
+            ],
+            "rotation": [
+              0.0251027327,
+              0.5749467,
+              0.0125157526,
+              0.8177099
+            ]
+          },
+          {
+            "frame": 29,
+            "realtime": 1.56906712,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.55,
+            "enabled": true,
+            "localRotation": [
+              -0.0198671483,
+              0.334778935,
+              0.006647467,
+              0.9420638
+            ],
+            "rotation": [
+              0.02688701,
+              0.6158134,
+              0.0134053584,
+              0.7873191
+            ]
+          },
+          {
+            "frame": 30,
+            "realtime": 1.57312632,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.563333333,
+            "enabled": true,
+            "localRotation": [
+              -0.0186644346,
+              0.3616032,
+              0.006245044,
+              0.9321243
+            ],
+            "rotation": [
+              0.02785903,
+              0.638076365,
+              0.0138899935,
+              0.769343555
+            ]
+          },
+          {
+            "frame": 31,
+            "realtime": 1.58010685,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.586666644,
+            "enabled": true,
+            "localRotation": [
+              -0.0165756978,
+              0.4067141,
+              0.005546161,
+              0.913388252
+            ],
+            "rotation": [
+              0.0294657387,
+              0.674876,
+              0.0146910669,
+              0.737196267
+            ]
+          },
+          {
+            "frame": 32,
+            "realtime": 1.58663058,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.609999955,
+            "enabled": true,
+            "localRotation": [
+              -0.0145333912,
+              0.4491025,
+              0.00486281328,
+              0.8933488
+            ],
+            "rotation": [
+              0.0309417862,
+              0.708683133,
+              0.015427,
+              0.704679251
+            ]
+          },
+          {
+            "frame": 33,
+            "realtime": 1.59344125,
+            "delta": 0.006,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.629999936,
+            "enabled": true,
+            "localRotation": [
+              -0.0128417751,
+              0.482985467,
+              0.00429680571,
+              0.8755237
+            ],
+            "rotation": [
+              0.03209665,
+              0.735133946,
+              0.0160027947,
+              0.6769726
+            ]
+          },
+          {
+            "frame": 34,
+            "realtime": 1.60015047,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.653333247,
+            "enabled": true,
+            "localRotation": [
+              -0.0109604253,
+              0.5194141,
+              0.00366731337,
+              0.854444563
+            ],
+            "rotation": [
+              0.03331178,
+              0.7629651,
+              0.01660864,
+              0.645367265
+            ]
+          },
+          {
+            "frame": 35,
+            "realtime": 1.60716975,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.676666558,
+            "enabled": true,
+            "localRotation": [
+              -0.009200449,
+              0.552333832,
+              0.003078433,
+              0.8335666
+            ],
+            "rotation": [
+              0.03438455,
+              0.787535548,
+              0.0171435028,
+              0.615070462
+            ]
+          },
+          {
+            "frame": 36,
+            "realtime": 1.61407077,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.699999869,
+            "enabled": true,
+            "localRotation": [
+              -0.007581091,
+              0.5816596,
+              0.002536602,
+              0.813393
+            ],
+            "rotation": [
+              0.0353184044,
+              0.8089243,
+              0.0176091027,
+              0.5865867
+            ]
+          },
+          {
+            "frame": 37,
+            "realtime": 1.61828566,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7133332,
+            "enabled": true,
+            "localRotation": [
+              -0.006724744,
+              0.596800864,
+              0.00225007185,
+              0.8023581
+            ],
+            "rotation": [
+              0.0357919969,
+              0.819771349,
+              0.0178452283,
+              0.571292758
+            ]
+          },
+          {
+            "frame": 38,
+            "realtime": 1.625747,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.739999831,
+            "enabled": true,
+            "localRotation": [
+              -0.00517218,
+              0.623613954,
+              0.00173059024,
+              0.7817135
+            ],
+            "rotation": [
+              0.03661539,
+              0.838630259,
+              0.018255759,
+              0.543162465
+            ]
+          },
+          {
+            "frame": 39,
+            "realtime": 1.63312411,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.763333142,
+            "enabled": true,
+            "localRotation": [
+              -0.00399504043,
+              0.6434006,
+              0.00133672426,
+              0.7655181
+            ],
+            "rotation": [
+              0.0372097157,
+              0.8522426,
+              0.01855208,
+              0.521492064
+            ]
+          },
+          {
+            "frame": 40,
+            "realtime": 1.64013755,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.786666453,
+            "enabled": true,
+            "localRotation": [
+              -0.00298928074,
+              0.659938633,
+              0.0010002011,
+              0.751312852
+            ],
+            "rotation": [
+              0.0376972072,
+              0.863407969,
+              0.0187951326,
+              0.502744853
+            ]
+          },
+          {
+            "frame": 41,
+            "realtime": 1.64702845,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.809999764,
+            "enabled": true,
+            "localRotation": [
+              -0.00215225923,
+              0.673445046,
+              0.0007201372,
+              0.7392338
+            ],
+            "rotation": [
+              0.03808872,
+              0.8723751,
+              0.0189903341,
+              0.4869808
+            ]
+          },
+          {
+            "frame": 42,
+            "realtime": 1.65385282,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8333331,
+            "enabled": true,
+            "localRotation": [
+              -0.00147712941,
+              0.684169531,
+              0.0004942415,
+              0.729321361
+            ],
+            "rotation": [
+              0.038395144,
+              0.879393458,
+              0.0191431157,
+              0.474158823
+            ]
+          },
+          {
+            "frame": 43,
+            "realtime": 1.65844059,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8466664,
+            "enabled": true,
+            "localRotation": [
+              -0.00116005063,
+              0.689154148,
+              0.0003881482,
+              0.7246137
+            ],
+            "rotation": [
+              0.03853618,
+              0.8826237,
+              0.01921343,
+              0.468103975
+            ]
+          },
+          {
+            "frame": 44,
+            "realtime": 1.66599953,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.873333037,
+            "enabled": true,
+            "localRotation": [
+              -0.000663739571,
+              0.6968895,
+              0.000222084549,
+              0.7171782
+            ],
+            "rotation": [
+              0.03875324,
+              0.8875952,
+              0.019321654,
+              0.458584517
+            ]
+          },
+          {
+            "frame": 45,
+            "realtime": 1.67288041,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.896666348,
+            "enabled": true,
+            "localRotation": [
+              -0.000364210864,
+              0.701518357,
+              0.000121863472,
+              0.7126513
+            ],
+            "rotation": [
+              0.03888206,
+              0.8905456,
+              0.0193858817,
+              0.4528144
+            ]
+          },
+          {
+            "frame": 46,
+            "realtime": 1.679843,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.919999659,
+            "enabled": true,
+            "localRotation": [
+              -0.000170442465,
+              0.704497039,
+              5.70293523E-05,
+              0.709706962
+            ],
+            "rotation": [
+              0.03896452,
+              0.8924343,
+              0.019426994,
+              0.449071735
+            ]
+          },
+          {
+            "frame": 47,
+            "realtime": 1.68784308,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.9466663,
+            "enabled": true,
+            "localRotation": [
+              -5.08601333E-05,
+              0.706329048,
+              1.70175936E-05,
+              0.7078837
+            ],
+            "rotation": [
+              0.03901507,
+              0.893592,
+              0.0194521956,
+              0.4467581
+            ]
+          },
+          {
+            "frame": 48,
+            "realtime": 1.69180059,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.9599996,
+            "enabled": true,
+            "localRotation": [
+              -2.15088239E-05,
+              0.706778049,
+              7.19676427E-06,
+              0.7074354
+            ],
+            "rotation": [
+              0.0390274376,
+              0.8938753,
+              0.0194583647,
+              0.4461897
+            ]
+          },
+          {
+            "frame": 49,
+            "realtime": 1.70006979,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.986666262,
+            "enabled": true,
+            "localRotation": [
+              -8.001295E-07,
+              0.7070946,
+              2.67720054E-07,
+              0.707119048
+            ],
+            "rotation": [
+              0.03903615,
+              0.8940749,
+              0.01946271,
+              0.445788652
+            ]
+          },
+          {
+            "frame": 50,
+            "realtime": 1.70788264,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.7071068,
+              0.0,
+              0.7071068
+            ],
+            "rotation": [
+              0.03903649,
+              0.894082665,
+              0.019462876,
+              0.445773154
+            ]
+          }
+        ]
+      },
+      "reused": {
+        "from": [
+          0.0,
+          0.707106769,
+          0.0,
+          0.707106769
+        ],
+        "target": [
+          0.0,
+          0.382683456,
+          0.0,
+          0.9238795
+        ],
+        "beginRealtime": 1.71629727,
+        "ignoreTimeScale": true,
+        "enabledAt": 1.71627986,
+        "rows": [
+          {
+            "frame": 51,
+            "realtime": 1.71644723,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.7071068,
+              0.0,
+              0.7071068
+            ],
+            "rotation": [
+              0.03903649,
+              0.894082665,
+              0.019462876,
+              0.445773154
+            ]
+          },
+          {
+            "frame": 52,
+            "realtime": 1.720371,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0133333337,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.7071025,
+              0.0,
+              0.7071111
+            ],
+            "rotation": [
+              0.0390366055,
+              0.894079864,
+              0.0194626376,
+              0.4457786
+            ]
+          },
+          {
+            "frame": 53,
+            "realtime": 1.724345,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0266666673,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.7070722,
+              0.0,
+              0.7071414
+            ],
+            "rotation": [
+              0.03903744,
+              0.89406085,
+              0.0194609649,
+              0.445816934
+            ]
+          },
+          {
+            "frame": 54,
+            "realtime": 1.73201334,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0533333346,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.7068311,
+              0.0,
+              0.7073823
+            ],
+            "rotation": [
+              0.0390440673,
+              0.893908739,
+              0.0194476582,
+              0.446121573
+            ]
+          },
+          {
+            "frame": 55,
+            "realtime": 1.73906124,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.07666667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.7062925,
+              0.0,
+              0.707920134
+            ],
+            "rotation": [
+              0.0390588641,
+              0.893569,
+              0.019417936,
+              0.446801871
+            ]
+          },
+          {
+            "frame": 56,
+            "realtime": 1.74609971,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.1,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.7053132,
+              0.0,
+              0.708895862
+            ],
+            "rotation": [
+              0.03908567,
+              0.8929504,
+              0.0193639211,
+              0.44803673
+            ]
+          },
+          {
+            "frame": 57,
+            "realtime": 1.7535038,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.123333335,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.703772843,
+              0.0,
+              0.710425138
+            ],
+            "rotation": [
+              0.0391276069,
+              0.8919759,
+              0.0192790367,
+              0.449973881
+            ]
+          },
+          {
+            "frame": 58,
+            "realtime": 1.75844586,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.14,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.702267349,
+              0.0,
+              0.711913347
+            ],
+            "rotation": [
+              0.03916833,
+              0.891021252,
+              0.0191961657,
+              0.451861084
+            ]
+          },
+          {
+            "frame": 59,
+            "realtime": 1.76587915,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.166666672,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.699054956,
+              0.0,
+              0.715068042
+            ],
+            "rotation": [
+              0.0392543636,
+              0.8889779,
+              0.0190196186,
+              0.455868244
+            ]
+          },
+          {
+            "frame": 60,
+            "realtime": 1.77290261,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.190000013,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6953425,
+              0.0,
+              0.718678534
+            ],
+            "rotation": [
+              0.0393523276,
+              0.886605144,
+              0.01881608,
+              0.4604658
+            ]
+          },
+          {
+            "frame": 61,
+            "realtime": 1.77984512,
+            "delta": 0.006,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.210000008,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6914309,
+              0.0,
+              0.7224426
+            ],
+            "rotation": [
+              0.0394538939,
+              0.88409245,
+              0.0186021812,
+              0.46527192
+            ]
+          },
+          {
+            "frame": 62,
+            "realtime": 1.78783333,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.236666679,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6850994,
+              0.0,
+              0.728449643
+            ],
+            "rotation": [
+              0.0396147445,
+              0.8799981,
+              0.0182571337,
+              0.4729702
+            ]
+          },
+          {
+            "frame": 63,
+            "realtime": 1.79574156,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.26333335,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6774337,
+              0.0,
+              0.735583842
+            ],
+            "rotation": [
+              0.0398037545,
+              0.874997,
+              0.0178413,
+              0.482159346
+            ]
+          },
+          {
+            "frame": 64,
+            "realtime": 1.79977536,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.276666671,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6730879,
+              0.0,
+              0.7395625
+            ],
+            "rotation": [
+              0.0399081856,
+              0.8721409,
+              0.017606467,
+              0.487306446
+            ]
+          },
+          {
+            "frame": 65,
+            "realtime": 1.80677807,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6646531,
+              0.0,
+              0.7471521
+            ],
+            "rotation": [
+              0.0401053876,
+              0.8665556,
+              0.0171525143,
+              0.4971708
+            ]
+          },
+          {
+            "frame": 66,
+            "realtime": 1.81372571,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.323333353,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.655169845,
+              0.0,
+              0.755481541
+            ],
+            "rotation": [
+              0.0403186828,
+              0.8602114,
+              0.016644951,
+              0.508068562
+            ]
+          },
+          {
+            "frame": 67,
+            "realtime": 1.82027853,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3466667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6446645,
+              0.0,
+              0.7644657
+            ],
+            "rotation": [
+              0.0405449159,
+              0.8531064,
+              0.01608605,
+              0.5199105
+            ]
+          },
+          {
+            "frame": 68,
+            "realtime": 1.82718658,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.370000035,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6331841,
+              0.0,
+              0.7740013
+            ],
+            "rotation": [
+              0.0407804623,
+              0.8452524,
+              0.0154791791,
+              0.532584131
+            ]
+          },
+          {
+            "frame": 69,
+            "realtime": 1.83464229,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.393333375,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.620796442,
+              0.0,
+              0.7839718
+            ],
+            "rotation": [
+              0.0410214439,
+              0.8366768,
+              0.014828762,
+              0.5459573
+            ]
+          },
+          {
+            "frame": 70,
+            "realtime": 1.84214365,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.420000046,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6056434,
+              0.0,
+              0.7957362
+            ],
+            "rotation": [
+              0.0412983522,
+              0.8260498,
+              0.0140391253,
+              0.5619067
+            ]
+          },
+          {
+            "frame": 71,
+            "realtime": 1.849424,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.4433334,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.5916366,
+              0.0,
+              0.8062048
+            ],
+            "rotation": [
+              0.0415375233,
+              0.8160981,
+              0.0133148367,
+              0.576265037
+            ]
+          },
+          {
+            "frame": 72,
+            "realtime": 1.85678029,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.466666728,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.577067137,
+              0.0,
+              0.816696644
+            ],
+            "rotation": [
+              0.0417698734,
+              0.805620551,
+              0.012566953,
+              0.59082377
+            ]
+          },
+          {
+            "frame": 73,
+            "realtime": 1.863764,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.490000069,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.5620812,
+              0.0,
+              0.827082038
+            ],
+            "rotation": [
+              0.0419920534,
+              0.7947148,
+              0.0118033169,
+              0.605413735
+            ]
+          },
+          {
+            "frame": 74,
+            "realtime": 1.87098241,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5166667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.544649065,
+              0.0,
+              0.8386641
+            ],
+            "rotation": [
+              0.04222988,
+              0.7818707,
+              0.0109219281,
+              0.621912837
+            ]
+          },
+          {
+            "frame": 75,
+            "realtime": 1.87845981,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.54,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.529318869,
+              0.0,
+              0.848423
+            ],
+            "rotation": [
+              0.0424213745,
+              0.7704402,
+              0.010152719,
+              0.636018336
+            ]
+          },
+          {
+            "frame": 76,
+            "realtime": 1.885504,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.563333333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.514099956,
+              0.0,
+              0.8577303
+            ],
+            "rotation": [
+              0.0425957367,
+              0.7589719,
+              0.009394365,
+              0.6496607
+            ]
+          },
+          {
+            "frame": 77,
+            "realtime": 1.89289582,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.59,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.497068077,
+              0.0,
+              0.867711544
+            ],
+            "rotation": [
+              0.04277288,
+              0.745999634,
+              0.00855169,
+              0.66451627
+            ]
+          },
+          {
+            "frame": 78,
+            "realtime": 1.89991438,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6133333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.48267284,
+              0.0,
+              0.8758008
+            ],
+            "rotation": [
+              0.04290826,
+              0.7349256,
+              0.00784426648,
+              0.676743567
+            ]
+          },
+          {
+            "frame": 79,
+            "realtime": 1.907825,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6366666,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.468920022,
+              0.0,
+              0.88324064
+            ],
+            "rotation": [
+              0.0430256575,
+              0.72425437,
+              0.007172405,
+              0.688151956
+            ]
+          },
+          {
+            "frame": 80,
+            "realtime": 1.91573179,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.663333237,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.454176426,
+              0.0,
+              0.890911758
+            ],
+            "rotation": [
+              0.0431389175,
+              0.7127177,
+              0.00645635836,
+              0.700093448
+            ]
+          },
+          {
+            "frame": 81,
+            "realtime": 1.91993654,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6799999,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.44557032,
+              0.0,
+              0.895247042
+            ],
+            "rotation": [
+              0.0431991331,
+              0.7059384,
+              0.00604036171,
+              0.706928968
+            ]
+          },
+          {
+            "frame": 82,
+            "realtime": 1.92787707,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7066665,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.4328873,
+              0.0,
+              0.901448131
+            ],
+            "rotation": [
+              0.0432801023,
+              0.695888,
+              0.00542989839,
+              0.716824532
+            ]
+          },
+          {
+            "frame": 83,
+            "realtime": 1.93494844,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.72999984,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.4229703,
+              0.0,
+              0.906143546
+            ],
+            "rotation": [
+              0.0433370732,
+              0.6879809,
+              0.004954691,
+              0.724416733
+            ]
+          },
+          {
+            "frame": 84,
+            "realtime": 1.941758,
+            "delta": 0.006,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7499998,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.41539225,
+              0.0,
+              0.9096424
+            ],
+            "rotation": [
+              0.04337692,
+              0.6819104,
+              0.004592796,
+              0.730133951
+            ]
+          },
+          {
+            "frame": 85,
+            "realtime": 1.945973,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7666665,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.409742117,
+              0.0,
+              0.912201464
+            ],
+            "rotation": [
+              0.0434045754,
+              0.677368641,
+              0.0043236576,
+              0.7343496
+            ]
+          },
+          {
+            "frame": 86,
+            "realtime": 1.95006025,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7799998,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.405659318,
+              0.0,
+              0.914024353
+            ],
+            "rotation": [
+              0.04342347,
+              0.674078345,
+              0.004129542,
+              0.737370849
+            ]
+          },
+          {
+            "frame": 87,
+            "realtime": 1.95705724,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8033331,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.399440527,
+              0.0,
+              0.916759133
+            ],
+            "rotation": [
+              0.0434505232,
+              0.669053435,
+              0.00383444875,
+              0.7419332
+            ]
+          },
+          {
+            "frame": 88,
+            "realtime": 1.9641521,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8266664,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.394367337,
+              0.0,
+              0.9189529
+            ],
+            "rotation": [
+              0.0434710532,
+              0.6649424,
+              0.00359423086,
+              0.745619833
+            ]
+          },
+          {
+            "frame": 89,
+            "realtime": 1.97118556,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8499997,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3903765,
+              0.0,
+              0.92065537
+            ],
+            "rotation": [
+              0.0434862375,
+              0.661701143,
+              0.00340558682,
+              0.7484979
+            ]
+          },
+          {
+            "frame": 90,
+            "realtime": 1.97807169,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.873333037,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3873786,
+              0.0,
+              0.9219207
+            ],
+            "rotation": [
+              0.04349709,
+              0.659261942,
+              0.003264064,
+              0.750647068
+            ]
+          },
+          {
+            "frame": 91,
+            "realtime": 1.98569489,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.896666348,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.385261,
+              0.0,
+              0.9228077
+            ],
+            "rotation": [
+              0.04350447,
+              0.657536864,
+              0.0031641908,
+              0.752158642
+            ]
+          },
+          {
+            "frame": 92,
+            "realtime": 1.993061,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.923333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.383746564,
+              0.0,
+              0.9234385
+            ],
+            "rotation": [
+              0.0435096025,
+              0.656302035,
+              0.003092816,
+              0.7532364
+            ]
+          },
+          {
+            "frame": 93,
+            "realtime": 2.000114,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.9466663,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.383043617,
+              0.0,
+              0.9237303
+            ],
+            "rotation": [
+              0.043511942,
+              0.6557286,
+              0.0030596992,
+              0.7537357
+            ]
+          },
+          {
+            "frame": 94,
+            "realtime": 2.007959,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.973332942,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.382728726,
+              0.0,
+              0.9238608
+            ],
+            "rotation": [
+              0.0435129851,
+              0.655471563,
+              0.003044868,
+              0.7539592
+            ]
+          },
+          {
+            "frame": 95,
+            "realtime": 2.01592565,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.9999996,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3826835,
+              0.0,
+              0.923879564
+            ],
+            "rotation": [
+              0.04351313,
+              0.655434668,
+              0.003042736,
+              0.7539913
+            ]
+          },
+          {
+            "frame": 96,
+            "realtime": 2.01996017,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.382683516,
+              0.0,
+              0.9238795
+            ],
+            "rotation": [
+              0.0435131341,
+              0.655434668,
+              0.003042739,
+              0.753991246
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "parent": [
+        0.06960567,
+        0.5995249,
+        -0.05245163,
+        0.79559654
+      ],
+      "first": {
+        "from": [
+          -0.06960554,
+          -0.5995249,
+          0.0524517223,
+          0.7955965
+        ],
+        "target": [
+          0.0,
+          0.8660254,
+          0.0,
+          -0.50000006
+        ],
+        "beginRealtime": 1.40402579,
+        "ignoreTimeScale": true,
+        "enabledAt": 1.40401065,
+        "rows": [
+          {
+            "frame": 4,
+            "realtime": 1.405874,
+            "delta": 0.002,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.006666667,
+            "enabled": true,
+            "localRotation": [
+              -0.06960542,
+              -0.5995256,
+              0.05245163,
+              0.795596063
+            ],
+            "rotation": [
+              1.34110451E-07,
+              -8.046627E-07,
+              -1.78813934E-07,
+              1.00000012
+            ]
+          },
+          {
+            "frame": 4,
+            "realtime": 1.40596259,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.006666667,
+            "enabled": true,
+            "localRotation": [
+              -0.06960542,
+              -0.5995256,
+              0.05245163,
+              0.795596063
+            ],
+            "rotation": [
+              1.34110451E-07,
+              -8.046627E-07,
+              -1.78813934E-07,
+              1.00000012
+            ]
+          },
+          {
+            "frame": 5,
+            "realtime": 1.4064405,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.006666667,
+            "enabled": true,
+            "localRotation": [
+              -0.06960542,
+              -0.5995256,
+              0.05245163,
+              0.795596063
+            ],
+            "rotation": [
+              1.34110451E-07,
+              -8.046627E-07,
+              -1.78813934E-07,
+              1.00000012
+            ]
+          },
+          {
+            "frame": 6,
+            "realtime": 1.41041267,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.02,
+            "enabled": true,
+            "localRotation": [
+              -0.06960209,
+              -0.599542,
+              0.05244912,
+              0.7955841
+            ],
+            "rotation": [
+              -4.209578E-07,
+              -2.10702419E-05,
+              -4.69014049E-06,
+              1.00000012
+            ]
+          },
+          {
+            "frame": 7,
+            "realtime": 1.41835618,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0466666669,
+            "enabled": true,
+            "localRotation": [
+              -0.0695618242,
+              -0.5997415,
+              0.05241878,
+              0.795439243
+            ],
+            "rotation": [
+              -7.122755E-06,
+              -0.000266641378,
+              -5.924329E-05,
+              1.0
+            ]
+          },
+          {
+            "frame": 8,
+            "realtime": 1.42595553,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.07333333,
+            "enabled": true,
+            "localRotation": [
+              -0.06943694,
+              -0.600359857,
+              0.05232467,
+              0.794989765
+            ],
+            "rotation": [
+              -2.7898699E-05,
+              -0.00102806091,
+              -0.0002284646,
+              0.9999995
+            ]
+          },
+          {
+            "frame": 9,
+            "realtime": 1.43027329,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.086666666,
+            "enabled": true,
+            "localRotation": [
+              -0.06932836,
+              -0.600896835,
+              0.0522428565,
+              0.7945988
+            ],
+            "rotation": [
+              -4.594773E-05,
+              -0.00168967247,
+              -0.000375513,
+              0.999998569
+            ]
+          },
+          {
+            "frame": 10,
+            "realtime": 1.438271,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.11333333,
+            "enabled": true,
+            "localRotation": [
+              -0.06899194,
+              -0.6025584,
+              0.0519893356,
+              0.7933856
+            ],
+            "rotation": [
+              -0.000101875514,
+              -0.00373891,
+              -0.000830926,
+              0.9999927
+            ]
+          },
+          {
+            "frame": 11,
+            "realtime": 1.44566393,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.14,
+            "enabled": true,
+            "localRotation": [
+              -0.06846342,
+              -0.60516,
+              0.0515910722,
+              0.791474938
+            ],
+            "rotation": [
+              -0.000189609826,
+              -0.00695425272,
+              -0.00154551491,
+              0.9999747
+            ]
+          },
+          {
+            "frame": 12,
+            "realtime": 1.45318282,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.163333341,
+            "enabled": true,
+            "localRotation": [
+              -0.0678155646,
+              -0.6083352,
+              0.0511028729,
+              0.7891247
+            ],
+            "rotation": [
+              -0.0002970025,
+              -0.0108894408,
+              -0.002420064,
+              0.9999378
+            ]
+          },
+          {
+            "frame": 13,
+            "realtime": 1.46006656,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.186666682,
+            "enabled": true,
+            "localRotation": [
+              -0.06697354,
+              -0.6124392,
+              0.0504683666,
+              0.7860571
+            ],
+            "rotation": [
+              -0.0004362762,
+              -0.0159937143,
+              -0.00355445966,
+              0.9998658
+            ]
+          },
+          {
+            "frame": 14,
+            "realtime": 1.467956,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.213333353,
+            "enabled": true,
+            "localRotation": [
+              -0.06575277,
+              -0.6183439,
+              0.04954844,
+              0.7815833
+            ],
+            "rotation": [
+              -0.000637661666,
+              -0.0233736038,
+              -0.00519457459,
+              0.9997132
+            ]
+          },
+          {
+            "frame": 15,
+            "realtime": 1.47201633,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.226666689,
+            "enabled": true,
+            "localRotation": [
+              -0.0650334954,
+              -0.62179786,
+              0.0490064248,
+              0.778932869
+            ],
+            "rotation": [
+              -0.000756017864,
+              -0.027710557,
+              -0.0061584115,
+              0.9995967
+            ]
+          },
+          {
+            "frame": 16,
+            "realtime": 1.47989547,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.25333336,
+            "enabled": true,
+            "localRotation": [
+              -0.0633695,
+              -0.629718065,
+              0.04775251,
+              0.772760749
+            ],
+            "rotation": [
+              -0.00102893636,
+              -0.0377122164,
+              -0.008381177,
+              0.999253035
+            ]
+          },
+          {
+            "frame": 17,
+            "realtime": 1.48772323,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.280000031,
+            "enabled": true,
+            "localRotation": [
+              -0.06140026,
+              -0.638965368,
+              0.0462685823,
+              0.7653839
+            ],
+            "rotation": [
+              -0.00135038421,
+              -0.0494919419,
+              -0.0109991357,
+              0.998713136
+            ]
+          },
+          {
+            "frame": 18,
+            "realtime": 1.49174035,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.293333352,
+            "enabled": true,
+            "localRotation": [
+              -0.0603013,
+              -0.6440674,
+              0.045440454,
+              0.76123327
+            ],
+            "rotation": [
+              -0.00152905285,
+              -0.0560394824,
+              -0.0124542713,
+              0.9983497
+            ]
+          },
+          {
+            "frame": 19,
+            "realtime": 1.499172,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3166667,
+            "enabled": true,
+            "localRotation": [
+              -0.05819816,
+              -0.6537158,
+              0.04385562,
+              0.7532233
+            ],
+            "rotation": [
+              -0.001869563,
+              -0.06851789,
+              -0.0152274854,
+              0.997532
+            ]
+          },
+          {
+            "frame": 20,
+            "realtime": 1.50666678,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.343333364,
+            "enabled": true,
+            "localRotation": [
+              -0.05552455,
+              -0.6657648,
+              0.0418409035,
+              0.7429156
+            ],
+            "rotation": [
+              -0.00229978934,
+              -0.0842838,
+              -0.0187313072,
+              0.996263146
+            ]
+          },
+          {
+            "frame": 21,
+            "realtime": 1.51403582,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3666667,
+            "enabled": true,
+            "localRotation": [
+              -0.052964408,
+              -0.6770787,
+              0.03991169,
+              0.7329163
+            ],
+            "rotation": [
+              -0.00270899758,
+              -0.09927994,
+              -0.02206409,
+              0.9948113
+            ]
+          },
+          {
+            "frame": 22,
+            "realtime": 1.51846528,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.380000025,
+            "enabled": true,
+            "localRotation": [
+              -0.0514163263,
+              -0.6838154,
+              0.03874512,
+              0.726809263
+            ],
+            "rotation": [
+              -0.002955176,
+              -0.108300894,
+              -0.02406891,
+              0.9938224
+            ]
+          },
+          {
+            "frame": 23,
+            "realtime": 1.52594507,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.4066667,
+            "enabled": true,
+            "localRotation": [
+              -0.04815406,
+              -0.6977565,
+              0.036286816,
+              0.7137929
+            ],
+            "rotation": [
+              -0.00347078219,
+              -0.127196044,
+              -0.028268192,
+              0.991468668
+            ]
+          },
+          {
+            "frame": 24,
+            "realtime": 1.53289843,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.430000037,
+            "enabled": true,
+            "localRotation": [
+              -0.0451430678,
+              -0.7103212,
+              0.03401786,
+              0.7016044
+            ],
+            "rotation": [
+              -0.00394297,
+              -0.144499779,
+              -0.0321137942,
+              0.988975763
+            ]
+          },
+          {
+            "frame": 25,
+            "realtime": 1.53986454,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.453333378,
+            "enabled": true,
+            "localRotation": [
+              -0.04201657,
+              -0.723065138,
+              0.03166187,
+              0.688773453
+            ],
+            "rotation": [
+              -0.00442956,
+              -0.162331313,
+              -0.03607667,
+              0.9860667
+            ]
+          },
+          {
+            "frame": 26,
+            "realtime": 1.54730082,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.476666719,
+            "enabled": true,
+            "localRotation": [
+              -0.0388067961,
+              -0.7358322,
+              0.0292431228,
+              0.675418258
+            ],
+            "rotation": [
+              -0.00492522866,
+              -0.180495471,
+              -0.0401135162,
+              0.9827452
+            ]
+          },
+          {
+            "frame": 27,
+            "realtime": 1.55482721,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5033334,
+            "enabled": true,
+            "localRotation": [
+              -0.0350807533,
+              -0.7502565,
+              0.02643534,
+              0.6596862
+            ],
+            "rotation": [
+              -0.005495753,
+              -0.201403171,
+              -0.0447600745,
+              0.9784699
+            ]
+          },
+          {
+            "frame": 28,
+            "realtime": 1.56175482,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5266667,
+            "enabled": true,
+            "localRotation": [
+              -0.0318102762,
+              -0.7625707,
+              0.0239708517,
+              0.6456775
+            ],
+            "rotation": [
+              -0.005992282,
+              -0.21959883,
+              -0.0488039,
+              0.974350452
+            ]
+          },
+          {
+            "frame": 29,
+            "realtime": 1.5690695,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.55,
+            "enabled": true,
+            "localRotation": [
+              -0.0285684224,
+              -0.7744613,
+              0.0215279274,
+              0.6316091
+            ],
+            "rotation": [
+              -0.00648059323,
+              -0.2374934,
+              -0.0527808,
+              0.969932556
+            ]
+          },
+          {
+            "frame": 30,
+            "realtime": 1.57312894,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.563333333,
+            "enabled": true,
+            "localRotation": [
+              -0.02674267,
+              -0.7810207,
+              0.02015212,
+              0.623606741
+            ],
+            "rotation": [
+              -0.00675392151,
+              -0.247509569,
+              -0.0550068058,
+              0.9672992
+            ]
+          },
+          {
+            "frame": 31,
+            "realtime": 1.58010972,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.586666644,
+            "enabled": true,
+            "localRotation": [
+              -0.0236179717,
+              -0.792019069,
+              0.0177974813,
+              0.609779656
+            ],
+            "rotation": [
+              -0.007218916,
+              -0.264549524,
+              -0.05879378,
+              0.962551236
+            ]
+          },
+          {
+            "frame": 32,
+            "realtime": 1.58663332,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.609999955,
+            "enabled": true,
+            "localRotation": [
+              -0.0206113029,
+              -0.8023324,
+              0.0155317867,
+              0.5963193
+            ],
+            "rotation": [
+              -0.00766302645,
+              -0.2808246,
+              -0.06241078,
+              0.957697153
+            ]
+          },
+          {
+            "frame": 33,
+            "realtime": 1.59344339,
+            "delta": 0.006,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.629999936,
+            "enabled": true,
+            "localRotation": [
+              -0.0181515273,
+              -0.8105745,
+              0.0136782061,
+              0.585194468
+            ],
+            "rotation": [
+              -0.008023966,
+              -0.2940516,
+              -0.06535035,
+              0.953519166
+            ]
+          },
+          {
+            "frame": 34,
+            "realtime": 1.60015309,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.653333247,
+            "enabled": true,
+            "localRotation": [
+              -0.01544318,
+              -0.8194471,
+              0.0116373124,
+              0.5728286
+            ],
+            "rotation": [
+              -0.008418899,
+              -0.308524281,
+              -0.0685667843,
+              0.9487047
+            ]
+          },
+          {
+            "frame": 35,
+            "realtime": 1.60717285,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.676666558,
+            "enabled": true,
+            "localRotation": [
+              -0.0129312892,
+              -0.82748735,
+              0.009744461,
+              0.561250746
+            ],
+            "rotation": [
+              -0.008782867,
+              -0.321862251,
+              -0.07153104,
+              0.944039643
+            ]
+          },
+          {
+            "frame": 36,
+            "realtime": 1.6140734,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.699999869,
+            "enabled": true,
+            "localRotation": [
+              -0.0106352912,
+              -0.8346784,
+              0.008014295,
+              0.5505767
+            ],
+            "rotation": [
+              -0.00911361,
+              -0.333982825,
+              -0.0742247254,
+              0.9396081
+            ]
+          },
+          {
+            "frame": 37,
+            "realtime": 1.61828828,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7133332,
+            "enabled": true,
+            "localRotation": [
+              -0.00942602,
+              -0.8384052,
+              0.00710304128,
+              0.5449197
+            ],
+            "rotation": [
+              -0.00928707048,
+              -0.340339273,
+              -0.0756374,
+              0.9372097
+            ]
+          },
+          {
+            "frame": 38,
+            "realtime": 1.62574935,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.739999831,
+            "enabled": true,
+            "localRotation": [
+              -0.00724067539,
+              -0.8450341,
+              0.00545626,
+              0.534635663
+            ],
+            "rotation": [
+              -0.009599235,
+              -0.351778835,
+              -0.07817973,
+              0.932763457
+            ]
+          },
+          {
+            "frame": 39,
+            "realtime": 1.63312674,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.763333142,
+            "enabled": true,
+            "localRotation": [
+              -0.00558867166,
+              -0.8499548,
+              0.004211381,
+              0.526809156
+            ],
+            "rotation": [
+              -0.009834111,
+              -0.360385865,
+              -0.0800925642,
+              0.9293065
+            ]
+          },
+          {
+            "frame": 40,
+            "realtime": 1.64014018,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.786666453,
+            "enabled": true,
+            "localRotation": [
+              -0.004179726,
+              -0.8540901,
+              0.0031496603,
+              0.520098865
+            ],
+            "rotation": [
+              -0.01003366,
+              -0.3676989,
+              -0.0817178339,
+              0.926293254
+            ]
+          },
+          {
+            "frame": 41,
+            "realtime": 1.647031,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.809999764,
+            "enabled": true,
+            "localRotation": [
+              -0.00300849625,
+              -0.8574847,
+              0.00226707244,
+              0.51449573
+            ],
+            "rotation": [
+              -0.0101990327,
+              -0.373758852,
+              -0.08306459,
+              0.9237428
+            ]
+          },
+          {
+            "frame": 42,
+            "realtime": 1.6538552,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8333331,
+            "enabled": true,
+            "localRotation": [
+              -0.002064437,
+              -0.8601925,
+              0.00155567029,
+              0.509963036
+            ],
+            "rotation": [
+              -0.01033197,
+              -0.3786306,
+              -0.0841473,
+              0.921656966
+            ]
+          },
+          {
+            "frame": 43,
+            "realtime": 1.6584425,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8466664,
+            "enabled": true,
+            "localRotation": [
+              -0.00162119581,
+              -0.861455,
+              0.00122166309,
+              0.507829845
+            ],
+            "rotation": [
+              -0.0103942826,
+              -0.380913973,
+              -0.08465476,
+              0.920668364
+            ]
+          },
+          {
+            "frame": 44,
+            "realtime": 1.66600215,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.873333037,
+            "enabled": true,
+            "localRotation": [
+              -0.0009275339,
+              -0.8634197,
+              0.0006989495,
+              0.504485
+            ],
+            "rotation": [
+              -0.0104916543,
+              -0.3844824,
+              -0.08544781,
+              0.919109344
+            ]
+          },
+          {
+            "frame": 45,
+            "realtime": 1.672883,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.896666348,
+            "enabled": true,
+            "localRotation": [
+              -0.000508951,
+              -0.864598632,
+              0.0003835235,
+              0.5024628
+            ],
+            "rotation": [
+              -0.0105503313,
+              -0.3866327,
+              -0.0859257057,
+              0.918161631
+            ]
+          },
+          {
+            "frame": 46,
+            "realtime": 1.67984533,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.919999659,
+            "enabled": true,
+            "localRotation": [
+              -0.000238175926,
+              -0.8653586,
+              0.000179479088,
+              0.5011531
+            ],
+            "rotation": [
+              -0.0105882622,
+              -0.388022542,
+              -0.08623458,
+              0.9175457
+            ]
+          },
+          {
+            "frame": 47,
+            "realtime": 1.68784571,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.9466663,
+            "enabled": true,
+            "localRotation": [
+              -7.10717E-05,
+              -0.865826547,
+              5.355656E-05,
+              0.5003443
+            ],
+            "rotation": [
+              -0.01061165,
+              -0.388879746,
+              -0.0864250958,
+              0.9171645
+            ]
+          },
+          {
+            "frame": 48,
+            "realtime": 1.69180286,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.9599996,
+            "enabled": true,
+            "localRotation": [
+              -3.00563242E-05,
+              -0.865941346,
+              2.26491447E-05,
+              0.5001456
+            ],
+            "rotation": [
+              -0.0106173977,
+              -0.38909018,
+              -0.08647184,
+              0.9170708
+            ]
+          },
+          {
+            "frame": 49,
+            "realtime": 1.7000736,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.986666262,
+            "enabled": true,
+            "localRotation": [
+              -1.11809686E-06,
+              -0.8660222,
+              8.42549355E-07,
+              0.5000054
+            ],
+            "rotation": [
+              -0.0106214471,
+              -0.3892386,
+              -0.08650482,
+              0.9170046
+            ]
+          },
+          {
+            "frame": 50,
+            "realtime": 1.70788622,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              -0.8660254,
+              0.0,
+              0.50000006
+            ],
+            "rotation": [
+              -0.0106216036,
+              -0.389244318,
+              -0.0865061,
+              0.9170021
+            ]
+          }
+        ]
+      },
+      "reused": {
+        "from": [
+          0.0,
+          0.8660254,
+          0.0,
+          -0.50000006
+        ],
+        "target": [
+          0.0,
+          0.382683456,
+          0.0,
+          0.9238795
+        ],
+        "beginRealtime": 1.7163378,
+        "ignoreTimeScale": true,
+        "enabledAt": 1.71633065,
+        "rows": [
+          {
+            "frame": 51,
+            "realtime": 1.71644914,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.8660254,
+              0.0,
+              -0.50000006
+            ],
+            "rotation": [
+              0.0106216036,
+              0.389244318,
+              0.0865061,
+              -0.9170021
+            ]
+          },
+          {
+            "frame": 52,
+            "realtime": 1.72037542,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0133333337,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.8660142,
+              0.0,
+              -0.50001955
+            ],
+            "rotation": [
+              0.010619659,
+              0.3892237,
+              0.08650634,
+              -0.9170109
+            ]
+          },
+          {
+            "frame": 53,
+            "realtime": 1.72434759,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0266666673,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.8659356,
+              0.0,
+              -0.500155449
+            ],
+            "rotation": [
+              0.0106060766,
+              0.38907975,
+              0.086508,
+              -0.917071939
+            ]
+          },
+          {
+            "frame": 54,
+            "realtime": 1.73201585,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.0533333346,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.8653099,
+              0.0,
+              -0.5012373
+            ],
+            "rotation": [
+              0.0104979575,
+              0.387933344,
+              0.0865211859,
+              -0.9175575
+            ]
+          },
+          {
+            "frame": 55,
+            "realtime": 1.73906374,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.07666667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.8639077,
+              0.0,
+              -0.5036503
+            ],
+            "rotation": [
+              0.0102564469,
+              0.385371059,
+              0.0865501538,
+              -0.9186367
+            ]
+          },
+          {
+            "frame": 56,
+            "realtime": 1.746102,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.1,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.8613437,
+              0.0,
+              -0.5080228
+            ],
+            "rotation": [
+              0.009817611,
+              0.380709738,
+              0.08660103,
+              -0.9205782
+            ]
+          },
+          {
+            "frame": 57,
+            "realtime": 1.7535063,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.123333335,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.857273161,
+              0.0,
+              -0.514861941
+            ],
+            "rotation": [
+              0.009128064,
+              0.373371,
+              0.08667642,
+              -0.923579
+            ]
+          },
+          {
+            "frame": 58,
+            "realtime": 1.75844812,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.14,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.85325104,
+              0.0,
+              -0.5215004
+            ],
+            "rotation": [
+              0.008455023,
+              0.366191059,
+              0.08674466,
+              -0.9264492
+            ]
+          },
+          {
+            "frame": 59,
+            "realtime": 1.7658819,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.163333341,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.8457853,
+              0.0,
+              -0.5335234
+            ],
+            "rotation": [
+              0.007226564,
+              0.353043348,
+              0.08685563,
+              -0.9315387
+            ]
+          },
+          {
+            "frame": 60,
+            "realtime": 1.77290475,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.186666682,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.8358488,
+              0.0,
+              -0.5489598
+            ],
+            "rotation": [
+              0.005630914,
+              0.335883349,
+              0.08697365,
+              -0.937862635
+            ]
+          },
+          {
+            "frame": 61,
+            "realtime": 1.77984917,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.210000023,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.823064744,
+              0.0,
+              -0.5679477
+            ],
+            "rotation": [
+              0.003638707,
+              0.3143287,
+              0.087079756,
+              -0.945305
+            ]
+          },
+          {
+            "frame": 62,
+            "realtime": 1.78783536,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.2366667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.8044713,
+              0.0,
+              -0.5939915
+            ],
+            "rotation": [
+              0.0008506514,
+              0.2839219,
+              0.08715159,
+              -0.9548782
+            ]
+          },
+          {
+            "frame": 63,
+            "realtime": 1.795744,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.26333335,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.7810764,
+              0.0,
+              -0.624435544
+            ],
+            "rotation": [
+              -0.00249552727,
+              0.247056961,
+              0.08712001,
+              -0.965073466
+            ]
+          },
+          {
+            "frame": 64,
+            "realtime": 1.79977763,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.276666671,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.767404735,
+              0.0,
+              -0.641163
+            ],
+            "rotation": [
+              -0.00437695161,
+              0.226151377,
+              0.08704577,
+              -0.9701853
+            ]
+          },
+          {
+            "frame": 65,
+            "realtime": 1.80678022,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.7400731,
+              0.0,
+              -0.672526538
+            ],
+            "rotation": [
+              -0.007993624,
+              0.185603172,
+              0.0867884,
+              -0.9787521
+            ]
+          },
+          {
+            "frame": 66,
+            "realtime": 1.81372917,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.323333353,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.708166659,
+              0.0,
+              -0.7060454
+            ],
+            "rotation": [
+              -0.01200027,
+              0.140123129,
+              0.0863256454,
+              -0.9862908
+            ]
+          },
+          {
+            "frame": 67,
+            "realtime": 1.82028091,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.3466667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.671486735,
+              0.0,
+              -0.7410166
+            ],
+            "rotation": [
+              -0.016358383,
+              0.08997455,
+              0.08560681,
+              -0.992123246
+            ]
+          },
+          {
+            "frame": 68,
+            "realtime": 1.82719076,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.370000035,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6299517,
+              0.0,
+              -0.776634336
+            ],
+            "rotation": [
+              -0.0210161582,
+              0.0355757475,
+              0.08458395,
+              -0.995559335
+            ]
+          },
+          {
+            "frame": 69,
+            "realtime": 1.83464432,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.393333375,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.583623946,
+              0.0,
+              -0.8120241
+            ],
+            "rotation": [
+              -0.0259094555,
+              -0.0224995017,
+              0.08321552,
+              -0.9959407
+            ]
+          },
+          {
+            "frame": 70,
+            "realtime": 1.84214616,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.420000046,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.5251086,
+              0.0,
+              -0.851035237
+            ],
+            "rotation": [
+              -0.03169408,
+              -0.0924422741,
+              0.081188716,
+              -0.9918964
+            ]
+          },
+          {
+            "frame": 71,
+            "realtime": 1.84942663,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.4433334,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.4694999,
+              0.0,
+              -0.8829326
+            ],
+            "rotation": [
+              -0.03683108,
+              -0.155807614,
+              0.07899111,
+              -0.983935
+            ]
+          },
+          {
+            "frame": 72,
+            "realtime": 1.85678279,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.466666728,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.410399377,
+              0.0,
+              -0.911905944
+            ],
+            "rotation": [
+              -0.04194771,
+              -0.220197976,
+              0.0763970762,
+              -0.971553862
+            ]
+          },
+          {
+            "frame": 73,
+            "realtime": 1.86376655,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.490000069,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.348562956,
+              0.0,
+              -0.9372854
+            ],
+            "rotation": [
+              -0.0469576865,
+              -0.28461048,
+              0.0734241,
+              -0.9546732
+            ]
+          },
+          {
+            "frame": 74,
+            "realtime": 1.87098467,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5166667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.27567932,
+              0.0,
+              -0.9612497
+            ],
+            "rotation": [
+              -0.0524486043,
+              -0.356963664,
+              0.06960796,
+              -0.9300436
+            ]
+          },
+          {
+            "frame": 75,
+            "realtime": 1.8784622,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.54,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.211062565,
+              0.0,
+              -0.9774726
+            ],
+            "rotation": [
+              -0.05696706,
+              -0.4180985,
+              0.06596118,
+              -0.9042111
+            ]
+          },
+          {
+            "frame": 76,
+            "realtime": 1.88550639,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.563333333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.146718457,
+              0.0,
+              -0.9891783
+            ],
+            "rotation": [
+              -0.0611567944,
+              -0.476308316,
+              0.06209645,
+              -0.8749482
+            ]
+          },
+          {
+            "frame": 77,
+            "realtime": 1.8928982,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.586666644,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.08364581,
+              0.0,
+              -0.996495545
+            ],
+            "rotation": [
+              -0.06497438,
+              -0.530875564,
+              0.05809004,
+              -0.8429562
+            ]
+          },
+          {
+            "frame": 78,
+            "realtime": 1.89991677,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.609999955,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0227822959,
+              0.0,
+              -0.9997405
+            ],
+            "rotation": [
+              -0.0683926344,
+              -0.5812438,
+              0.0540237948,
+              -0.809048653
+            ]
+          },
+          {
+            "frame": 79,
+            "realtime": 1.90782726,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6366666,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.04300127,
+              0.0,
+              -0.999075055
+            ],
+            "rotation": [
+              -0.0717967749,
+              -0.633182049,
+              0.04940998,
+              -0.769080341
+            ]
+          },
+          {
+            "frame": 80,
+            "realtime": 1.91573417,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.663333237,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.103767566,
+              0.0,
+              -0.9946016
+            ],
+            "rotation": [
+              -0.07467269,
+              -0.6788456,
+              0.04494566,
+              -0.7290904
+            ]
+          },
+          {
+            "frame": 81,
+            "realtime": 1.91993892,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.676666558,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.132013127,
+              0.0,
+              -0.991248
+            ],
+            "rotation": [
+              -0.07592078,
+              -0.699307,
+              0.0428037122,
+              -0.709488332
+            ]
+          },
+          {
+            "frame": 82,
+            "realtime": 1.92787933,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7033332,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.183863267,
+              0.0,
+              -0.9829519
+            ],
+            "rotation": [
+              -0.07806295,
+              -0.7355851,
+              0.0387595035,
+              -0.671802461
+            ]
+          },
+          {
+            "frame": 83,
+            "realtime": 1.93495107,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7266665,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.223920614,
+              0.0,
+              -0.9746074
+            ],
+            "rotation": [
+              -0.0795832,
+              -0.7624519,
+              0.0355336,
+              -0.641148269
+            ]
+          },
+          {
+            "frame": 84,
+            "realtime": 1.94176042,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7499998,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.2589079,
+              0.0,
+              -0.96590203
+            ],
+            "rotation": [
+              -0.0808124,
+              -0.7850686,
+              0.03264168,
+              -0.61324656
+            ]
+          },
+          {
+            "frame": 85,
+            "realtime": 1.94597518,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7666665,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.280806482,
+              0.0,
+              -0.9597644
+            ],
+            "rotation": [
+              -0.0815338045,
+              -0.7988113,
+              0.0307954848,
+              -0.595234752
+            ]
+          },
+          {
+            "frame": 86,
+            "realtime": 1.95006263,
+            "delta": 0.004,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7799998,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.296503216,
+              0.0,
+              -0.9550319
+            ],
+            "rotation": [
+              -0.08202771,
+              -0.8084623,
+              0.02945467,
+              -0.582058966
+            ]
+          },
+          {
+            "frame": 87,
+            "realtime": 1.95705926,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8033331,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.320198268,
+              0.0,
+              -0.947350562
+            ],
+            "rotation": [
+              -0.08273589,
+              -0.8227089,
+              0.0274024643,
+              -0.561742
+            ]
+          },
+          {
+            "frame": 88,
+            "realtime": 1.9641546,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8266664,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.339330584,
+              0.0,
+              -0.9406672
+            ],
+            "rotation": [
+              -0.0832742155,
+              -0.8339237,
+              0.0257201958,
+              -0.5449544
+            ]
+          },
+          {
+            "frame": 89,
+            "realtime": 1.97118843,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8499997,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.35425213,
+              0.0,
+              -0.935149968
+            ],
+            "rotation": [
+              -0.0836728439,
+              -0.842487454,
+              0.0243921839,
+              -0.531619132
+            ]
+          },
+          {
+            "frame": 90,
+            "realtime": 1.97807384,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.873333037,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.365384132,
+              0.0,
+              -0.9308569
+            ],
+            "rotation": [
+              -0.08395791,
+              -0.848770261,
+              0.02339215,
+              -0.5215296
+            ]
+          },
+          {
+            "frame": 91,
+            "realtime": 1.98569727,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.896666348,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.3732072,
+              0.0,
+              -0.927748
+            ],
+            "rotation": [
+              -0.08415185,
+              -0.85313046,
+              0.0226845574,
+              -0.5143661
+            ]
+          },
+          {
+            "frame": 92,
+            "realtime": 1.99306285,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.923333,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.37878117,
+              0.0,
+              -0.925486267
+            ],
+            "rotation": [
+              -0.08428678,
+              -0.85620904,
+              0.0221779458,
+              -0.509224951
+            ]
+          },
+          {
+            "frame": 93,
+            "realtime": 2.000116,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.9466663,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.3813626,
+              0.0,
+              -0.9244256
+            ],
+            "rotation": [
+              -0.08434835,
+              -0.857627,
+              0.02194263,
+              -0.506833434
+            ]
+          },
+          {
+            "frame": 94,
+            "realtime": 2.007961,
+            "delta": 0.008,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.973332942,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.3825177,
+              0.0,
+              -0.9239482
+            ],
+            "rotation": [
+              -0.08437571,
+              -0.858259737,
+              0.0218371879,
+              -0.505761147
+            ]
+          },
+          {
+            "frame": 95,
+            "realtime": 2.01592779,
+            "delta": 0.007,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.996666253,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.382683069,
+              0.0,
+              -0.9238797
+            ],
+            "rotation": [
+              -0.08437961,
+              -0.8583503,
+              0.0218220819,
+              -0.5056074
+            ]
+          },
+          {
+            "frame": 96,
+            "realtime": 2.0199635,
+            "delta": 0.00500000035,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              -0.382683456,
+              0.0,
+              -0.923879564
+            ],
+            "rotation": [
+              -0.08437963,
+              -0.8583504,
+              0.02182205,
+              -0.5056071
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "parent": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "first": {
+        "from": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "target": [
+          0.0,
+          0.1736482,
+          0.0,
+          0.9848077
+        ],
+        "beginRealtime": 1.40405607,
+        "ignoreTimeScale": false,
+        "enabledAt": 1.40404534,
+        "rows": [
+          {
+            "frame": 4,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.111111112,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.00152974564,
+              0.0,
+              0.999998868
+            ],
+            "rotation": [
+              0.0,
+              0.00152974564,
+              0.0,
+              0.999998868
+            ]
+          },
+          {
+            "frame": 4,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.222222224,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0113819744,
+              0.0,
+              0.999935269
+            ],
+            "rotation": [
+              0.0,
+              0.0113819744,
+              0.0,
+              0.999935269
+            ]
+          },
+          {
+            "frame": 5,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.333333343,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0340298265,
+              0.0,
+              0.9994208
+            ],
+            "rotation": [
+              0.0,
+              0.0340298265,
+              0.0,
+              0.9994208
+            ]
+          },
+          {
+            "frame": 6,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.444444448,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0679706857,
+              0.0,
+              0.99768734
+            ],
+            "rotation": [
+              0.0,
+              0.0679706857,
+              0.0,
+              0.99768734
+            ]
+          },
+          {
+            "frame": 7,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5555556,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.106308557,
+              0.0,
+              0.9943332
+            ],
+            "rotation": [
+              0.0,
+              0.106308557,
+              0.0,
+              0.9943332
+            ]
+          },
+          {
+            "frame": 8,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6666667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.1400348,
+              0.0,
+              0.990146637
+            ],
+            "rotation": [
+              0.0,
+              0.1400348,
+              0.0,
+              0.990146637
+            ]
+          },
+          {
+            "frame": 9,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7777778,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.162427887,
+              0.0,
+              0.986720443
+            ],
+            "rotation": [
+              0.0,
+              0.162427887,
+              0.0,
+              0.986720443
+            ]
+          },
+          {
+            "frame": 10,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8888889,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.172141492,
+              0.0,
+              0.985072255
+            ],
+            "rotation": [
+              0.0,
+              0.172141492,
+              0.0,
+              0.985072255
+            ]
+          },
+          {
+            "frame": 11,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.173648208,
+              0.0,
+              0.9848078
+            ],
+            "rotation": [
+              0.0,
+              0.173648208,
+              0.0,
+              0.9848078
+            ]
+          },
+          {
+            "frame": 12,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.173648208,
+              0.0,
+              0.9848078
+            ],
+            "rotation": [
+              0.0,
+              0.173648208,
+              0.0,
+              0.9848078
+            ]
+          }
+        ]
+      },
+      "reused": {
+        "from": [
+          0.0,
+          0.173648208,
+          0.0,
+          0.9848077
+        ],
+        "target": [
+          0.0,
+          0.382683456,
+          0.0,
+          0.9238795
+        ],
+        "beginRealtime": 1.71634626,
+        "ignoreTimeScale": false,
+        "enabledAt": 1.71634245,
+        "rows": [
+          {
+            "frame": 51,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.111111112,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.175525784,
+              0.0,
+              0.984474838
+            ],
+            "rotation": [
+              0.0,
+              0.175525784,
+              0.0,
+              0.984474838
+            ]
+          },
+          {
+            "frame": 52,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.222222224,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.18760927,
+              0.0,
+              0.9822438
+            ],
+            "rotation": [
+              0.0,
+              0.18760927,
+              0.0,
+              0.9822438
+            ]
+          },
+          {
+            "frame": 53,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.333333343,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.2153191,
+              0.0,
+              0.9765438
+            ],
+            "rotation": [
+              0.0,
+              0.2153191,
+              0.0,
+              0.9765438
+            ]
+          },
+          {
+            "frame": 54,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.444444448,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.256625384,
+              0.0,
+              0.966510952
+            ],
+            "rotation": [
+              0.0,
+              0.256625384,
+              0.0,
+              0.966510952
+            ]
+          },
+          {
+            "frame": 55,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5555556,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3028704,
+              0.0,
+              0.9530318
+            ],
+            "rotation": [
+              0.0,
+              0.3028704,
+              0.0,
+              0.9530318
+            ]
+          },
+          {
+            "frame": 56,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6666667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.343098372,
+              0.0,
+              0.939299464
+            ],
+            "rotation": [
+              0.0,
+              0.343098372,
+              0.0,
+              0.939299464
+            ]
+          },
+          {
+            "frame": 57,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7777778,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3695312,
+              0.0,
+              0.929218352
+            ],
+            "rotation": [
+              0.0,
+              0.3695312,
+              0.0,
+              0.929218352
+            ]
+          },
+          {
+            "frame": 58,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8888889,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.380921066,
+              0.0,
+              0.9246076
+            ],
+            "rotation": [
+              0.0,
+              0.380921066,
+              0.0,
+              0.9246076
+            ]
+          },
+          {
+            "frame": 59,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.382683456,
+              0.0,
+              0.9238795
+            ],
+            "rotation": [
+              0.0,
+              0.382683456,
+              0.0,
+              0.9238795
+            ]
+          },
+          {
+            "frame": 60,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.382683456,
+              0.0,
+              0.9238795
+            ],
+            "rotation": [
+              0.0,
+              0.382683456,
+              0.0,
+              0.9238795
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "parent": [
+        0.0413652956,
+        0.317002654,
+        -0.0138406334,
+        0.9474211
+      ],
+      "first": {
+        "from": [
+          -0.04136526,
+          -0.317002684,
+          0.0138406465,
+          0.9474211
+        ],
+        "target": [
+          0.0,
+          0.707106769,
+          0.0,
+          0.707106769
+        ],
+        "beginRealtime": 1.40408564,
+        "ignoreTimeScale": false,
+        "enabledAt": 1.404076,
+        "rows": [
+          {
+            "frame": 4,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.111111112,
+            "enabled": true,
+            "localRotation": [
+              -0.04116211,
+              -0.307731271,
+              0.013772673,
+              0.9504828
+            ],
+            "rotation": [
+              0.000425927341,
+              0.009754479,
+              0.000212339684,
+              0.9999524
+            ]
+          },
+          {
+            "frame": 4,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.222222224,
+            "enabled": true,
+            "localRotation": [
+              -0.0397619158,
+              -0.247410864,
+              0.0133041749,
+              0.968003035
+            ],
+            "rotation": [
+              0.00316359475,
+              0.0724572539,
+              0.00157728978,
+              0.997365236
+            ]
+          },
+          {
+            "frame": 5,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.333333343,
+            "enabled": true,
+            "localRotation": [
+              -0.03596693,
+              -0.105741322,
+              0.0120343864,
+              0.9936702
+            ],
+            "rotation": [
+              0.009379044,
+              0.214814544,
+              0.00467619626,
+              0.97659874
+            ]
+          },
+          {
+            "frame": 6,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.444444448,
+            "enabled": true,
+            "localRotation": [
+              -0.0289249066,
+              0.109376483,
+              0.009678155,
+              0.99353236
+            ],
+            "rotation": [
+              0.0182755347,
+              0.418578,
+              0.009111835,
+              0.9079513
+            ]
+          },
+          {
+            "frame": 7,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5555556,
+            "enabled": true,
+            "localRotation": [
+              -0.019365754,
+              0.346039236,
+              0.00647970242,
+              0.9379978
+            ],
+            "rotation": [
+              0.027296517,
+              0.625192642,
+              0.0136095332,
+              0.7798743
+            ]
+          },
+          {
+            "frame": 8,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6666667,
+            "enabled": true,
+            "localRotation": [
+              -0.00993852,
+              0.538662732,
+              0.0033253883,
+              0.8424564
+            ],
+            "rotation": [
+              0.0339420848,
+              0.7774013,
+              0.016922893,
+              0.627860546
+            ]
+          },
+          {
+            "frame": 9,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7777778,
+            "enabled": true,
+            "localRotation": [
+              -0.00335227977,
+              0.6540087,
+              0.00112165906,
+              0.7564788
+            ],
+            "rotation": [
+              0.03752341,
+              0.859427452,
+              0.0187084824,
+              0.5095356
+            ]
+          },
+          {
+            "frame": 10,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8888889,
+            "enabled": true,
+            "localRotation": [
+              -0.00045129942,
+              0.7001756,
+              0.000151002954,
+              0.7139706
+            ],
+            "rotation": [
+              0.0388447754,
+              0.8896917,
+              0.01936729,
+              0.454494059
+            ]
+          },
+          {
+            "frame": 11,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.7071068,
+              0.0,
+              0.7071068
+            ],
+            "rotation": [
+              0.03903649,
+              0.894082665,
+              0.019462876,
+              0.445773154
+            ]
+          },
+          {
+            "frame": 12,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.7071068,
+              0.0,
+              0.7071068
+            ],
+            "rotation": [
+              0.03903649,
+              0.894082665,
+              0.019462876,
+              0.445773154
+            ]
+          }
+        ]
+      },
+      "reused": {
+        "from": [
+          0.0,
+          0.707106769,
+          0.0,
+          0.707106769
+        ],
+        "target": [
+          0.0,
+          0.382683456,
+          0.0,
+          0.9238795
+        ],
+        "beginRealtime": 1.716354,
+        "ignoreTimeScale": false,
+        "enabledAt": 1.71634948,
+        "rows": [
+          {
+            "frame": 51,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.111111112,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.704656661,
+              0.0,
+              0.7095485
+            ],
+            "rotation": [
+              0.03910358,
+              0.8925353,
+              0.01932773,
+              0.448863119
+            ]
+          },
+          {
+            "frame": 52,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.222222224,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6886911,
+              0.0,
+              0.725055
+            ],
+            "rotation": [
+              0.0395240337,
+              0.882324755,
+              0.0184526891,
+              0.468615472
+            ]
+          },
+          {
+            "frame": 53,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.333333343,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.650790453,
+              0.0,
+              0.7592574
+            ],
+            "rotation": [
+              0.04041426,
+              0.8572592,
+              0.0164115354,
+              0.513034165
+            ]
+          },
+          {
+            "frame": 54,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.444444448,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.590954542,
+              0.0,
+              0.806704938
+            ],
+            "rotation": [
+              0.0415487736,
+              0.8156104,
+              0.0132797016,
+              0.5769551
+            ]
+          },
+          {
+            "frame": 55,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5555556,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.5191497,
+              0.0,
+              0.8546834
+            ],
+            "rotation": [
+              0.0425395928,
+              0.7627903,
+              0.009645423,
+              0.645173252
+            ]
+          },
+          {
+            "frame": 56,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6666667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.452415675,
+              0.0,
+              0.8918072
+            ],
+            "rotation": [
+              0.0431515872,
+              0.7113334,
+              0.006371132,
+              0.701499939
+            ]
+          },
+          {
+            "frame": 57,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7777778,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.4063128,
+              0.0,
+              0.9137341
+            ],
+            "rotation": [
+              0.04342051,
+              0.6746054,
+              0.00416059047,
+              0.7368887
+            ]
+          },
+          {
+            "frame": 58,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8888889,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3858769,
+              0.0,
+              0.9225503
+            ],
+            "rotation": [
+              0.04350235,
+              0.6580388,
+              0.00319323037,
+              0.751719654
+            ]
+          },
+          {
+            "frame": 59,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.382683516,
+              0.0,
+              0.9238795
+            ],
+            "rotation": [
+              0.0435131341,
+              0.655434668,
+              0.003042739,
+              0.753991246
+            ]
+          },
+          {
+            "frame": 60,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.382683516,
+              0.0,
+              0.9238795
+            ],
+            "rotation": [
+              0.0435131341,
+              0.655434668,
+              0.003042739,
+              0.753991246
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "parent": [
+        0.06960567,
+        0.5995249,
+        -0.05245163,
+        0.79559654
+      ],
+      "first": {
+        "from": [
+          -0.06960554,
+          -0.5995249,
+          0.0524517223,
+          0.7955965
+        ],
+        "target": [
+          0.0,
+          0.8660254,
+          0.0,
+          -0.50000006
+        ],
+        "beginRealtime": 1.40411425,
+        "ignoreTimeScale": false,
+        "enabledAt": 1.40410376,
+        "rows": [
+          {
+            "frame": 4,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.111111112,
+            "enabled": true,
+            "localRotation": [
+              -0.0690267757,
+              -0.6023865,
+              0.05201559,
+              0.7935114
+            ],
+            "rotation": [
+              -9.607524E-05,
+              -0.00352674723,
+              -0.000783782452,
+              0.999993563
+            ]
+          },
+          {
+            "frame": 4,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.222222224,
+            "enabled": true,
+            "localRotation": [
+              -0.0652814955,
+              -0.620609,
+              0.04919331,
+              0.779848
+            ],
+            "rotation": [
+              -0.000715225935,
+              -0.02621606,
+              -0.0058262907,
+              0.999639153
+            ]
+          },
+          {
+            "frame": 5,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.333333343,
+            "enabled": true,
+            "localRotation": [
+              -0.0565598533,
+              -0.6611276,
+              0.0426210575,
+              0.746923566
+            ],
+            "rotation": [
+              -0.00213354826,
+              -0.07819155,
+              -0.01737738,
+              0.9967847
+            ]
+          },
+          {
+            "frame": 6,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.444444448,
+            "enabled": true,
+            "localRotation": [
+              -0.043219246,
+              -0.7181992,
+              0.032568153,
+              0.6937301
+            ],
+            "rotation": [
+              -0.00424282625,
+              -0.155488282,
+              -0.0345558859,
+              0.9872242
+            ]
+          },
+          {
+            "frame": 7,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5555556,
+            "enabled": true,
+            "localRotation": [
+              -0.02780475,
+              -0.777217031,
+              0.0209524576,
+              0.6282688
+            ],
+            "rotation": [
+              -0.00659506768,
+              -0.241688371,
+              -0.05371309,
+              0.9688438
+            ]
+          },
+          {
+            "frame": 8,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6666667,
+            "enabled": true,
+            "localRotation": [
+              -0.01398239,
+              -0.824145,
+              0.0105365245,
+              0.5661082
+            ],
+            "rotation": [
+              -0.008630838,
+              -0.316290915,
+              -0.07029285,
+              0.9460151
+            ]
+          },
+          {
+            "frame": 9,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7777778,
+            "enabled": true,
+            "localRotation": [
+              -0.004688013,
+              -0.8526048,
+              0.003532684,
+              0.522523344
+            ],
+            "rotation": [
+              -0.00996176153,
+              -0.365063637,
+              -0.08113216,
+              0.9273871
+            ]
+          },
+          {
+            "frame": 10,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8888889,
+            "enabled": true,
+            "localRotation": [
+              -0.000630652241,
+              -0.8642564,
+              0.000475232257,
+              0.503051043
+            ],
+            "rotation": [
+              -0.0105332807,
+              -0.386007726,
+              -0.0857868046,
+              0.9184377
+            ]
+          },
+          {
+            "frame": 11,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.8660254,
+              0.0,
+              0.50000006
+            ],
+            "rotation": [
+              -0.0106216036,
+              -0.389244318,
+              -0.0865061,
+              0.9170021
+            ]
+          },
+          {
+            "frame": 12,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              -0.8660254,
+              0.0,
+              0.50000006
+            ],
+            "rotation": [
+              -0.0106216036,
+              -0.389244318,
+              -0.0865061,
+              0.9170021
+            ]
+          }
+        ]
+      },
+      "reused": {
+        "from": [
+          0.0,
+          0.8660254,
+          0.0,
+          -0.50000006
+        ],
+        "target": [
+          0.0,
+          0.382683456,
+          0.0,
+          0.9238795
+        ],
+        "beginRealtime": 1.7163589,
+        "ignoreTimeScale": false,
+        "enabledAt": 1.71635616,
+        "rows": [
+          {
+            "frame": 51,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.111111112,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.859614432,
+              0.0,
+              -0.510943353
+            ],
+            "rotation": [
+              0.009523619,
+              0.377583,
+              0.08663385,
+              -0.921865046
+            ]
+          },
+          {
+            "frame": 52,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.222222224,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.8151022,
+              0.0,
+              -0.5793172
+            ],
+            "rotation": [
+              0.00242967531,
+              0.3011774,
+              0.08712187,
+              -0.949576855
+            ]
+          },
+          {
+            "frame": 53,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.333333343,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.693039,
+              0.0,
+              -0.7209001
+            ],
+            "rotation": [
+              -0.0138277113,
+              0.119181871,
+              0.08605183,
+              -0.9890398
+            ]
+          },
+          {
+            "frame": 54,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.444444448,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.466759443,
+              0.0,
+              -0.884384334
+            ],
+            "rotation": [
+              -0.03707587,
+              -0.15885824,
+              0.0788765,
+              -0.983447
+            ]
+          },
+          {
+            "frame": 55,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.5555556,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.1680737,
+              0.0,
+              -0.985774457
+            ],
+            "rotation": [
+              -0.0597997569,
+              -0.457277477,
+              0.06340436,
+              -0.885043144
+            ]
+          },
+          {
+            "frame": 56,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.6666667,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.110968754,
+              0.0,
+              -0.993823946
+            ],
+            "rotation": [
+              -0.07499627,
+              -0.684108555,
+              0.04440363,
+              -0.724154353
+            ]
+          },
+          {
+            "frame": 57,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.7777778,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.293998182,
+              0.0,
+              -0.955805957
+            ],
+            "rotation": [
+              -0.0819501951,
+              -0.8069334,
+              0.0296696387,
+              -0.5841767
+            ]
+          },
+          {
+            "frame": 58,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 0.8888889,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.37093538,
+              0.0,
+              -0.928658664
+            ],
+            "rotation": [
+              -0.0840960741,
+              -0.851868868,
+              0.0228904542,
+              -0.5164526
+            ]
+          },
+          {
+            "frame": 59,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.382683456,
+              0.0,
+              -0.923879564
+            ],
+            "rotation": [
+              -0.08437963,
+              -0.8583504,
+              0.02182205,
+              -0.5056071
+            ]
+          },
+          {
+            "frame": 60,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "scaledDelta": 0.0333333351,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              -0.382683456,
+              0.0,
+              -0.923879564
+            ],
+            "rotation": [
+              -0.08437963,
+              -0.8583504,
+              0.02182205,
+              -0.5056071
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

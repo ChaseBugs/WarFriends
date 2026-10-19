@@ -36,6 +36,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Automatic Unity tween lifecycle is now captured separately from explicit method
+dispatch. Six tween-only objects exercise three parent rotations, both clock
+modes and reuse of the same component/clock. The fresh first frame invokes
+Update through Start and again through normal Update; both observations must
+be consumed rather than collapsed into one host-frame update. All 342 captured
+updates match the composed entry state, with maximum quaternion error about
+0.000000134 at the unchanged 0.00001 tolerance. Windows and actual Ubuntu WSL
+pass 9,793 native ownership/motion checks with zero build warnings/errors.
+Logs: `.local/crew-entry-lifecycle-windows.log` and `.local/crew-entry-lifecycle-linux.log`.
+This closes automatic tween dispatch evidence only. Actor/pool callbacks,
+camera/animation ordering and host scheduling remain separate integration work.
+
 Source inspection found a retained clock-mode dependency: several ground actions
 set `TweenRotation.ignoreTimeScale=false`; `UITweener.Begin` does not reset it,
 and helicopter entry does not set it explicitly. Entry therefore cannot always
