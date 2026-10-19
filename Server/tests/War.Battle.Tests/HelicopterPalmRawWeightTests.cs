@@ -109,7 +109,7 @@ internal static class HelicopterPalmRawWeightTests
 
     private static void VerifyRejectedWeights(HelicopterPalmBlendCatalog catalog)
     {
-        Vector2[] invalid = { new(float.NaN, 1), new(-1, 1), new(2, 1), new(0.2f, 0.2f), Vector2.Zero };
+        Vector2[] invalid = { new(float.NaN, 1), new(-1, 1), new(2, 1), new(float.PositiveInfinity, 0), Vector2.Zero };
         foreach (Vector2 weights in invalid)
         {
             try
@@ -120,7 +120,7 @@ internal static class HelicopterPalmRawWeightTests
             {
                 continue;
             }
-            throw new Exception("Palm blend accepted malformed weights or an unproven base-pose remainder.");
+            throw new Exception("Palm blend accepted malformed weights or zero weight without retained pose.");
         }
     }
 

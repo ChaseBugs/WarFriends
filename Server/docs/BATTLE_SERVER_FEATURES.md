@@ -40,8 +40,8 @@ Palm sampling now supports independent effective Idle/Slide weights, including
 the greater-than-one sums created by retained slide weight plus partial Idle.
 Actual Unity Animation.Sample provides 36 local/world reference cases, 24 above
 unit total, while the original 30 normalized references still pass. The new
-weighted-frame API preserves both contributions and rejects unresolved sub-unit
-base-pose remainder. Stopped clips must contribute zero effective weight. This
+weighted-frame API preserves both contributions and normalizes every positive
+total, including sub-unit weights. Stopped clips must contribute zero effective weight. This
 is canonical two-clip pose evidence; pooled incoming state, real timing/culling
 and independent descended-crew collision ownership remain pending.
 The new sampler additionally matches 188 actually evaluated transition palms
@@ -51,6 +51,18 @@ are explicitly excluded rather than being assigned a fresh sampled pose.
 Windows and actual Ubuntu WSL each pass 28,324 reported combat-content assertions
 plus native lifecycle helpers. Logs: `.local/palm-transition-content.log` and
 `.local/palm-transition-linux-content.log`. Build warnings/errors remain zero.
+
+The follow-up retained-pose capture adds 72 local/world cases from two distinct
+prior poses, including twelve zero-total cases. Positive sub-unit totals match
+normalized blending; zero total preserves every captured local transform exactly.
+The sampler requires the complete validated retained hierarchy for zero total
+instead of inventing a bind-pose fallback. Maximum local/world position error is
+0.00000024 at the unchanged 0.00003 tolerance. Windows and actual Ubuntu WSL pass 28,473 focused
+combat-content assertions plus native lifecycle helpers at
+`.local/palm-remainder-content.log` and `.local/palm-remainder-linux-content.log`;
+the builds have zero warnings/errors.
+This does not close unevaluated command boundaries, procedural/camera behavior,
+normal actor lifecycle, or independently descended crew collision ownership.
 
 Reset/Idle now connects to original RopeSlide calls during zero, partial and
 completed Idle fades. The slide can reactivate at its retained weight one;

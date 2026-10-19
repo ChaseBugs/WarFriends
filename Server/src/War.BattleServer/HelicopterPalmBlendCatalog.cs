@@ -9,7 +9,7 @@ namespace War.BattleServer;
 internal sealed record HelicopterPalmBlendSelection(int IdleFrame, int SlideFrame, float SlideWeight);
 
 /// <summary>
-/// Effective enabled-layer weights; stopped clips contribute zero. Sub-unit sums require base-pose evidence.
+/// Effective enabled-layer weights; stopped clips contribute zero. Zero total needs retained pose evidence.
 /// </summary>
 internal sealed record HelicopterPalmWeightedSelection(
     int IdleFrame, int SlideFrame, float IdleWeight, float SlideWeight);
@@ -82,17 +82,41 @@ internal sealed class HelicopterPalmBlendCatalog
 
     internal Vector3 SampleWeighted(HelicopterPalmWeightedSelection selection)
     {
-        ArgumentNullException.ThrowIfNull(selection);
-        float totalWeight = selection.IdleWeight + selection.SlideWeight;
-        if (!float.IsFinite(selection.IdleWeight) || !float.IsFinite(selection.SlideWeight) ||
-            selection.IdleWeight is < 0 or > 1 || selection.SlideWeight is < 0 or > 1 || totalWeight < 1f)
+        float totalWeight = ValidateWeightedSelection(selection);
+        if (totalWeight == 0)
         {
-            throw new InvalidDataException("Palm layers require bounded weights " +
-                "with no unresolved base-pose remainder.");
+            throw new InvalidDataException("Zero-weight animation requires the actual retained local pose.");
         }
-        // Unity normalizes these two fully contributing layers; a retained slide weight must not be discarded.
+        // The captured legacy sampler normalizes positive totals even when their sum is below one.
         return Sample(new HelicopterPalmBlendSelection(selection.IdleFrame, selection.SlideFrame,
             selection.SlideWeight / totalWeight));
+    }
+
+    internal Vector3 SampleWithRetainedPose(HelicopterPalmWeightedSelection selection,
+        IReadOnlyList<RigLocalTransform> retainedPose)
+    {
+        float totalWeight = ValidateWeightedSelection(selection);
+        ArgumentNullException.ThrowIfNull(retainedPose);
+        if (retainedPose.Count != _parents.Length)
+        {
+            throw new InvalidDataException("Retained palm pose must bind the complete catalog hierarchy.");
+        }
+        RigWorldTransform[] retained = RigLocalPose.Compose(_parents, retainedPose);
+        // Zero total writes no new sampled pose; substituting a bind pose discards the previous source state.
+        return totalWeight == 0 ? retained[^1].Position : SampleWeighted(selection);
+    }
+
+    private float ValidateWeightedSelection(HelicopterPalmWeightedSelection selection)
+    {
+        ArgumentNullException.ThrowIfNull(selection);
+        if (!float.IsFinite(selection.IdleWeight) || !float.IsFinite(selection.SlideWeight) ||
+            selection.IdleWeight is < 0 or > 1 || selection.SlideWeight is < 0 or > 1 ||
+            selection.IdleFrame < 0 || selection.IdleFrame >= _idle.Length ||
+            selection.SlideFrame < 0 || selection.SlideFrame >= _slide.Length)
+        {
+            throw new InvalidDataException("Invalid enabled palm layers or captured frame identity.");
+        }
+        return selection.IdleWeight + selection.SlideWeight;
     }
 
     internal HelicopterDescentFrame CreateWeightedFrame(HelicopterPalmWeightedSelection selection,

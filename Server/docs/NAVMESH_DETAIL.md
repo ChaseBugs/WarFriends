@@ -664,9 +664,9 @@ landed soldier or collision authority is enabled by these mixer checks.
 `HelicopterPalmBlendCatalog.SampleWeighted` now accepts independent effective
 Idle/Slide weights. A retained, enabled slide at weight one must not discard a
 simultaneous partial Idle contribution. The sampled two-layer context normalizes
-weights when their sum is at least one. Each weight remains bounded zero through
-one. A sum below one is rejected because the remaining base-pose contribution is
-not implemented here. Stopped clips must contribute effective weight zero even
+weights whenever their sum is positive. Each weight remains bounded zero through
+one. The follow-up capture below establishes sub-unit normalization and explicit
+retained-pose handling for zero total. Stopped clips must contribute effective weight zero even
 when AnimationState retains a stored weight; the selection is not a raw packet
 or an unfiltered list of every stored clip weight.
 
@@ -682,7 +682,7 @@ The LF reference digest is
 The new API normalizes the effective layer ratio, then uses the existing validated
 local-transform blend and world palm placement. Tests check all 36 local and
 world results at the unchanged 0.00003 position tolerance and reject malformed,
-oversized, zero-total and sub-unit weights. This is canonical two-clip sampling
+oversized weights and zero total without retained-pose evidence. This is canonical two-clip sampling
 evidence, not proof of a pooled incoming pose, partially keyed base-pose channels,
 arbitrary clip sets or normal animation timing. It does not register descended
 crew hitboxes, bypass actual camera/coroutine evidence or authorize landing.
@@ -696,5 +696,30 @@ command boundaries. Maximum observed transition error is approximately
 0.00002644, below the unchanged 0.00003 tolerance; independent Sample references
 have maximum error approximately 0.00000024. These distinct errors are retained
 as diagnostics rather than reporting the smaller canonical-sample error as a
-live-transition result. Sub-unit Idle fade before RopeSlide, bone state at the
+live-transition result. Transition replay of sub-unit Idle fade before RopeSlide, bone state at the
 command instant and procedural/real-camera effects remain unresolved.
+
+### Positive sub-unit totals and zero-weight retained pose
+
+`UnityPalmRemainderExport` captures 72 Edit Mode samples from the actual enemy
+prefab in a disposable project. It seeds either T_pose or helicopter_jump_pose,
+then samples six weight pairs across three Idle and two Slide frames. Each row
+contains the complete eleven-node chain before and after sampling plus local and
+world palm positions. All twelve zero-total rows retain every local transform
+exactly; they do not reset to the imported binding pose. All positive sub-unit
+totals match normalized layer blending rather than a binding/previous-pose remainder.
+
+The LF reference digest is
+`0ca1a8d7292f00c88498b09fe52e31ffe2b769ba5e7186ad200226fdc852e806`.
+The accepted Unity process exits zero at `.local/palm-remainder-unity.log`.
+`SampleWithRetainedPose` validates the complete catalog-relative hierarchy and
+returns its composed palm when total weight is zero. Missing or damaged retained
+state fails rather than creating a new pose; sampling does not modify caller state.
+Host/world placement remains separate from this catalog-relative hierarchy.
+
+Tests compare all 72 local/world results at the unchanged 0.00003 tolerance,
+check exact zero-weight retention and input preservation, and reject incomplete
+hierarchies, damaged rotations, invalid frames and non-finite weights. Maximum
+position error is 0.00000024. This proves these two sampled clips in Unity 2018.3,
+not arbitrary partially keyed clips, original Unity 5.2 parity, real culling,
+normal actor lifecycle or live descended-crew collision/landing behavior.
