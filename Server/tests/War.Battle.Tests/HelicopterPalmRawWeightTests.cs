@@ -45,6 +45,8 @@ internal static class HelicopterPalmRawWeightTests
                 "057da06e2d77ad8d10e7dfa03020ae05f63cf6aa1f0e2a385b67471e63a707b0"),
             ("recovered-idle-to-slide-visibility-unity-reference.json",
                 "e1b0f1532531da3a61d272c2675158681f684c1f5b52bd913681154529ecebdb"),
+            ("recovered-soldier-reset-idle-unity-reference.json",
+                "8490940e2e5173766160714a483dbbd43a6b08db09a027eb0d7c0f21d48d26c1"),
         };
         int checks = 0;
         foreach ((string filename, string digest) in captures)
@@ -55,7 +57,7 @@ internal static class HelicopterPalmRawWeightTests
             using JsonDocument document = JsonDocument.Parse(text);
             checks += VerifyTransitionFrames(catalog, document.RootElement.GetProperty("frames"));
         }
-        Require(checks == 188, "Transition palm replay lost evaluated or resumed frame coverage.");
+        Require(checks == 320, "Transition palm replay lost evaluated Idle or resumed Slide frame coverage.");
         return checks;
     }
 
@@ -71,17 +73,21 @@ internal static class HelicopterPalmRawWeightTests
                 JsonElement idle = states.Single(state => state.GetProperty("name").GetString() == "idle");
                 JsonElement slide = states.Single(state => state.GetProperty("name").GetString() ==
                     "helicopter_jump_pose");
-                if (!row.GetProperty("componentEnabled").GetBoolean() ||
-                    !slide.GetProperty("enabled").GetBoolean() || slide.GetProperty("time").GetSingle() <= 0)
+                float idleWeight = EffectiveWeight(idle);
+                float slideWeight = EffectiveWeight(slide);
+                bool hasEvaluatedLayer =
+                    (idleWeight > 0 && idle.GetProperty("time").GetSingle() > 0) ||
+                    (slideWeight > 0 && slide.GetProperty("time").GetSingle() > 0);
+                // Disabled frames and unevaluated command boundaries retain state not recorded in these captures.
+                if (!row.GetProperty("componentEnabled").GetBoolean() || !hasEvaluatedLayer)
                 {
                     continue;
                 }
                 int idleFrame = (int)MathF.Round(idle.GetProperty("time").GetSingle() * MatchManifest.TickRate) %
                     (catalog.IdleFrameCount - 1);
-                float idleWeight = idle.GetProperty("enabled").GetBoolean() ?
-                    idle.GetProperty("weight").GetSingle() : 0;
-                var selection = new HelicopterPalmWeightedSelection(idleFrame, catalog.SlideFrameCount - 1,
-                    idleWeight, slide.GetProperty("weight").GetSingle());
+                int slideFrame = slide.GetProperty("time").GetSingle() > 0 ? catalog.SlideFrameCount - 1 : 0;
+                var selection = new HelicopterPalmWeightedSelection(idleFrame, slideFrame,
+                    idleWeight, slideWeight);
                 float error = Vector3.Distance(catalog.SampleWeighted(selection), Vector(row.GetProperty("palm")));
                 Require(error <= PositionTolerance,
                     $"Source transition palm differs by {error} at frame {frame.GetProperty("frame")}, {selection}.");
@@ -91,6 +97,11 @@ internal static class HelicopterPalmRawWeightTests
         }
         Console.WriteLine($"PASS: {checks} evaluated source transition palms; maximum error {maximumError}.");
         return checks;
+    }
+
+    private static float EffectiveWeight(JsonElement state)
+    {
+        return state.GetProperty("enabled").GetBoolean() ? state.GetProperty("weight").GetSingle() : 0;
     }
 
     private static float Verify(HelicopterPalmBlendCatalog catalog, JsonElement row,

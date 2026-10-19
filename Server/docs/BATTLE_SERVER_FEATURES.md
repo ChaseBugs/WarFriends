@@ -44,11 +44,11 @@ weighted-frame API preserves both contributions and normalizes every positive
 total, including sub-unit weights. Stopped clips must contribute zero effective weight. This
 is canonical two-clip pose evidence; pooled incoming state, real timing/culling
 and independent descended-crew collision ownership remain pending.
-The new sampler additionally matches 188 actually evaluated transition palms
-(96 continuous, 92 visibility-resumed), with maximum error about 0.00002644 at
+The new sampler additionally matches 320 actually evaluated transition palms
+(108 continuous, 104 visibility-resumed, 108 standalone Reset/Idle), with maximum error about 0.00002644 at
 the unchanged 0.00003 tolerance. Unevaluated command instants and disabled frames
 are explicitly excluded rather than being assigned a fresh sampled pose.
-Windows and actual Ubuntu WSL each pass 28,324 reported combat-content assertions
+The earlier Windows and actual Ubuntu WSL checkpoint passed 28,324 reported combat-content assertions
 plus native lifecycle helpers. Logs: `.local/palm-transition-content.log` and
 `.local/palm-transition-linux-content.log`. Build warnings/errors remain zero.
 
@@ -63,6 +63,16 @@ combat-content assertions plus native lifecycle helpers at
 the builds have zero warnings/errors.
 This does not close unevaluated command boundaries, procedural/camera behavior,
 normal actor lifecycle, or independently descended crew collision ownership.
+
+The expanded transition replay additionally checks positive sub-unit Idle poses
+before RopeSlide and after Reset, bringing evaluated transition coverage to 320
+frames. Stopped layers contribute zero even when their stored weight is nonzero.
+The standalone Reset/Idle maximum palm error is 0.0000000833; the continuous and
+resumed transition maximum remains 0.00002644 without changing tolerance.
+Windows and actual Ubuntu WSL each pass 28,605 focused combat-content assertions
+plus native helpers. Logs: `.local/palm-idle-transition-content.log` and
+`.local/palm-idle-transition-linux-content.log`. Build warnings/errors remain zero.
+Normal runtime crew descent and landing are still pending, not inferred from these captures.
 
 Reset/Idle now connects to original RopeSlide calls during zero, partial and
 completed Idle fades. The slide can reactivate at its retained weight one;

@@ -688,16 +688,19 @@ arbitrary clip sets or normal animation timing. It does not register descended
 crew hitboxes, bypass actual camera/coroutine evidence or authorize landing.
 
 The same sampler is also checked against actual evaluated palms in the earlier
-Reset/Idle/RopeSlide captures: 96 continuous and 92 visibility-resumed frames.
+Reset/Idle/RopeSlide captures: 108 continuous and 104 visibility-resumed frames,
+plus 108 standalone Reset/Idle frames spanning the Idle loop.
 The test uses source layer times on the known 30 Hz sample grid, effective
-enabled weights and the slide's captured clamped end frame. It requires all 188
+enabled weights and the slide's captured clamped end frame when it contributes. It requires all 320
 eligible observations, skipping disabled animation and unevaluated time-zero
 command boundaries. Maximum observed transition error is approximately
 0.00002644, below the unchanged 0.00003 tolerance; independent Sample references
 have maximum error approximately 0.00000024. These distinct errors are retained
 as diagnostics rather than reporting the smaller canonical-sample error as a
-live-transition result. Transition replay of sub-unit Idle fade before RopeSlide, bone state at the
-command instant and procedural/real-camera effects remain unresolved.
+live-transition result. The 132 added Idle observations include positive sub-unit
+weights before RopeSlide and after Reset. Standalone Reset/Idle maximum error is
+0.0000000833. Bone state at unevaluated command instants and procedural/real-camera
+effects remain unresolved; disabled/stopped layers never contribute retained stored weights.
 
 ### Positive sub-unit totals and zero-weight retained pose
 
