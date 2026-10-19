@@ -465,3 +465,27 @@ mission fixture verifies those inputs alongside both drops, direct landing
 queries, live leases and cleanup. Original actor initialization, later pool
 movement, entry endpoint capture and source callback/coroutine ordering remain
 required before normal crew descent authority can be registered.
+
+## Retained host crew birth publication
+
+The recovered helicopter assigns each crew point before starting Helicopter
+behaviour. Driving begins one entry rotation tween; later point poses must not
+replace its original target evidence. The host now records `TransportCrewBirth`
+at the actual modeled aircraft spawn publication: slot, spawn tick, aircraft pose
+and transformed crew point. Read-only per-aircraft lists survive flight and drops;
+each native drop retains its corresponding birth record. Aircraft death and
+terminal cleanup remove both birth and drop records.
+
+The native-enabled mission fixture reads the birth list before flight, checks
+its spawn tick, and verifies that the complete first crew wave retains the same
+list values. It checks drop-to-birth binding, source point placement and that at
+least one birth position differs materially from its later drop position. An
+all-stationary fixture cannot silently pass that coverage. Cleanup also requires
+the birth list to become empty.
+
+This is the server's modeled spawn publication, not an observation of the exact
+Client SpawnByCard/OnInstancied/StartEnemyBehaviour dispatch point. It is not yet
+fed into the entry tween as an Euler-roundtripped target, nor used as a current
+soldier pose. Existing animation reset, pooled TweenRotation state, callback order
+and the subsequent coroutine transition must still be observed before enabling
+normal independent crew descent and collision authority.

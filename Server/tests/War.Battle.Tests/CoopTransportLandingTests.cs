@@ -49,6 +49,12 @@ internal static class CoopTransportLandingTests
         ulong endTick, HelicopterRopeDefinition rope)
     {
         BattleCoopEnemySpawn previous = initial;
+        CoopMatchRuntime.TransportCrewBirth[] birthsAtSpawn = runtime.TransportCrewBirths(initial.EntityId).ToArray();
+        if (runtime.HasNativeTransportRopes && (birthsAtSpawn.Length == 0 ||
+            birthsAtSpawn.Any(birth => birth.SpawnTick != initial.SpawnTick)))
+        {
+            throw new Exception("Native transport did not publish its original crew births at spawn.");
+        }
         for (ulong next = initial.PoseTick + 1; next <= endTick; next++)
         {
             AdvanceTo(runtime, next);
@@ -84,6 +90,10 @@ internal static class CoopTransportLandingTests
                 {
                     throw new Exception("Co-op arrival decision changed on a later flight frame.");
                 }
+                if (!runtime.TransportCrewBirths(initial.EntityId).SequenceEqual(birthsAtSpawn))
+                {
+                    throw new Exception("Flight or drop rewrote the original crew birth evidence.");
+                }
                 return endTick;
             }
             previous = runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == initial.EntityId);
@@ -113,7 +123,7 @@ internal static class CoopTransportLandingTests
             return;
         }
         if (runtime.TransportRopeSnapshot?.Members.Any(member => member.Lease.EntityId == entityId) != false ||
-            runtime.TransportCrewDrops(entityId).Count != 0)
+            runtime.TransportCrewDrops(entityId).Count != 0 || runtime.TransportCrewBirths(entityId).Count != 0)
         {
             throw new Exception("Transport death retained its native scene.");
         }
@@ -140,11 +150,12 @@ internal static class CoopTransportLandingTests
             return;
         }
         IReadOnlyList<CoopMatchRuntime.TransportCrewDrop> drops = runtime.TransportCrewDrops(entityId);
+        IReadOnlyList<CoopMatchRuntime.TransportCrewBirth> births = runtime.TransportCrewBirths(entityId);
         IReadOnlyList<HelicopterCrewDescentSnapshot> descents = runtime.TransportCrewDescents(entityId);
         HelicopterPhysicsWorldSnapshot physics = runtime.TransportRopeSnapshot
             ?? throw new Exception("Crew drop fixture lost native world state.");
         HelicopterPhysicsMemberSnapshot rope = physics.Members.Single(member => member.Lease.EntityId == entityId);
-        if (drops.Count == 0 || drops.Count != descents.Count)
+        if (drops.Count == 0 || drops.Count != descents.Count || births.Count != drops.Count)
         {
             throw new Exception($"Crew drop boundary mismatch: captured {drops.Count}, descents {descents.Count}.");
         }
@@ -154,7 +165,11 @@ internal static class CoopTransportLandingTests
             Vector3 marker = drop.Aircraft.Position +
                 Vector3.Transform(slot.RopeRestPosition, drop.Aircraft.Rotation);
             Vector3 root = drop.Aircraft.Position + Vector3.Transform(slot.RestPosition, drop.Aircraft.Rotation);
+            CoopMatchRuntime.TransportCrewBirth birth = births.Single(entry => entry.Slot == drop.Slot);
+            Vector3 birthPoint = birth.Aircraft.Position + Vector3.Transform(slot.RestPosition, birth.Aircraft.Rotation);
             if (drop.StartTick != descents.Single(descent => descent.Slot == drop.Slot).StartTick ||
+                drop.Birth != birth || birth.SpawnTick >= drop.StartTick ||
+                Vector3.Distance(birth.CrewPoint.Position, birthPoint) > 0.000001f ||
                 Vector3.Distance(drop.RopeMarker, marker) > 0.000001f ||
                 Vector3.Distance(drop.CrewPoint.Position, root) > 0.000001f || drop.LandingSurface == null ||
                 drop.InitialPoolParentRotation != Quaternion.Identity || drop.SpawnResetRotation != Quaternion.Identity ||
@@ -163,6 +178,10 @@ internal static class CoopTransportLandingTests
             {
                 throw new Exception("Crew drop lost its marker, crew point, surface or live rope binding.");
             }
+        }
+        if (drops.All(drop => Vector3.Distance(drop.Birth.CrewPoint.Position, drop.CrewPoint.Position) < 0.1f))
+        {
+            throw new Exception("Crew birth fixture never separated the original spawn point from the later drop point.");
         }
         Console.WriteLine($"PASS: {drops.Count} source crew drop inputs bound to native rope and direct surface lookup.");
     }

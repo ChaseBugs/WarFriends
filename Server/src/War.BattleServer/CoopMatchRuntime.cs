@@ -1123,6 +1123,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
                 ArmyHelicopterCrewStats crew = combat.TransportCrew(level);
                 transportHelicopterCrew.Add(enemy.EntityId,
                     new HelicopterCrewState(crew, transportCrewPoints, tick));
+                CaptureTransportCrewBirths(enemy.EntityId, crew.Seats);
                 enemy.CrewCount = (uint)crew.Seats;
                 var gunner = new HelicopterGunnerState(
                     transportCrewPoints.TurretPointComponentFileId,
@@ -3929,6 +3930,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         _transportSpawnRealtime.Clear();
         _transportLandings.Clear();
         _transportCrewDrops.Clear();
+        _transportCrewBirths.Clear();
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
         infantryPointArrivals.Clear();

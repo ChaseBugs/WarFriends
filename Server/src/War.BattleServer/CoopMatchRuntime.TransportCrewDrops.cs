@@ -11,6 +11,7 @@ internal sealed partial class CoopMatchRuntime
         internal required ulong StartTick { get; init; }
         internal required HelicopterRopeBodyPose Aircraft { get; init; }
         internal required HelicopterRopeBodyPose CrewPoint { get; init; }
+        internal required TransportCrewBirth Birth { get; init; }
         internal required Quaternion InitialPoolParentRotation { get; init; }
         internal required Quaternion SpawnResetRotation { get; init; }
         internal required Vector3 RopeMarker { get; init; }
@@ -64,6 +65,8 @@ internal sealed partial class CoopMatchRuntime
                     Aircraft = aircraft,
                     // Driving follows point position only; this rotation is the point's, not the soldier's.
                     CrewPoint = new HelicopterRopeBodyPose(pose.Position, pose.Rotation),
+                    // Entry captures its target earlier; later point rotations must not overwrite that evidence.
+                    Birth = TransportCrewBirths(entityId).Single(birth => birth.Slot == member.Slot),
                     InitialPoolParentRotation = _transportCrewPoolFrame.ParentRotation,
                     SpawnResetRotation = _transportCrewPoolFrame.SpawnResetRotation,
                     RopeMarker = pose.RopePosition,
@@ -77,6 +80,7 @@ internal sealed partial class CoopMatchRuntime
 
     private void RemoveTransportCrewDrops(ulong entityId)
     {
+        _transportCrewBirths.Remove(entityId);
         foreach (var key in _transportCrewDrops.Keys.Where(key => key.EntityId == entityId).ToArray())
         {
             _transportCrewDrops.Remove(key);

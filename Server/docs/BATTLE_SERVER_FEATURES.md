@@ -36,6 +36,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Actual native-enabled co-op spawns now retain immutable crew birth publications
+separately from later drop poses. Each drop binds its original slot/tick/aircraft/
+point record, and death/terminal cleanup removes both lifetimes. The mission
+fixture snapshots births before flight, verifies they survive unchanged through
+the complete first crew wave, and requires birth/drop positions to differ so a
+stationary test cannot stand in for target retention. This remains host spawn
+input evidence, not proof of the Client's precise entry callback or a canonical
+Euler-roundtripped tween target; normal pose/descent registration stays pending.
+Windows and actual Ubuntu WSL each pass 28,059 reported combat-content assertions
+plus native drop/lifecycle helper checks. Logs: `.local/crew-birth-content.log`
+and `.local/crew-birth-linux-content.log`. Build warnings/errors remain zero.
+
 The actual MainScene initial pool frame is now source-bound. Its NetworkPool has
 a nonzero world translation, but the source's newly parented crew container
 preserves world identity. ReInstantiate resets the soldier's world rotation to
