@@ -19,6 +19,8 @@ public static class UnityHelicopterRopePhysicsCapture
     private const float MotionYawDegrees = 3f;
     private const int ExtensionSteps = 18;
     private const float ExtensionVelocity = 0.7f;
+    private const float ReachedTargetOffset = 0.05f;
+    private const float ActiveTargetOffset = -1f;
     private static readonly Vector3 MotionTranslation = new Vector3(0.04f, 0.01f, -0.02f);
     private static GameObject[] _parents;
     private static QuickRope2[] _ropes;
@@ -109,6 +111,11 @@ public static class UnityHelicopterRopePhysicsCapture
 
     private static void WriteReference()
     {
+        if (Environment.GetEnvironmentVariable("WAR_ROPE_CAPTURE_COMBINED") == "1")
+        {
+            WriteCombinedReference();
+            return;
+        }
         if (Environment.GetEnvironmentVariable("WAR_ROPE_CAPTURE_EXTENSION") == "1")
         {
             WriteExtensionReference();
@@ -208,6 +215,69 @@ public static class UnityHelicopterRopePhysicsCapture
         }, Formatting.Indented).Replace("\r\n", "\n") + "\n";
         File.WriteAllText(Environment.GetEnvironmentVariable("WAR_ROPE_PHYSICS_OUTPUT"), reference);
         Debug.Log("PASS: recovered physical rope extension frames=" + frames.Count);
+    }
+
+    private static void WriteCombinedReference()
+    {
+        object[] initial = ExtensionStates();
+        float[] targetHeights = _ropes.Select((rope, index) => rope.ropeEnd.transform.position.y +
+            (index == 1 ? ReachedTargetOffset : ActiveTargetOffset)).ToArray();
+        bool[] shown = { true, true, true };
+        var frames = new List<object>();
+        for (int step = 1; step <= ExtensionSteps; step++)
+        {
+            object[] before = CombinedStates(shown);
+            for (int index = 0; index < _ropes.Length; index++)
+            {
+                QuickRope2 rope = _ropes[index];
+                if (shown[index])
+                {
+                    if (rope.ropeEnd.transform.position.y > targetHeights[index])
+                    {
+                        rope.ExtendRope(ExtensionVelocity);
+                    }
+                    else
+                    {
+                        shown[index] = false;
+                    }
+                }
+                Transform aircraft = rope.GetComponent<FixedJoint>().connectedBody.transform;
+                aircraft.position += MotionTranslation;
+                aircraft.rotation = Quaternion.AngleAxis(MotionYawDegrees, Vector3.up) * aircraft.rotation;
+            }
+            Physics.SyncTransforms();
+            object[] render = CombinedStates(shown);
+            Physics.Simulate(PhysicsStep);
+            frames.Add(new { step, before, render, after = CombinedStates(shown) });
+        }
+        string reference = JsonConvert.SerializeObject(new
+        {
+            version = 1, client = "1.4.0", unity = Application.unityVersion,
+            prefabSource = PrefabSource, prefabSha256 = Hash(PrefabSource),
+            helicopterSource = "Assets/Scripts/Assembly-CSharp/Helicopter.cs",
+            helicopterSha256 = Hash("Assets/Scripts/Assembly-CSharp/Helicopter.cs"),
+            ropeSource = "Assets/Plugins/Assembly-CSharp-firstpass/QuickRope2.cs",
+            ropeSha256 = Hash("Assets/Plugins/Assembly-CSharp-firstpass/QuickRope2.cs"),
+            fixture = "Source extension-height gate, original ExtendRope, direct aircraft transform, then physics.",
+            deltaTime = Time.deltaTime, physicsStep = PhysicsStep, targetHeights, initial, frames
+        }, Formatting.Indented).Replace("\r\n", "\n") + "\n";
+        File.WriteAllText(Environment.GetEnvironmentVariable("WAR_ROPE_PHYSICS_OUTPUT"), reference);
+        Debug.Log("PASS: combined source rope render/physics frames=" + frames.Count);
+    }
+
+    private static object[] CombinedStates(bool[] shown)
+    {
+        return _ropes.Select((rope, index) =>
+        {
+            Rigidbody aircraft = rope.GetComponent<FixedJoint>().connectedBody;
+            return new { isExtending = shown[index], aircraftPosition = Values(aircraft.position),
+                aircraftRotation = Values(aircraft.rotation), joints = rope.Joints.Select(joint =>
+                {
+                    Rigidbody body = joint.GetComponent<Rigidbody>();
+                    return new { position = Values(body.position), rotation = Values(body.rotation),
+                        velocity = Values(body.velocity), angularVelocity = Values(body.angularVelocity) };
+                }).ToArray() };
+        }).Cast<object>().ToArray();
     }
 
     private static object[] ExtensionStates()

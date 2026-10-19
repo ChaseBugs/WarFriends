@@ -18,8 +18,21 @@ internal sealed class NativeHelicopterRope : IDisposable
     private readonly float _initialJointDistance;
     private int _bodyCount;
     private bool _hasFailed;
+    private float? _extensionTargetHeight;
 
     internal ulong StepCount { get; private set; }
+    internal ulong RenderFrameCount { get; private set; }
+    internal bool IsExtending
+    {
+        get
+        {
+            lock (_gate)
+            {
+                RequireAvailable();
+                return _extensionTargetHeight.HasValue;
+            }
+        }
+    }
 
     internal NativeHelicopterRope(HelicopterRopeInitialState initial, HelicopterRopeBodyPose aircraft,
         Quaternion attachmentConnectedRestRotation)
@@ -52,19 +65,58 @@ internal sealed class NativeHelicopterRope : IDisposable
     /// </summary>
     internal void ApplyAircraftTransform(HelicopterRopeBodyPose aircraft)
     {
-        ArgumentNullException.ThrowIfNull(aircraft);
-        float length = aircraft.Rotation.LengthSquared();
-        if (!PlayerHitbox.Finite(aircraft.Position) || !float.IsFinite(length) ||
-            MathF.Abs(length - 1) > UnitRotationTolerance)
-        {
-            throw new InvalidDataException("Aircraft transform requires a finite bounded unit pose.");
-        }
+        ValidateAircraftTransform(aircraft);
         var values = new List<float>(PoseSize);
         AddPose(values, aircraft.Position, aircraft.Rotation);
         lock (_gate)
         {
             RequireAvailable();
             RequireSuccess(NativeRopeMethods.SetAircraftTransform(_handle, values.ToArray(), values.Count));
+        }
+    }
+
+    /// <summary>Starts the source ShowRope gate using a separately resolved NavMesh target height.</summary>
+    internal void BeginExtension(float targetHeight)
+    {
+        if (!float.IsFinite(targetHeight) || !PlayerHitbox.Finite(new Vector3(0, targetHeight, 0)))
+        {
+            throw new InvalidDataException("Rope extension requires a finite bounded target height.");
+        }
+        lock (_gate)
+        {
+            RequireAvailable();
+            _extensionTargetHeight = targetHeight;
+        }
+    }
+
+    /// <summary>
+    /// Runs the source extension gate before aircraft Transform changes; fixed physics stays separate.
+    /// </summary>
+    internal void UpdateRenderFrame(float deltaTime, HelicopterRopeBodyPose aircraft)
+    {
+        if (!float.IsFinite(deltaTime) || deltaTime < 0)
+        {
+            throw new InvalidDataException("Rope render delta must be finite and nonnegative.");
+        }
+        ValidateAircraftTransform(aircraft);
+        lock (_gate)
+        {
+            RequireAvailable();
+            ulong nextFrame = checked(RenderFrameCount + 1);
+            if (_extensionTargetHeight is float targetHeight)
+            {
+                // Helicopter.Update tests ropeEnd against the target before applying its next flight pose.
+                if (Snapshot()[^1].Pose.Position.Y > targetHeight)
+                {
+                    Extend(deltaTime);
+                }
+                else
+                {
+                    _extensionTargetHeight = null;
+                }
+            }
+            ApplyAircraftTransform(aircraft);
+            RenderFrameCount = nextFrame;
         }
     }
 
@@ -152,6 +204,17 @@ internal sealed class NativeHelicopterRope : IDisposable
             throw new InvalidDataException("Native rope returned an invalid motion state.");
         }
         return new HelicopterRopeMotionBody(new HelicopterRopeBodyPose(position, rotation), velocity, angular);
+    }
+
+    private static void ValidateAircraftTransform(HelicopterRopeBodyPose aircraft)
+    {
+        ArgumentNullException.ThrowIfNull(aircraft);
+        float length = aircraft.Rotation.LengthSquared();
+        if (!PlayerHitbox.Finite(aircraft.Position) || !float.IsFinite(length) ||
+            MathF.Abs(length - 1) > UnitRotationTolerance)
+        {
+            throw new InvalidDataException("Aircraft transform requires a finite bounded unit pose.");
+        }
     }
 
     private void RequireAvailable()

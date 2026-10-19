@@ -101,8 +101,15 @@ internal static class NativeHelicopterRopeTests
         RequireDisposed(() => first.ApplyAircraftTransform(
             new HelicopterRopeBodyPose(Vector3.Zero, Quaternion.Identity)));
         RequireDisposed(() => first.Extend(0.03f));
+        RequireDisposed(() => first.BeginExtension(0));
+        RequireDisposed(() => first.UpdateRenderFrame(0.03f,
+            new HelicopterRopeBodyPose(Vector3.Zero, Quaternion.Identity)));
+        RequireDisposed(() =>
+        {
+            _ = first.IsExtending;
+        });
         second.Advance();
-        return 7;
+        return 10;
     }
 
     private static int VerifyCapacity(JsonElement initial)

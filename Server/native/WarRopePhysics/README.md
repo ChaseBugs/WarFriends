@@ -63,6 +63,22 @@ Rigidbody linear drag zero, rather than the initial chain's 0.2. New objects and
 capacity allocate before existing body mutation; SDK failure still closes authority.
 The new body remains unparented and the original terminal body retains aircraft inheritance.
 
+## Managed render ordering
+
+`BeginExtension(targetHeight)` arms the source ShowRope gate. Target height must come
+from a separately resolved host NavMesh target; this API does not fabricate a ground hit.
+`UpdateRenderFrame(deltaTime, aircraft)` validates both inputs before mutation, reads the
+current terminal height, applies extension only while that height is strictly above the
+target, then changes the aircraft Transform. Reaching the target disables extension
+until another explicit BeginExtension call, even if a later aircraft move raises the end.
+The checked render counter advances only after that sequence succeeds. `Advance()`
+remains a separate 0.02-second physics operation; no render/fixed-step ratio is invented.
+The managed composition uses existing ABI 3 exports and does not change the native ABI.
+
+The combined capture drives this specific recovered branch with original ExtendRope
+calls and synthetic aircraft poses. It is not a complete Helicopter.Update execution,
+waypoint flight, automatic Unity fixed-update schedule, NavMesh query or crew proof.
+
 ## Verification
 
 The deliberate `War.Battle.Tests --native-helicopter-rope-only` mode requires the built

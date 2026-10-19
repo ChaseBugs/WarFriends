@@ -228,7 +228,7 @@ tilted discrepancy is not resolved by this stationary-aircraft extension fixture
 Worker activation, complete flight/render/physics scheduling, map collisions, crew
 attachment, descent and landing remain required.
 
-The expanded native runner passes 2,707 checks on both Windows and actual Ubuntu WSL:
+The physical-extension checkpoint passed 2,707 checks on both Windows and actual Ubuntu WSL:
 468 initial/ownership, 664 aircraft-transform and 1,575 extension/capacity checks.
 It verifies source commands and solved positions, one insertion on command nine,
 velocity reset, malformed delta rejection, access after disposal, zero-delta behavior,
@@ -241,6 +241,49 @@ The Linux run executes the self-contained publish in `.local/linux-native-rope-e
 with the actual ABI 3 shared library. `.local/rope-native-extension-dotnet.log` records
 the full solution build with zero warnings/errors. This is not a normal Client match,
 native mobile build, complete collision world or Mongo settlement proof.
+
+## Combined render gate and aircraft movement
+
+`BeginExtension` and `UpdateRenderFrame` now model the recovered render branch together.
+The height comparison uses the current ropeEnd before changing the aircraft Transform;
+extension runs first. Once the end reaches its target, the extension gate stays disabled
+until an explicit source-equivalent ShowRope request arms it again. Malformed delta,
+aircraft pose or target height rejects before consuming extension state or either clock.
+RenderFrameCount and the existing fixed StepCount stay separate. Access after disposal
+rejects for the new methods and gate property too.
+
+The combined fixture drives the source height branch, original QuickRope2.ExtendRope,
+synthetic aircraft translation/yaw, and one manual physics step, eighteen times.
+It records the initial source states, target heights, and before/render/after samples.
+Identity inserts on render frames seven and sixteen; the tilted fixture inserts on nine
+and eighteen. The yaw fixture starts with an already-reached height, disables extension
+on its first update, and keeps four bodies while its aircraft moves. This differs from
+the stationary extension fixture's insertion on command nine and proves that composing
+the two operations is not interchangeable with applying aircraft motion first.
+
+`recovered-helicopter-rope-combined-unity-reference.json` has normalized-LF SHA-256
+`10917a8c2672f3b238dc31a14167f2519283b8aaea171d0b7b8ee1370534e0ba`.
+Its Helicopter.cs hash matches the active recovered Client. The Unity capture exits zero
+at `.local/rope-combined-unity.log`. Reproduce using `WAR_ROPE_CAPTURE_COMBINED=1`,
+a distinct `WAR_ROPE_PHYSICS_OUTPUT`, and the existing RunPhysics editor entry point.
+The stripped fixture drives the recovered branch explicitly; it does not invoke the full
+Helicopter.Update/base Update stack, derive waypoint poses, perform NavMesh sampling,
+or prove Unity's automatic render/fixed scheduling. The active Client was not changed.
+
+Actual Windows and Ubuntu WSL native runners pass 4,192 checks each: 471 initial/ownership,
+664 aircraft motion, 1,575 physical extension and 1,482 combined render-order checks.
+Combined source topology, gate state and positions pass on all three fixtures, and
+identity/yaw rotations pass, at the existing 0.00002 threshold. Maximum combined position
+differences stay below 0.0000018 on both platforms. Velocities remain diagnostic for this
+combined fixture; the tilted quaternion-component difference reaches about 0.15236 on
+Windows and 0.14930 on Linux. The earlier no-extension tilted-motion discrepancy remains
+open. Do not treat these position results as a complete tilted trajectory or landing proof.
+
+Evidence is `.local/rope-native-render-windows.log`, `.local/rope-native-render-linux.log`,
+and the zero-warning/error solution build at `.local/rope-native-render-build.log`.
+The Linux run executes the self-contained output at `.local/linux-native-rope-render`.
+Normal flight scheduling, signed content, map collision, current crew/palm attachment,
+descent, landing and live Worker/Client integration remain required.
 
 ## Verification and remaining work
 

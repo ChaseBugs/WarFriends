@@ -34,12 +34,22 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now composes the source render height gate, rope extension and aircraft Transform
+in their original order, with render and physical clocks kept separate. Combined
+Unity captures verify insertion on frames 7/16 and 9/18, an already-reached target,
+and a disabled gate that cannot restart without ShowRope. Windows/Linux native runs
+pass 4,192 checks each; combined positions and normal/yaw rotations match while
+tilted rotations and combined velocities remain diagnostic. This is a controlled
+branch/physics fixture, not full waypoint flight or automatic frame scheduling.
+Crew attachment, descent, landing and live integration remain pending.
+See [combined render evidence](HELICOPTER_ROPE_PHYSICS.md).
+
 B22 now applies original physical rope extension and one-body insertion through ABI 3.
 The source fixture records eighteen render commands with physical steps, including
 the first insertion on command nine in all three poses. The adapter retains root
 constraint identity, resets the moved body's velocities through the source kinematic
 transition, and gives inserted bodies the measured default drag zero. Initial chain
-drag remains 0.2. Windows/Linux native runners pass 2,707 checks each. Positions,
+drag remains 0.2. The Windows/Linux extension checkpoint passed 2,707 checks each. Positions,
 linear velocities and normal/yaw rotations/angular velocities match the bounded sequence;
 tilted rotations and the previous moving-aircraft discrepancy remain open. No live
 Worker/crew/landing acceptance is implied. See [physical extension evidence](HELICOPTER_ROPE_PHYSICS.md).
