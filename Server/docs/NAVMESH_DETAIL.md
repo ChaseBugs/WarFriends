@@ -149,3 +149,26 @@ Unity initial physics captures, independent of the earlier crew-marker extractio
 That callback and QuickRope `OnEnable` must own initial world pose and physical
 birth time in the next integration stage. The new definition is not permission to
 create a rope at spawn or reset the match's existing physics clock.
+
+## Realtime rope activation
+
+`HelicopterRopeActivationState` now performs actual `NativeHelicopterPhysicsWorld.Add`
+after the recovered wait. Evidence is `Core_BaseScript.InvokeAfterRealTime`,
+`WaitForRealSeconds.finished` and `RadicalRoutine.Execute`: the float deadline is
+strictly exceeded, and the callback resumes through `WaitForEndOfFrame`.
+Activation must therefore be called after that frame's world render, with the
+current aircraft pose. The state does not advance or reset the world's clock.
+
+Native tests verify no allocation at exactly two seconds, allocation at the next
+representable float on a zero-scaled-delta frame, initial pose from current aircraft,
+preserved clock debt, and no physical/render work on the newborn until the next
+frame. They also verify duplicate callback suppression, cancellation before due,
+invalid realtime rejection and removed-identity reuse without an old callback
+touching the replacement. The activated lease belongs to the match world; calling
+`CancelPending` after activation is rejected because removal must go through that
+lease owner. Allocation failure closes the activation state instead of retrying.
+
+This is native scheduling acceptance driven by source code, not a new Unity
+coroutine timing capture. The co-op runtime still needs to own pending states,
+invoke activation at its actual render boundary, cancel them on removal, and release
+the native world on match termination. The normal Worker gate remains closed.

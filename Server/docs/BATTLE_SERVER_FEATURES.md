@@ -36,6 +36,20 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+`HelicopterRopeActivationState` now connects the recovered realtime wait to actual
+native world allocation. It preserves float `spawnRealtime + 2f` and strict `>`
+from `WaitForRealSeconds`, and is called after world rendering because RadicalRoutine
+waits at `WaitForEndOfFrame`. Activation uses the current aircraft pose, leaves
+the match's physical debt intact and records a zero-step/zero-render newborn rope.
+Pending cancellation suppresses late calls; repeated activation cannot allocate
+twice, and a fresh lifecycle can reuse a removed identity with a new world generation.
+The world remains the scene owner. This source-backed scheduling primitive is
+not yet installed in the co-op runtime or normal Worker; live callback ordering
+and the complete create/advance/remove/teardown chain remain to be integrated.
+Windows and actual Ubuntu WSL each pass 6,756 native/activation checks. The focused
+build has zero warnings/errors. Logs: `.local/rope-activation-windows.log` and
+`.local/rope-activation-linux.log`.
+
 Prefab verification corrected the arrival query origin: `ShowRope` uses QuickRope
 root Transform 436455, not crew alignment marker 480871. A new source-bound rope
 definition supplies actual root/end positions, creation rest rotation and spacing.
