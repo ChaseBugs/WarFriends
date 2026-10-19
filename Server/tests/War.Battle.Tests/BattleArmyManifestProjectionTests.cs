@@ -11,6 +11,7 @@ using War.Shared;
 internal static class BattleArmyManifestProjectionTests
 {
     private const int StarterUnitCount = 4;
+    private const int LoadingObservationSeconds = 20;
     private static readonly string[] StarterUnitIds =
     ["ID_UNIT-ASSAULT", "ID_UNIT-GRENADIER", "ID_UNIT-MACHINEGUNNER", "ID_UNIT-SHOTGUNNER"];
 
@@ -18,6 +19,9 @@ internal static class BattleArmyManifestProjectionTests
     {
         BattleCombatContent content = LoadContent(contentDirectory);
         JsonObject root = CreateTemplate(content, contentDirectory);
+        MatchManifest starterPolicy = MatchManifest.Parse(File.ReadAllBytes(
+            Path.Combine(contentDirectory, "local-starter-match-template.json")));
+        root["AdmissionSeconds"] = starterPolicy.AdmissionSeconds;
         var catalog = new BattleMixedManifestCatalog(content);
         var allocations = new List<BattleAllocationProjection>();
         var views = new List<BattlePlayerPresentation>();
@@ -61,12 +65,17 @@ internal static class BattleArmyManifestProjectionTests
                 CommandId = 2, SelectCards = selection
             }).Code == "cards-selected", "The source starter army echo was rejected.");
         }
-        return 14 + VerifySpawnedVitality(host, manifest);
+        return 14 + VerifySpawnedVitality(host, manifest) + VerifyAdmissionExpiry(manifest, map, content);
     }
 
     private static int VerifySpawnedVitality(MatchEngine host, MatchManifest manifest)
     {
         int checks = 0;
+        ulong loadingTick = LoadingObservationSeconds * MatchManifest.TickRate;
+        host.Advance(loadingTick);
+        Require(host.Snapshot().Phase == BattlePhase.Waiting,
+            "Admission expired before a normal card-selection and loading interval.");
+        checks++;
         foreach (ParticipantManifest player in manifest.Players)
         {
             Require(host.Command(player.PlayerId, new MatchCommand
@@ -75,14 +84,14 @@ internal static class BattleArmyManifestProjectionTests
             }).Code == "ready", "The durable starter host could not acknowledge readiness.");
             checks++;
         }
-        host.Advance(60);
+        host.Advance(loadingTick + 60);
         Require(host.Snapshot().Phase == BattlePhase.Running, "The durable starter host did not start.");
         string ownerId = manifest.Players[0].PlayerId;
         Require(host.Command(ownerId, new MatchCommand
         {
             CommandId = 4, DeployArmy = new() { OptionIndex = host.ArmyBatch(ownerId).OptionIndexes.First() }
         }).Code == "army-deploying", "The durable starter deployment was rejected.");
-        host.Advance(61);
+        host.Advance(loadingTick + 61);
         var entities = host.ArmyEntityBatch(ownerId, 0, 0).Entities;
         Require(entities.Count > 0, "The durable starter deployment did not spawn an entity.");
         foreach (BattleArmyEntityState entity in entities)
@@ -93,6 +102,22 @@ internal static class BattleArmyManifestProjectionTests
             checks++;
         }
         return checks + 3;
+    }
+
+    private static int VerifyAdmissionExpiry(MatchManifest manifest, RecoveredBattleMap map, BattleCombatContent content)
+    {
+        var waiting = new MatchEngine(manifest, map, content);
+        ulong deadline = (ulong)manifest.AdmissionSeconds * MatchManifest.TickRate;
+        waiting.Advance(deadline - 1);
+        Require(waiting.Snapshot().Phase == BattlePhase.Waiting,
+            "Admission must retain the configured half-open waiting interval.");
+        waiting.Advance(deadline);
+        Require(waiting.Snapshot().Phase == BattlePhase.Aborted &&
+            waiting.Snapshot().TerminalReason == "admission-timeout",
+            "An incomplete match must expire without scoring at its configured deadline.");
+        Require(!waiting.Admit(manifest.Players[0].PlayerId),
+            "Late admission must not reopen the expired match.");
+        return 3;
     }
 
     internal static BattleCombatContent LoadContent(string directory)

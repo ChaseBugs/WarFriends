@@ -34,6 +34,16 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+The [local admission policy](ADMISSION_POLICY.md) now gives the normal starter allocation sixty
+seconds for card selection and loading. The original card-selection allowance is fifteen seconds;
+the old ten-second host deadline included that choice and all subsequent loading. Sixty seconds
+is explicit reconstruction policy, not an original server constant. The harness uses the
+repository template unless an override is explicitly supplied. The mixed allocator group passes 24 starter host checks, including late readiness and exact
+expiry; protocol and native Mongo/HTTP/UDP smoke checks also pass. A new rendered default-policy
+gate remains pending.
+
+The following earlier entry checkpoints used the former ten-second default:
+
 The two-normal-Unity gate now executes via `ClientBootSmoke.ps1 -SecondUnityProject ...` and
 passes entry with a diagnostic thirty-second admission window. Start acknowledgements 64/65 and trusted map identity/revision
 delivery now work through the normal controllers: both participants select the source map index 2

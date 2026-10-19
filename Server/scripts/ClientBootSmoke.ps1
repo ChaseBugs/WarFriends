@@ -7,7 +7,7 @@ param(
     [switch]$VerifyReturningPlayer,
     [switch]$VerifyNormalQueue,
     [string]$SecondUnityProject,
-    [ValidateRange(5, 120)][int]$PairAdmissionSeconds = 10
+    [ValidateRange(5, 120)][Nullable[int]]$PairAdmissionSeconds
 )
 $ErrorActionPreference = 'Stop'
 if ($VerifyNormalQueue) { $VerifyReturningPlayer = $true }
@@ -99,7 +99,7 @@ try {
     if ($VerifyNormalQueue -or $SecondUnityProject) {
         $env:Battle__MatchmakingCompatibilityKey = 'unscored-starter.fixture'
         $env:Battle__MatchManifestTemplatePath = Join-Path $serverRoot 'content/local-starter-match-template.json'
-        if ($SecondUnityProject -and $PairAdmissionSeconds -ne 10) {
+        if ($SecondUnityProject -and $null -ne $PairAdmissionSeconds) {
             $template = [System.Text.Json.Nodes.JsonNode]::Parse(
                 [IO.File]::ReadAllText($env:Battle__MatchManifestTemplatePath))
             $template['AdmissionSeconds'] = [System.Text.Json.Nodes.JsonNode]::Parse(
