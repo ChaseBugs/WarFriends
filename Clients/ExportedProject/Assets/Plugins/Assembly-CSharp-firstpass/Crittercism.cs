@@ -1,117 +1,121 @@
 using System;
 using System.Net;
-using Beebyte.Obfuscator;
 using UnityEngine;
 
+using Beebyte.Obfuscator;
+
+/// <summary>Retains recovered telemetry call sites without starting a retired online SDK.</summary>
 [Skip]
 public class Crittercism : MonoBehaviour
 {
-	public string CrittercismiOSAppID = "YOUR IOS APP ID GOES HERE";
+    // Serialized field names and public signatures remain for recovered scenes and callers.
+    // Retired telemetry is always opted out; gameplay must not depend on its counters.
 
-	public string CrittercismAndroidAppID = "YOUR ANDROID APP ID GOES HERE";
+    public string CrittercismiOSAppID = "YOUR IOS APP ID GOES HERE";
 
-	private void Awake()
-	{
-		CrittercismAndroid.Init(CrittercismAndroidAppID);
-		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
-		SetLogUnhandledExceptionAsCrash(value: true);
-	}
+    public string CrittercismAndroidAppID = "YOUR ANDROID APP ID GOES HERE";
 
-	public static void LogHandledException(Exception e)
-	{
-		Debug.LogError(e);
-		Debug.LogError(e.StackTrace);
-		CrittercismAndroid.LogHandledException(e);
-	}
+    private void Awake()
+    {
+        UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+    }
 
-	public static bool GetOptOut()
-	{
-		return CrittercismAndroid.GetOptOut();
-	}
+    public static void LogHandledException(Exception e)
+    {
+        if (e != null)
+        {
+            Debug.LogError(e);
+            Debug.LogError(e.StackTrace);
+        }
+    }
 
-	public static void SetOptOut(bool isOptedOut)
-	{
-		CrittercismAndroid.SetOptOut(isOptedOut);
-	}
+    public static bool GetOptOut()
+    {
+        return true;
+    }
 
-	public static void SetUsername(string username)
-	{
-		CrittercismAndroid.SetUsername(username);
-	}
+    public static void SetOptOut(bool isOptedOut)
+    {
+    }
 
-	public static void SetValue(string key, string value)
-	{
-		CrittercismAndroid.SetMetadata(new string[1] { key }, new string[1] { value });
-	}
+    public static void SetUsername(string username)
+    {
+    }
 
-	public static void SetMetadata(string[] keys, string[] values)
-	{
-		CrittercismAndroid.SetMetadata(keys, values);
-	}
+    public static void SetValue(string key, string value)
+    {
+    }
 
-	public static void LeaveBreadcrumb(string breadcrumb)
-	{
-		CrittercismAndroid.LeaveBreadcrumb(breadcrumb);
-	}
+    public static void SetMetadata(string[] keys, string[] values)
+    {
+    }
 
-	public static void LogNetworkRequest(string method, string uriString, double latencyInSeconds, int bytesRead, int bytesSent, HttpStatusCode responseCode, WebExceptionStatus exceptionStatus)
-	{
-		CrittercismAndroid.LogNetworkRequest(method, uriString, (long)latencyInSeconds * 1000, bytesRead, bytesSent, responseCode, exceptionStatus);
-	}
+    public static void LeaveBreadcrumb(string breadcrumb)
+    {
+    }
 
-	public static void LogNetworkRequest(string method, string uriString, long latencyInMilliseconds, int bytesRead, int bytesSent, HttpStatusCode responseCode, WebExceptionStatus exceptionStatus)
-	{
-		CrittercismAndroid.LogNetworkRequest(method, uriString, latencyInMilliseconds, bytesRead, bytesSent, responseCode, exceptionStatus);
-	}
+    public static void LogNetworkRequest(
+        string method,
+        string uriString,
+        double latencyInSeconds,
+        int bytesRead,
+        int bytesSent,
+        HttpStatusCode responseCode,
+        WebExceptionStatus exceptionStatus)
+    {
+    }
 
-	public static bool DidCrashOnLastLoad()
-	{
-		return CrittercismAndroid.DidCrashOnLastLoad();
-	}
+    public static void LogNetworkRequest(
+        string method,
+        string uriString,
+        long latencyInMilliseconds,
+        int bytesRead,
+        int bytesSent,
+        HttpStatusCode responseCode,
+        WebExceptionStatus exceptionStatus)
+    {
+    }
 
-	public static void BeginUserflow(string name)
-	{
-		CrittercismAndroid.BeginUserflow(name);
-	}
+    public static bool DidCrashOnLastLoad()
+    {
+        return false;
+    }
 
-	public static void BeginUserflow(string name, int value)
-	{
-		CrittercismAndroid.BeginUserflow(name);
-		CrittercismAndroid.SetUserflowValue(name, value);
-	}
+    public static void BeginUserflow(string name)
+    {
+    }
 
-	public static void CancelUserflow(string name)
-	{
-		CrittercismAndroid.CancelUserflow(name);
-	}
+    public static void BeginUserflow(string name, int value)
+    {
+    }
 
-	public static void EndUserflow(string name)
-	{
-		CrittercismAndroid.EndUserflow(name);
-	}
+    public static void CancelUserflow(string name)
+    {
+    }
 
-	public static void FailUserflow(string name)
-	{
-		CrittercismAndroid.FailUserflow(name);
-	}
+    public static void EndUserflow(string name)
+    {
+    }
 
-	public static void SetUserflowValue(string name, int value)
-	{
-		CrittercismAndroid.SetUserflowValue(name, value);
-	}
+    public static void FailUserflow(string name)
+    {
+    }
 
-	public static int GetUserflowValue(string name)
-	{
-		return CrittercismAndroid.GetUserflowValue(name);
-	}
+    public static void SetUserflowValue(string name, int value)
+    {
+    }
 
-	public static void SetLogUnhandledExceptionAsCrash(bool value)
-	{
-		CrittercismAndroid.SetLogUnhandledExceptionAsCrash(value);
-	}
+    public static int GetUserflowValue(string name)
+    {
+        return 0;
+    }
 
-	public static bool GetLogUnhandledExceptionAsCrash()
-	{
-		return CrittercismAndroid.GetLogUnhandledExceptionAsCrash();
-	}
+    public static void SetLogUnhandledExceptionAsCrash(bool value)
+    {
+    }
+
+    public static bool GetLogUnhandledExceptionAsCrash()
+    {
+        return false;
+    }
 }

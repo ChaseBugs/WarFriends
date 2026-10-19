@@ -20,6 +20,12 @@ retired provider initialization/waits are removed and account boot passes; retai
 startup requires mobile auditing. Removing external online dependencies is an explicit migration gate, not established
 by Editor bootstrap success or by retaining Photon only for serialized type compatibility.
 
+The retained Crittercism facade now keeps local diagnostic logging while rejecting remote SDK
+startup/forwarding. Compiled verification covers 21 facade methods alongside 17 launcher methods
+and twelve enabled scenes, with a zero exit code. Native plugin/manifest startup and a denied
+external-network Android run remain unverified; this is one removed provider boundary, not full
+third-party removal. Details are in the Unity integration review above.
+
 ## Dependency-ordered work
 
 The two-normal-Unity gate now executes via `ClientBootSmoke.ps1 -SecondUnityProject ...` and

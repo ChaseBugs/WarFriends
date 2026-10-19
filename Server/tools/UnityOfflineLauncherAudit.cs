@@ -16,7 +16,8 @@ public static class UnityOfflineLauncherAudit
     private static readonly HashSet<string> RetiredTypes = new HashSet<string>
     {
         "Terms", "FuseSDK", "GooglePlayGameService", "GameCenterProvider", "GooglePlayDownloader",
-        "Crittercism", "NoodlePermissionGranter", "Kochava", "AndroidJavaClass"
+        "Crittercism", "CrittercismAndroid", "CrittercismIOS", "NoodlePermissionGranter",
+        "Kochava", "AndroidJavaClass", "AndroidJavaObject"
     };
     private static readonly Dictionary<short, OpCode> Instructions = typeof(OpCodes)
         .GetFields(BindingFlags.Public | BindingFlags.Static)
@@ -33,7 +34,17 @@ public static class UnityOfflineLauncherAudit
             throw new InvalidOperationException("Use a disposable project under Server/.local.");
         }
 
-        int methods = VerifyCompiledLauncher();
+        int methods = VerifyCompiledType(typeof(GameLauncher));
+        int telemetryMethods = VerifyCompiledType(typeof(Crittercism));
+        if (!Crittercism.GetOptOut())
+        {
+            throw new InvalidOperationException("Retired crash telemetry must always be opted out.");
+        }
+        Crittercism.SetOptOut(false);
+        if (!Crittercism.GetOptOut())
+        {
+            throw new InvalidOperationException("A legacy caller cannot reactivate retired crash telemetry.");
+        }
         int scenes = VerifyScenes();
         VerifyLauncherFields();
         string output = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "offline-launcher-audit.json");
@@ -42,6 +53,8 @@ public static class UnityOfflineLauncherAudit
             scope = "Compiled GameLauncher/nested IL, enabled-scene scripts and Splash fields; no network trace.",
             unityVersion = Application.unityVersion,
             methodsChecked = methods,
+            telemetryMethodsChecked = telemetryMethods,
+            telemetryAlwaysOptedOut = true,
             enabledScenesChecked = scenes,
             launcherGuid = LauncherGuid,
             serializedFieldsChecked = 8,
@@ -49,13 +62,14 @@ public static class UnityOfflineLauncherAudit
             retiredProviderReferencesInLauncher = 0,
             legacyDownloadFlagRead = false
         }, Formatting.Indented) + "\n");
-        Debug.Log("UNITY_OFFLINE_LAUNCHER_AUDIT_PASSED methods=" + methods + " scenes=" + scenes);
+        Debug.Log("UNITY_OFFLINE_LAUNCHER_AUDIT_PASSED methods=" + methods +
+            " telemetryMethods=" + telemetryMethods + " scenes=" + scenes);
     }
 
-    private static int VerifyCompiledLauncher()
+    private static int VerifyCompiledType(Type root)
     {
         int methods = 0;
-        foreach (Type type in EnumerateTypes(typeof(GameLauncher)))
+        foreach (Type type in EnumerateTypes(root))
         {
             IEnumerable<MethodBase> members = type.GetMethods(DeclaredMembers).Cast<MethodBase>()
                 .Concat(type.GetConstructors(DeclaredMembers));
@@ -117,7 +131,9 @@ public static class UnityOfflineLauncherAudit
         Type owner = target as Type ?? target.DeclaringType;
         while (owner != null)
         {
-            if (RetiredTypes.Contains(owner.Name))
+            bool isRetainedTelemetrySelf = owner == typeof(Crittercism) &&
+                caller.DeclaringType == typeof(Crittercism);
+            if (RetiredTypes.Contains(owner.Name) && !isRetainedTelemetrySelf)
             {
                 throw new InvalidOperationException(caller.Name + " retains provider dependency " + owner.FullName);
             }

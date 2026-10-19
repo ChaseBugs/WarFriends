@@ -36,6 +36,32 @@ local notifications; never turn unavailable ads or identity providers into succe
 authenticated accounts. A denied-external-network device run remains necessary before declaring
 the complete boot/gameplay path offline.
 
+## Retired crash telemetry boundary
+
+Rendered startup logs in `.local/client-boot-c4f08a8f33ae478e903cc0c0d5fb0cdd` show the
+scene's `Crittercism.Awake` invoking `CrittercismAndroid.Init`. This is a concrete retired
+provider entrypoint, although it does not prove the cause of the Editor's separate login-page
+stall. The facade now retains its scene GUID, both serialized app-ID fields and public call
+signatures while omitting native SDK initialization and forwarding. Handled exceptions still
+reach local Unity error logs. Opt-out always returns true, including after a legacy caller
+requests reactivation. Remote crash-history/user-flow values are unavailable and return false
+or zero; these diagnostic defaults must not authorize gameplay or rewards.
+
+`UnityOfflineLauncherAudit` now inspects the compiled facade as well as the launcher, rejecting
+references to Android/iOS telemetry wrappers and Java bridge types. Only the facade's own type
+references are exempted, so preserved serialized fields do not masquerade as native SDK calls.
+The first attempt caught that overly broad self-reference rule; the corrected final run passes
+17 launcher and 21 telemetry methods, twelve enabled scenes with zero missing script attachments,
+and the existing launcher-field checks. Unity 2018.3.0f2 exits zero at
+`.local/offline-telemetry-audit-final.log`. This is compiled/scene evidence, not a new normal
+match or Android network trace. No other gameplay sources directly reference the platform
+telemetry wrappers in the current source search.
+
+The platform wrappers and native libraries remain until their asset/native dependency audit.
+Fuse initialization, attribution and other provider boundaries remain pending. This change does
+not explain or fix the Editor login-page startup stalls described in
+[NORMAL_UNITY_TERMINAL.md](NORMAL_UNITY_TERMINAL.md), and does not close terminal/results acceptance.
+
 ## Patterns worth using
 
 | Ice MOBA source | Observed integration | WarFriends application |
