@@ -15,8 +15,13 @@ internal sealed class HelicopterOrientationState
     {
         if(!PlayerHitbox.Finite(position)||!PlayerHitbox.Finite(velocity)||
            !PlayerHitbox.Finite(steering)||!PlayerHitbox.Finite(target)||
-           !float.IsFinite(frameDelta)||frameDelta<=0||frameDelta>.2f)
+           !float.IsFinite(frameDelta)||frameDelta<0||frameDelta>.2f)
             throw new InvalidDataException("Invalid Helicopter orientation frame.");
+        // Source interpolation factors are zero while paused; retain accepted rotation before dividing by delta.
+        if (frameDelta == 0)
+        {
+            return;
+        }
         Vector3 forward=breaking?target-position:velocity;
         if(forward.Y>0&&!breaking)forward.Y=-forward.Y;
         else forward.Y=0;

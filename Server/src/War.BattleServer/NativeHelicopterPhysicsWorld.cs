@@ -138,6 +138,11 @@ internal sealed class NativeHelicopterPhysicsWorld : IDisposable
             }
             _ = RequireMember(input.Lease);
             NativeHelicopterRope.ValidateAircraftTransform(input.Aircraft);
+            if (input.ExtensionTargetHeight is float height &&
+                (!float.IsFinite(height) || !PlayerHitbox.Finite(new Vector3(0, height, 0))))
+            {
+                throw new InvalidDataException("A render extension target must be finite and bounded.");
+            }
         }
         return prepared.OrderBy(input => input.Lease.EntityId).ToArray();
     }
@@ -164,6 +169,12 @@ internal sealed class NativeHelicopterPhysicsWorld : IDisposable
             NativeHelicopterRope rope = _members[input.Lease.EntityId].Rope;
             rope.SetPhysicsMode(modeAfterRender);
             rope.UpdateRenderFrame(deltaTime, input.Aircraft);
+            if (input.ExtensionTargetHeight is float height)
+            {
+                // StopPointReached runs during Steer, after this frame's rope extension branch.
+                // ShowRope can therefore enable extension only for the following render update.
+                rope.BeginExtension(height);
+            }
         }
     }
 

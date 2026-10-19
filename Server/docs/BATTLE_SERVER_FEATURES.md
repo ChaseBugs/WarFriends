@@ -36,6 +36,23 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The 2026-10-20 composition checkpoint adds an arrival-frame extension target to the
+native world's render input. Recovered `Helicopter.Update` tests `mShowRope` before
+`Steer` invokes `StopPointReached`/`ShowRope`; activation therefore takes effect on
+the next render, rather than extending on the arrival frame. Targets are preflighted
+with the complete roster before any physics executes. Zero-delta orientation retains
+the accepted pose before bank calculation divides by delta time.
+
+A twelve-frame native composition test combines source flight and orientation,
+arrival, delayed extension and a three-frame pause/resume. It compares every body
+and executed counter with explicit source-ordered native operations. Malformed
+arrival targets leave both native bodies and clocks unchanged. This is a synthetic
+host composition test, not a new Unity flight capture or normal Worker integration;
+landing height is supplied explicitly and NavMesh target resolution remains pending.
+Windows and actual Ubuntu WSL each pass 5,977 native/composition checks; the focused
+test project builds with no warnings or errors. Logs are `.local/flight-rope-frame-windows.log`
+and `.local/flight-rope-frame-linux.log`.
+
 Flight timing now exposes separate realtime and time-scale inputs. Recovered
 `Helicopter.Update` computes steering from `UpdateRealTimeDelta`, then translates
 with `mVel * Time.timeScale`. The new overload preserves that split, including

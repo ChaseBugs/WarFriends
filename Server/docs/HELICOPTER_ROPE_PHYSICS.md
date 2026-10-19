@@ -453,3 +453,21 @@ Windows and actual Ubuntu WSL native validation each pass 5,916 checks in
 This covers a native derived-transform rejection after partial frame execution,
 not every SDK failure or operating-system allocation failure. Worker ownership,
 shared collision scenes, flight, crew descent and landing remain open.
+
+## Flight and arrival frame composition — 2026-10-20
+
+`HelicopterFlightRopeFrameTests` drives a braking flight near its stop, source
+orientation, and the native world for twelve render frames, including three paused
+frames. An independent native rope receives explicit fixed steps, render extension,
+aircraft pose and then arrival activation in recovered callback order. Every body
+snapshot, physics/render count and extension flag must agree after each frame.
+The arrival callback fires once. An arrival input arms extension after the current
+rope render branch so extension starts on the next frame. Non-finite or out-of-bound
+arrival targets reject before any frame mutation.
+
+Zero scaled delta is accepted by orientation and preserves its prior pose before
+the bank formula divides by delta. Source interpolation factors are zero and its
+invalid bank quaternion has a guard; no paused orientation is inferred from an
+infinite bank angle. Full Unity flight/pause capture is still required to establish
+rendered fidelity. The composition uses an explicit test landing height, not a
+recovered NavMesh sample. Worker registration and real landing remain pending.

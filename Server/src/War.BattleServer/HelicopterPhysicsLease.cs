@@ -4,7 +4,8 @@ namespace War.BattleServer;
 internal readonly record struct HelicopterPhysicsLease(Guid WorldId, ulong EntityId, ulong Generation);
 
 /// <summary>One trusted flight pose required for a complete world render update.</summary>
-internal sealed record HelicopterPhysicsRenderInput(HelicopterPhysicsLease Lease, HelicopterRopeBodyPose Aircraft);
+internal sealed record HelicopterPhysicsRenderInput(
+    HelicopterPhysicsLease Lease, HelicopterRopeBodyPose Aircraft, float? ExtensionTargetHeight = null);
 
 /// <summary>Copied native state with the global physical birth boundary and local executed counters.</summary>
 internal sealed record HelicopterPhysicsMemberSnapshot(HelicopterPhysicsLease Lease, ulong BirthPhysicsStep,
