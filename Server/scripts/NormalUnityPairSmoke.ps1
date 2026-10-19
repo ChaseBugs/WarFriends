@@ -42,6 +42,17 @@ function Complete-OwnedUnity($process, [string]$project, [string]$label) {
         Copy-Item -LiteralPath $source -Destination (Join-Path $RunRoot ($label + '.json'))
     }
     if ($process.ExitCode -ne 0) { throw "Owned Unity failed: $label; inspect $RunRoot" }
+    # The JSON report precedes Editor teardown; inspect the completed log as well.
+    $logPath = Join-Path $RunRoot ($label + '.log')
+    if (!(Test-Path -LiteralPath $logPath)) {
+        throw "Owned Unity did not leave a complete log: $label"
+    }
+    $exceptionPattern = '^\s*(?:[A-Za-z_][\w]*\.)*[A-Za-z_][\w]*Exception:'
+    $exceptions = @(Select-String -LiteralPath $logPath -Pattern $exceptionPattern)
+    if ($exceptions.Count -ne 0) {
+        throw "Owned Unity logged $($exceptions.Count) exceptions, including teardown: $label; inspect $RunRoot"
+    }
+
 }
 try {
     $editorFolder = Join-Path $secondPath 'Assets/Editor'

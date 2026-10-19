@@ -56,15 +56,15 @@ One alternate starter weapon does not complete firing, reload, all weapon famili
 [Manual reload authority](NORMAL_UNITY_RELOAD.md) routes the selected recovered HUD callback
 through the host and prevents local completion from granting ammunition. The combined diagnostic
 normal run now passes sniper aim/release, completed HUD reload on both peers and live reconnect
-with ninety resumed ticks. Report-time exception counts are zero; error-level diagnostics remain,
-and both Editor logs contain post-report shutdown exceptions. Default admission timing, ordinary
-pointer firing, terminal card indexing and clean shutdown remain open.
+with ninety resumed ticks. The latest pair has zero exceptions in both reports and completed Editor logs; existing
+142/141 error-level diagnostics remain. Default admission timing, ordinary
+pointer firing and complete terminal/result acceptance remain open.
 
 [Army HUD lifecycle repair](ARMY_HUD_LIFECYCLE.md) now avoids retired-controller lookup during
 shutdown and stops card animation at the available offer/slot boundary. Nine actual-component
-Unity checks pass, including the real City Crane teardown target. The previous normal-run
-shutdown and terminal indexing failures remain historical evidence; a new normal terminal and
-whole-process shutdown run is required before closing those acceptance gates.
+Unity checks pass, including the real City Crane teardown target. The new normal pair also passes HUD reload/reconnect and process shutdown with no exceptions
+in either completed log. The harness now rejects post-report exceptions. Full normal terminal,
+results and rematch acceptance remain open; the earlier failures remain historical evidence.
 
 [Army perk projection](ARMY_PERK_PROJECTION.md) now binds complete bilateral combat factors in
 initial mixed allocations and recalculates them from fresh durable snapshots on rematch.

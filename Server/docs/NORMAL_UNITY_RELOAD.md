@@ -108,3 +108,11 @@ zero report exceptions is not a clean whole-process lifecycle result. The earlie
 card-animation indexing defect also remains open. This uses the diagnostic thirty-second
 admission window and prepared sniper input; default admission, pointer firing, all families,
 terminal/rematch gameplay, Android and external-network isolation remain separate gates.
+
+## Shutdown revalidation
+
+The subsequent pair at `.local/client-boot-4f6bbe8273924dc7b3938bd562a1f17f` passes HUD reload
+and live reconnect after the [lifecycle repair](ARMY_HUD_LIFECYCLE.md), with zero exceptions in
+both reports and completed process logs. Error-level diagnostics remain 142/141. The paired
+script now scans logs after process exit to reject post-report exceptions. This is a stronger
+shutdown boundary, not battle-result/rematch or ordinary pointer-input acceptance.
