@@ -36,6 +36,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Helicopter entry's default NGUI clock is now explicit: unscaled realtime,
+millisecond rounding with a carried residual, and a one-second cap applied after
+the full interval is subtracted. `NguiRealtimeClock` reproduces the original
+method's 27 captured rows exactly and rejects malformed observations atomically.
+The capture gate requires three actual long intervals, preventing short Editor
+uptime from creating a vacuous cap test. This remains a prerequisite; normal
+tween update ordering, reuse and crew integration are still open, and the existing
+scaled shot tween is not repurposed for this different clock.
+Windows and actual Ubuntu WSL each pass 7,778 native/query checks with the new
+clock comparisons. Logs: `.local/ngui-realtime-windows.log` and
+`.local/ngui-realtime-linux.log`; build warnings/errors remain zero.
+
 Driving evidence now distinguishes crew-point rotation from soldier rotation.
 An original-method Unity capture covers all six source prefab slots and 96 moving
 point observations after the original entry tween is explicitly completed. The

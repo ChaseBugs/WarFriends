@@ -1,0 +1,226 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "unity": "2018.3.0f2",
+  "source": "Assets/Plugins/Assembly-CSharp-firstpass/IgnoreTimeScale.cs",
+  "sourceSha256": "176759d03696dd5f7a165b4d131fe5c2466f683935b8d3c50d510c6045911576",
+  "fixture": "Controlled prior timestamps; actual UpdateRealTimeDelta invocation, residual retained.",
+  "rows": [
+    {
+      "requestedGap": 0.0,
+      "previous": 1.52520478,
+      "beforeResidual": 0.0,
+      "realtime": 1.52556729,
+      "delta": 0.0,
+      "residual": 0.00036251545
+    },
+    {
+      "requestedGap": 0.0004,
+      "previous": 1.5253247,
+      "beforeResidual": 0.00036251545,
+      "realtime": 1.52573764,
+      "delta": 0.001,
+      "residual": -0.000224543619
+    },
+    {
+      "requestedGap": 0.0005,
+      "previous": 1.5252403,
+      "beforeResidual": -0.000224543619,
+      "realtime": 1.5257467,
+      "delta": 0.0,
+      "residual": 0.000281857443
+    },
+    {
+      "requestedGap": 0.0006,
+      "previous": 1.52514863,
+      "beforeResidual": 0.000281857443,
+      "realtime": 1.52575421,
+      "delta": 0.001,
+      "residual": -0.000112559414
+    },
+    {
+      "requestedGap": 0.016,
+      "previous": 1.50975585,
+      "beforeResidual": -0.000112559414,
+      "realtime": 1.52576137,
+      "delta": 0.016,
+      "residual": -0.000107044354
+    },
+    {
+      "requestedGap": 0.033,
+      "previous": 1.4927659,
+      "beforeResidual": -0.000107044354,
+      "realtime": 1.52577138,
+      "delta": 0.033,
+      "residual": -0.000101566315
+    },
+    {
+      "requestedGap": 0.35,
+      "previous": 1.17577291,
+      "beforeResidual": -0.000101566315,
+      "realtime": 1.52577829,
+      "delta": 0.350000024,
+      "residual": -9.62019E-05
+    },
+    {
+      "requestedGap": 1.0,
+      "previous": 0.525779843,
+      "beforeResidual": -9.62019E-05,
+      "realtime": 1.52578533,
+      "delta": 1.0,
+      "residual": -9.071827E-05
+    },
+    {
+      "requestedGap": 1.25,
+      "previous": 0.275786877,
+      "beforeResidual": -9.071827E-05,
+      "realtime": 1.52579236,
+      "delta": 1.0,
+      "residual": -8.523464E-05
+    },
+    {
+      "requestedGap": 0.0,
+      "previous": 1.52579474,
+      "beforeResidual": -8.523464E-05,
+      "realtime": 1.52580035,
+      "delta": 0.0,
+      "residual": -7.96318054E-05
+    },
+    {
+      "requestedGap": 0.0004,
+      "previous": 1.525402,
+      "beforeResidual": -7.96318054E-05,
+      "realtime": 1.52580726,
+      "delta": 0.0,
+      "residual": 0.000325679779
+    },
+    {
+      "requestedGap": 0.0005,
+      "previous": 1.525309,
+      "beforeResidual": 0.000325679779,
+      "realtime": 1.52581429,
+      "delta": 0.001,
+      "residual": -0.00016899209
+    },
+    {
+      "requestedGap": 0.0006,
+      "previous": 1.52521586,
+      "beforeResidual": -0.00016899209,
+      "realtime": 1.52582133,
+      "delta": 0.0,
+      "residual": 0.0004364719
+    },
+    {
+      "requestedGap": 0.016,
+      "previous": 1.50982273,
+      "beforeResidual": 0.0004364719,
+      "realtime": 1.52582824,
+      "delta": 0.016,
+      "residual": 0.000441987067
+    },
+    {
+      "requestedGap": 0.033,
+      "previous": 1.4928298,
+      "beforeResidual": 0.000441987067,
+      "realtime": 1.52583516,
+      "delta": 0.033,
+      "residual": 0.000447344035
+    },
+    {
+      "requestedGap": 0.35,
+      "previous": 1.17583668,
+      "beforeResidual": 0.000447344035,
+      "realtime": 1.52584207,
+      "delta": 0.350000024,
+      "residual": 0.000452697277
+    },
+    {
+      "requestedGap": 1.0,
+      "previous": 0.52584374,
+      "beforeResidual": 0.000452697277,
+      "realtime": 1.525849,
+      "delta": 1.0,
+      "residual": 0.0004580021
+    },
+    {
+      "requestedGap": 1.25,
+      "previous": 0.2758516,
+      "beforeResidual": 0.0004580021,
+      "realtime": 1.525858,
+      "delta": 1.0,
+      "residual": 0.0004644394
+    },
+    {
+      "requestedGap": 0.0,
+      "previous": 1.52585971,
+      "beforeResidual": 0.0004644394,
+      "realtime": 1.5258652,
+      "delta": 0.0,
+      "residual": 0.000469923019
+    },
+    {
+      "requestedGap": 0.0004,
+      "previous": 1.5254668,
+      "beforeResidual": 0.000469923019,
+      "realtime": 1.52587211,
+      "delta": 0.001,
+      "residual": -0.000124765444
+    },
+    {
+      "requestedGap": 0.0005,
+      "previous": 1.52537358,
+      "beforeResidual": -0.000124765444,
+      "realtime": 1.525879,
+      "delta": 0.0,
+      "residual": 0.000380681944
+    },
+    {
+      "requestedGap": 0.0006,
+      "previous": 1.52528048,
+      "beforeResidual": 0.000380681944,
+      "realtime": 1.52588594,
+      "delta": 0.001,
+      "residual": -1.38541218E-05
+    },
+    {
+      "requestedGap": 0.016,
+      "previous": 1.50988734,
+      "beforeResidual": -1.38541218E-05,
+      "realtime": 1.52589285,
+      "delta": 0.016,
+      "residual": -8.339062E-06
+    },
+    {
+      "requestedGap": 0.033,
+      "previous": 1.49289525,
+      "beforeResidual": -8.339062E-06,
+      "realtime": 1.5259006,
+      "delta": 0.033,
+      "residual": -2.98023224E-06
+    },
+    {
+      "requestedGap": 0.35,
+      "previous": 1.17590213,
+      "beforeResidual": -2.98023224E-06,
+      "realtime": 1.52590752,
+      "delta": 0.350000024,
+      "residual": 2.38418579E-06
+    },
+    {
+      "requestedGap": 1.0,
+      "previous": 0.525908947,
+      "beforeResidual": 2.38418579E-06,
+      "realtime": 1.52591443,
+      "delta": 1.0,
+      "residual": 7.867813E-06
+    },
+    {
+      "requestedGap": 1.25,
+      "previous": 0.275916576,
+      "beforeResidual": 7.867813E-06,
+      "realtime": 1.525922,
+      "delta": 1.0,
+      "residual": 1.32322311E-05
+    }
+  ]
+}

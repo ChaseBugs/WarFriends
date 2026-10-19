@@ -362,3 +362,37 @@ of the soldier's precise pose at coroutine resume. No held soldier rotation is
 invented from current aircraft orientation, spawn age or this isolated endpoint
 capture. Actual phase order and parent-space inputs remain required for runtime
 descent registration.
+
+## Unscaled NGUI clock for entry tween integration
+
+The default `UITweener.ignoreTimeScale` is true. Unlike the existing scaled shot
+tween path, helicopter entry therefore consumes `IgnoreTimeScale.UpdateRealTimeDelta`.
+That method carries sub-millisecond residuals, rounds to the nearest millisecond,
+subtracts the complete rounded interval, then caps the returned delta at one second.
+Excess seconds are discarded, not saved as catch-up debt. OnEnable resets its
+time origin and returned delta but does not clear the carried residual.
+
+`NguiRealtimeClock` implements this calculation from explicit trusted realtime
+observations. Malformed time/overflow rejects before publishing the new origin
+or residual. It is not yet substituted into the scaled shot tween or normal crew
+runtime: the exact caller update order, reuse, realtime observations and parent
+pose must be preserved before that integration. Fixed tick age is not silently
+treated as the original Unity unscaled clock.
+
+`UnityNguiRealtimeClockExport` calls the original method on an inactive owner with
+controlled prior timestamps and carried residuals, recording the method's actual
+realtime and output. The first zero-exit capture lacked sufficient Editor uptime
+to exercise long intervals; its local file is
+`.local/ngui-realtime-short-uptime.json` and is not the cap acceptance evidence.
+The exporter now waits 1.5 seconds in a fresh batch Editor before those cases.
+The accepted run exits zero: `.local/ngui-realtime-unity-final.log`.
+The LF reference digest is
+`4a3d9307e13fa6b0ae9d70b977f943cb8a0814f6dbc92b4b174a4321026547b0`.
+The source digest recorded in that reference is
+`176759d03696dd5f7a165b4d131fe5c2466f683935b8d3c50d510c6045911576`.
+
+Tests require all 27 rows and three observed intervals above 1.2 seconds that
+return the one-second cap. Every delta and residual compares exactly; non-finite,
+negative and overflowing observations must leave the next valid result unchanged.
+This is clock calculation evidence under Unity 2018.3, not a completed real-time
+entry tween, source Start/Update ordering or original Unity 5.2 proof.
