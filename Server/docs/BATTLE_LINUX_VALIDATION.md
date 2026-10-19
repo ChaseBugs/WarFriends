@@ -69,3 +69,41 @@ for this checkpoint.
 These timings describe the WSL test environment, not a production-host service
 level. This pass does not certify normal Unity scene rendering,
 Android, all game modes or Backend economy settlement.
+
+## Current-source regression on 2026-10-19
+
+This later checkpoint uses Ubuntu 22.04.5 WSL2 x86-64 and self-contained .NET/ASP.NET Core
+10.0.12 publications at `.local/linux-protocol-audit` and `.local/linux-battle-audit`.
+The protocol executable exits zero, including its 1,360-check protocol/admission/replay group.
+Focused Linux groups pass 46 bilateral army-perk checks, 24 starter host checks, 130 source army
+wave checks and 14,326 Mortar indicator/pool checks. The latter two also pass on Windows.
+
+The first broad run rejects a stale deployment-manager fingerprint. Review of c830ce762 to
+104f27751 confirms only retired-binding response guards changed, with Spawn unchanged. The
+whole-file guard remains enforced with the reviewed current digest. A subsequent broad run
+rejects old Mortar reference provenance. Rather than bypassing that check, the unchanged Unity
+probe is rerun against the actual active prefab and Weapon source; all ten input hashes match,
+and both complete scenario records are identical. The static pool extractor also changes only
+its source provenance. See [clock review](BATTLE_CLOCKS.md) and
+[actual Unity recapture](MORTAR_INDICATOR.md) for the exact digests and scope.
+
+Because the pool provenance revision participates in the package digest, all four local match
+templates receive freshly computed package identities. No pool capacity, return timing,
+manifest gameplay field or admission policy is changed by this refresh. Old package identities
+are not silently treated as current. The current Windows native smoke exits zero at
+`.local/smoke-ba06b64298054e3fa0d237c355fc659d`, including 74 MongoDB/HTTP/protobuf/UDP checks,
+transactional terminal/card acceptance, cancellation and restart evidence. That Mongo-backed
+Windows run must not be described as Linux MongoDB validation.
+
+The final complete Linux executable exits **zero** with **264,545** battle engine, admission,
+portable SDK, map geometry and real two-peer UDP assertions. Its complete log is
+`.local/linux-battle-current.log`; the earlier failure before the Mortar refresh is retained at
+`.local/linux-battle-before-mortar-refresh.log`. The capacity interval completes 61 rounds of
+32 concurrent polls over 8.14 seconds, p95 37.9 ms and maximum 38.2 ms. These are WSL observations,
+not production service guarantees. The run retains explicit diagnostic-only physics/navigation
+comparisons and does not establish exact original Unity physics or presentation equivalence.
+
+Linux production deployment, Linux MongoDB integration, Android, rendered normal-match entry
+under the new default, results and rematch remain separate acceptance gates. The latest
+normal-Editor attempt is recorded in [the admission policy](ADMISSION_POLICY.md); successful
+account boots and a native full-suite pass do not close its Editor startup failure.

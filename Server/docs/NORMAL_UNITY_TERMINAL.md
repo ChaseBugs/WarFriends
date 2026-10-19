@@ -6,7 +6,8 @@ server termination, recovered GameOver animation, HTTP completion or EndScreen p
 
 Set `WAR_NORMAL_BATTLE_TERMINAL=1` for `ClientBootSmoke.ps1 -SecondUnityProject ...`.
 Use the same disposable projects, isolated Mongo replica set and native Backend/Worker as the
-normal entry gate. The thirty-second admission override remains diagnostic.
+normal entry gate. Omit the admission override to use the current repository policy;
+explicit overrides remain diagnostic.
 
 After both participants complete reconnect observation, each publishes a run-local readiness
 marker. The designated initiator sends the existing authenticated `Forfeit` command. Neither

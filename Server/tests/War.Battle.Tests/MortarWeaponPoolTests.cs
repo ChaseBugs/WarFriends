@@ -8,7 +8,7 @@ using War.Backend;
 /// <summary>Checks the recovered four-slot pool and rejects stale actor ownership.</summary>
 internal static class MortarWeaponPoolTests
 {
-    private const string ReferenceDigest = "ae80ede2b826ff009ea03f82e26ae63e751143816eea6deb7b1f40a1d3d2ea11";
+    private const string ReferenceDigest = "b47c3e88b9d70a48508e125f4e10712fc207f814bf239a20b01887a996620d3e";
 
     internal static int Run(string directory)
     {

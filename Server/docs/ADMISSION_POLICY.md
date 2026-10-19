@@ -53,3 +53,15 @@ The standard native smoke exits zero at
 checks with two independent SDK clients, transactional terminal/card acceptance, cancellation
 and restart evidence. That smoke uses its own prototype fixture and does not replace the
 source-bound default-policy tests or a rendered normal-Client run.
+
+## Default-template Unity attempt
+
+`.local/client-boot-c8662c686e1648b3b9032ea02177aee7` omits the admission override and
+creates no diagnostic template. Both actual account boots complete with zero exceptions,
+zero invalid bootstrap queries and 70 existing error-level diagnostics each, using the recent
+local-configuration and explicit-disposal changes. The subsequent rendered battle Editors
+publish neither lobby-readiness markers nor a battle report. Both logs end in Unity login-page
+CEF errors; the first process reaches the 240-second wrapper timeout, the script exits nonzero
+and cleans up its owned processes. This does not verify or contradict sixty-second in-match
+admission because matchmaking was never observed. Resolve the rendered Editor startup boundary
+before repeating this gate; retain the native policy evidence separately.

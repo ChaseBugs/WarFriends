@@ -9,7 +9,8 @@ internal static class ArmyDeploymentRealtimeRoutineTests
     private const float StartedSeconds = 2f;
     private const float HitchSeconds = 10f;
     private const string WaitSourceDigest = "4ce840bfc00c216677a27f6f951227424d4e223c44a17d3525a3ba924a0137eb";
-    private const string ManagerSourceDigest = "a5af4723f0222252fb5eb0019b3941d67a9787e9bec8424a63ecb027312d5849";
+    // Reviewed 104f27751 changes binding-generation guards; Spawn is unchanged from c830ce762.
+    private const string ManagerSourceDigest = "2dd7ab8fcd227e6843c11a1ae3d45dd07f0fbcc2daf15ee94f63e1459ddf394f";
     private const string WrapperSourceDigest = "4108b79f7f6b250be727bb154f2045b14f02698db0cba66825aa95f366322499";
 
     internal static int Run(string directory)

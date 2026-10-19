@@ -7,7 +7,7 @@ namespace War.BattleServer;
 public sealed class MortarWeaponPoolSource
 {
     /// <summary>Identifies the reviewed source artifact shared by allocator and Worker startup.</summary>
-    public const string VerifiedRevision = "ae80ede2b826ff009ea03f82e26ae63e751143816eea6deb7b1f40a1d3d2ea11";
+    public const string VerifiedRevision = "b47c3e88b9d70a48508e125f4e10712fc207f814bf239a20b01887a996620d3e";
     private const int MaximumArtifactBytes = 16384;
     private const int ParticipantCount = 2;
 

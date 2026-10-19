@@ -2252,6 +2252,16 @@ Regression checks cover resolved health, no-damage refund and collided-ally
 identity independent of the intended aim target. Shield damage remains on its
 own unit-to-shield policy; this does not open live co-op damage authority.
 
+B34/B36 current-source regression on 2026-10-19 passes the complete Linux executable with
+264,545 assertions and terminal exit zero. Stale deployment and Mortar source guards were
+reviewed, the actual Unity warning observation was recaptured with all active inputs matched,
+and package identities were refreshed without changing gameplay fields. Windows focused wave
+and Mortar checks also pass, together with 74 real Mongo/HTTP/UDP smoke checks and restart proof.
+Linux Mongo integration, production deployment and normal Unity/results/rematch remain open.
+See [current evidence and failure provenance](BATTLE_LINUX_VALIDATION.md).
+
+Earlier checkpoint:
+
 B34/B36 Linux validation on 2026-10-17 now executes the current self-contained
 Battle test runner under Ubuntu 22.04.5 WSL2: terminal exit zero and 143,124
 assertions, including real two-peer UDP, 32-match concurrent polls and recent

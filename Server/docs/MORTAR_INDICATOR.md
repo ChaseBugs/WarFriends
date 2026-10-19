@@ -769,3 +769,29 @@ enabling subscribes, the checkpoint shows a warning, deactivation unsubscribes/h
 subscribes, and deferred destruction removes all four world roots. No lifecycle method is
 invoked manually in this path. This closes the isolated automatic-callback gate only; account
 admission, two normal Client scenes, real disconnect recovery and Android remain unverified here.
+
+## Current-source recapture on 2026-10-19
+
+The broad Linux regression stopped because the reuse observation still pinned Weapon.cs from
+before host-authoritative reload integration. The current source was recaptured with the
+unchanged Unity export/probe. A validation copy initially had a different MortarEnemy prefab;
+that intermediate capture was not retained. After synchronizing the actual active prefab,
+all ten recorded input hashes match the active Client and committed tools. Both observers'
+complete scenario records are identical to the earlier capture; no native frame, callback
+history or warning outcome was invented or rewritten.
+
+The final Unity 2018.3.0f2 process exits zero at
+`.local/mortar-reuse-current-source-final.log`. The refreshed compressed reference is 9,305 bytes,
+SHA-256 `9a85f7421194a459680c7a8e64c128bf21278f6cc03397beaf04dad32aaadb51`.
+The previous hash and size above identify the historical capture. The Linux indicator group
+passes 14,326 checks after this recapture and the pool provenance refresh below.
+
+The static weapon-pool artifact also retained the pre-104f27751 deployment-manager hash.
+Review confirms that commit only changes retired connection-generation handling, not Spawn,
+weapon allocation, pool capacity or return timing. Running `extract_mortar_weapon_pool.py`
+changes only its source-provenance list; `--check` passes afterward. The new artifact revision
+is `b47c3e88b9d70a48508e125f4e10712fc207f814bf239a20b01887a996620d3e`.
+The allocator and Worker retain the same strict artifact check. Because that revision participates
+in the combat package digest, all four local templates now carry their freshly computed package
+revisions. Their admission/gameplay fields are preserved; old package identities are not aliased
+to new ones. This is not a compatibility proof for retained pre-update grants or rematches.

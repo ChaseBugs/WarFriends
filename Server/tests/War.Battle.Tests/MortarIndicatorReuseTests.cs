@@ -7,7 +7,7 @@ using War.Shared;
 /// <summary>Replays original warning reuse and allied suppression independently for each observer.</summary>
 internal static class MortarIndicatorReuseTests
 {
-    private const string ReferenceDigest = "c39711ff2007ee3ab629d7985fbf22c3f267ab8739ffa51e5007f1214b456cf7";
+    private const string ReferenceDigest = "9a85f7421194a459680c7a8e64c128bf21278f6cc03397beaf04dad32aaadb51";
     private const float Tolerance = 0.00001f;
 
     internal static int Run(string directory)
