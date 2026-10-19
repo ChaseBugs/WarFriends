@@ -10,7 +10,7 @@ internal sealed partial class CoopMatchRuntime
         internal required int Slot { get; init; }
         internal required ulong StartTick { get; init; }
         internal required HelicopterRopeBodyPose Aircraft { get; init; }
-        internal required HelicopterRopeBodyPose Soldier { get; init; }
+        internal required HelicopterRopeBodyPose CrewPoint { get; init; }
         internal required Vector3 RopeMarker { get; init; }
         internal required Vector3? LandingSurface { get; init; }
         internal required HelicopterPhysicsLease RopeLease { get; init; }
@@ -59,7 +59,8 @@ internal sealed partial class CoopMatchRuntime
                     Slot = member.Slot,
                     StartTick = tick,
                     Aircraft = aircraft,
-                    Soldier = new HelicopterRopeBodyPose(pose.Position, pose.Rotation),
+                    // Driving follows point position only; this rotation is the point's, not the soldier's.
+                    CrewPoint = new HelicopterRopeBodyPose(pose.Position, pose.Rotation),
                     RopeMarker = pose.RopePosition,
                     LandingSurface = surface,
                     RopeLease = rope.Lease,

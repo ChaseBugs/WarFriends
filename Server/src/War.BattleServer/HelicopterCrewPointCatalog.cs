@@ -111,6 +111,7 @@ public sealed class HelicopterCrewPointCatalog
         return new(TurretPointComponentFileId,point,pointRotation,
             sight,sightRotation,muzzle,muzzleRotation);
     }
+    /// <summary>Transforms prefab crew points; their rotations are not observations of Driving soldiers.</summary>
     public IReadOnlyList<HelicopterCrewPose> PlaceAttached(Vector3 rootPosition,Quaternion rootRotation,int seats)
     {
         if(!PlayerHitbox.Finite(rootPosition)||seats is <0 or >6||

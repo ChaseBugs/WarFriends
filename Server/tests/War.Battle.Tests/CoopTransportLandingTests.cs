@@ -156,11 +156,11 @@ internal static class CoopTransportLandingTests
             Vector3 root = drop.Aircraft.Position + Vector3.Transform(slot.RestPosition, drop.Aircraft.Rotation);
             if (drop.StartTick != descents.Single(descent => descent.Slot == drop.Slot).StartTick ||
                 Vector3.Distance(drop.RopeMarker, marker) > 0.000001f ||
-                Vector3.Distance(drop.Soldier.Position, root) > 0.000001f || drop.LandingSurface == null ||
+                Vector3.Distance(drop.CrewPoint.Position, root) > 0.000001f || drop.LandingSurface == null ||
                 drop.RopeLease != rope.Lease || drop.PhysicsSequence == 0 ||
                 drop.PhysicsSequence > physics.PhysicsSteps)
             {
-                throw new Exception("Crew drop lost its marker, initial root, surface or live rope binding.");
+                throw new Exception("Crew drop lost its marker, crew point, surface or live rope binding.");
             }
         }
         Console.WriteLine($"PASS: {drops.Count} source crew drop inputs bound to native rope and direct surface lookup.");

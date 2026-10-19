@@ -334,3 +334,31 @@ normal spawn/coroutine integration or solver equivalence. The Windows-generated
 trace is replay input on Linux; passing Linux descent replay does not mean Linux
 regenerated an identical native trajectory. Existing native physics tests remain
 separate. No independent landed entity or collision authority is added here.
+
+## Driving point rotation is not soldier rotation
+
+`Helicopter.SpawnAssaulter` assigns the helicopter point and starts Helicopter
+behaviour after `SpawningManager.Spawn` resets the pooled soldier's world rotation
+to identity. `SwitchStateToHelicopter` calls Idle, enters Driving and starts one
+`TweenRotation.Begin` toward the point's current rotation. Subsequent Driving
+updates assign position only. They do not refresh that initial tween target when
+the aircraft/point rotates. Pool parent transforms and concurrent tweens still
+need normal-scene observation before deriving a live soldier pose.
+
+`UnityHelicopterDrivingExport` invokes the original `HelicopterUpdate` on inactive
+unparented owners with all six actual prefab crew point transforms. It completes
+the original TweenRotation with `Sample(1, true)` and then moves and rotates the
+aircraft through sixteen observations per slot. All 96 rows follow point position
+while holding the completed entry rotation. This verifies the endpoint and later
+Driving method, not real-time tween scheduling or source coroutine execution.
+The Unity process exits zero; accepted log: `.local/helicopter-driving-unity.log`.
+The LF reference digest is
+`acc7ceb748ad671e31fdae3abb86b3ea06c75848ba9d6d654fa6d5faa23828c6`.
+
+The runtime's drop metadata now calls its transformed point pose `CrewPoint`
+instead of `Soldier`, and the catalog API explicitly documents that limitation.
+Its position is still an attached-point input; even that position is not proof
+of the soldier's precise pose at coroutine resume. No held soldier rotation is
+invented from current aircraft orientation, spawn age or this isolated endpoint
+capture. Actual phase order and parent-space inputs remain required for runtime
+descent registration.

@@ -36,6 +36,21 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Driving evidence now distinguishes crew-point rotation from soldier rotation.
+An original-method Unity capture covers all six source prefab slots and 96 moving
+point observations after the original entry tween is explicitly completed. The
+soldier follows position and holds that entry rotation while the point turns.
+Drop metadata is renamed `CrewPoint` so a current aircraft-composed point rotation
+cannot be mistaken for the soldier's observed rotation. Real tween scheduling,
+pool parent space and coroutine-resume ordering remain open; no runtime soldier
+pose is inferred from this isolated endpoint capture. Details: `NAVMESH_DETAIL.md`.
+Windows and actual Ubuntu WSL each pass 7,718 native/query checks and the
+native-enabled combat-content suite (28,059 reported assertions plus lifecycle
+helpers). Both content logs confirm two crew drop records and full native registry
+reuse. Logs: `.local/crew-driving-windows.log`, `.local/crew-driving-linux.log`,
+`.local/crew-driving-content.log`, `.local/crew-driving-linux-content.log`.
+Build warnings/errors remain zero.
+
 Descent replay now also uses sixteen actual native joint publications from a
 translating/yawing aircraft and extending source-bound rope. Unity consumes the
 exact exported positions before invoking its original descent method. Both
