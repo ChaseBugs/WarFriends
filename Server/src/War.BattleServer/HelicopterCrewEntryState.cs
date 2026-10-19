@@ -55,4 +55,20 @@ internal sealed class HelicopterCrewEntryState
         // Driving follows position only. Aircraft turns must not overwrite the completed entry rotation.
         return new HelicopterRopeBodyPose(pointPosition, _parentRotation * _rotation.LocalRotation);
     }
+
+    /// <summary>Uses observed Time.deltaTime without touching the retained unscaled clock.</summary>
+    internal HelicopterRopeBodyPose AdvanceScaledUpdate(float scaledDelta, Vector3 pointPosition)
+    {
+        if (!float.IsFinite(scaledDelta) || scaledDelta < 0 ||
+            !float.IsFinite(pointPosition.X) || !float.IsFinite(pointPosition.Y) ||
+            !float.IsFinite(pointPosition.Z))
+        {
+            throw new InvalidDataException("Crew entry requires finite position and nonnegative scaled delta.");
+        }
+        if (_rotation.IsRunning)
+        {
+            _rotation.AdvanceScaledUpdate(scaledDelta);
+        }
+        return new HelicopterRopeBodyPose(pointPosition, _parentRotation * _rotation.LocalRotation);
+    }
 }

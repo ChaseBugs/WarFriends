@@ -1,0 +1,659 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "unity": "2018.3.0f2",
+  "fixture": "Explicit original Start/Update dispatch, controlled prior clock, fresh and reused entry tween.",
+  "tweenSha256": "b413504f45103aa0cadaefb89141caa4b43d705953ee0b7450388a1e0551d375",
+  "updateSha256": "9701b22bdb46bb2cf6e42f9d155dd5ad9453ce255b5a2bddd7a2d81ea576fef7",
+  "clockSha256": "176759d03696dd5f7a165b4d131fe5c2466f683935b8d3c50d510c6045911576",
+  "scenarios": [
+    {
+      "parent": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "first": {
+        "from": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "target": [
+          0.0,
+          0.1736482,
+          0.0,
+          0.9848077
+        ],
+        "rows": [
+          {
+            "previous": 2.85516381,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Start",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.274481654,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.0203846637,
+              0.0,
+              0.9997922
+            ],
+            "rotation": [
+              0.0,
+              0.0203846637,
+              0.0,
+              0.9997922
+            ]
+          },
+          {
+            "previous": 2.85638,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.5489633,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.10407646,
+              0.0,
+              0.9945693
+            ],
+            "rotation": [
+              0.0,
+              0.10407646,
+              0.0,
+              0.9945693
+            ]
+          },
+          {
+            "previous": 2.85641766,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.823444963,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.167819738,
+              0.0,
+              0.98581773
+            ],
+            "rotation": [
+              0.0,
+              0.167819738,
+              0.0,
+              0.98581773
+            ]
+          },
+          {
+            "previous": 2.85643148,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.173648208,
+              0.0,
+              0.9848078
+            ],
+            "rotation": [
+              0.0,
+              0.173648208,
+              0.0,
+              0.9848078
+            ]
+          }
+        ]
+      },
+      "reused": {
+        "from": [
+          0.0,
+          0.173648208,
+          0.0,
+          0.9848077
+        ],
+        "target": [
+          0.0,
+          0.382683456,
+          0.0,
+          0.9238795
+        ],
+        "rows": [
+          {
+            "previous": 1.63951659,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.274481654,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.198636159,
+              0.0,
+              0.980073333
+            ],
+            "rotation": [
+              0.0,
+              0.198636159,
+              0.0,
+              0.980073333
+            ]
+          },
+          {
+            "previous": 1.63953018,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.5489633,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.300191939,
+              0.0,
+              0.9538788
+            ],
+            "rotation": [
+              0.0,
+              0.300191939,
+              0.0,
+              0.9538788
+            ]
+          },
+          {
+            "previous": 1.63953829,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.823444963,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.3758594,
+              0.0,
+              0.92667675
+            ],
+            "rotation": [
+              0.0,
+              0.3758594,
+              0.0,
+              0.92667675
+            ]
+          },
+          {
+            "previous": 1.63954592,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.382683456,
+              0.0,
+              0.9238795
+            ],
+            "rotation": [
+              0.0,
+              0.382683456,
+              0.0,
+              0.9238795
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "parent": [
+        0.0413652956,
+        0.317002654,
+        -0.0138406334,
+        0.9474211
+      ],
+      "first": {
+        "from": [
+          -0.04136526,
+          -0.317002684,
+          0.0138406465,
+          0.9474211
+        ],
+        "target": [
+          0.0,
+          0.707106769,
+          0.0,
+          0.707106769
+        ],
+        "rows": [
+          {
+            "previous": 2.85692024,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Start",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.274481654,
+            "enabled": true,
+            "localRotation": [
+              -0.0383470319,
+              -0.191506758,
+              0.01283076,
+              0.980658
+            ],
+            "rotation": [
+              0.005651232,
+              0.129433647,
+              0.00281758141,
+              0.991568
+            ]
+          },
+          {
+            "previous": 2.85695481,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.5489633,
+            "enabled": true,
+            "localRotation": [
+              -0.0199607182,
+              0.332665116,
+              0.006678775,
+              0.942810059
+            ],
+            "rotation": [
+              0.0268098973,
+              0.6140473,
+              0.0133669162,
+              0.7887006
+            ]
+          },
+          {
+            "previous": 2.8569665,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.823444963,
+            "enabled": true,
+            "localRotation": [
+              -0.00174407242,
+              0.6799472,
+              0.000583559566,
+              0.7332588
+            ],
+            "rotation": [
+              0.0382749848,
+              0.876641333,
+              0.0190832019,
+              0.47924
+            ]
+          },
+          {
+            "previous": 2.85697532,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.7071068,
+              0.0,
+              0.7071068
+            ],
+            "rotation": [
+              0.03903649,
+              0.894082665,
+              0.019462876,
+              0.445773154
+            ]
+          }
+        ]
+      },
+      "reused": {
+        "from": [
+          0.0,
+          0.707106769,
+          0.0,
+          0.707106769
+        ],
+        "target": [
+          0.0,
+          0.382683456,
+          0.0,
+          0.9238795
+        ],
+        "rows": [
+          {
+            "previous": 1.63999033,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.274481654,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.6738237,
+              0.0,
+              0.7388922
+            ],
+            "rotation": [
+              0.03989064,
+              0.8726256,
+              0.01764618,
+              0.486438155
+            ]
+          },
+          {
+            "previous": 1.63999939,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.5489633,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.5234499,
+              0.0,
+              0.852056444
+            ],
+            "rotation": [
+              0.0424904451,
+              0.7660316,
+              0.009859659,
+              0.6413212
+            ]
+          },
+          {
+            "previous": 1.64000773,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.823444963,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.39500168,
+              0.0,
+              0.9186804
+            ],
+            "rotation": [
+              0.04346856,
+              0.665457,
+              0.00362424273,
+              0.7451606
+            ]
+          },
+          {
+            "previous": 1.64001513,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              0.382683516,
+              0.0,
+              0.9238795
+            ],
+            "rotation": [
+              0.0435131341,
+              0.655434668,
+              0.003042739,
+              0.753991246
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "parent": [
+        0.06960567,
+        0.5995249,
+        -0.05245163,
+        0.79559654
+      ],
+      "first": {
+        "from": [
+          -0.06960554,
+          -0.5995249,
+          0.0524517223,
+          0.7955965
+        ],
+        "target": [
+          0.0,
+          0.8660254,
+          0.0,
+          -0.50000006
+        ],
+        "rows": [
+          {
+            "previous": 2.857088,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Start",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.274481654,
+            "enabled": true,
+            "localRotation": [
+              -0.061832875,
+              -0.636945546,
+              0.04659458,
+              0.767011166
+            ],
+            "rotation": [
+              -0.00127991661,
+              -0.0469093621,
+              -0.0104251765,
+              0.9988441
+            ]
+          },
+          {
+            "previous": 2.85710168,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.5489633,
+            "enabled": true,
+            "localRotation": [
+              -0.0287113544,
+              -0.7739437,
+              0.021635633,
+              0.6322331
+            ],
+            "rotation": [
+              -0.006459154,
+              -0.236707479,
+              -0.05260612,
+              0.9701343
+            ]
+          },
+          {
+            "previous": 2.85711,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.823444963,
+            "enabled": true,
+            "localRotation": [
+              -0.00243765768,
+              -0.859124959,
+              0.0018369134,
+              0.5117567
+            ],
+            "rotation": [
+              -0.0102794543,
+              -0.376705945,
+              -0.08371957,
+              0.9224847
+            ]
+          },
+          {
+            "previous": 2.85711741,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              -0.8660254,
+              0.0,
+              0.50000006
+            ],
+            "rotation": [
+              -0.0106216036,
+              -0.389244318,
+              -0.0865061,
+              0.9170021
+            ]
+          }
+        ]
+      },
+      "reused": {
+        "from": [
+          0.0,
+          0.8660254,
+          0.0,
+          -0.50000006
+        ],
+        "target": [
+          0.0,
+          0.382683456,
+          0.0,
+          0.9238795
+        ],
+        "rows": [
+          {
+            "previous": 1.64012933,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.274481654,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.7697396,
+              0.0,
+              -0.638358057
+            ],
+            "rotation": [
+              -0.004059244,
+              0.229690641,
+              0.08706117,
+              -0.969353557
+            ]
+          },
+          {
+            "previous": 1.64013743,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.5489633,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              0.18625775,
+              0.0,
+              -0.982501
+            ],
+            "rotation": [
+              -0.05861812,
+              -0.440847754,
+              0.06449837,
+              -0.8933405
+            ]
+          },
+          {
+            "previous": 1.6401453,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 0.823444963,
+            "enabled": true,
+            "localRotation": [
+              0.0,
+              -0.336948335,
+              0.0,
+              -0.941523135
+            ],
+            "rotation": [
+              -0.0832088441,
+              -0.8325415,
+              0.0259309076,
+              -0.547063649
+            ]
+          },
+          {
+            "previous": 1.64015269,
+            "realtime": 0.0,
+            "delta": 0.0,
+            "dispatch": "Update",
+            "scaledDelta": 0.0823445,
+            "ignoreTimeScale": false,
+            "factor": 1.0,
+            "enabled": false,
+            "localRotation": [
+              0.0,
+              -0.382683456,
+              0.0,
+              -0.923879564
+            ],
+            "rotation": [
+              -0.08437963,
+              -0.8583504,
+              0.02182205,
+              -0.5056071
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

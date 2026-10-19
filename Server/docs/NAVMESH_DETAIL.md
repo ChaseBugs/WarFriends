@@ -758,3 +758,30 @@ Windows and actual Ubuntu WSL pass 9,427 native ownership/motion checks; evidenc
 is `.local/crew-entry-reuse-windows.log` and `.local/crew-entry-reuse-linux.log`.
 These checks establish the preserved clock field semantics, not the normal pool's
 callback schedule or a captured sub-millisecond Unity lifecycle run.
+
+### Retained scaled-time entry mode
+
+`EnemyController` ground rotation paths explicitly set `ignoreTimeScale=false`.
+`UITweener.Begin` resets factor, style, duration and callbacks but does not reset
+that field; `SwitchStateToHelicopter` does not override it. The server now exposes
+`AdvanceScaledUpdate` on the entry and tween classes, consuming source-scaled
+delta directly while leaving the NGUI clock untouched. The existing unscaled
+method retains its one-second NGUI cap; scaled input is not assigned that cap.
+Finite nonnegative input and finite derived progress are required before mutation.
+
+`WAR_HELICOPTER_ENTRY_SCALED=1` runs the source entry exporter in an empty disposable
+Play Mode scene, retaining inactive fixture objects and explicit Start/Update calls.
+The accepted process exits zero at `.local/crew-entry-scaled-unity-play.log`.
+The prior Edit Mode attempt exits one because Time.deltaTime is zero; it is not
+accepted evidence of completed scaled rotation (`.local/crew-entry-scaled-unity.log`).
+The accepted capture uses the observed 0.0823445-second Time.deltaTime for 24 calls
+across three parent rotations and fresh/reused cycles. Repeated calls use that
+same frame delta; this is not a normal PlayerLoop timing or pool lifecycle trace.
+
+Reference LF SHA-256:
+`6d5875a2c9f1dcd2e633b44505ad101302ce33e4832d3e8942960a2eb4496344`.
+All 24 composed world rotations and completion flags match the original at the
+unchanged 0.00001 quaternion tolerance. Additional zero-delta checks retain the
+initial rotation. Windows and actual Ubuntu WSL pass 9,451 native ownership/motion
+checks at `.local/crew-entry-scaled-windows.log` and `.local/crew-entry-scaled-linux.log`.
+Normal runtime mode selection, OnEnable/Start order and pooled endpoints remain pending.

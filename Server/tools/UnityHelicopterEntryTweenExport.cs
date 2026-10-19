@@ -10,9 +10,30 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// <summary>Invokes original Start/Update with controlled prior realtime and actual parent-space rotations.</summary>
+[InitializeOnLoad]
 public static class UnityHelicopterEntryTweenExport
 {
     private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
+    private const string ScaledKey = "WarFriends.EntryScaledCapture";
+
+    static UnityHelicopterEntryTweenExport()
+    {
+        if (SessionState.GetBool(ScaledKey, false))
+        {
+            EditorApplication.update += ObserveScaledStart;
+        }
+    }
+
+    private static void ObserveScaledStart()
+    {
+        if (!Application.isPlaying || Time.frameCount < 3 || Time.deltaTime <= 0)
+        {
+            return;
+        }
+        EditorApplication.update -= ObserveScaledStart;
+        SessionState.SetBool(ScaledKey, false);
+        Run();
+    }
 
     public static void Run()
     {
@@ -23,7 +44,16 @@ public static class UnityHelicopterEntryTweenExport
             {
                 throw new InvalidOperationException("A disposable project and explicit output are required.");
             }
-            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+            if (!Application.isPlaying)
+            {
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+                if (Environment.GetEnvironmentVariable("WAR_HELICOPTER_ENTRY_SCALED") == "1")
+                {
+                    SessionState.SetBool(ScaledKey, true);
+                    EditorApplication.isPlaying = true;
+                    return;
+                }
+            }
             if (Time.realtimeSinceStartup < 1.5f)
             {
                 System.Threading.Thread.Sleep(1500);
@@ -70,10 +100,15 @@ public static class UnityHelicopterEntryTweenExport
     private static object CaptureCycle(GameObject soldier, Quaternion target, int cycle)
     {
         TweenRotation tween = TweenRotation.Begin(soldier, 0.3f, target);
+        if (Environment.GetEnvironmentVariable("WAR_HELICOPTER_ENTRY_SCALED") == "1")
+        {
+            tween.ignoreTimeScale = false;
+        }
         Quaternion from = Quaternion.Euler(tween.from);
         Quaternion to = Quaternion.Euler(tween.to);
         var rows = new List<object>();
-        for (int index = 0; index < 20 && tween.enabled; index++)
+        int maximumUpdates = tween.ignoreTimeScale ? 20 : 2048;
+        for (int index = 0; index < maximumUpdates && tween.enabled; index++)
         {
             float gap = cycle == 0 ? 0.033f : 1.25f;
             float previous = Time.realtimeSinceStartup - gap;
@@ -84,6 +119,7 @@ public static class UnityHelicopterEntryTweenExport
             rows.Add(new
             {
                 previous, realtime = tween.realTime, delta = tween.realTimeDelta, dispatch,
+                scaledDelta = Time.deltaTime, ignoreTimeScale = tween.ignoreTimeScale,
                 factor = tween.tweenFactor, enabled = tween.enabled,
                 localRotation = Values(soldier.transform.localRotation), rotation = Values(soldier.transform.rotation)
             });

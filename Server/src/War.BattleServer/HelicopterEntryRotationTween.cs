@@ -34,12 +34,26 @@ internal sealed class HelicopterEntryRotationTween
         {
             throw new InvalidDataException("Entry tween requires a validated NGUI unscaled delta.");
         }
+        AdvanceScaledUpdate(unscaledDelta);
+    }
+
+    /// <summary>Consumes source Time.deltaTime directly when a reused tween retains ignoreTimeScale=false.</summary>
+    internal void AdvanceScaledUpdate(float scaledDelta)
+    {
+        if (!float.IsFinite(scaledDelta) || scaledDelta < 0)
+        {
+            throw new InvalidDataException("Entry tween requires a finite nonnegative scaled delta.");
+        }
         if (!IsRunning)
         {
             throw new InvalidOperationException("Entry tween cannot update after completion without Begin.");
         }
         // Captured Mono updates round at assignment; rounding the product first drifts from frame four.
-        float nextFactor = (float)(Factor + (double)(1f / DurationSeconds) * unscaledDelta);
+        float nextFactor = (float)(Factor + (double)(1f / DurationSeconds) * scaledDelta);
+        if (!float.IsFinite(nextFactor))
+        {
+            throw new InvalidDataException("Entry tween progress overflowed.");
+        }
         IsRunning = nextFactor <= 1f;
         Factor = MathF.Min(nextFactor, 1f);
         float circle = MathF.PI * 2f;

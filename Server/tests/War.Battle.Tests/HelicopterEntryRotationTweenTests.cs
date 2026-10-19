@@ -34,7 +34,7 @@ internal static class HelicopterEntryRotationTweenTests
         }
         VerifyGuards();
         Console.WriteLine("PASS: 33 original entry tween updates, unscaled clock reuse and parent-space rotations.");
-        return checks + 5 + VerifyEntryGuards() + VerifyRestartResidual();
+        return checks + 5 + VerifyEntryGuards() + VerifyRestartResidual() + VerifyScaledCapture(directory);
     }
 
     private static int VerifyCycle(JsonElement cycle, Quaternion parent,
@@ -151,6 +151,50 @@ internal static class HelicopterEntryRotationTweenTests
                 "Restart discarded the source clock residual or invented an OnEnable time origin.");
         }
         return 2;
+    }
+
+    private static int VerifyScaledCapture(string directory)
+    {
+        string text = File.ReadAllText(Path.Combine(directory,
+            "recovered-helicopter-entry-scaled-unity-reference.json")).Replace("\r\n", "\n");
+        Require(Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text))) ==
+            "6d5875a2c9f1dcd2e633b44505ad101302ce33e4832d3e8942960a2eb4496344",
+            "Scaled entry reference changed without review.");
+        using JsonDocument document = JsonDocument.Parse(text);
+        int checks = 0;
+        foreach (JsonElement scenario in document.RootElement.GetProperty("scenarios").EnumerateArray())
+        {
+            Quaternion parent = ReadRotation(scenario.GetProperty("parent"));
+            JsonElement first = scenario.GetProperty("first");
+            var entry = new HelicopterCrewEntryState(ReadRotation(first.GetProperty("from")),
+                ReadRotation(first.GetProperty("target")), parent, 0);
+            checks += VerifyScaledCycle(first, entry);
+            checks += VerifyScaledCycle(scenario.GetProperty("reused"), entry);
+        }
+        Require(checks == 24, "Scaled entry lost fresh/reused parent-space update coverage.");
+        Console.WriteLine("PASS: 24 original scaled entry updates across fresh and reused cycles.");
+        return checks;
+    }
+
+    private static int VerifyScaledCycle(JsonElement cycle, HelicopterCrewEntryState entry)
+    {
+        entry.Restart(ReadRotation(cycle.GetProperty("from")), ReadRotation(cycle.GetProperty("target")));
+        Quaternion initial = entry.AdvanceScaledUpdate(0, Vector3.Zero).Rotation;
+        Require(entry.AdvanceScaledUpdate(0, Vector3.One).Rotation == initial && entry.IsRotating,
+            "Paused scaled entry moved its rotation or completed without a positive delta.");
+        JsonElement rows = cycle.GetProperty("rows");
+        foreach (JsonElement row in rows.EnumerateArray())
+        {
+            Require(!row.GetProperty("ignoreTimeScale").GetBoolean() &&
+                row.GetProperty("scaledDelta").GetSingle() > 0 && row.GetProperty("delta").GetSingle() == 0,
+                "Scaled reference used the unscaled clock or lost its positive scaled delta.");
+            HelicopterRopeBodyPose pose = entry.AdvanceScaledUpdate(row.GetProperty("scaledDelta").GetSingle(),
+                Vector3.One);
+            Require(Difference(pose.Rotation, ReadRotation(row.GetProperty("rotation"))) < RotationTolerance &&
+                entry.IsRotating == row.GetProperty("enabled").GetBoolean(),
+                "Scaled crew entry differs from original Update or reused completion state.");
+        }
+        return rows.GetArrayLength();
     }
 
     private static Quaternion ReadRotation(JsonElement value)

@@ -36,6 +36,21 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Source inspection found a retained clock-mode dependency: several ground actions
+set `TweenRotation.ignoreTimeScale=false`; `UITweener.Begin` does not reset it,
+and helicopter entry does not set it explicitly. Entry therefore cannot always
+use NGUI unscaled time when a pooled tween is reused. The composed entry and
+rotation classes now provide an explicit `AdvanceScaledUpdate` path consuming
+observed `Time.deltaTime`, without advancing the retained unscaled clock.
+Zero scaled delta retains rotation; malformed/overflowed deltas fail closed.
+Twenty-four original scaled Start/Update observations across three parents and
+fresh/reused cycles match at the existing rotation tolerance. Windows and actual
+Ubuntu WSL pass 9,451 native ownership/motion checks; builds have zero warnings/errors.
+Logs: `.local/crew-entry-scaled-windows.log` and `.local/crew-entry-scaled-linux.log`.
+The Unity capture explicitly dispatches methods in Play Mode using one observed
+scaled delta, not normal actor/pool scheduling. Runtime wiring must still select
+clock mode from source-owned state rather than forcing one mode for every birth.
+
 `HelicopterCrewEntryState` now composes the recovered entry tween with its NGUI
 realtime clock and fixed pool-parent rotation. It accepts observed Euler-roundtripped
 local endpoints and callback time explicitly. Each Driving observation follows the
