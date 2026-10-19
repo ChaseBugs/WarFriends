@@ -107,3 +107,51 @@ Linux production deployment, Linux MongoDB integration, Android, rendered normal
 under the new default, results and rematch remain separate acceptance gates. The latest
 normal-Editor attempt is recorded in [the admission policy](ADMISSION_POLICY.md); successful
 account boots and a native full-suite pass do not close its Editor startup failure.
+
+## Native Linux Mongo integration on 2026-10-19
+
+This later run closes the Linux Mongo smoke gap above, not the remaining game acceptance gates.
+Ubuntu 22.04.5 WSL executes self-contained linux-x64 Backend, Worker, protocol tests,
+Battle tests and SmokeClient from `.local/linux-integration/<project-name>`.
+MongoDB 8.0.34 runs natively with an isolated replica set and data on the Linux filesystem.
+No Docker, system-wide SDK installation, or existing database is used.
+
+The official Ubuntu 22.04 x86-64 archive is
+`https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-8.0.34.tgz`;
+its verified SHA-256 is `8eef2a821651ac20f732b6636731a51b407675674ced8d7f1f1578ebc7aced43`.
+See the [official tarball instructions](https://www.mongodb.com/docs/v8.0/tutorial/install-mongodb-on-ubuntu-tarball/).
+
+Publish each of `War.Backend`, `War.BattleServer`, `War.Battle.Tests`, `War.Protocol.Tests`,
+and `War.SmokeClient` with `dotnet publish <project.csproj> -c Release -r linux-x64
+--self-contained true -o Server/.local/linux-integration/<project-name>`.
+Then, from a Linux shell at the repository root:
+
+```bash
+MONGOD="$PWD/Server/.local/linux-mongodb-8.0.34/bin/mongod" \
+PUBLISHED_ROOT="$PWD/Server/.local/linux-integration" \
+SMOKE_RUN_ROOT=/root/warfriends-smoke \
+HTTP_PORT=28080 MONGO_PORT=29028 BATTLE_PORT=31080 CONTROL_PORT=31081 \
+bash Server/scripts/smoke.sh
+```
+
+Use a writable native Linux `SMOKE_RUN_ROOT` for your account; `/root` reflects this WSL user.
+Omit `PUBLISHED_ROOT` to use the original installed-SDK build mode. Port inputs are validated
+before startup. The script owns, stops, and reaps only its own service children.
+
+The first run passed transaction tests but failed service readiness with empty host logs.
+Explicit per-host `contentRoot` fixed startup; a direct Worker probe then immediately reached
+key validation, and the complete rerun passed. This scopes configuration loading/watchers to
+each application rather than the repository. Backend publication also exposed `NETSDK1152`:
+referenced Worker settings and executable metadata collided with the Backend's own files.
+Backend now excludes child-project publish content while retaining referenced assemblies.
+Its published appsettings hash matches its source and only its own runtimeconfig is present.
+
+The final smoke exits **zero**, including replica-set election, queue/cancellation recovery,
+atomic terminal/card/pair publication, 25 prestart orderings, 22 command acknowledgements,
+the protocol executable (including 1,360 protocol/admission/replay checks), and **74 live
+MongoDB/HTTP/protobuf/UDP checks with two independent clients**. The complete output is
+`.local/linux-native-mongo-smoke-fixed.log`. Service logs are copied to
+`.local/linux-mongo-backend.log` and `.local/linux-mongo-worker.log`; the native run directory
+is `/root/warfriends-smoke/smoke-PiS5rt2F`. The ordinary solution build also passes with zero
+warnings/errors. This is not Linux restart/fault parity with the larger Windows smoke,
+production-host installation, wallet settlement, normal Unity gameplay, or Android acceptance.

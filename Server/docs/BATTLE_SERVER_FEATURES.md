@@ -34,6 +34,15 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B34/B36 native Linux integration on 2026-10-19 now passes the isolated MongoDB 8.0.34
+replica-set smoke with self-contained Backend and Worker: transactional queue/card/terminal
+checks, the protocol executable, and 74 live HTTP/protobuf/UDP checks with two independent
+clients, terminal exit zero. The smoke now supports published executables, configurable
+validated ports and native Linux data directories. Per-host content roots fix the observed
+startup failure; Backend publication excludes colliding child-host config/metadata.
+See [Linux validation](BATTLE_LINUX_VALIDATION.md) for reproduction and exact scope.
+Production deployment, complete fault testing and normal Unity/Android gameplay remain open.
+
 The [local admission policy](ADMISSION_POLICY.md) now gives the normal starter allocation sixty
 seconds for card selection and loading. The original card-selection allowance is fifteen seconds;
 the old ten-second host deadline included that choice and all subsequent loading. Sixty seconds
