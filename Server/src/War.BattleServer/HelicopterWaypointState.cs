@@ -5,6 +5,14 @@ namespace War.BattleServer;
 // rotation, rope, crew deployment and combat remain separate integration gates.
 internal sealed class HelicopterWaypointState
 {
+    private const float NormalTimeScale = 1f;
+    private const float MillisecondsPerSecond = 1000f;
+    private const float MaximumSteeringDelta = 1f;
+    private const float SourceBrakingDistance = 6f;
+    private const float SourceBrakingSpeed = 2f;
+    private const float SourceMass = 150f;
+    private const float SourceBrakingMass = 30f;
+    private const float SourceStopDistance = 1f;
     private readonly DroneWaypoint[] points;
     private readonly float radius,speed;
     private readonly bool loop;
@@ -34,43 +42,85 @@ internal sealed class HelicopterWaypointState
     // Returns true only on the source's first stop-point arrival callback.
     internal bool Advance(float realtime)
     {
-        if(!float.IsFinite(realtime)||realtime<0||(timeStarted&&realtime<lastRealtime))
+        return Advance(realtime, NormalTimeScale);
+    }
+
+    // Source Steer uses realtime; only the final Transform translation uses Time.timeScale.
+    internal bool Advance(float realtime, float timeScale)
+    {
+        if (!float.IsFinite(realtime) || realtime < 0 || (timeStarted && realtime < lastRealtime) ||
+            !float.IsFinite(timeScale) || timeScale < 0)
+        {
             throw new InvalidDataException("Invalid Helicopter realtime authority.");
-        float dt=0,nextResidual=residual;
-        if(timeStarted)
-        {
-            nextResidual+=realtime-lastRealtime;
-            dt=MathF.Round(nextResidual*1000f)/1000f;
-            nextResidual-=dt;
-            dt=Math.Min(dt,1f);
         }
-        int nextIndex=TargetIndex;
-        if(Vector3.Distance(Position,points[nextIndex].Position)<radius)
+        (float deltaTime, float nextResidual) = PrepareRealtime(realtime);
+        int nextIndex = PrepareTargetIndex();
+        Vector3 stop = points[routeStopIndex].Position;
+        float distance = Vector3.Distance(stop, Position);
+        bool isBraking = distance < SourceBrakingDistance;
+        Vector3 desired = DesiredVelocity(nextIndex, deltaTime, distance);
+        Vector3 steering = (desired - Velocity) / (isBraking ? SourceBrakingMass : SourceMass);
+        Vector3 nextVelocity = Velocity + steering;
+        Vector3 nextPosition = Position + nextVelocity * timeScale;
+        if (!PlayerHitbox.Finite(nextVelocity) || !PlayerHitbox.Finite(nextPosition) || !float.IsFinite(nextResidual))
         {
-            if(nextIndex<points.Length-1)nextIndex++;
-            else if(loop)nextIndex=0;
-        }
-        var stop=points[routeStopIndex].Position;
-        Vector3 target=points[nextIndex].Position-Position;
-        float distance=Vector3.Distance(stop,Position);
-        bool braking=distance<6f; // Helicopter.prefab breakDistance=6, mass=150.
-        Vector3 desired=Vector3.Zero;
-        if(braking)
-        {
-            var toward=stop-Position;
-            if(toward.LengthSquared()>0)desired=Vector3.Normalize(toward)*(2f*dt*(distance/6f));
-        }
-        else if(target.LengthSquared()>0)desired=Vector3.Normalize(target)*(speed*dt);
-        Vector3 steering=(desired-Velocity)/(braking?30f:150f);
-        Vector3 nextVelocity=Velocity+steering;
-        Vector3 nextPosition=Position+nextVelocity;
-        if(!PlayerHitbox.Finite(nextVelocity)||!PlayerHitbox.Finite(nextPosition)||!float.IsFinite(nextResidual))
             throw new InvalidDataException("Helicopter motion overflow.");
-        bool arrived=braking&&distance<1f&&!StopReached;
-        Position=nextPosition;Velocity=nextVelocity;Steering=steering;TargetIndex=nextIndex;
-        Breaking=braking;StopReached|=arrived;
-        residual=nextResidual;lastRealtime=realtime;timeStarted=true;
-        return arrived;
+        }
+        bool hasArrived = isBraking && distance < SourceStopDistance && !StopReached;
+        Position = nextPosition;
+        Velocity = nextVelocity;
+        Steering = steering;
+        TargetIndex = nextIndex;
+        Breaking = isBraking;
+        StopReached |= hasArrived;
+        residual = nextResidual;
+        lastRealtime = realtime;
+        timeStarted = true;
+        return hasArrived;
+    }
+
+    private (float DeltaTime, float Residual) PrepareRealtime(float realtime)
+    {
+        if (!timeStarted)
+        {
+            return (0, residual);
+        }
+        float nextResidual = residual + (realtime - lastRealtime);
+        float deltaTime = MathF.Round(nextResidual * MillisecondsPerSecond) / MillisecondsPerSecond;
+        nextResidual -= deltaTime;
+        return (Math.Min(deltaTime, MaximumSteeringDelta), nextResidual);
+    }
+
+    private int PrepareTargetIndex()
+    {
+        int nextIndex = TargetIndex;
+        if (Vector3.Distance(Position, points[nextIndex].Position) < radius)
+        {
+            if (nextIndex < points.Length - 1)
+            {
+                nextIndex++;
+            }
+            else if (loop)
+            {
+                nextIndex = 0;
+            }
+        }
+        return nextIndex;
+    }
+
+    private Vector3 DesiredVelocity(int targetIndex, float deltaTime, float distanceToStop)
+    {
+        bool isBraking = distanceToStop < SourceBrakingDistance;
+        Vector3 destination = isBraking ? points[routeStopIndex].Position : points[targetIndex].Position;
+        Vector3 direction = destination - Position;
+        if (direction.LengthSquared() == 0)
+        {
+            return Vector3.Zero;
+        }
+        float desiredSpeed = isBraking
+            ? SourceBrakingSpeed * deltaTime * (distanceToStop / SourceBrakingDistance)
+            : speed * deltaTime;
+        return Vector3.Normalize(direction) * desiredSpeed;
     }
     private readonly int routeStopIndex;
 }

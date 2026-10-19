@@ -36,6 +36,15 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Flight timing now exposes separate realtime and time-scale inputs. Recovered
+`Helicopter.Update` computes steering from `UpdateRealTimeDelta`, then translates
+with `mVel * Time.timeScale`. The new overload preserves that split, including
+continued steering updates while paused and scaled displacement on resume.
+The existing Worker call retains normal scale one; this does not yet migrate the
+Worker to paused render callbacks. Source equation checks cover pause, half speed,
+invalid scale rejection and the next valid frame. Full rendered source capture
+with pause and flight, and coupling this path to the native world, remain pending.
+
 `NativeHelicopterPhysicsWorld` now owns multiple isolated native rope scenes under one
 match clock. Joining preserves existing clock debt and records each member's physical
 birth boundary. Render inputs are validated as a complete roster before execution;
