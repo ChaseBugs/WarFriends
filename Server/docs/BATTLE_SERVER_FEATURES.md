@@ -24,9 +24,23 @@ do not automatically register actors. Normal Worker creation, health, colliders,
 landing, detached-seat behavior and parent-death cascades still need integration
 and gameplay proof.
 
-Validation: Windows build completed with zero warnings/errors; the native-enabled
-combat-content executable passed 28,882 focused assertions. Linux validation for
-this accounting change has not yet run.
+Boundary coverage also checks a missing Assaulter wave family, empty and oversized
+cohorts, a dead parent and a finished mission. A missing wave family retains
+one-time actor death confirmation without changing the wave balance.
+
+The next integration must preserve `Helicopter.SpawnAssaulter` health initialization
+from the parent's crew upgrade and co-op scale. Parent destruction must check the
+source seat/actor binding: `Vehicle.DestroySoldier` only kills a soldier whose
+current `enemyPoint` still equals that seat. A detached actor must not be killed
+merely because its original aircraft disappears. Current identity reservations
+and descent snapshots alone do not establish this lifetime behavior.
+
+Validation: Windows build completed with zero warnings/errors. Windows and actual
+WSL Linux native-enabled combat-content runs each passed 28,887 focused assertions.
+The published Linux assembly was checked for the added boundary test before running.
+Logs: `.local/mission-crew-boundaries-windows.log` and
+`.local/mission-crew-boundaries-linux.log`. These are regression checks, not normal
+two-client gameplay acceptance.
 
 The [Ice MOBA source review](ICE_MOBA_SERVER_REFERENCE.md) records useful UDP/service lifecycle,
 checkpoint-plus-input-tail reconnect and diagnostic patterns, with exact external source hashes.

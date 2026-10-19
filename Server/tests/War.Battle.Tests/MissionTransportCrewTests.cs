@@ -9,9 +9,10 @@ internal static class MissionTransportCrewTests
     {
         VerifyWaveBalance(catalog.Get(0));
         VerifyUnlistedAircraft(catalog.Get(0));
+        VerifyCrewWithoutWaveFamily(catalog.Get(0));
         VerifyKillObjective(catalog);
         Console.WriteLine("PASS: initial transport crew preserves generation accounting and one-time kill credit.");
-        return 12;
+        return 17;
     }
 
     private static void VerifyWaveBalance(MissionRule source)
@@ -58,6 +59,30 @@ internal static class MissionTransportCrewTests
             "Timed aircraft absent from the wave list could not register its confirmed crew.");
         Require(state.LiveCount == 0 && state.ConfirmDeath(501) && state.LiveCount == -1,
             "Timed aircraft crew fabricated wave generation or missed a matching Assaulter death.");
+    }
+
+    private static void VerifyCrewWithoutWaveFamily(MissionRule source)
+    {
+        MissionRule rule = source with
+        {
+            Behaviours = Array.Empty<MissionSpawnBehaviour>(),
+            Events = new[] { new MissionTimedEvent(0, "DeployHeli", 1, true, 1, "") },
+        };
+        var state = new MissionAutomaticSpawnState(rule, null);
+        Require(state.Start(0) && state.DueTimedEvents(0).Contains(0) &&
+            state.ConfirmTimedEventSpawn(0, 700, 0), "Unlisted-family fixture did not create its aircraft.");
+        Require(!state.ConfirmInitialTransportCrew(700, Array.Empty<ulong>(), 0) &&
+            !state.ConfirmInitialTransportCrew(700, new ulong[] { 701, 702, 703, 704, 705, 706, 707 }, 0),
+            "Crew registration accepted an empty or oversized initial cohort.");
+        Require(state.ConfirmInitialTransportCrew(700, new ulong[] { 701 }, 0) &&
+            state.ConfirmDeath(701) && !state.ConfirmDeath(701) && state.LiveCount == 0,
+            "An unlisted Assaulter family changed wave accounting or accepted a duplicate death.");
+        Require(state.ConfirmDeath(700) &&
+            !state.ConfirmInitialTransportCrew(700, new ulong[] { 702 }, 0),
+            "A dead aircraft accepted a new crew cohort.");
+        state.Finish();
+        Require(!state.ConfirmInitialTransportCrew(700, new ulong[] { 702 }, 0),
+            "A finished mission accepted crew registration.");
     }
 
     private static void VerifyKillObjective(MissionCatalog catalog)
