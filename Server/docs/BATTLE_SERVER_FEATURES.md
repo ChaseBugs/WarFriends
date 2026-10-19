@@ -36,6 +36,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Fallback-owner failure checks now prove that invalid obstacle placement publishes
+no destination, releases its point and leaves the owner Faulted even after input
+repair/cancellation. Another actor can claim the released point. An unrepresentable
+next deadline with a full point list also becomes Faulted without changing another
+actor's reservation. Runtime integration audit confirms crew births currently have
+aircraft/seat identity but no independently allocated infantry entity ID. The retry
+API's actor ID must not be filled with the parent aircraft ID or an arbitrary
+existing Assaulter ID; independent actor allocation/provenance remains a gate.
+Windows and actual Ubuntu WSL pass 28,861 focused combat-content assertions plus
+the new fault/rollback checks with zero build warnings/errors. Logs:
+`.local/crew-retry-fault-windows.log` and `.local/crew-retry-fault-linux.log`.
+
 The fallback retry owner now composes the observed scaled wait with shared
 nearest-point reservations. It attempts only when due, schedules the next wait
 when no point is free and retains one accepted assignment on success. Pending

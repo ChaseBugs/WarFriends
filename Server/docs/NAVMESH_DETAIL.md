@@ -1185,3 +1185,25 @@ Worker delivery of source scaled observations and movement remain pending.
 Windows and actual Ubuntu WSL pass 28,861 focused combat-content assertions plus
 fallback-owner helper checks with zero build warnings/errors. Evidence is
 `.local/crew-fallback-owner-windows.log` and `.local/crew-fallback-owner-linux.log`.
+
+### Retry failure and actor-binding audit
+
+Additional fallback-owner checks inject an invalid obstacle placement at the due
+callback. The original error propagates, the owner becomes Faulted, no destination
+is published and a different actor can claim the released point after repair.
+Cancel/input repair cannot silently resume that failed owner. A full point list
+with an unrepresentable subsequent deadline also faults without changing the
+existing occupant's destination or fabricating one for the retrying actor.
+
+The next runtime connection needs an independent infantry identity: current
+TransportCrewBirth records bind aircraft/seat/root/time but allocate no child
+entity. CoopMatchRuntime currently allocates mission enemy IDs through nextEnemyId
+in SpawnEnemy. Passing the parent aircraft ID to the fallback owner would conflate
+actors; borrowing a mission Assaulter ID would steal another actor's destination.
+Neither is an authorized substitute for a real crew identity. Source SpawnAssaulter
+creates a separate actor, marks card provenance and then overrides health from
+the parent crew upgrade rows. Child allocation, mission-count semantics, health,
+pool life and death cleanup must be bound deliberately before automatic registration.
+Windows and actual Ubuntu WSL pass 28,861 focused combat-content assertions plus
+fault/rollback checks with zero build warnings/errors. Evidence is
+`.local/crew-retry-fault-windows.log` and `.local/crew-retry-fault-linux.log`.
