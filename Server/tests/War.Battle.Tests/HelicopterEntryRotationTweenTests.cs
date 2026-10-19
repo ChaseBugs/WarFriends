@@ -25,21 +25,26 @@ internal static class HelicopterEntryRotationTweenTests
             var tween = new HelicopterEntryRotationTween();
             var clock = new NguiRealtimeClock(0);
             Quaternion parent = ReadRotation(scenario.GetProperty("parent"));
-            checks += VerifyCycle(scenario.GetProperty("first"), parent, tween, clock);
-            checks += VerifyCycle(scenario.GetProperty("reused"), parent, tween, clock);
+            JsonElement first = scenario.GetProperty("first");
+            var entry = new HelicopterCrewEntryState(ReadRotation(first.GetProperty("from")),
+                ReadRotation(first.GetProperty("target")), parent, 0);
+            var replay = new EntryReplay(clock, entry);
+            checks += VerifyCycle(first, parent, tween, replay);
+            checks += VerifyCycle(scenario.GetProperty("reused"), parent, tween, replay);
         }
         VerifyGuards();
         Console.WriteLine("PASS: 33 original entry tween updates, unscaled clock reuse and parent-space rotations.");
-        return checks + 5 + VerifyEntryGuards();
+        return checks + 5 + VerifyEntryGuards() + VerifyRestartResidual();
     }
 
     private static int VerifyCycle(JsonElement cycle, Quaternion parent,
-        HelicopterEntryRotationTween tween, NguiRealtimeClock clock)
+        HelicopterEntryRotationTween tween, EntryReplay replay)
     {
         tween.Begin(ReadRotation(cycle.GetProperty("from")), ReadRotation(cycle.GetProperty("target")));
         JsonElement rows = cycle.GetProperty("rows");
-        var entry = new HelicopterCrewEntryState(ReadRotation(cycle.GetProperty("from")),
-            ReadRotation(cycle.GetProperty("target")), parent, rows[0].GetProperty("previous").GetSingle());
+        NguiRealtimeClock clock = replay.Clock;
+        HelicopterCrewEntryState entry = replay.Entry;
+        entry.Restart(ReadRotation(cycle.GetProperty("from")), ReadRotation(cycle.GetProperty("target")));
         Require(rows.GetArrayLength() is 1 or 10, "Entry tween lost its normal or long-frame completion coverage.");
         foreach (JsonElement row in rows.EnumerateArray())
         {
@@ -126,6 +131,28 @@ internal static class HelicopterEntryRotationTweenTests
         return invalid.Length;
     }
 
+    private static int VerifyRestartResidual()
+    {
+        Quaternion target = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 1);
+        var expected = new HelicopterEntryRotationTween();
+        expected.Begin(Quaternion.Identity, target);
+        expected.AdvanceUpdate(0.001f);
+        foreach (bool hasOnEnable in new[] { false, true })
+        {
+            var entry = new HelicopterCrewEntryState(Quaternion.Identity, target, Quaternion.Identity, 0);
+            entry.AdvanceUpdate(0.0004f, Vector3.Zero);
+            entry.Restart(Quaternion.Identity, target);
+            if (hasOnEnable)
+            {
+                entry.ReenableAt(0.0004f);
+            }
+            HelicopterRopeBodyPose pose = entry.AdvanceUpdate(0.0008f, Vector3.One);
+            Require(pose.Rotation == expected.LocalRotation,
+                "Restart discarded the source clock residual or invented an OnEnable time origin.");
+        }
+        return 2;
+    }
+
     private static Quaternion ReadRotation(JsonElement value)
     {
         return new Quaternion(value[0].GetSingle(), value[1].GetSingle(), value[2].GetSingle(), value[3].GetSingle());
@@ -143,4 +170,6 @@ internal static class HelicopterEntryRotationTweenTests
             throw new Exception(message);
         }
     }
+
+    private sealed record EntryReplay(NguiRealtimeClock Clock, HelicopterCrewEntryState Entry);
 }

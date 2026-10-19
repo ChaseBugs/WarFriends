@@ -746,3 +746,15 @@ and actual Ubuntu WSL pass 9,425 native ownership/motion checks at
 This is a composition boundary, not normal controller lifecycle evidence. It is
 not wired into `CoopMatchRuntime` until actual callback timing, pooled tween state
 and source endpoint conversion are established for that host path.
+
+The composition now exposes `Restart` for reuse of the same component state.
+Recovered `UITweener.Begin` resets factor/start flags but leaves IgnoreTimeScale
+fields intact. Its separate OnEnable resets the origin without clearing residual.
+The source fixture's fresh/reused cycles now share the same composed entry object,
+instead of constructing a new clock for the second cycle. Two boundary checks
+accumulate 0.4 ms before restart and another 0.4 ms afterward, requiring the source
+rounded 1 ms update both with and without a separately observed OnEnable.
+Windows and actual Ubuntu WSL pass 9,427 native ownership/motion checks; evidence
+is `.local/crew-entry-reuse-windows.log` and `.local/crew-entry-reuse-linux.log`.
+These checks establish the preserved clock field semantics, not the normal pool's
+callback schedule or a captured sub-millisecond Unity lifecycle run.

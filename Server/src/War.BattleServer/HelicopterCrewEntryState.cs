@@ -26,6 +26,13 @@ internal sealed class HelicopterCrewEntryState
 
     internal bool IsRotating => _rotation.IsRunning;
 
+    /// <summary>Models Begin on the same component; the source preserves fractional realtime residual.</summary>
+    internal void Restart(Quaternion fromLocal, Quaternion targetLocal)
+    {
+        // Begin resets tween progress, not IgnoreTimeScale fields. An actual OnEnable is observed separately.
+        _rotation.Begin(fromLocal, targetLocal);
+    }
+
     /// <summary>Models an observed OnEnable; it does not invent a callback at crew spawn.</summary>
     internal void ReenableAt(float realtime)
     {

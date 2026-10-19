@@ -49,6 +49,16 @@ This class is not yet called by `CoopMatchRuntime`; normal spawn callback timing
 pooled tween state and endpoint capture still require evidence before runtime wiring.
 It does not establish live descent, landing or combat collision ownership.
 
+Entry reuse now keeps the same composed state across the fresh and reused source
+cycles. `Restart` resets only tween progress/endpoints, preserving the clock's
+fractional residual; an observed OnEnable still resets its time origin separately.
+This follows `UITweener.Begin` and `IgnoreTimeScale.OnEnable`, which do not clear
+that residual. Two sub-millisecond boundary checks cover restart with and without
+OnEnable. Windows and actual Ubuntu WSL pass 9,427 native ownership/motion checks
+at `.local/crew-entry-reuse-windows.log` and `.local/crew-entry-reuse-linux.log`.
+Build warnings/errors remain zero. This corrects reuse semantics in the composed
+state without assuming normal pool callback timing has been observed.
+
 Palm sampling now supports independent effective Idle/Slide weights, including
 the greater-than-one sums created by retained slide weight plus partial Idle.
 Actual Unity Animation.Sample provides 36 local/world reference cases, 24 above
