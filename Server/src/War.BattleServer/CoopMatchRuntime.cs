@@ -2919,12 +2919,17 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             selected.Weapon.SourceId).AnimationFamily;
         if (!UsesCoverShotTimeline(family))
             return false;
-        RifleCoverTimeline timeline = player.ShotTimeline != null &&
-            player.ShotAnimationFamily == family
-                ? player.ShotTimeline
-                : new RifleCoverTimeline(playerPoses, family);
-        if (timeline != player.ShotTimeline)
+        RifleCoverTimeline timeline;
+        if (player.ShotTimeline is { } currentTimeline && player.ShotAnimationFamily == family)
+        {
+            // Prepare animation separately; ammunition validation can still reject the shot.
+            timeline = currentTimeline.Copy();
+        }
+        else
+        {
+            timeline = new RifleCoverTimeline(playerPoses, family);
             timeline.Advance(tick / (double)MatchManifest.TickRate);
+        }
 
         // PlayerClickWeapon compares the defend point's forward direction
         // against the target from the player's current position.

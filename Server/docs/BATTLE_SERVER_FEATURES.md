@@ -34,6 +34,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22's internal host-shot confirmation now prepares cover animation on an independent timeline
+copy and publishes it only after ammunition commits. Previously an existing timeline could
+change before a later ammunition exception, leaving a shot pose without an accepted shot.
+The copy preserves clocks, queued hiding, cross-fade layers, direction and source weapon-family
+bindings, and avoids advancing an existing timeline twice in one tick. Tests cover nine source
+animation families, isolated discarded shots and matching continuation transitions. This does
+not establish a host projectile or enable the closed co-op Fire command/Worker registration.
+The solution build passes with zero warnings/errors, protocol tests pass, and the focused combat
+run exits zero with 26,396 assertions. Its complete log is
+`.local/coop-shot-animation-transaction.log`; physics/navigation diagnostics in that suite
+remain diagnostics rather than proof of original Unity equivalence.
+
 B22 co-op weapon state now prepares the next-fire tick, shot counter and any automatic-reload
 deadline before mutating ammunition. Previously a checked clock overflow could consume the
 round and increment its shot counter before failing, or leave the last round spent without

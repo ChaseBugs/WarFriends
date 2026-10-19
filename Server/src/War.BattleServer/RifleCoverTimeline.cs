@@ -21,6 +21,28 @@ internal sealed class RifleCoverTimeline
     private readonly bool bazooka;
     public RifleCoverPhase Phase { get; private set; }
     public string RunClip { get; }
+    private RifleCoverTimeline(RifleCoverTimeline source)
+    {
+        poses = source.poses;
+        suffix = source.suffix;
+        idleClip = source.idleClip;
+        bazooka = source.bazooka;
+        RunClip = source.RunClip;
+        now = source.now;
+        position = source.position;
+        hideDeadline = source.hideDeadline;
+        right = source.right;
+        fadingFrom = source.fadingFrom.ToArray();
+        fadeStarted = source.fadeStarted;
+        Phase = source.Phase;
+    }
+
+    /// <summary>Copies playback state so a pending host shot cannot mutate its published pose.</summary>
+    internal RifleCoverTimeline Copy()
+    {
+        return new RifleCoverTimeline(this);
+    }
+
     public RifleCoverTimeline(PlayerPoseCatalog poses,int animationFamily=0)
     {
         this.poses=poses;
