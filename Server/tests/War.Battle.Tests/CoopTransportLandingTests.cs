@@ -51,6 +51,7 @@ internal static class CoopTransportLandingTests
         ulong endTick, HelicopterRopeDefinition rope)
     {
         BattleCoopEnemySpawn previous = initial;
+        var crewDescent = new CoopTransportCrewDescentTests();
         CoopMatchRuntime.TransportCrewBirth[] birthsAtSpawn = runtime.TransportCrewBirths(initial.EntityId).ToArray();
         if (runtime.HasNativeTransportRopes && (birthsAtSpawn.Length == 0 ||
             birthsAtSpawn.Any(birth => birth.SpawnTick != initial.SpawnTick)))
@@ -71,6 +72,7 @@ internal static class CoopTransportLandingTests
         for (ulong next = initial.PoseTick + 1; next <= endTick; next++)
         {
             AdvanceTo(runtime, next);
+            crewDescent.Observe(runtime, initial.EntityId, next);
             if (runtime.TransportRopeSnapshot is HelicopterPhysicsWorldSnapshot ropes)
             {
                 bool shouldBeActive = (float)ObservedTimeForTick(next) >
@@ -98,7 +100,11 @@ internal static class CoopTransportLandingTests
                     endTick = Math.Max(endTick, landing.StopTick + SourceFirstDropDelayTicks +
                         SourceDropSpacingTicks * (slots - 1));
                 }
-                AdvanceTo(runtime, endTick);
+                for (ulong observedTick = next + 1; observedTick <= endTick; observedTick++)
+                {
+                    AdvanceTo(runtime, observedTick);
+                    crewDescent.Observe(runtime, initial.EntityId, observedTick);
+                }
                 if (runtime.TransportLandingFor(initial.EntityId) != landing)
                 {
                     throw new Exception("Co-op arrival decision changed on a later flight frame.");
@@ -107,6 +113,7 @@ internal static class CoopTransportLandingTests
                 {
                     throw new Exception("Flight or drop rewrote the original crew birth evidence.");
                 }
+                crewDescent.RequireObserved(runtime, initial.EntityId);
                 return endTick;
             }
             previous = runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == initial.EntityId);
@@ -155,7 +162,8 @@ internal static class CoopTransportLandingTests
             return;
         }
         if (runtime.TransportRopeSnapshot?.Members.Any(member => member.Lease.EntityId == entityId) != false ||
-            runtime.TransportCrewDrops(entityId).Count != 0 || runtime.TransportCrewBirths(entityId).Count != 0)
+            runtime.TransportCrewDrops(entityId).Count != 0 || runtime.TransportCrewBirths(entityId).Count != 0 ||
+            runtime.TransportCrewDescentCount != 0)
         {
             throw new Exception("Transport death retained its native scene.");
         }

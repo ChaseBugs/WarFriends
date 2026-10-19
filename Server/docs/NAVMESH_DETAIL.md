@@ -949,3 +949,30 @@ Windows and actual Ubuntu WSL pass 9,995 native ownership/motion checks and
 warnings/errors. Logs are `.local/crew-drop-transition-windows.log`,
 `.local/crew-drop-transition-linux.log`, `.local/crew-drop-transition-content-windows.log`
 and `.local/crew-drop-transition-content-linux.log`.
+
+### Match-owned descent lifecycle
+
+`CoopMatchRuntime.TransportCrewDescents` stores one descent per aircraft/seat.
+`BeginTransportCrewDescent` requires an existing unconsumed drop, a live match
+and the current match-owned native publication. It validates the host-observed
+root through FromDrop before insertion. Failed validation does not consume the
+drop, and a repeated start cannot replace an existing or completed state.
+`AdvanceTransportCrewDescent` takes host pose/delta observations but obtains the
+physics snapshot from the match itself; callers cannot substitute another world
+or a future snapshot. Existing generation and consecutive-render checks apply.
+
+Aircraft removal discards its matching descent states together with drop/birth
+records; match end clears all descent states. The API returns calculated results,
+not mutable descent owners that a caller could retain after match cleanup.
+
+The co-op test now observes each post-arrival host/render frame rather than
+fast-forwarding past the drops. It authors explicit root/palm inputs, starts each
+captured drop and consumes later native joint publications. It rejects a damaged
+root before successful start, repeated start, same-frame advancement and one
+replayed update; aircraft-death checks require no retained descent states.
+These inputs prove match ownership and lifecycle, not recovered animation fidelity.
+Windows and actual Ubuntu WSL pass 28,605 focused combat-content assertions plus
+native helpers with zero build warnings/errors. Logs:
+`.local/match-crew-descent-windows.log` and `.local/match-crew-descent-linux.log`.
+Normal actor/entry/animation observations, worker scheduling, landed infantry
+creation and combat collision ownership are still required for live gameplay.

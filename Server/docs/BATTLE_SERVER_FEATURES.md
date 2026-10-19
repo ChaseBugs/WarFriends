@@ -36,6 +36,22 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The co-op match now owns descent states keyed by aircraft/seat. Its explicit
+host-observation API starts from the current captured drop exactly once and
+advances using only the match-owned native snapshot. Invalid starts leave the
+drop available, repeated starts cannot replace progress, and replayed publications
+are rejected by the existing descent state. Aircraft removal clears its descents;
+match end also clears the registry. Completed descent state remains retained
+until cleanup so the same drop cannot restart as a new descent.
+
+Real co-op/native-world integration tests now deliver observations at each drop
+and later frame, verify rejection/retry behavior and death cleanup. Root/palm
+poses are explicitly authored test inputs, not original animation output. Windows
+and actual Ubuntu WSL pass 28,605 focused combat-content assertions plus native
+helpers, with zero build warnings/errors. Logs: `.local/match-crew-descent-windows.log`
+and `.local/match-crew-descent-linux.log`. Normal entry/animation observations,
+automatic worker scheduling, landed entities and combat collision remain pending.
+
 `HelicopterCrewDescentState.FromDrop` now binds a drop to the explicit observed
 soldier root and exact native publication. Drop records retain RenderFrame as
 well as PhysicsSequence: equal physics-step counters alone cannot identify a

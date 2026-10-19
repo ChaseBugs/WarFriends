@@ -3934,6 +3934,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         _transportSpawnRealtime.Clear();
         _transportLandings.Clear();
         _transportCrewDrops.Clear();
+        _transportCrewDescents.Clear();
         _transportCrewBirths.Clear();
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
