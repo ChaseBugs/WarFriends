@@ -109,10 +109,52 @@ runner also exits zero on Windows and as a self-contained Linux executable at
 The Linux focused run does not repeat the full combat-content group or the full
 crew-runtime fixture. No new live co-op or Android acceptance is claimed.
 
+## Source slide-palm binding
+
+`UnityHelicopterSlidePoseExport` now samples the actual restored
+`EnemyController.mSoldierAnimationController.leftPalm` binding at the start and
+end of `helicopter_jump_pose`. The original prefab/clip and their metadata were
+copied into the disposable project before capture; input and loaded prefab
+SHA-256 both match the existing enemy-pose source:
+`64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54`.
+The active Client was not modified. The final Edit Mode export under Unity
+2018.3.0f2 exits zero with no logged exceptions at
+`.local/helicopter-slide-palm-final.log`.
+
+The clip's source duration is `0.0333328247` seconds, with ClampForever wrap.
+Its 237 curves do not satisfy the probe's strict constant-value/zero-tangent
+criterion. Nearly equal start/end palm positions are therefore not used as proof
+that every intermediate or blended pose is constant.
+
+`HelicopterSlidePalmCatalog` pins the artifact's normalized-LF SHA-256
+`8a3c1f5d3022c0bd05165e71b443fcf056b9203ba4ead45c7498ae636b716760`,
+binds it to `EnemyPoseCatalog`, verifies original unit scale and clip identity,
+and exposes only a settled, unblended end-pose frame. It does not interpolate
+unknown palm samples or decide when a CrossFade has finished. Runtime scaling
+must also be established before that unit-scale frame can be used.
+
+The reference also invokes the actual recovered `GetRopePosition` with that
+sampled end pose at a rotated world root. Native tests create the same frame
+from the catalog, compose it with `HelicopterDescentState`, and match the recorded
+Unity result. They also reject a changed palm-bone identity and invalid root poses.
+The Windows combat-content run exits zero with 26,504 assertions at
+`.local/helicopter-slide-palm-host.log`; the solution build has zero warnings/errors
+and protocol tests pass. This reference is bone/geometry evidence in the stated
+Editor, not proof of original Unity 5.2.5 animation/physics equivalence.
+The self-contained Linux runner at `.local/linux-slide-palm` also executes the
+complete combat-content group under Ubuntu WSL and exits zero with 26,504 assertions.
+Its log is `.local/helicopter-slide-palm-linux.log`. This is the focused combat-content
+group, not the full Battle test executable, Mongo integration or normal Unity gameplay.
+
+This is a standalone reviewed catalog, not a negotiated live content extension.
+Before live use, include its source identity in the signed battle-content package
+and establish current blend state, physical rope joints, root update ordering and
+landing authority. Co-op Fire and Worker registration remain closed.
+
 ## Remaining integration
 
-The server still needs current rope-joint physics, the correctly sampled left
-palm/slide pose, integration of the root update ordering, NavMesh sampling and the landing
+The server still needs current rope-joint physics, the current blended left-palm
+pose, integration of the root update ordering, NavMesh sampling and the landing
 transition. Existing crew progress describes animation time, not those positions.
 Likewise `AttachedTransportCrewPoses` reports transformed seat anchors; it does
 not prove the actual soldier's root rotation during or after its initial 0.3-second

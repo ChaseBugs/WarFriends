@@ -34,6 +34,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now has a reviewed source binding for the slide clip's actual left-palm end pose.
+The exporter uses the original restored prefab/controller binding, records both input and
+loaded source identities, and invokes the recovered rope method with the sampled hand at a
+rotated root. Host catalog/descent composition matches that result and rejects changed bones.
+The 237-curve constancy check does not pass, so only a settled, unblended end pose is exposed;
+no intermediate/fading pose is inferred. Windows combat-content tests exit zero with 26,504
+assertions. See [slide palm evidence](HELICOPTER_ROPE_ALIGNMENT.md); signed content integration,
+current blend/rope physics, landing and live co-op combat remain open.
+The same combat-content group also executes under Ubuntu WSL using the current self-contained
+Linux publication and exits zero with 26,504 assertions; diagnostic physics comparisons retain
+their existing limitations and do not establish original Unity or complete game acceptance.
+
 B22's isolated descent state now captures source start/end heights, accumulates float frame
 delta, aligns the palm with the old root facing, then turns toward the aircraft's right.
 Rejected frames leave progress unchanged, and animation completion does not authorize landing.

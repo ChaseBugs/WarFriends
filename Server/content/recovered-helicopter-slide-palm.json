@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "unity": "2018.3.0f2",
+  "source": "Assets/GameObject/enemy.prefab",
+  "sourceInputSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "sourceLoadedSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "rootScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "palmPath": "character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1/cartoon_guyLArm2/cartoon_guyLArmPalm",
+  "clip": {
+    "name": "helicopter_jump_pose",
+    "source": "Assets/AnimationClip/helicopter_jump_pose.anim",
+    "guid": "ebb36e03a4e11e540b76fcc4bd674242",
+    "fileId": 7400000,
+    "sha256": "9f4bcc438ad3a51c2008994f22c5e301e16cc8b2a49783218b326267e6d42b0d",
+    "length": 0.0333328247,
+    "wrap": "ClampForever",
+    "curveCount": 237,
+    "constantCurves": false
+  },
+  "startPalm": [
+    -0.0288379937,
+    0.446492732,
+    0.06742111
+  ],
+  "endPalm": [
+    -0.0288380142,
+    0.446492642,
+    0.06742108
+  ],
+  "alignedReference": {
+    "rootPosition": [
+      3.0,
+      10.0,
+      5.0
+    ],
+    "rootRotation": [
+      0.0,
+      0.7071068,
+      0.0,
+      0.7071068
+    ],
+    "joints": [
+      [
+        2.0,
+        12.0,
+        3.0
+      ],
+      [
+        2.0,
+        0.0,
+        3.0
+      ]
+    ],
+    "expected": [
+      1.952579,
+      5.0,
+      3.0111618
+    ]
+  }
+}

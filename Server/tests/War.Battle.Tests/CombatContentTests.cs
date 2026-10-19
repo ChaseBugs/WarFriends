@@ -7680,6 +7680,7 @@ internal static class CombatContentTests
         int count=0;
         count += HelicopterRopeAlignmentTests.Run(directory);
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
+        count += HelicopterSlidePalmTests.Run(directory, content.EnemyPoses);
         count += VerifyMissionCatalog(directory, content);
         void Check(bool ok,string name) { if (!ok) throw new Exception(name);count++; }
         void Reject(Action action) { try { action(); } catch (InvalidDataException) { count++;return; } throw new Exception("Invalid combat allocation accepted."); }
