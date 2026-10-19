@@ -34,6 +34,17 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22's isolated descent state now captures source start/end heights, accumulates float frame
+delta, aligns the palm with the old root facing, then turns toward the aircraft's right.
+Rejected frames leave progress unchanged, and animation completion does not authorize landing.
+The existing crew progress projection now uses bounded fixed-step float accumulation instead
+of elapsed-tick division. Tests cover every fixed-step sample and a real crew projection before
+completion. See [descent state](HELICOPTER_ROPE_ALIGNMENT.md); the current rope/palm inputs,
+NavMesh landing and live co-op combat integration remain required.
+The solution build has zero warnings/errors, protocol tests pass, and Windows combat-content
+tests exit zero with 26,498 assertions. Focused alignment/descent tests also execute successfully
+on Windows and Ubuntu WSL; this is not full Linux combat or normal Unity gameplay acceptance.
+
 B22 now has the source `GetRopePosition` alignment calculation, checked against 24 actual
 recovered Unity method calls and guarded by 56 native tests. It preserves first-joint and
 segment crossings, the source hand/root offsets and the below-rope/null-rope behavior.

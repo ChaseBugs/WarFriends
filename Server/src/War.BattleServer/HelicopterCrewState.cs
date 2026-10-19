@@ -33,8 +33,7 @@ internal sealed class HelicopterCrewState
             ulong elapsed=tick-member.DropStartTick;
             // EnemyController.HelicopterUpdate accumulates deltaTime and clamps at one.
             // The host's fixed 30 Hz clock describes animation only, not NavMesh landing.
-            float progress=elapsed>=MatchManifest.TickRate?1f:
-                (float)elapsed/MatchManifest.TickRate;
+            float progress = HelicopterDescentProgress.AtFixedTicks(elapsed);
             result.Add(new(member.Slot,member.DropStartTick,progress,progress>=1f));
         }
         return result.AsReadOnly();

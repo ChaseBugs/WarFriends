@@ -72,10 +72,47 @@ execution, not publication alone. Use `--helicopter-rope-alignment-only` on the 
 executable for the focused comparison on either platform. It discovers the reference
 above the executable directory, so keep the published runner under the repository tree.
 
+## Descent state and fixed-step progress
+
+`HelicopterDescentState` now composes source progress, vertical interpolation,
+rope alignment and subsequent facing. Its constructor captures the starting and
+host-sampled landing heights once. Each step receives the current root/palm,
+aircraft right vector, scaled frame delta and current rope joints. It computes
+all results before committing progress, so malformed joints or pose inputs do
+not consume part of the animation. Invalid or near-vertical aircraft facing is
+rejected rather than substituting an unverified LookRotation singularity.
+
+The step preserves `mProgress = Clamp01(mProgress + deltaTime)` using floats;
+it aligns using the old root rotation and then faces the aircraft's right.
+Completion stops further descent steps but grants no landing, enemy-point claim
+or mission progress. The actual `OnHeliSpawnFinished` transition is still separate.
+The helper is not connected to the live co-op loop without its missing physical inputs.
+
+`HelicopterCrewState.DescentSnapshot` now uses a private precomputed float-addition
+table for the host's fixed 30 Hz animation projection. It no longer divides elapsed
+ticks directly; the source additions round differently before completion. Lookup
+is bounded even for a large elapsed tick gap. This remains a fixed-step projection,
+not proof of the original variable-frame client's rope physics or landing time.
+
+Native tests cover old-facing alignment, new-facing output, float accumulation,
+all 31 fixed-step samples, completion and seven rejected-frame cases without progress
+mutation. A source-bound crew fixture also checks the actual crew projection one
+tick before completion. The existing 24 actual Unity alignment references remain unchanged;
+these additional descent-state checks are native host tests, not a new capture of the
+complete Unity `HelicopterUpdate` lifecycle.
+
+The current solution build passes with zero warnings/errors and protocol tests pass.
+The complete Windows combat-content group exits zero with 26,498 assertions;
+its log is `.local/helicopter-descent-state-host.log`. The focused alignment/descent
+runner also exits zero on Windows and as a self-contained Linux executable at
+`.local/linux-descent-state` under Ubuntu WSL, using `--helicopter-rope-alignment-only`.
+The Linux focused run does not repeat the full combat-content group or the full
+crew-runtime fixture. No new live co-op or Android acceptance is claimed.
+
 ## Remaining integration
 
 The server still needs current rope-joint physics, the correctly sampled left
-palm/slide pose, root rotation update ordering, NavMesh sampling and the landing
+palm/slide pose, integration of the root update ordering, NavMesh sampling and the landing
 transition. Existing crew progress describes animation time, not those positions.
 Likewise `AttachedTransportCrewPoses` reports transformed seat anchors; it does
 not prove the actual soldier's root rotation during or after its initial 0.3-second

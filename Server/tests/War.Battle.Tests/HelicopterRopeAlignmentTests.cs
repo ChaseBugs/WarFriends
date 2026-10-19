@@ -36,7 +36,7 @@ internal static class HelicopterRopeAlignmentTests
         }
         int checks = 2 + cases.Length * 2 + VerifyInvalidInputs();
         Console.WriteLine($"PASS: {checks} rope alignment checks, including 24 actual recovered Unity cases");
-        return checks;
+        return checks + HelicopterDescentStateTests.Run();
     }
 
     private static void VerifyScenario(JsonElement scenario)

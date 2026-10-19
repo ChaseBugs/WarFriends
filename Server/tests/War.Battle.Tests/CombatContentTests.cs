@@ -5402,6 +5402,7 @@ internal static class CombatContentTests
             transportRuntime.PlaceRestingTransportGunnerTargets(transport.EntityId));
         ArmyHelicopterCrewStats expectedTransportCrew = enemyCombat.TransportCrew(
             transport.Level);
+        HelicopterDescentStateTests.VerifyCrewProjection(expectedTransportCrew, content.HelicopterCrewPoints);
         IReadOnlyList<HelicopterCrewMemberSnapshot> attachedCrew =
             transportRuntime.TransportCrewMembers(transport.EntityId);
         IReadOnlyList<HelicopterCrewPose> attachedCrewPoses =
