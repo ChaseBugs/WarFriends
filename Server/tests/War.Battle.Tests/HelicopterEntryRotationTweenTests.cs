@@ -30,7 +30,7 @@ internal static class HelicopterEntryRotationTweenTests
         }
         VerifyGuards();
         Console.WriteLine("PASS: 33 original entry tween updates, unscaled clock reuse and parent-space rotations.");
-        return checks + 5;
+        return checks + 5 + VerifyEntryGuards();
     }
 
     private static int VerifyCycle(JsonElement cycle, Quaternion parent,
@@ -38,6 +38,8 @@ internal static class HelicopterEntryRotationTweenTests
     {
         tween.Begin(ReadRotation(cycle.GetProperty("from")), ReadRotation(cycle.GetProperty("target")));
         JsonElement rows = cycle.GetProperty("rows");
+        var entry = new HelicopterCrewEntryState(ReadRotation(cycle.GetProperty("from")),
+            ReadRotation(cycle.GetProperty("target")), parent, rows[0].GetProperty("previous").GetSingle());
         Require(rows.GetArrayLength() is 1 or 10, "Entry tween lost its normal or long-frame completion coverage.");
         foreach (JsonElement row in rows.EnumerateArray())
         {
@@ -45,6 +47,13 @@ internal static class HelicopterEntryRotationTweenTests
             float delta = clock.Advance(row.GetProperty("realtime").GetSingle());
             Require(delta == row.GetProperty("delta").GetSingle(), "Entry tween used a different realtime delta.");
             tween.AdvanceUpdate(delta);
+            entry.ReenableAt(row.GetProperty("previous").GetSingle());
+            var pointPosition = new Vector3(3, row.GetProperty("factor").GetSingle(), 7);
+            HelicopterRopeBodyPose pose = entry.AdvanceUpdate(row.GetProperty("realtime").GetSingle(), pointPosition);
+            Require(pose.Position == pointPosition &&
+                Difference(pose.Rotation, ReadRotation(row.GetProperty("rotation"))) < RotationTolerance &&
+                entry.IsRotating == row.GetProperty("enabled").GetBoolean(),
+                "Composed crew entry differs from source clock, parent rotation or Driving point position.");
             Require(tween.Factor == row.GetProperty("factor").GetSingle() &&
                 tween.IsRunning == row.GetProperty("enabled").GetBoolean(),
                 $"Entry factor {tween.Factor:R}/{row.GetProperty("factor").GetSingle():R}, " +
@@ -55,7 +64,13 @@ internal static class HelicopterEntryRotationTweenTests
                 RotationTolerance, "Entry tween lost the original local-to-world parent composition.");
         }
         Require(!tween.IsRunning, "Source entry cycle did not terminate.");
-        return rows.GetArrayLength() * 4;
+        Vector3 moved = new(13, 17, 19);
+        JsonElement last = rows[rows.GetArrayLength() - 1];
+        HelicopterRopeBodyPose held = entry.AdvanceUpdate(last.GetProperty("realtime").GetSingle() + 1, moved);
+        Require(held.Position == moved && Difference(held.Rotation,
+            ReadRotation(last.GetProperty("rotation"))) < RotationTolerance && !entry.IsRotating,
+            "Completed entry stopped following position or changed its retained world rotation.");
+        return rows.GetArrayLength() * 5 + 1;
     }
 
     private static void VerifyGuards()
@@ -80,6 +95,35 @@ internal static class HelicopterEntryRotationTweenTests
         }
         tween.AdvanceUpdate(0.001f);
         Require(!tween.IsRunning, "A later positive delta failed to finish the source tween.");
+    }
+
+    private static int VerifyEntryGuards()
+    {
+        (float Realtime, Vector3 Position)[] invalid =
+        {
+            (float.NaN, Vector3.Zero),
+            (-1, Vector3.Zero),
+            (0.02f, new Vector3(float.NaN, 0, 0)),
+            (0.02f, new Vector3(0, float.PositiveInfinity, 0)),
+        };
+        foreach ((float realtime, Vector3 position) in invalid)
+        {
+            Quaternion target = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 1);
+            var entry = new HelicopterCrewEntryState(Quaternion.Identity, target, Quaternion.Identity, 0);
+            var control = new HelicopterCrewEntryState(Quaternion.Identity, target, Quaternion.Identity, 0);
+            try
+            {
+                entry.AdvanceUpdate(realtime, position);
+                throw new Exception("Crew entry accepted a malformed observation.");
+            }
+            catch (InvalidDataException)
+            {
+                Require(entry.AdvanceUpdate(0.033f, Vector3.One) ==
+                    control.AdvanceUpdate(0.033f, Vector3.One),
+                    "Rejected crew observation advanced its clock or changed its pose.");
+            }
+        }
+        return invalid.Length;
     }
 
     private static Quaternion ReadRotation(JsonElement value)

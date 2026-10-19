@@ -36,6 +36,19 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+`HelicopterCrewEntryState` now composes the recovered entry tween with its NGUI
+realtime clock and fixed pool-parent rotation. It accepts observed Euler-roundtripped
+local endpoints and callback time explicitly. Each Driving observation follows the
+current point position; completed entry rotation is retained rather than overwritten
+by aircraft turns. Malformed position/time observations fail before clock mutation.
+All 33 original tween updates match through this composition, with six completed
+position-follow checks and four rejected-input atomicity checks. Windows and actual
+Ubuntu WSL each pass 9,425 native ownership/motion checks; builds have zero warnings/errors.
+Logs: `.local/crew-entry-state-windows.log` and `.local/crew-entry-state-linux.log`.
+This class is not yet called by `CoopMatchRuntime`; normal spawn callback timing,
+pooled tween state and endpoint capture still require evidence before runtime wiring.
+It does not establish live descent, landing or combat collision ownership.
+
 Palm sampling now supports independent effective Idle/Slide weights, including
 the greater-than-one sums created by retained slide weight plus partial Idle.
 Actual Unity Animation.Sample provides 36 local/world reference cases, 24 above

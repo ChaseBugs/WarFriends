@@ -726,3 +726,23 @@ hierarchies, damaged rotations, invalid frames and non-finite weights. Maximum
 position error is 0.00000024. This proves these two sampled clips in Unity 2018.3,
 not arbitrary partially keyed clips, original Unity 5.2 parity, real culling,
 normal actor lifecycle or live descended-crew collision/landing behavior.
+
+### Composed crew entry state
+
+`HelicopterCrewEntryState` joins the existing `NguiRealtimeClock` and
+`HelicopterEntryRotationTween` under an explicitly observed fixed parent rotation.
+It requires source Euler-roundtripped local endpoints and the initial realtime;
+`ReenableAt` represents an actual observed OnEnable, not an inferred spawn callback.
+`AdvanceUpdate` consumes one observed tween invocation and the current Driving
+point position. After tween completion it retains world rotation while following
+position, matching the source `EnemyController.HelicopterUpdate` Driving branch.
+
+The existing three-parent fresh/reused tween capture supplies 33 original updates
+for composed clock/rotation comparison. Six post-completion checks cover retained
+rotation with changed positions, and four malformed position/time observations
+must leave the next valid result identical to an untouched control. Both Windows
+and actual Ubuntu WSL pass 9,425 native ownership/motion checks at
+`.local/crew-entry-state-windows.log` and `.local/crew-entry-state-linux.log`.
+This is a composition boundary, not normal controller lifecycle evidence. It is
+not wired into `CoopMatchRuntime` until actual callback timing, pooled tween state
+and source endpoint conversion are established for that host path.
