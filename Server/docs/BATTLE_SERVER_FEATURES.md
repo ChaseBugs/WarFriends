@@ -36,6 +36,16 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Decoded navigation detail is now source-bound across all five co-op maps: 655 VAND
+version-16 tiles with polygon, detail-vertex and detail-triangle arrays. Each payload
+is located byte-for-byte in its original binary asset or YAML hex field. The generated
+manifest pins every decoded artifact. All 275 successful Unity landing positions lie
+on these detail surfaces within 0.0001 units (observed maximum 0.000004963); twenty
+malformed/truncated tile checks reject. This verifies available height geometry,
+not selection of the right polygon from an arbitrary query. The server still uses
+the old triangle sampler; its eighteen known differences are not closed by extraction.
+See `NAVMESH_DETAIL.md` for reproduction and the next sampler integration gate.
+
 Failed surface queries now have an explicit trusted render-input flag. It cannot
 coexist with a successful target. After the arrival render it arms the captured
 positive-infinite internal height; the next render's height gate disables extension

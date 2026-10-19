@@ -428,3 +428,6 @@ Server/tools/UnityHelicopterClockRecorder.cs text eol=lf
 Server/content/recovered-helicopter-landing-unity-reference.json text eol=lf
 Server/tools/UnityHelicopterLandingExport.cs text eol=lf
 Server/content/recovered-helicopter-landing-offset-unity-reference.json text eol=lf
+Server/content/coop-navmesh-detail/*.json text eol=lf
+Server/content/recovered-coop-navmesh-detail.json text eol=lf
+Server/tools/UnityNavMeshTileExport.cs text eol=lf

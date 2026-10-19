@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "tileVersion": 16,
+  "sourceManifestSha256": "8a3e7b87defcdd70d5ba5b89b2c2b26cb25e052698db9016033fdc0a4703977f",
+  "maps": [
+    {
+      "file": "NavMesh_7.json",
+      "sha256": "373a6e7f20e1013efaa38aeb9fc0dee48ce544498d1800829159dc19b33b2daf",
+      "sourceSha256": "1dbb45220c0177624d46ba646b4c65af9ecd24b9d4684aab983bd9062913544d",
+      "tiles": 64,
+      "polygons": 637,
+      "detailTriangles": 4689
+    },
+    {
+      "file": "NavMesh_1.json",
+      "sha256": "bd8d2dc203d4d6d5555955b56236a0a75058004758a8c88919be5c936745b8c1",
+      "sourceSha256": "4415c4a08f1811bb8a6515c29d863a6c174a7796c09edc4bfa7fcc36c93c3a8b",
+      "tiles": 153,
+      "polygons": 1350,
+      "detailTriangles": 8264
+    },
+    {
+      "file": "NavMesh.json",
+      "sha256": "0f2288b4192bbd6e7b823ee3d1bbcc3ec7d4ef7ac74318a278008b10d81df801",
+      "sourceSha256": "0ab907c62296712ad3d62d504d37fd64a132f1f161c1887c7673e705329a634a",
+      "tiles": 44,
+      "polygons": 1020,
+      "detailTriangles": 2991
+    },
+    {
+      "file": "NavMesh_0.json",
+      "sha256": "cf1aa5885e2846e8427c4a046d51681073572aac41929146ad3c302d23dad479",
+      "sourceSha256": "28ad9bd4d67b5a7f3dfe2ae1d07d7eafb3d9eb43d62ce1b11cd550cc2efbcecc",
+      "tiles": 170,
+      "polygons": 1531,
+      "detailTriangles": 7952
+    },
+    {
+      "file": "NavMesh_3.json",
+      "sha256": "63512b42b16a8c06b0aa010bdc296bc5f20012bd6cb4227e58f7b3b0eb1ff7f0",
+      "sourceSha256": "5a638bfc7566c5b76f985ef482520f32a7024d372e144b4399ee60557b9ab4f7",
+      "tiles": 224,
+      "polygons": 1155,
+      "detailTriangles": 2185
+    }
+  ]
+}
