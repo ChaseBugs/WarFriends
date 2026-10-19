@@ -81,6 +81,11 @@ public static class UnityHelicopterPalmBlendExport
                 }
             }
         }
+        bool rawWeightProbe = Environment.GetEnvironmentVariable("WAR_PALM_RAW_WEIGHTS") == "1";
+        if (rawWeightProbe)
+        {
+            references = CaptureRawWeights(enemy, animation, palm);
+        }
         string reference = JsonConvert.SerializeObject(new
         {
             version = 1, client = "1.4.0", unity = Application.unityVersion,
@@ -88,7 +93,8 @@ public static class UnityHelicopterPalmBlendExport
             resetClip = DescribeClip(animation["T_pose"]),
             nodes = chain.Select((node, index) => new { parent = index - 1,
                 path = AnimationUtility.CalculateTransformPath(node, enemy.transform) }).ToArray(),
-            clips, worldRootPosition = Vector(WorldRootPosition), worldRootRotation = Rotation(WorldRootRotation),
+            clips, rawWeightProbe,
+            worldRootPosition = Vector(WorldRootPosition), worldRootRotation = Rotation(WorldRootRotation),
             references
         }, Formatting.Indented).Replace("\r\n", "\n") + "\n";
         File.WriteAllText(Environment.GetEnvironmentVariable("WAR_PALM_BLEND_OUTPUT"), reference);
@@ -124,6 +130,39 @@ public static class UnityHelicopterPalmBlendExport
 
     private static void Blend(Animation animation, int idleFrame, int slideFrame, float weight)
     {
+        BlendWithWeights(animation, idleFrame, slideFrame, new Vector2(1f - weight, weight));
+    }
+
+    private static List<object> CaptureRawWeights(GameObject enemy, Animation animation, Transform palm)
+    {
+        var references = new List<object>();
+        int idleLast = Mathf.CeilToInt(animation[Idle].length * SampleRate);
+        int slideLast = Mathf.CeilToInt(animation[Slide].length * SampleRate);
+        Vector2[] weights = { new Vector2(0, 1), new Vector2(2f / 9f, 1), new Vector2(0.5f, 1),
+            new Vector2(1, 1), new Vector2(1, 0.5f), new Vector2(1, 0) };
+        foreach (int idleFrame in new[] { 0, idleLast / 2, idleLast - 1 })
+        {
+            foreach (int slideFrame in new[] { 0, slideLast })
+            {
+                foreach (Vector2 pair in weights)
+                {
+                    BlendWithWeights(animation, idleFrame, slideFrame, pair);
+                    Vector3 localPalm = enemy.transform.InverseTransformPoint(palm.position);
+                    enemy.transform.position = WorldRootPosition;
+                    enemy.transform.rotation = WorldRootRotation;
+                    Vector3 worldPalm = palm.position;
+                    enemy.transform.position = Vector3.zero;
+                    enemy.transform.rotation = Quaternion.identity;
+                    references.Add(new { idleFrame, slideFrame, idleWeight = pair.x, slideWeight = pair.y,
+                        palm = Vector(localPalm), worldPalm = Vector(worldPalm) });
+                }
+            }
+        }
+        return references;
+    }
+
+    private static void BlendWithWeights(Animation animation, int idleFrame, int slideFrame, Vector2 weights)
+    {
         animation.Stop();
         AnimationState reset = animation["T_pose"];
         reset.enabled = true;
@@ -137,8 +176,8 @@ public static class UnityHelicopterPalmBlendExport
         slide.enabled = true;
         idle.time = Mathf.Min(idleFrame / (float)SampleRate, idle.length);
         slide.time = Mathf.Min(slideFrame / (float)SampleRate, slide.length);
-        idle.weight = 1f - weight;
-        slide.weight = weight;
+        idle.weight = weights.x;
+        slide.weight = weights.y;
         animation.Sample();
         idle.enabled = false;
         slide.enabled = false;

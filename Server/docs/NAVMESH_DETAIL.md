@@ -658,3 +658,43 @@ component pause/resume, without assuming fully weighted Idle or zero incoming
 Slide. They still use controlled commands and AlwaysAnimate, not normal actor
 creation, real camera/renderer culling or source coroutine timing. No independent
 landed soldier or collision authority is enabled by these mixer checks.
+
+## Independent enabled-layer weights and palm placement
+
+`HelicopterPalmBlendCatalog.SampleWeighted` now accepts independent effective
+Idle/Slide weights. A retained, enabled slide at weight one must not discard a
+simultaneous partial Idle contribution. The sampled two-layer context normalizes
+weights when their sum is at least one. Each weight remains bounded zero through
+one. A sum below one is rejected because the remaining base-pose contribution is
+not implemented here. Stopped clips must contribute effective weight zero even
+when AnimationState retains a stored weight; the selection is not a raw packet
+or an unfiltered list of every stored clip weight.
+
+`WAR_PALM_RAW_WEIGHTS=1` extends the Edit Mode palm exporter with six independent
+weight pairs, three idle frames and two slide frames. All 36 local/world results
+come from actual Unity Animation.Sample; 24 use a sum greater than one. The
+canonical T_pose extraction reset and full local bone chain remain explicit.
+The existing normalized sampling API and its original 30 references are unchanged.
+The accepted Unity process exits zero: `.local/palm-raw-weights-unity.log`.
+The LF reference digest is
+`df4c69550b7fe2d7f9b821e3eb7a6abc8f8eaefef02371e4cf2d55831b343705`.
+
+The new API normalizes the effective layer ratio, then uses the existing validated
+local-transform blend and world palm placement. Tests check all 36 local and
+world results at the unchanged 0.00003 position tolerance and reject malformed,
+oversized, zero-total and sub-unit weights. This is canonical two-clip sampling
+evidence, not proof of a pooled incoming pose, partially keyed base-pose channels,
+arbitrary clip sets or normal animation timing. It does not register descended
+crew hitboxes, bypass actual camera/coroutine evidence or authorize landing.
+
+The same sampler is also checked against actual evaluated palms in the earlier
+Reset/Idle/RopeSlide captures: 96 continuous and 92 visibility-resumed frames.
+The test uses source layer times on the known 30 Hz sample grid, effective
+enabled weights and the slide's captured clamped end frame. It requires all 188
+eligible observations, skipping disabled animation and unevaluated time-zero
+command boundaries. Maximum observed transition error is approximately
+0.00002644, below the unchanged 0.00003 tolerance; independent Sample references
+have maximum error approximately 0.00000024. These distinct errors are retained
+as diagnostics rather than reporting the smaller canonical-sample error as a
+live-transition result. Sub-unit Idle fade before RopeSlide, bone state at the
+command instant and procedural/real-camera effects remain unresolved.

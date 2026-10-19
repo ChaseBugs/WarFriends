@@ -7687,6 +7687,7 @@ internal static class CombatContentTests
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
         count += HelicopterSlidePalmTests.Run(directory, content.EnemyPoses);
         count += HelicopterPalmBlendTests.Run(directory, content.EnemyPoses);
+        count += HelicopterPalmRawWeightTests.Run(directory, content.EnemyPoses);
         count += HelicopterSlideFadeTests.Run(directory);
         count += HelicopterRopeExtensionTests.Run(directory);
         count += HelicopterRopeInitializationTests.Run(directory);

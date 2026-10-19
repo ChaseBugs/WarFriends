@@ -36,6 +36,22 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Palm sampling now supports independent effective Idle/Slide weights, including
+the greater-than-one sums created by retained slide weight plus partial Idle.
+Actual Unity Animation.Sample provides 36 local/world reference cases, 24 above
+unit total, while the original 30 normalized references still pass. The new
+weighted-frame API preserves both contributions and rejects unresolved sub-unit
+base-pose remainder. Stopped clips must contribute zero effective weight. This
+is canonical two-clip pose evidence; pooled incoming state, real timing/culling
+and independent descended-crew collision ownership remain pending.
+The new sampler additionally matches 188 actually evaluated transition palms
+(96 continuous, 92 visibility-resumed), with maximum error about 0.00002644 at
+the unchanged 0.00003 tolerance. Unevaluated command instants and disabled frames
+are explicitly excluded rather than being assigned a fresh sampled pose.
+Windows and actual Ubuntu WSL each pass 28,324 reported combat-content assertions
+plus native lifecycle helpers. Logs: `.local/palm-transition-content.log` and
+`.local/palm-transition-linux-content.log`. Build warnings/errors remain zero.
+
 Reset/Idle now connects to original RopeSlide calls during zero, partial and
 completed Idle fades. The slide can reactivate at its retained weight one;
 outgoing Idle fades from its actual current weight. The mixer accepts observed

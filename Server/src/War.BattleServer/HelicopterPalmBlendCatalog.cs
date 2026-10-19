@@ -8,6 +8,12 @@ namespace War.BattleServer;
 /// <summary>Exact captured frame selections and a host-owned slide weight, without inferred fade timing.</summary>
 internal sealed record HelicopterPalmBlendSelection(int IdleFrame, int SlideFrame, float SlideWeight);
 
+/// <summary>
+/// Effective enabled-layer weights; stopped clips contribute zero. Sub-unit sums require base-pose evidence.
+/// </summary>
+internal sealed record HelicopterPalmWeightedSelection(
+    int IdleFrame, int SlideFrame, float IdleWeight, float SlideWeight);
+
 /// <summary>Blends the recovered palm's local bone chain before composing its root-relative position.</summary>
 internal sealed class HelicopterPalmBlendCatalog
 {
@@ -72,6 +78,28 @@ internal sealed class HelicopterPalmBlendCatalog
             _idle[selection.IdleFrame], _slide[selection.SlideFrame], selection.SlideWeight);
         RigWorldTransform[] world = RigLocalPose.Compose(_parents, local);
         return world[^1].Position;
+    }
+
+    internal Vector3 SampleWeighted(HelicopterPalmWeightedSelection selection)
+    {
+        ArgumentNullException.ThrowIfNull(selection);
+        float totalWeight = selection.IdleWeight + selection.SlideWeight;
+        if (!float.IsFinite(selection.IdleWeight) || !float.IsFinite(selection.SlideWeight) ||
+            selection.IdleWeight is < 0 or > 1 || selection.SlideWeight is < 0 or > 1 || totalWeight < 1f)
+        {
+            throw new InvalidDataException("Palm layers require bounded weights " +
+                "with no unresolved base-pose remainder.");
+        }
+        // Unity normalizes these two fully contributing layers; a retained slide weight must not be discarded.
+        return Sample(new HelicopterPalmBlendSelection(selection.IdleFrame, selection.SlideFrame,
+            selection.SlideWeight / totalWeight));
+    }
+
+    internal HelicopterDescentFrame CreateWeightedFrame(HelicopterPalmWeightedSelection selection,
+        Vector3 rootPosition, Quaternion rootRotation, Vector3 helicopterRight)
+    {
+        return HelicopterPalmFramePlacement.Create(
+            SampleWeighted(selection), rootPosition, rootRotation, helicopterRight);
     }
 
     /// <summary>Places an explicitly selected sampled blend; it does not infer the current animation phase.</summary>
