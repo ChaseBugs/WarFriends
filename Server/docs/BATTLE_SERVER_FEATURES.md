@@ -26,6 +26,11 @@ and twelve enabled scenes, with a zero exit code. Native plugin/manifest startup
 external-network Android run remain unverified; this is one removed provider boundary, not full
 third-party removal. Details are in the Unity integration review above.
 
+Fuse configuration now comes only from the existing Backend snapshot and bundled fallback;
+the forty-second remote configuration wait and remote configuration publication path are removed.
+Ten selected compiled methods and six real getter checks pass in Unity. Fuse native/session/ad
+startup and service teardown remain pending; see the Unity integration review for the exact scope.
+
 ## Dependency-ordered work
 
 The two-normal-Unity gate now executes via `ClientBootSmoke.ps1 -SecondUnityProject ...` and

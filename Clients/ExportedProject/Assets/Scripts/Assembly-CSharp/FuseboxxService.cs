@@ -73,14 +73,6 @@ public class FuseboxxService
 
 	private RewardType mReward;
 
-	private bool mHaveAnyConfigurationDownloaded;
-
-	private float mInitTime;
-
-	private bool mCanSaveConfigs;
-
-	private bool mNeedSaveConfigs;
-
 	private Dictionary<string, string> configFromDb;
 
 	private string usedABvariant = string.Empty;
@@ -95,12 +87,10 @@ public class FuseboxxService
 
 	public FuseboxxService()
 	{
-		mInitTime = Time.time;
 	}
 
 	public FuseboxxService(FuseSDK fuseSdk)
 	{
-		mInitTime = Time.time;
 		FuseSDK.SessionStartReceived += SessionStarted;
 		FuseSDK.SessionLoginError += SessionLoginError;
 		FuseSDK.AdDeclined += AdDeclined;
@@ -110,7 +100,6 @@ public class FuseboxxService
 		FuseSDK.RewardedAdCompletedWithObject += RewardedAdCompletedWithObject;
 		FuseSDK.IAPOfferAcceptedWithObject += IAPOfferAcceptedWithObject;
 		FuseSDK.VirtualGoodsOfferAcceptedWithObject += VirtualGoodsOfferAcceptedWithObject;
-		FuseSDK.GameConfigurationReceived += GameConfigurationReceived;
 		FuseSDK.NotificationAction += NotificationAction;
 		FuseSDK.NotificationWillClose += NotificationWillClose;
 		string bundleID = BundleVersionBindings.BundleID;
@@ -144,65 +133,33 @@ public class FuseboxxService
 		case DatabaseAction.CreateAccount:
 		case DatabaseAction.TutorialEnded:
 		case DatabaseAction.CreateGcAccount:
-			mCanSaveConfigs = true;
-			if (mHaveAnyConfigurationDownloaded)
-			{
-				GameConfigurationManager.instance.GetConfigurations(GetConfigVariant());
-			}
-			else
-			{
-				GameConfigurationManager.instance.StartCoroutine(WaitForFuseboxConfigurations());
-			}
+            // Offline configuration is already supplied by our Backend; no retired-provider wait is needed.
+            GameConfigurationManager.instance.GetConfigurations(GetConfigVariant());
 			break;
 		}
 	}
 
 	public void StartLoginProcces()
 	{
-		mCanSaveConfigs = false;
+        // Retained for recovered login callers; configuration has no remote-provider session.
 	}
 
-	private IEnumerator WaitForFuseboxConfigurations()
-	{
-		while (!mHaveAnyConfigurationDownloaded && mInitTime + 40f > Time.time)
-		{
-			yield return new WaitForSeconds(0.2f);
-		}
-		GameConfigurationManager.instance.GetConfigurations(GetConfigVariant());
-		yield return null;
-	}
+    private string GetConfigVariant()
+    {
+        usedABvariant = ReadSavedConfigurationValue("SheetVersionVariant") ?? string.Empty;
+        return usedABvariant;
+    }
 
-	private string GetConfigVariant()
-	{
-		string text = string.Empty;
-		if (mHaveAnyConfigurationDownloaded)
-		{
-			text = FuseSDK.GetGameConfigurationValue("SheetVersionVariant");
-			if (text == null)
-			{
-				text = string.Empty;
-			}
-		}
-		else if (configFromDb != null && configFromDb.ContainsKey("SheetVersionVariant"))
-		{
-			text = configFromDb["SheetVersionVariant"];
-		}
-		usedABvariant = text;
-		return text;
-	}
+    private string ReadSavedConfigurationValue(string key)
+    {
+        string value;
+        return configFromDb != null && configFromDb.TryGetValue(key, out value) ? value : null;
+    }
 
 	public void OverrideConfigurations()
 	{
 		Debug.LogWarning("Fuseboxx: Overriding Configurations");
-		Dictionary<string, string> gameConfiguration = FuseSDK.GetGameConfiguration();
-		if (mNeedSaveConfigs)
-		{
-			Singleton<BeanstalkServerManager>.instance.SendFuseboxConfigurations(PrepareConfigurationString());
-		}
-		if (!mHaveAnyConfigurationDownloaded)
-		{
-			gameConfiguration = configFromDb;
-		}
+        Dictionary<string, string> gameConfiguration = configFromDb;
 		try
 		{
 			if (gameConfiguration == null || !gameConfiguration.ContainsKey("Pack.moneypack1"))
@@ -523,7 +480,6 @@ public class FuseboxxService
 		FuseSDK.RewardedAdCompletedWithObject -= RewardedAdCompletedWithObject;
 		FuseSDK.IAPOfferAcceptedWithObject -= IAPOfferAcceptedWithObject;
 		FuseSDK.VirtualGoodsOfferAcceptedWithObject -= VirtualGoodsOfferAcceptedWithObject;
-		FuseSDK.GameConfigurationReceived -= GameConfigurationReceived;
 		FuseSDK.NotificationAction -= NotificationAction;
 		FuseSDK.NotificationWillClose -= NotificationWillClose;
 	}
@@ -569,7 +525,7 @@ public class FuseboxxService
 
 	internal string GetStarterPackDays()
 	{
-		return FuseSDK.GetGameConfigurationValue("StarterPackDays");
+		return ReadSavedConfigurationValue("StarterPackDays");
 	}
 
 	internal Dictionary<string, object> GetBattleWarbucksRewards()
@@ -579,12 +535,12 @@ public class FuseboxxService
 
 	internal string GetPlayerProgressRate()
 	{
-		return FuseSDK.GetGameConfigurationValue("PlayerProgressRate");
+		return ReadSavedConfigurationValue("PlayerProgressRate");
 	}
 
 	public string GetFuseboxxConfigValue()
 	{
-		string gameConfigurationValue = FuseSDK.GetGameConfigurationValue("FuseboxxConfigValue");
+		string gameConfigurationValue = ReadSavedConfigurationValue("FuseboxxConfigValue");
 		if (string.IsNullOrEmpty(gameConfigurationValue))
 		{
 			Debug.Log("Fuseboxx: Fuseboxx Config Value not found!");
@@ -597,7 +553,7 @@ public class FuseboxxService
 	{
 		try
 		{
-			string gameConfigurationValue = FuseSDK.GetGameConfigurationValue(key);
+			string gameConfigurationValue = ReadSavedConfigurationValue(key);
 			if (string.IsNullOrEmpty(gameConfigurationValue))
 			{
 				Debug.Log("Fuseboxx: Error No " + key + " found!");
@@ -615,27 +571,6 @@ public class FuseboxxService
 		{
 			Debug.LogError("Fuseboxx: Error json for key " + key + ", exception = " + ex.Message);
 			return null;
-		}
-	}
-
-	private string PrepareConfigurationString()
-	{
-		Dictionary<string, string> gameConfiguration = FuseSDK.GetGameConfiguration();
-		if (gameConfiguration != null && gameConfiguration.Count > 0)
-		{
-			return JsonConvert.SerializeObject(gameConfiguration);
-		}
-		return "{}";
-	}
-
-	private void GameConfigurationReceived()
-	{
-		Debug.Log("Fuseboxx: Game configuration received after time " + (Time.time - mInitTime));
-		mHaveAnyConfigurationDownloaded = true;
-		mNeedSaveConfigs = !mCanSaveConfigs;
-		if (mCanSaveConfigs)
-		{
-			Singleton<BeanstalkServerManager>.instance.SendFuseboxConfigurations(PrepareConfigurationString());
 		}
 	}
 

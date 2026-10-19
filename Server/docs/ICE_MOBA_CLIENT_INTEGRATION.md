@@ -62,6 +62,32 @@ Fuse initialization, attribution and other provider boundaries remain pending. T
 not explain or fix the Editor login-page startup stalls described in
 [NORMAL_UNITY_TERMINAL.md](NORMAL_UNITY_TERMINAL.md), and does not close terminal/results acceptance.
 
+## Backend-owned configuration instead of Fuse configuration
+
+`FuseboxxService` now reads its configuration variant, JSON configuration values, pack duration
+and progress-rate hints only from `DeserializeSavedConfig` data received through the existing
+Backend channel. Configuration override selection also uses that dictionary. An absent variant
+keeps the bundled-sheet path; no replacement prices or rewards are invented. The source forty-
+second Fuse download wait is removed, and supported account-data callbacks request existing
+self-hosted configuration immediately. The service no longer subscribes to remote configuration
+updates or sends those provider updates back as Backend configuration. Obsolete wait/session
+configuration flags and the now-unreachable configuration publication callback were removed.
+Public login compatibility calls remain valid without starting a configuration-provider session.
+
+`UnityFuseConfigurationAudit.Run` passes in Unity 2018.3.0f2 with exit code zero at
+`.local/offline-fuse-configuration-audit-final.log`: ten compiled configuration methods contain
+no direct retired-provider/Java references, and six actual getter checks cover absent values,
+variant selection and retained scalar/JSON Backend settings. Synthetic reward JSON verifies
+parsing only; no player account or currency is modified. The compiled check covers the selected
+configuration boundary, not every transitive manager call, provider method or network endpoint.
+No asset was saved and no source GUID or serialized field was renamed.
+
+This does **not** disable FuseSDK Awake/Start, advertising, session telemetry, currency telemetry,
+push or native auto-initializers. Those remain explicit migration work. The retained service's
+finalizer also still resolves Unity singletons and needs lifecycle repair; this focused test
+suppresses finalization for its unsubscribed temporary service rather than claiming that defect
+fixed. Normal rendered boot/terminal and denied-external-network device acceptance remain open.
+
 ## Patterns worth using
 
 | Ice MOBA source | Observed integration | WarFriends application |
