@@ -5,7 +5,10 @@ namespace War.BattleServer;
 internal sealed record CoopShotHit(
     float Distance, Vector3 Position, int? SceneColliderFileId,
     ulong? EnemyEntityId, int? EnemyPartFileId,
-    string? EnemyPartPath = null, float PartWeight = 0);
+    string? EnemyPartPath = null, float PartWeight = 0)
+{
+    internal bool IsHelicopterGunner { get; init; }
+}
 
 internal sealed record CoopEnemyCollisionFrame(
     IReadOnlyList<DynamicShotTarget> Targets,
@@ -50,9 +53,8 @@ internal sealed class CoopShotCollisionWorld
             sceneHit.ComponentFileId, null, null);
         Vector3 ray = Vector3.Normalize(direction);
 
-        // Vehicles and air units retain serialized collider IDs. The sampled
-        // infantry rig has no collider IDs in its pose artifact, so its three
-        // parts use the source hierarchy path plus shape kind within one AI.
+        // Vehicle bodies retain serialized collider IDs. Sampled infantry and
+        // gunner rigs use source hierarchy paths plus shape kind within one AI.
         var sourceParts = new HashSet<(ulong EntityId, int PartFileId)>();
         var infantryParts = new HashSet<
             (ulong EntityId, string Path, PlayerHitboxKind Kind)>();
@@ -75,7 +77,10 @@ internal sealed class CoopShotCollisionWorld
                 target.EntityId,
                 target.PartComponentFileId > 0
                     ? target.PartComponentFileId : null,
-                target.Hitbox.SourcePath, target.Hitbox.Weight);
+                target.Hitbox.SourcePath, target.Hitbox.Weight)
+            {
+                IsHelicopterGunner = target.HelicopterGunner
+            };
         }
         return nearest;
     }
@@ -86,9 +91,15 @@ internal sealed class CoopShotCollisionWorld
             target.Layer is < 0 or > 31 || target.Hitbox == null)
             throw new InvalidDataException("Invalid co-op enemy hitbox identity.");
 
-        // Infantry parts come from the recovered animated rig. Other enemies
-        // must retain their serialized collider component IDs.
-        bool validPart = target.ArmyInfantry
+        // Soldier parts come from sampled infantry/gunner rigs. Other enemy
+        // bodies must retain their serialized collider component IDs.
+        if (target.HelicopterGunner && (target.ArmyInfantry || target.Decoy || target.HeavyTurret ||
+            target.GroundVehicleBody || target.HelicopterBody || target.DroneRoot || target.AssaultGlass ||
+            target.GrenadierGrenade || target.PassengerRole != null || target.RepairDronePathIndex != null))
+        {
+            throw new InvalidDataException("Ambiguous co-op gunner hitbox identity.");
+        }
+        bool validPart = target.ArmyInfantry || target.HelicopterGunner
             ? target.PartComponentFileId == 0 && target.Layer == 23
             : target.PartComponentFileId > 0;
         if (!validPart)
@@ -99,7 +110,7 @@ internal sealed class CoopShotCollisionWorld
         HashSet<(ulong EntityId, int PartFileId)> sourceParts,
         HashSet<(ulong EntityId, string Path, PlayerHitboxKind Kind)> infantryParts)
     {
-        bool added = target.ArmyInfantry
+        bool added = target.ArmyInfantry || target.HelicopterGunner
             ? infantryParts.Add((target.EntityId,
                 target.Hitbox.SourcePath, target.Hitbox.Kind))
             : sourceParts.Add((target.EntityId, target.PartComponentFileId));

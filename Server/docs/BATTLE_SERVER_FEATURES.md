@@ -34,6 +34,22 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22's transport collision diagnostics now include the living resting turret soldier's three
+sampled hitboxes, separate from the eleven aircraft body boxes. Source `Helicopter.GenerateMachineGunner`
+creates a separate soldier at `enemyPointVehicle`; `EnemyController.SwitchStateToVehicle` calls
+Idle, makes its parts triggers and attaches it to the seat. The host reuses the reviewed passenger
+idle pose at the current host seat and resets its animation age at the gunner's own spawn/respawn
+tick. Death removes those targets; exact respawn restores them; aircraft death removes them too.
+An isolated ray retains a distinct gunner identity and rejects duplicate parts or mixed gunner/
+infantry/vehicle identities. This is resting sampled geometry, not native trigger-query parity,
+active turret animation or a complete co-op bullet world. The existing unplaced-gunner/rope-crew
+gate remains enforced, and Fire routing/Worker registration remain closed.
+The solution build passes with zero warnings/errors and protocol tests pass. The focused combat
+run exits zero with 26,396 assertions; new checks cover source pose equality while flying,
+gunner death, just-before/exact respawn, aircraft death, isolated ray identity and malformed
+identity rejection. The complete log is `.local/coop-transport-gunner-targets.log`. Existing
+physics/navigation diagnostics in that run do not establish exact native Unity equivalence.
+
 B22's internal host-shot confirmation now prepares cover animation on an independent timeline
 copy and publishes it only after ammunition commits. Previously an existing timeline could
 change before a later ammunition exception, leaving a shot pose without an accepted shot.

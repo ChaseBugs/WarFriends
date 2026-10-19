@@ -5394,6 +5394,12 @@ internal static class CombatContentTests
             .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "DeployHeli");
         IReadOnlyList<DynamicShotTarget> transportBodies = transportRuntime
             .PlaceTransportHelicopterTargets(transport.EntityId);
+        CoopTransportGunnerTargetTests.RequireLivingTargets(transportRuntime, content, transport.EntityId);
+        CoopTransportGunnerTargetTests.RequireNoTargets(transportRuntime, 999);
+        var gunnerWorld = new CoopShotCollisionWorld(new CoopNativeSceneRaycaster(
+            rifleScenes.MapForMission(catalog, transportMissionIndex), rifleGeometry));
+        CoopTransportGunnerTargetTests.RequireRayIdentity(gunnerWorld,
+            transportRuntime.PlaceRestingTransportGunnerTargets(transport.EntityId));
         ArmyHelicopterCrewStats expectedTransportCrew = enemyCombat.TransportCrew(
             transport.Level);
         IReadOnlyList<HelicopterCrewMemberSnapshot> attachedCrew =
@@ -5438,6 +5444,7 @@ internal static class CombatContentTests
             flownTransport.CurrentY, flownTransport.CurrentZ);
         IReadOnlyList<DynamicShotTarget> flownBodies = transportRuntime
             .PlaceTransportHelicopterTargets(transport.EntityId);
+        CoopTransportGunnerTargetTests.RequireLivingTargets(transportRuntime, content, transport.EntityId);
         uint expectedDropMask = 0;
         for (int slot = 0; slot < expectedTransportCrew.Seats; slot++)
             if (afterFlight >= flownTransport.StopTick +
@@ -5464,6 +5471,7 @@ internal static class CombatContentTests
             !transportRuntime.ApplyHostTransportGunnerDamage(transport.EntityId,
                 expectedTransportCrew.SoldierHealth, afterFlight))
             throw new Exception("Co-op transport gunner accepted invalid damage or rejected a host hit.");
+        CoopTransportGunnerTargetTests.RequireNoTargets(transportRuntime, transport.EntityId);
         BattleCoopEnemySpawn gunnerDown = transportRuntime.Snapshot().Coop.EnemySpawns
             .Single(enemy => enemy.EntityId == transport.EntityId);
         CoopEnemyCollisionFrame crewFrame =
@@ -5480,10 +5488,12 @@ internal static class CombatContentTests
                 1, afterFlight))
             throw new Exception("Gunner death changed transport body health or left its turret active.");
         transportRuntime.Advance(gunnerDue - 1);
+        CoopTransportGunnerTargetTests.RequireNoTargets(transportRuntime, transport.EntityId);
         if (transportRuntime.TransportGunner(transport.EntityId) is not
                 { Health: 0, RespawnTick: > 0 })
             throw new Exception("Co-op gunner respawned before its source delay.");
         transportRuntime.Advance(gunnerDue);
+        CoopTransportGunnerTargetTests.RequireLivingTargets(transportRuntime, content, transport.EntityId);
         BattleCoopEnemySpawn gunnerRestored = transportRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.EntityId == transport.EntityId);
         if (gunnerRestored.GunnerHealth != expectedTransportCrew.SoldierHealth ||
@@ -5501,6 +5511,7 @@ internal static class CombatContentTests
             transportRuntime.Snapshot().Coop.EnemySpawns.Single(enemy =>
                 enemy.EntityId == transport.EntityId).GunnerHealth != 0)
             throw new Exception("Co-op transport Helicopter death retained its path or hitboxes.");
+        CoopTransportGunnerTargetTests.RequireNoTargets(transportRuntime, transport.EntityId);
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, skillShotScores: skillShots);
