@@ -36,6 +36,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The scaled retry clock now has original coroutine evidence. An isolated Unity
+probe invokes Core_BaseScript.InvokeAfter twice, including ten paused frames
+and changed time scales. `HelicopterCrewRetryClock` reproduces all 235 observed
+frames and the two callback boundaries, consumes each wait once and schedules a
+repeat from the consumed callback's scaled time. Later polling cannot shift that
+origin. Malformed/regressing clocks, incoherent same-frame time, repeated pending
+scheduling and unrepresentable deadlines fail closed. This clock is not yet
+registered with normal crew life, target retry or movement scheduling.
+Windows and actual Ubuntu WSL pass 28,861 focused combat-content assertions plus
+native helpers with zero build warnings/errors. Logs: `.local/crew-retry-clock-windows.log`
+and `.local/crew-retry-clock-linux.log`.
+
 The deferred Assaulter target retry now has an explicit destination-state API.
 `RetryHelicopterAssaulterPoint` uses source GetInitPoint's nearest free selection
 with shared reservations and the soldier's card-spawn identity. Tests place a

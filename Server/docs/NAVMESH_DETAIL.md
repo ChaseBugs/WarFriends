@@ -1125,3 +1125,38 @@ scheduling, life/transition ownership and repeated five-second waits when it ret
 Windows and actual Ubuntu WSL pass 28,618 focused combat-content assertions plus
 the nearest-retry checks with zero build warnings/errors. Evidence is
 `.local/crew-point-retry-windows.log` and `.local/crew-point-retry-linux.log`.
+
+### Observed scaled retry wait
+
+`UnityCrewRetryWaitExport` captures the original Core_BaseScript.InvokeAfter
+coroutine on an isolated runtime probe in an empty disposable Play Mode scene.
+It runs two consecutive five-second waits, including ten zero-delta paused frames
+and time scales 0.5 and 1.5. All 235 LateUpdate observations retain the cumulative
+source callback count. Callbacks occur at frames 138 and 238; the first wait is
+quantized to the first eligible observed frame, not a realtime timeout.
+
+The accepted Unity process exits zero at `.local/crew-retry-wait-unity.log`.
+Reference LF SHA-256:
+`60a557245e046eccbbc2666bd1a297814fcb3e3acd18fdc39554e942efe73396`.
+The artifact also pins Core_BaseScript source SHA-256
+`3a42957a1560169dc96af028905d93f0a70aa7d84050d6d5b640b06507f60dce`.
+Place UnityCrewRetryWaitExport in the disposable Assets/Editor and
+CrewRetryWaitProbe in Assets outside Editor. This runs the original coroutine,
+not EnemyController, actor activation, animation, networking or NavMesh movement.
+
+`HelicopterCrewRetryClock` takes host-observed scaled time/frame pairs, never
+realtime or client timestamps. It reproduces the source capture, including no
+same-scheduling-frame completion, pause and repeat. A pending wait cannot be
+overwritten, and a consumed wait does not fire twice. ScheduleNext anchors to
+the consumed callback, so later inactive polling cannot postpone the next deadline.
+Damaged clocks/frame order and finite origins whose five-second deadline is no
+longer representable fail before scheduling/consumption. Tests also preserve
+pending state after rejected observations and verify callback-origin retention.
+
+This establishes the observed Unity 2018.3 coroutine boundaries and the explicit
+clock API, not original Unity 5.2 parity, arbitrary engine timestamp precision or
+normal Worker callback phase. Crew life/cancellation ownership, scheduling the
+nearest-point retry and executing movement remain separate integration gates.
+Windows and actual Ubuntu WSL pass 28,861 focused combat-content assertions plus
+native helpers with zero build warnings/errors. Evidence is
+`.local/crew-retry-clock-windows.log` and `.local/crew-retry-clock-linux.log`.

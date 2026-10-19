@@ -7691,6 +7691,7 @@ internal static class CombatContentTests
         count += HelicopterPalmBlendTests.Run(directory, content.EnemyPoses);
         count += HelicopterPalmRawWeightTests.Run(directory, content.EnemyPoses);
         count += HelicopterPalmRemainderTests.Run(directory, content.EnemyPoses);
+        count += HelicopterCrewRetryClockTests.Run(directory);
         count += HelicopterSlideFadeTests.Run(directory);
         count += HelicopterRopeExtensionTests.Run(directory);
         count += HelicopterRopeInitializationTests.Run(directory);
