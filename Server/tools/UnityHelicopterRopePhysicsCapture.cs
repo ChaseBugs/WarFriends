@@ -16,6 +16,8 @@ public static class UnityHelicopterRopePhysicsCapture
     private const string PrefabSource = "Assets/GameObject/Helicopter.prefab";
     private const float PhysicsStep = 0.02f;
     private const int DiagnosticSteps = 10;
+    private const float MotionYawDegrees = 3f;
+    private static readonly Vector3 MotionTranslation = new Vector3(0.04f, 0.01f, -0.02f);
     private static GameObject[] _parents;
     private static QuickRope2[] _ropes;
     private static Quaternion[] _attachmentRestRotations;
@@ -105,6 +107,11 @@ public static class UnityHelicopterRopePhysicsCapture
 
     private static void WriteReference()
     {
+        if (Environment.GetEnvironmentVariable("WAR_ROPE_CAPTURE_MOTION") == "1")
+        {
+            WriteMotionReference();
+            return;
+        }
         object[] initial = _ropes.Select((rope, index) => Capture(rope, _attachmentRestRotations[index])).ToArray();
         var frames = new List<object>();
         for (int step = 1; step <= DiagnosticSteps; step++)
@@ -128,6 +135,42 @@ public static class UnityHelicopterRopePhysicsCapture
         }, Formatting.Indented).Replace("\r\n", "\n") + "\n";
         File.WriteAllText(Environment.GetEnvironmentVariable("WAR_ROPE_PHYSICS_OUTPUT"), reference);
         Debug.Log("PASS: activated rope frames and native diagnostic steps=" + DiagnosticSteps);
+    }
+
+    private static void WriteMotionReference()
+    {
+        object[] initial = _ropes.Select((rope, index) => Capture(rope, _attachmentRestRotations[index])).ToArray();
+        bool[][] aircraftChildren = _ropes.Select(rope =>
+        {
+            Transform aircraft = rope.GetComponent<FixedJoint>().connectedBody.transform;
+            return rope.Joints.Select(joint => joint.transform.IsChildOf(aircraft)).ToArray();
+        }).ToArray();
+        var frames = new List<object>();
+        for (int step = 1; step <= DiagnosticSteps; step++)
+        {
+            foreach (QuickRope2 rope in _ropes)
+            {
+                Transform aircraft = rope.GetComponent<FixedJoint>().connectedBody.transform;
+                aircraft.position += MotionTranslation;
+                aircraft.rotation = Quaternion.AngleAxis(MotionYawDegrees, Vector3.up) * aircraft.rotation;
+            }
+            Physics.SyncTransforms();
+            object[] before = _ropes.Select((rope, index) => Capture(rope, _attachmentRestRotations[index])).ToArray();
+            Physics.Simulate(PhysicsStep);
+            object[] after = _ropes.Select((rope, index) => Capture(rope, _attachmentRestRotations[index])).ToArray();
+            frames.Add(new { step, before, after });
+        }
+        string reference = JsonConvert.SerializeObject(new
+        {
+            version = 1, client = "1.4.0", unity = Application.unityVersion,
+            prefabSource = PrefabSource, prefabSha256 = Hash(PrefabSource),
+            ropeSource = "Assets/Plugins/Assembly-CSharp-firstpass/QuickRope2.cs",
+            ropeSha256 = Hash("Assets/Plugins/Assembly-CSharp-firstpass/QuickRope2.cs"),
+            fixture = "Direct aircraft Transform translation/yaw, SyncTransforms, then one native fixed step.",
+            physicsStep = PhysicsStep, aircraftChildren, initial, frames
+        }, Formatting.Indented).Replace("\r\n", "\n") + "\n";
+        File.WriteAllText(Environment.GetEnvironmentVariable("WAR_ROPE_PHYSICS_OUTPUT"), reference);
+        Debug.Log("PASS: recovered moving-aircraft rope frames=" + frames.Count);
     }
 
     private static object Capture(QuickRope2 rope, Quaternion attachmentRestRotation)

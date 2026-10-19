@@ -25,7 +25,8 @@ namespace
     constexpr int HeaderSize = 14;
     constexpr int MotionSize = 13;
     constexpr float FixedDelta = 0.02f;
-    constexpr int AbiVersion = 1;
+    constexpr int AbiVersion = 2;
+    constexpr float MaximumCoordinate = 10000.0f;
     constexpr int Success = 0;
     constexpr int InvalidInput = 1;
     constexpr int CapacityExceeded = 2;
@@ -147,7 +148,7 @@ namespace
         }
         for (int index = 0; index < length; index++)
         {
-            if (!std::isfinite(values[index]) || std::abs(values[index]) > 10000.0f)
+            if (!std::isfinite(values[index]) || std::abs(values[index]) > MaximumCoordinate)
             {
                 return false;
             }
@@ -272,6 +273,67 @@ ROPE_API int war_rope_create(const float* values, int length, int bodyCount, uin
         runtime.ropes.emplace(identity, std::move(rope));
         *handle = identity;
         return Success;
+    }
+    catch (...)
+    {
+        return PhysicsFailure;
+    }
+}
+
+ROPE_API int war_rope_set_aircraft_transform(uintptr_t handle, const float* values, int length)
+{
+    if (!values || length != PoseSize)
+    {
+        return InvalidInput;
+    }
+    for (int index = 0; index < length; index++)
+    {
+        if (!std::isfinite(values[index]) || std::abs(values[index]) > MaximumCoordinate)
+        {
+            return InvalidInput;
+        }
+    }
+    PxTransform target = ReadPose(values);
+    if (!target.isValid())
+    {
+        return InvalidInput;
+    }
+    try
+    {
+        Runtime& runtime = GetRuntime();
+        std::lock_guard<std::mutex> lock(runtime.gate);
+        auto found = runtime.ropes.find(handle);
+        if (found == runtime.ropes.end())
+        {
+            return InvalidInput;
+        }
+        if (runtime.errors.hasFailed.load())
+        {
+            return PhysicsFailure;
+        }
+        Rope& rope = *found->second;
+        PxTransform previousAircraft = rope.aircraft->getGlobalPose();
+        // QuickRope2 leaves generated middle bodies unparented; only root and ropeEnd inherit aircraft transforms.
+        PxRigidDynamic* children[] = { rope.bodies.front(), rope.bodies.back() };
+        PxTransform poses[2];
+        for (int index = 0; index < 2; index++)
+        {
+            PxTransform localPose = previousAircraft.transformInv(children[index]->getGlobalPose());
+            poses[index] = target.transform(localPose);
+            PxVec3 position = poses[index].p;
+            if (!poses[index].isValid() || std::abs(position.x) > MaximumCoordinate ||
+                std::abs(position.y) > MaximumCoordinate || std::abs(position.z) > MaximumCoordinate)
+            {
+                return InvalidInput;
+            }
+        }
+        // Helicopter.Update writes Transform directly. Kinematic targets would invent motion-derived velocity.
+        rope.aircraft->setGlobalPose(target);
+        for (int index = 0; index < 2; index++)
+        {
+            children[index]->setGlobalPose(poses[index]);
+        }
+        return runtime.errors.hasFailed.load() ? PhysicsFailure : Success;
     }
     catch (...)
     {

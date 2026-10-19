@@ -9,7 +9,7 @@ internal sealed class NativeHelicopterRope : IDisposable
     private const int HeaderSize = 14;
     private const int PoseSize = 7;
     private const int MotionSize = 13;
-    private const int ExpectedAbiVersion = 1;
+    private const int ExpectedAbiVersion = 2;
     private const float UnitRotationTolerance = 0.0001f;
     private static readonly HelicopterRopeBodySetup SourceBody = new(1f, 0.2f, 0.05f, true);
     private static readonly HelicopterRopeAngularLimits SourceLimits = new(-60f, 60f, 35f, 35f);
@@ -43,6 +43,27 @@ internal sealed class NativeHelicopterRope : IDisposable
             throw new InvalidOperationException($"Native rope creation failed with status {status}.");
         }
         _handle = new NativeRopeHandle(identity);
+    }
+
+    /// <summary>
+    /// Applies source Transform inheritance without advancing physics or generating kinematic velocity.
+    /// </summary>
+    internal void ApplyAircraftTransform(HelicopterRopeBodyPose aircraft)
+    {
+        ArgumentNullException.ThrowIfNull(aircraft);
+        float length = aircraft.Rotation.LengthSquared();
+        if (!PlayerHitbox.Finite(aircraft.Position) || !float.IsFinite(length) ||
+            MathF.Abs(length - 1) > UnitRotationTolerance)
+        {
+            throw new InvalidDataException("Aircraft transform requires a finite bounded unit pose.");
+        }
+        var values = new List<float>(PoseSize);
+        AddPose(values, aircraft.Position, aircraft.Rotation);
+        lock (_gate)
+        {
+            RequireAvailable();
+            RequireSuccess(NativeRopeMethods.SetAircraftTransform(_handle, values.ToArray(), values.Count));
+        }
     }
 
     internal void Advance()

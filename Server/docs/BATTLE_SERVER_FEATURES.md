@@ -34,11 +34,23 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now applies source aircraft Transform inheritance in the native adapter: root
+and terminal rope bodies move with their aircraft; generated middle bodies do not.
+Original Unity before/after-physics captures prove that hierarchy and unchanged
+pre-simulation velocities. ABI 2 adds the explicit setter without changing rest
+frames or physics time. Identity/yaw positions and rotations match the bounded
+motion fixture. The expanded native runner passes 1,131 checks on Windows and Linux,
+while accumulated speeds and the tilted transient retain documented differences
+(the moving tilted position error reaches about 0.40 m). Full flight/extension
+scheduling, crew, landing and Worker integration
+remain pending; see [motion evidence](HELICOPTER_ROPE_PHYSICS.md).
+
 B22 now includes an explicit .NET-to-PhysX rope adapter with versioned C ABI,
 isolated scene ownership, SafeHandle disposal, immutable snapshots and bounded
 capacity. Its dedicated native tests exercise real library calls separately from
-the managed prototype and CLI comparison; actual Windows and Linux runs pass 466
-adapter checks each. Worker registration, moving aircraft,
+the managed prototype and CLI comparison. Its initial stationary Windows and Linux
+checkpoint passed 466 adapter checks each; expanded motion coverage is listed above.
+Worker registration, flight scheduling,
 extension/insertion coupling, collisions, crew/landing and normal Unity acceptance
 remain pending. See [adapter boundary](HELICOPTER_ROPE_PHYSICS.md).
 

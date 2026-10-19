@@ -1466,6 +1466,7 @@ if (args is ["--native-helicopter-rope-only"])
         throw new FileNotFoundException("The native rope fixture was not found.");
     }
     int nativeRopeChecks = NativeHelicopterRopeTests.Run(Path.Combine(root.FullName, "content"));
+    nativeRopeChecks += NativeHelicopterRopeMotionTests.Run(Path.Combine(root.FullName, "content"));
     Console.WriteLine($"PASS: {nativeRopeChecks} native rope ownership and motion checks");
     return;
 }

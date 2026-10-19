@@ -3,8 +3,8 @@
 `NativeHelicopterRope` calls this shared library through a small C ABI. Construction is
 explicit; the battle Worker does not register or load it automatically. The existing
 PhysX reference build scripts build both the diagnostic executable and this library.
-It currently implements stationary, unit-scale aircraft attachment and generated rope
-bodies only. Moving aircraft, extension/insertion, collisions, crew, landing, signed
+It implements unit-scale aircraft attachment, generated rope bodies and direct aircraft
+Transform inheritance. Flight steering integration, extension/insertion, collisions, crew, landing, signed
 content selection and live Client acceptance remain separate work.
 
 ## Ownership and failure
@@ -23,15 +23,16 @@ simulation authority; failed simulation cannot be retried as though it rolled ba
 SDK parameter/operation/allocation/internal/abort errors latch the shared runtime into
 failure, while cleanup remains permitted. This is fail-closed behavior, not crash recovery.
 
-## C ABI version 1
+## C ABI version 2
 
-All functions return `0` for success, `1` for invalid input/identity, `2` for capacity,
+Lifecycle operations return `0` for success, `1` for invalid input/identity, `2` for capacity,
 and `3` for SDK/internal failure. No C++ exception crosses the boundary. Identities use
 `uintptr_t`, matching managed `IntPtr` on the supported Windows/Linux x64 builds.
 
 | Export | Contract |
 | --- | --- |
-| `war_rope_abi_version()` | Returns `1`; managed construction rejects any other version before exchanging buffers. |
+| `war_rope_abi_version()` | Returns `2`; managed construction rejects any other version before exchanging buffers. |
+| `war_rope_set_aircraft_transform(handle, values, length)` | Applies exactly seven pose floats without advancing time. |
 | `war_rope_create(values, length, bodyCount, outHandle)` | Requires `14 + 7 * bodyCount` floats. |
 | `war_rope_step(handle)` | Completes exactly one 0.02-second simulation step. |
 | `war_rope_snapshot(handle, output, length)` | Requires exactly `13 * bodyCount` output floats. |
@@ -43,6 +44,13 @@ position XYZ and rotation XYZW. Snapshot body rows contain position XYZ, rotatio
 XYZW, linear velocity XYZ, and world angular velocity XYZ in radians per second.
 The ABI accepts managed-owned buffers of the stated length; it is not an untrusted
 network parser. SDK objects, signing secrets and native pointers never cross the wire.
+
+The aircraft setter mirrors `Helicopter.Update`'s direct Transform writes. It carries
+the root and terminal rope body in aircraft-local space, leaves generated middle bodies
+unparented, and preserves existing velocities. It does not use a kinematic target or
+recompute joint rest frames. All resulting child poses validate before the first write.
+It assumes the measured original unit-scale hierarchy, not arbitrary caller-owned parenting.
+ABI 1 libraries must be rebuilt; no compatibility fallback selects different behavior.
 
 ## Verification
 

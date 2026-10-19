@@ -31,6 +31,10 @@ internal static class NativeRopeMethods
     [DllImport(LibraryName, EntryPoint = "war_rope_step", CallingConvention = CallingConvention.Cdecl)]
     internal static extern int Step(NativeRopeHandle handle);
 
+    [DllImport(LibraryName, EntryPoint = "war_rope_set_aircraft_transform",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int SetAircraftTransform(NativeRopeHandle handle, [In] float[] values, int length);
+
     [DllImport(LibraryName, EntryPoint = "war_rope_snapshot", CallingConvention = CallingConvention.Cdecl)]
     internal static extern int Snapshot(NativeRopeHandle handle, [Out] float[] values, int length);
 

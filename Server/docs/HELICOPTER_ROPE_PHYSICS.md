@@ -117,7 +117,7 @@ registration or live gameplay acceptance exists yet.
 ## Native host adapter
 
 `NativeHelicopterRope` now owns an isolated native scene through `WarRopePhysics` C ABI
-version 1. It validates and snapshots the source initialization, preserves the attachment's
+version 2. It validates and snapshots the source initialization, preserves the attachment's
 creation-time rest rotation, advances exactly 0.02 seconds per call, and returns copied
 body snapshots. A SafeHandle releases joints, actors and scene. Scene operations and disposal
 are synchronized; stale native registry identities are never reused. The explicit adapter
@@ -137,7 +137,7 @@ malformed input, unknown handles, and the ABI version. This mode requires native
 it never silently skips an unavailable adapter. Platform results are recorded after actual
 execution, separately from cross-publishing and from normal Unity match acceptance.
 
-Actual Windows and Ubuntu WSL .NET/native runs pass 466 checks each. Adapter maximum
+The initial stationary Windows and Ubuntu WSL .NET/native checkpoint passed 466 checks each. Adapter maximum
 position errors are about 0.00000043 (identity), 0.00000095 (yaw), and 0.000496 (tilted)
 on each platform. The adapter starts from host-generated initial poses in one scene per
 rope; the CLI probe starts from recorded poses with three ropes sharing a scene. Their
@@ -145,6 +145,50 @@ near-singular tilted diagnostics therefore are not interchangeable or parity thr
 Logs are `.local/rope-native-adapter-windows.log` and `.local/rope-native-adapter-linux.log`.
 The latter executes `.local/linux-native-rope-adapter/War.Battle.Tests` with the real
 Linux shared library. Flight/extension, full collision geometry and live combat are unverified.
+
+## Aircraft Transform inheritance
+
+`Helicopter.Update` directly changes position and rotation after its rope-extension branch;
+it does not call Rigidbody MovePosition/MoveRotation. QuickRope2 creates intermediate bodies
+without a Transform parent in Play Mode. The original root and ropeEnd retain aircraft
+ancestry. A new stripped Unity capture confirms `[true, false, false, true]` for all three
+fixtures. Each of ten samples writes aircraft translation `(0.04, 0.01, -0.02)` and a
+three-degree world yaw, synchronizes transforms, captures before simulation, then simulates
+one 0.02-second step and captures after. This synthetic input tests the source setter path;
+it is not a normal waypoint-flight acceptance run.
+
+`recovered-helicopter-rope-motion-unity-reference.json` has normalized-LF SHA-256
+`83f71afc33e30d9b632578afa2023d65ad93de40393cc9bc1d0f230b0486d376`.
+The owned Unity process exits zero at `.local/rope-aircraft-motion-unity.log`, with
+`PASS: recovered moving-aircraft rope frames=10`. The active Client was not modified.
+Reproduce with `WAR_ROPE_CAPTURE_MOTION=1`, a distinct `WAR_ROPE_PHYSICS_OUTPUT`,
+and `UnityHelicopterRopeExtensionExport.RunPhysics` in the disposable project.
+
+`ApplyAircraftTransform`/`war_rope_set_aircraft_transform` applies those parent changes
+without advancing physics. It transforms root/end through the old aircraft-local frame
+into the new world frame, leaving middle bodies and all existing velocities unchanged.
+It uses direct global-pose writes, not a kinematic target that would invent velocity.
+Invalid inputs reject before SDK mutation. Flight scheduling must still preserve the
+source's render-update/physics-update ordering rather than issuing one extension per fixed step.
+
+Windows moving identity/yaw positions and rotations pass the existing 0.00002 comparison
+threshold across before/after captures. Their maximum position differences are about
+0.00000045 and 0.00000145. Accumulated yaw-fixture velocity differs by up to 0.00002466,
+so later speed comparisons are explicitly diagnostic; initial physical steps still assert
+the original threshold. The tilted transient remains substantially different: maximum
+position difference about 0.4081, quaternion-component distance 0.5286, velocity 5.9934,
+and angular velocity 16.3039. Finite output is not tilted-trajectory acceptance. No live
+crew, landing, collision, or Worker integration is established by this new setter.
+
+The expanded native runner now passes 1,131 checks on Windows and actual Ubuntu WSL:
+467 stationary/ownership checks and 664 motion/validation checks. The new guards also
+reject NaN positions, zero/non-unit rotations and access after disposal, while retaining
+unchanged physics time and snapshots after rejected input. Linux normal/yaw position
+differences remain below 0.0000015; its tilted maximum position difference is about
+0.3997, with quaternion-component distance 0.5162 and angular-velocity difference 15.9757.
+These substantial tilted differences remain an open fidelity issue, not a passing trajectory.
+Evidence is `.local/rope-native-motion-windows.log`, `.local/rope-native-motion-linux.log`,
+and the zero-warning/error build at `.local/rope-native-motion-dotnet.log`.
 
 ## Verification and remaining work
 
