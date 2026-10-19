@@ -5381,6 +5381,7 @@ internal static class CombatContentTests
             playerWeaponContent: content,
             coopAirWaypoints: CoopAirWaypointCatalog.Load(Path.Combine(directory,
                 "recovered-coop-air-waypoint-routes.json"), spawnPoints));
+        CoopTransportLandingTests.Bind(transportRuntime, directory, catalog);
         transportRuntime.Admit(firstPlayer);
         transportRuntime.Admit(secondPlayer);
         var transportReady = new MatchCommand { CommandId = 1,
@@ -5437,7 +5438,8 @@ internal static class CombatContentTests
             transportRuntime.PlaceTransportHelicopterTargets(999).Count != 0)
             throw new Exception("Co-op transport Helicopter needs eleven enemy body boxes.");
         ulong afterFlight = transportTick + 15 * MatchManifest.TickRate;
-        transportRuntime.Advance(afterFlight);
+        CoopTransportLandingTests.AdvanceAndVerify(transportRuntime, transport, afterFlight,
+            content.HelicopterCrewPoints);
         BattleCoopEnemySpawn flownTransport = transportRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.EntityId == transport.EntityId);
         Vector3 transportStart = new(transport.X, transport.Y, transport.Z);
@@ -5508,6 +5510,7 @@ internal static class CombatContentTests
             transportRuntime.PlaceTransportHelicopterTargets(transport.EntityId).Count != 0 ||
             transportRuntime.TransportCrewMembers(transport.EntityId).Count != 0 ||
             transportRuntime.TransportGunner(transport.EntityId) != null ||
+            transportRuntime.TransportLandingFor(transport.EntityId) != null ||
             transportRuntime.PlaceTransportGunner(transport.EntityId) != null ||
             transportRuntime.Snapshot().Coop.EnemySpawns.Single(enemy =>
                 enemy.EntityId == transport.EntityId).GunnerHealth != 0)

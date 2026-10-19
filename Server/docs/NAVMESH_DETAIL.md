@@ -105,3 +105,27 @@ methods retain their existing behavior. Tests exercise the bound co-op entry poi
 and reject the previous approximate fallback. Worker construction and arrival do
 not yet use this builder. PvP detail-map extraction, additional near-edge/stacked
 surface/radius-boundary source probes, and normal crew landing acceptance remain open.
+
+## Co-op arrival integration
+
+`CoopMatchRuntime.BindTransportLandingNavigation` now accepts validated detail
+navigation exactly once before participant admission. On the actual first stop
+callback, it records the surface result, tick and query points. The source rope
+origin uses the aircraft pose before this render's flight/orientation writes,
+matching `ShowRope` inside `Steer`. The player plane comes from the source master's
+current selected point, including a locked route destination rather than the
+player's intermediate walking position. The source crew catalog binds the rope
+rest offset and prefab identity.
+
+The decision is not replaced by later frames and is removed on transport death.
+Tests run mission 46's transport through real runtime admission, flight and arrival;
+the expected origin is calculated independently from the prior snapshot. They
+require a real sampled surface, reject rebinding and verify decision retention and
+death cleanup. Movement-time cover selection still needs a dedicated runtime case.
+No binding means no landing decision; the old triangle sampler is never selected.
+
+The normal Worker currently does not create this co-op runtime because the complete
+collision/combat world is still closed. This integration does not open that gate,
+instantiate native ropes, settle combat or land crew. A later runtime factory must
+bind the verified navigation before admission and own native world cleanup before
+normal UDP co-op is enabled.

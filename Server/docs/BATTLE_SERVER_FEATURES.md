@@ -36,6 +36,21 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The co-op runtime now supports one pre-admission binding of validated landing
+navigation. Transport arrival records a detail-sampled surface using the previous
+aircraft pose, source rope rest offset and the source master's current locked player
+point. The decision is immutable across later flight frames and removed on aircraft
+death. The runtime test independently derives the expected rope origin from the
+previous tick's snapshot and exercises real mission flight/arrival and cleanup.
+Absent binding leaves this optional diagnostic runtime feature unissued; it does
+not enable approximate landing. Normal Worker co-op construction still remains
+closed behind its incomplete collision/combat world. Native rope issuance and crew
+landing are not enabled by recording the target.
+The full combat-content runner passes on Windows and actual Ubuntu WSL, reporting
+28,059 assertions plus the new arrival helper's checks. The focused build has zero
+warnings/errors. Logs: `.local/coop-transport-landing-content.log` and
+`.local/coop-transport-landing-linux-content.log`.
+
 The polygon/detail sampler now matches all 275 development queries and 155 queries
 in a separately captured set, including 105 newly chosen positions. It retains the
 existing 0.002-unit comparison tolerance. The observed rule prioritizes a polygon

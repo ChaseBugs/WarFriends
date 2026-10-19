@@ -13,6 +13,7 @@ public sealed class CoopNavMeshConnectivity
     private readonly CoopNavMeshTriangulationCatalog geometry;
     private readonly CoopInfantryPathFixtureCatalog? sourcePaths;
     private readonly IReadOnlyList<NavigationDetailSampler>? _landingSamplers;
+    internal bool HasHelicopterLandingDetails => _landingSamplers != null;
 
     private CoopNavMeshConnectivity(
         CoopNavMeshTriangulationCatalog geometry,

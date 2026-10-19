@@ -921,10 +921,14 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         foreach ((ulong entityId, HelicopterWaypointState flight) in
             transportHelicopterFlights.OrderBy(pair => pair.Key))
         {
+            Vector3 previousPosition = flight.Position;
+            Quaternion previousRotation = transportHelicopterOrientations[entityId].Rotation;
             bool arrived = flight.Advance(time);
             BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn => spawn.EntityId == entityId);
             if (arrived)
             {
+                // Source ShowRope runs inside Steer, before the current frame's aircraft Transform writes.
+                CaptureTransportLanding(entityId, previousPosition, previousRotation);
                 enemy.StopTick = tick;
                 if (transportHelicopterCrew.TryGetValue(entityId, out HelicopterCrewState? crew))
                     transportCrewSchedules.Add(entityId,
@@ -2865,6 +2869,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 transportHelicopterFlights.Remove(entityId);
                 transportHelicopterOrientations.Remove(entityId);
                 transportHelicopterCrew.Remove(entityId);
+                _transportLandings.Remove(entityId);
                 transportCrewSchedules.Remove(entityId);
                 transportGunners.Remove(entityId);
                 // DestroyPooled also destroys its attached turret soldier.
