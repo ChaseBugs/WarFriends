@@ -36,6 +36,20 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+`HelicopterCrewEntryDispatch` now preserves component Start lifetime separately
+from host frame identity. It accepts fresh Start plus normal Update in the same
+frame, retains Start history across entry restart, and rejects repeated Start,
+reversed frames, duplicate normal Update and unknown callback/clock identities.
+Dispatch metadata advances only after successful pose evaluation. The existing
+342 automatic source observations now pass through this dispatcher, including
+fresh double dispatch and reused Update-only cycles. Four rejection checks
+verify that invalid observations do not consume the following valid callback.
+Windows and actual Ubuntu WSL pass 9,797 native ownership/motion checks with
+zero build warnings/errors. Logs: `.local/crew-entry-dispatch-windows.log` and
+`.local/crew-entry-dispatch-linux.log`.
+This remains an internal integration boundary; normal `CoopMatchRuntime` scheduling
+and original actor/pool callback order are not yet connected or verified.
+
 Automatic Unity tween lifecycle is now captured separately from explicit method
 dispatch. Six tween-only objects exercise three parent rotations, both clock
 modes and reuse of the same component/clock. The fresh first frame invokes

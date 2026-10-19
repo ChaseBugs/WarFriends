@@ -818,3 +818,23 @@ native ownership/motion checks at `.local/crew-entry-lifecycle-windows.log` and
 This establishes automatic lifecycle of these tween-only fixtures in Unity 2018.3.
 It does not establish original Unity 5.2 parity, actual actor/pool callback order,
 camera/animation scheduling or a normal host-to-client crew descent integration.
+
+### Explicit component callback dispatch
+
+`HelicopterCrewEntryDispatch` owns Start history for one composed entry lifetime.
+Its invocation identifies frame, Start/Update callback and scaled/unscaled clock
+mode explicitly. Fresh Start and Update in the same frame are distinct accepted
+operations; another Start, reversed frame, duplicate normal Update or invalid
+kind/mode fails before advancing dispatch metadata. Restarting the entry does
+not replace this dispatch owner or clear component Start history.
+
+The 342 automatic source observations now replay through this boundary rather
+than calling the entry sampler directly. Fresh cycles use one Start followed by
+Updates; reused cycles use Updates only. Four rejected-observation cases prove
+that repeated Start, reversed frame, unknown clock mode and damaged position
+leave the following valid same-frame Update available and preserve its pose.
+Windows and actual Ubuntu WSL pass 9,797 native ownership/motion checks, with
+zero build warnings/errors. Evidence is `.local/crew-entry-dispatch-windows.log`
+and `.local/crew-entry-dispatch-linux.log`.
+The dispatcher does not infer actor birth, create a host scheduler, select a
+clock mode from client packets, or register independently descended combat bodies.

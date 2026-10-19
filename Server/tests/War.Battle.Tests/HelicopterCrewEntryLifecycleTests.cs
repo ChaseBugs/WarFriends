@@ -30,32 +30,43 @@ internal static class HelicopterCrewEntryLifecycleTests
             Require(firstRows[0].GetProperty("frame").GetInt32() ==
                 firstRows[1].GetProperty("frame").GetInt32(),
                 "Fresh source tween lost automatic Start plus Update in the same frame.");
-            checks += VerifyCycle(first, entry);
-            checks += VerifyCycle(scenario.GetProperty("reused"), entry);
+            var dispatch = new HelicopterCrewEntryDispatch(entry);
+            checks += VerifyCycle(first, entry, dispatch, CrewEntryCallback.Start);
+            checks += VerifyCycle(scenario.GetProperty("reused"), entry, dispatch, CrewEntryCallback.Update);
         }
         Require(checks == 342, "Automatic crew entry lost evaluated updates or reuse coverage.");
         Console.WriteLine("PASS: 342 automatic source entry updates, first-frame double dispatch and retained reuse.");
-        return checks;
+        return checks + VerifyDispatchGuards();
     }
 
-    private static int VerifyCycle(JsonElement cycle, HelicopterCrewEntryState entry)
+    private static int VerifyCycle(JsonElement cycle, HelicopterCrewEntryState entry,
+        HelicopterCrewEntryDispatch dispatch, CrewEntryCallback firstCallback)
     {
         entry.Restart(Rotation(cycle.GetProperty("from")), Rotation(cycle.GetProperty("target")));
         entry.ReenableAt(cycle.GetProperty("enabledAt").GetSingle());
         bool isUnscaled = cycle.GetProperty("ignoreTimeScale").GetBoolean();
         JsonElement rows = cycle.GetProperty("rows");
         float maximumError = 0;
+        int callbackIndex = 0;
         foreach (JsonElement row in rows.EnumerateArray())
         {
-            HelicopterRopeBodyPose pose = isUnscaled
-                ? entry.AdvanceUpdate(row.GetProperty("realtime").GetSingle(), Vector3.One)
-                : entry.AdvanceScaledUpdate(row.GetProperty("scaledDelta").GetSingle(), Vector3.One);
+            var invocation = new CrewEntryInvocation
+            {
+                Frame = row.GetProperty("frame").GetUInt64(),
+                Callback = callbackIndex == 0 ? firstCallback : CrewEntryCallback.Update,
+                ClockMode = isUnscaled ? CrewEntryClockMode.Unscaled : CrewEntryClockMode.Scaled,
+                Realtime = row.GetProperty("realtime").GetSingle(),
+                ScaledDelta = row.GetProperty("scaledDelta").GetSingle(),
+                PointPosition = Vector3.One,
+            };
+            HelicopterRopeBodyPose pose = dispatch.Advance(invocation);
             Quaternion expected = Rotation(row.GetProperty("rotation"));
             float error = MathF.Min((pose.Rotation - expected).Length(), (pose.Rotation + expected).Length());
             Require(error < RotationTolerance && pose.Position == Vector3.One &&
                 entry.IsRotating == row.GetProperty("enabled").GetBoolean(),
                 $"Automatic entry differs at frame {row.GetProperty("frame")}: rotation error {error}.");
             maximumError = MathF.Max(maximumError, error);
+            callbackIndex++;
         }
         Require(!entry.IsRotating, "Automatic entry did not retain source completion.");
         Console.WriteLine($"PASS: {rows.GetArrayLength()} automatic entry observations; maximum error {maximumError}.");
@@ -65,6 +76,43 @@ internal static class HelicopterCrewEntryLifecycleTests
     private static Quaternion Rotation(JsonElement value)
     {
         return new Quaternion(value[0].GetSingle(), value[1].GetSingle(), value[2].GetSingle(), value[3].GetSingle());
+    }
+
+    private static int VerifyDispatchGuards()
+    {
+        var start = new CrewEntryInvocation
+        {
+            Frame = 1, Callback = CrewEntryCallback.Start, ClockMode = CrewEntryClockMode.Scaled,
+            Realtime = 0.01f, ScaledDelta = 0.01f, PointPosition = Vector3.Zero,
+        };
+        CrewEntryInvocation[] rejected =
+        {
+            start,
+            start with { Callback = CrewEntryCallback.Update, Frame = 0 },
+            start with { Callback = CrewEntryCallback.Update, ClockMode = (CrewEntryClockMode)99 },
+            start with { Callback = CrewEntryCallback.Update, PointPosition = new Vector3(float.NaN, 0, 0) },
+        };
+        foreach (CrewEntryInvocation invalid in rejected)
+        {
+            var entry = new HelicopterCrewEntryState(Quaternion.Identity,
+                Quaternion.CreateFromAxisAngle(Vector3.UnitY, 1), Quaternion.Identity, 0);
+            var dispatch = new HelicopterCrewEntryDispatch(entry);
+            HelicopterRopeBodyPose before = dispatch.Advance(start);
+            try
+            {
+                dispatch.Advance(invalid);
+                throw new Exception("Crew entry accepted repeated, reversed or malformed dispatch.");
+            }
+            catch (InvalidDataException)
+            {
+                HelicopterRopeBodyPose after = dispatch.Advance(start with
+                {
+                    Callback = CrewEntryCallback.Update, ScaledDelta = 0,
+                });
+                Require(after == before, "Rejected callback consumed the normal same-frame Update or changed pose.");
+            }
+        }
+        return rejected.Length;
     }
 
     private static void Require(bool condition, string message)
