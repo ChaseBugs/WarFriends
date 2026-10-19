@@ -51,7 +51,31 @@ internal static class HelicopterFlightRopeFrameTests
             }
             checks += 4;
         }
-        return checks;
+        return checks + VerifyFailedLandingFrame();
+    }
+
+    private static int VerifyFailedLandingFrame()
+    {
+        var pose = new HelicopterRopeBodyPose(Vector3.Zero, Quaternion.Identity);
+        HelicopterRopeInitialState initial = HelicopterRopeInitialization.Create(
+            Vector3.Zero, -Vector3.UnitY * 3, 1);
+        using var world = new NativeHelicopterPhysicsWorld();
+        HelicopterPhysicsLease lease = world.Add(1, initial, pose, Quaternion.Identity);
+        world.BeginExtension(lease, LandingHeight);
+        HelicopterPhysicsWorldSnapshot arrival = world.AdvanceFrame(0,
+            new[] { new HelicopterPhysicsRenderInput(lease, pose, HasFailedLandingSample: true) },
+            HelicopterPhysicsMode.Normal);
+        if (!arrival.Members[0].IsExtending)
+        {
+            throw new Exception("Failed landing skipped the source arrival-frame activation.");
+        }
+        HelicopterPhysicsWorldSnapshot next = world.AdvanceFrame(0,
+            new[] { new HelicopterPhysicsRenderInput(lease, pose) }, HelicopterPhysicsMode.Normal);
+        if (next.Members[0].IsExtending || !next.Members[0].Bodies.SequenceEqual(arrival.Members[0].Bodies))
+        {
+            throw new Exception("Failed landing did not stop extension at the next render's height gate.");
+        }
+        return 2;
     }
 
     private static void VerifyTargetPreflight(NativeHelicopterPhysicsWorld world,

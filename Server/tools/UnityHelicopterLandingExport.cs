@@ -53,6 +53,15 @@ public static class UnityHelicopterLandingExport
                 Vector3 surface = vertices[index * (vertices.Length - 1) / 4];
                 rows.Add(Query(name, surface + Vector3.up * 8, surface));
                 rows.Add(Query(name, surface + Vector3.up * 8, surface + Vector3.up * 20));
+                if (Environment.GetEnvironmentVariable("WAR_ROPE_LANDING_EXTENDED") == "1")
+                {
+                    foreach (float height in new[] { 1f, 4f, 8f })
+                    foreach (float offset in new[] { -0.5f, 0.5f, 2f })
+                    {
+                        Vector3 origin = surface + new Vector3(offset, height, 0);
+                        rows.Add(Query(name, origin, origin + Vector3.up * 20));
+                    }
+                }
             }
         }
         finally

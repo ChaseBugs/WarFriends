@@ -503,8 +503,8 @@ Unity 5.2.5 fidelity or a rendered game test.
 
 The failed empty-mesh query returns `(Infinity, Infinity, Infinity)`. Source code
 then arms ShowRope, but its next render's height comparison is false and disables
-extension. The host currently returns null; wiring the explicit cancellation at
-the same callback boundary remains pending.
+extension. The host surface query returns null; the later native-world input below
+represents this cancellation at the same callback boundary. Worker wiring remains pending.
 
 All 25 projected surface queries agree with host geometry within 0.002 units.
 Of 25 non-projected queries, seven agree and eighteen differ. For example,
@@ -516,3 +516,24 @@ and excludes it from accepted counts. Next work must reproduce source polygon
 sampling and compare it against these cases before enabling Worker landing.
 The Windows native runner reports 6,016 accepted checks with eighteen diagnostics;
 Linux was not rerun for this capture checkpoint.
+
+### Failed landing activation and wider source probes
+
+The native world's `HasFailedLandingSample` input now represents the captured
+failed-query branch explicitly. It rejects a simultaneous successful target.
+After the current render it arms the source positive-infinite target internally;
+the next render clears extension through the ordinary height comparison. The test
+starts with an active extension, verifies arrival-frame activation, and verifies
+that next-frame bodies remain unchanged while the flag clears. This does not allow
+untrusted infinity through pose/target validation.
+
+Set `WAR_ROPE_LANDING_EXTENDED=1` when running the disposable exporter to add
+three heights and three horizontal offsets at each sampled vertex. The resulting
+`recovered-helicopter-landing-offset-unity-reference.json` has 276 rows and LF digest
+`01c66cae6eedc21c3a291e0a2a94c4b4cd783d46affa62adc16472169e45cd5b`.
+Unity exited zero (`.local/rope-landing-offset-unity.log`). There are 275 successful
+queries and one empty-mesh failure. An exploratory triangle projection comparison
+matched only 142 with Euclidean ranking and 200 with horizontal-first ranking;
+neither is a validated replacement for Unity polygon/detail-surface queries.
+The wider capture is evidence for the pending algorithm, not a passing acceptance
+fixture. The original 18 discrepancies remain diagnostics in the native runner.

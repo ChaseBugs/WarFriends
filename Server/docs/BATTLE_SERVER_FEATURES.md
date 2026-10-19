@@ -36,6 +36,22 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Failed surface queries now have an explicit trusted render-input flag. It cannot
+coexist with a successful target. After the arrival render it arms the captured
+positive-infinite internal height; the next render's height gate disables extension
+without issuing a native extension command. Infinity is not accepted as an ordinary
+target or published body state. Native tests cover cancellation of an already armed
+extension, including the arrival-frame flag and unchanged next-frame bodies.
+Windows and actual Ubuntu WSL each pass 6,018 accepted checks; eighteen known
+surface-selection discrepancies remain separately reported. The focused build
+has zero warnings/errors. Logs: `.local/landing-failure-windows.log` and
+`.local/landing-failure-linux.log`.
+
+Extended Unity capture adds 225 height/offset queries (276 rows including the initial
+set and empty-mesh failure). Exploratory comparison found that even horizontal-first
+triangle selection matches only 200 of 275 successful samples; it is not adopted as
+source equivalence. General polygon/detail-surface sampling remains an open gate.
+
 Actual Unity 2018.3 landing-query capture now exists for all five recovered co-op
 NavMeshData assets (51 rows). Empty-mesh SamplePosition returns positive infinity
 on all position axes; the original next-frame `ropeEnd.y > target.y` test is false.

@@ -5,7 +5,8 @@ internal readonly record struct HelicopterPhysicsLease(Guid WorldId, ulong Entit
 
 /// <summary>One trusted flight pose required for a complete world render update.</summary>
 internal sealed record HelicopterPhysicsRenderInput(
-    HelicopterPhysicsLease Lease, HelicopterRopeBodyPose Aircraft, float? ExtensionTargetHeight = null);
+    HelicopterPhysicsLease Lease, HelicopterRopeBodyPose Aircraft,
+    float? ExtensionTargetHeight = null, bool HasFailedLandingSample = false);
 
 /// <summary>Copied native state with the global physical birth boundary and local executed counters.</summary>
 internal sealed record HelicopterPhysicsMemberSnapshot(HelicopterPhysicsLease Lease, ulong BirthPhysicsStep,

@@ -91,6 +91,18 @@ internal sealed class NativeHelicopterRope : IDisposable
         }
     }
 
+    /// <summary>Arms the source failed SamplePosition result; the next render's height gate disables extension.</summary>
+    internal void BeginFailedLanding()
+    {
+        lock (_gate)
+        {
+            RequireAvailable();
+            // Unity 2018.3 returns a positive-infinite hit position on the captured failed query.
+            // Keep this sentinel internal; it is never accepted as a network or successful landing target.
+            _extensionTargetHeight = float.PositiveInfinity;
+        }
+    }
+
     /// <summary>
     /// Runs the source extension gate before aircraft Transform changes; fixed physics stays separate.
     /// </summary>
