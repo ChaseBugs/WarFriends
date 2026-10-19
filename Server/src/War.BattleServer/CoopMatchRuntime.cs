@@ -2841,69 +2841,91 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
             return false;
 
         float remaining = MathF.Max(0, enemy.Health - damage);
-        if (remaining == 0)
+        using (remaining == 0 && enemy.Behaviour == "DeployHeli"
+            ? mission.BeginDeathCascade(impactTick) : null)
         {
-            bool confirmed = credit == null
-                ? mission.ConfirmAiDeath(entityId, impactTick)
-                : mission.ConfirmAttributedAiDeath(entityId, credit.PlayerId,
-                    credit.KillCredit, skillShotScores!, impactTick);
-            if (!confirmed)
-                return false;
-        }
+            if (remaining == 0)
+            {
+                if (enemy.Behaviour == "DeployHeli")
+                {
+                    DestroyAttachedTransportCrew(enemy.EntityId, impactTick, credit);
+                }
+                bool confirmed = credit == null
+                    ? mission.ConfirmAiDeath(entityId, impactTick)
+                    : mission.ConfirmAttributedAiDeath(entityId, credit.PlayerId,
+                        credit.KillCredit, skillShotScores!, impactTick);
+                if (!confirmed)
+                {
+                    if (enemy.Behaviour == "DeployHeli")
+                    {
+                        throw new InvalidDataException("Confirmed transport death cascade lost its parent identity.");
+                    }
+                    return false;
+                }
+            }
 
-        enemy.Health = remaining;
-        if (remaining == 0)
+            enemy.Health = remaining;
+            if (remaining == 0)
+            {
+                RemoveDeadEnemyState(enemy, impactTick);
+            }
+        }
+        if (remaining == 0 && mission.Outcome == MissionOutcome.Succeeded)
         {
-            enemy.DeathTick = impactTick;
-            enemyDestinations?.Release(entityId);
-            infantryPaths.Remove(entityId);
-            infantryPointArrivals.Remove(entityId);
-            infantryFirstTargets.Remove(entityId);
-            infantryFirstPlacedTargets.Remove(entityId);
-            cornerFirstShotAttempts.Remove(entityId);
-            cornerLatestShotAttempts.Remove(entityId);
-            cornerNoTargetRetryTicks.Remove(entityId);
-            _obstacleVolleyClocks.Remove(entityId);
-            _nextObstaclePointChangeTicks.Remove(entityId);
-            _obstacleCrawlStates.Remove(entityId);
-            _obstacleRootTweens.Remove(entityId);
-            infantryShotWindups.Remove(entityId);
-            infantryRoundIntents.Remove(entityId);
-            nextCornerChangeTicks.Remove(entityId);
-            obstacleRepositionStartedTicks.Remove(entityId);
-            nextObstacleRepositionTicks.Remove(entityId);
-            movingObstacleRepositions.Remove(entityId);
-            if (enemy.Behaviour == "Drone")
-            {
-                airPathReservations?.Release(entityId);
-                droneFlights.Remove(entityId);
-            }
-            if (enemy.Behaviour == "Helicopter")
-            {
-                airPathReservations?.Release(entityId);
-                assaultHelicopterFlights.Remove(entityId);
-            }
-            if (enemy.Behaviour == "DeployHeli")
-            {
-                airPathReservations?.Release(entityId);
-                transportHelicopterFlights.Remove(entityId);
-                transportHelicopterOrientations.Remove(entityId);
-                transportHelicopterCrew.Remove(entityId);
-                _transportLandings.Remove(entityId);
-                RemoveTransportCrewDrops(entityId);
-                _transportRopes?.Remove(entityId);
-                _transportSpawnRealtime.Remove(entityId);
-                transportCrewSchedules.Remove(entityId);
-                transportGunners.Remove(entityId);
-                // DestroyPooled also destroys its attached turret soldier.
-                enemy.GunnerHealth = 0;
-                enemy.GunnerRespawnTick = 0;
-            }
-            if (mission.Outcome == MissionOutcome.Succeeded)
-                End(BattlePhase.Ended, "mission-success");
+            End(BattlePhase.Ended, "mission-success");
         }
         stateRevision++;
         return true;
+    }
+
+    private void RemoveDeadEnemyState(BattleCoopEnemySpawn enemy, ulong impactTick)
+    {
+        ulong entityId = enemy.EntityId;
+        enemy.DeathTick = impactTick;
+        enemyDestinations?.Release(entityId);
+        infantryPaths.Remove(entityId);
+        infantryPointArrivals.Remove(entityId);
+        infantryFirstTargets.Remove(entityId);
+        infantryFirstPlacedTargets.Remove(entityId);
+        cornerFirstShotAttempts.Remove(entityId);
+        cornerLatestShotAttempts.Remove(entityId);
+        cornerNoTargetRetryTicks.Remove(entityId);
+        _obstacleVolleyClocks.Remove(entityId);
+        _nextObstaclePointChangeTicks.Remove(entityId);
+        _obstacleCrawlStates.Remove(entityId);
+        _obstacleRootTweens.Remove(entityId);
+        infantryShotWindups.Remove(entityId);
+        infantryRoundIntents.Remove(entityId);
+        nextCornerChangeTicks.Remove(entityId);
+        obstacleRepositionStartedTicks.Remove(entityId);
+        nextObstacleRepositionTicks.Remove(entityId);
+        movingObstacleRepositions.Remove(entityId);
+        if (enemy.Behaviour == "Drone")
+        {
+            airPathReservations?.Release(entityId);
+            droneFlights.Remove(entityId);
+        }
+        if (enemy.Behaviour == "Helicopter")
+        {
+            airPathReservations?.Release(entityId);
+            assaultHelicopterFlights.Remove(entityId);
+        }
+        if (enemy.Behaviour == "DeployHeli")
+        {
+            airPathReservations?.Release(entityId);
+            transportHelicopterFlights.Remove(entityId);
+            transportHelicopterOrientations.Remove(entityId);
+            transportHelicopterCrew.Remove(entityId);
+            _transportLandings.Remove(entityId);
+            RemoveTransportCrewDrops(entityId);
+            _transportRopes?.Remove(entityId);
+            _transportSpawnRealtime.Remove(entityId);
+            transportCrewSchedules.Remove(entityId);
+            transportGunners.Remove(entityId);
+            // DestroyPooled also destroys its attached turret soldier.
+            enemy.GunnerHealth = 0;
+            enemy.GunnerRespawnTick = 0;
+        }
     }
 
     /// <summary>Only a validated host impact may call this; packets cannot.</summary>

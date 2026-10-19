@@ -16,6 +16,7 @@ public sealed class MissionObjectiveState
     private const int MaximumReceipts = 100_000;
     private readonly HashSet<string> acceptedEvents = new(StringComparer.Ordinal);
     private readonly MissionRule rule;
+    private bool _isDeathCascadeActive;
 
     public int MissionIndex => rule.Index;
     public int EnemyKills { get; private set; }
@@ -47,7 +48,7 @@ public sealed class MissionObjectiveState
             return false;
 
         EnemyKills = checked(EnemyKills + 1);
-        if (EnemyKills >= rule.Objective)
+        if (!_isDeathCascadeActive && EnemyKills >= rule.Objective)
             Outcome = MissionOutcome.Succeeded;
         return true;
     }
@@ -60,7 +61,7 @@ public sealed class MissionObjectiveState
             return false;
 
         Score += earnedScore;
-        if (Score >= rule.Objective)
+        if (!_isDeathCascadeActive && Score >= rule.Objective)
             Outcome = MissionOutcome.Succeeded;
         return true;
     }
@@ -72,6 +73,32 @@ public sealed class MissionObjectiveState
 
         Outcome = MissionOutcome.Succeeded;
         return true;
+    }
+
+    internal void BeginDeathCascade()
+    {
+        if (!StartTick.HasValue || Outcome != MissionOutcome.InProgress || _isDeathCascadeActive)
+        {
+            throw new InvalidOperationException("A death cascade requires one running objective.");
+        }
+
+        _isDeathCascadeActive = true;
+    }
+
+    internal void CompleteDeathCascade()
+    {
+        if (!_isDeathCascadeActive)
+        {
+            throw new InvalidOperationException("No death cascade is active.");
+        }
+
+        _isDeathCascadeActive = false;
+        bool reachedTarget = rule.MissionType == "KillXEnemies" && EnemyKills >= rule.Objective ||
+            rule.MissionType == "Score" && Score >= rule.Objective;
+        if (reachedTarget)
+        {
+            Outcome = MissionOutcome.Succeeded;
+        }
     }
 
     public bool AdvanceClock(ulong tick)

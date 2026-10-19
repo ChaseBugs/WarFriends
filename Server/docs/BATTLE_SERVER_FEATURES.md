@@ -31,13 +31,28 @@ already reserved for that actor in the shared scene-point state. A completed
 animation or fallback movement without a reserved point cannot detach a soldier.
 This is a host confirmation seam, not a normal SetFinalTarget callback yet.
 
-Parent-death integration must preserve `Helicopter.OnOnDeath`: ordered crew
-`DestroySoldier` calls occur before the aircraft's `OnKilled`, with the turret
-soldier afterwards. Defer match teardown across this host-owned cascade so a
-crew kill that reaches the objective cannot leave the lethally hit aircraft alive.
+Parent lethal hits now preserve the initial rope-crew part of `Helicopter.OnOnDeath`:
+living attached crew receive confirmed deaths in seat order before the aircraft's
+own death. Detached and already dead actors are excluded. A synchronous mission
+death-cascade scope defers KillXEnemies/Score completion until the callback chain
+and aircraft cleanup finish. This permits later deaths in the same chain to
+contribute even when an earlier soldier reaches the target. The real co-op fixture
+checks attached actor death after aircraft destruction; focused objective tests
+check both target-crossing modes. A full runtime target-crossing/attributed-score
+cascade and detached-survivor scenario still need acceptance coverage.
+
+The source turret soldier dies after the aircraft's `OnKilled`. Its existing
+cleanup disables gunner health/respawn, but a distinct turret actor identity and
+mission/score death are still absent. Do not describe this as the complete source
+death cascade or complete crew integration.
+
+Validation: build passed with zero warnings/errors. Native-enabled Windows and
+actual WSL Linux combat-content runs each passed 28,903 counted assertions plus
+the real-match fixture's uncounted checks. Logs:
+`.local/crew-parent-cascade-windows.log`, `.local/crew-parent-cascade-linux.log`.
 
 These operations are not yet connected to normal hitbox selection,
-SetFinalTarget callbacks or parent-death scoring/cascades. Initial
+SetFinalTarget callbacks or complete turret-inclusive parent-death scoring. Initial
 actor health registration does not establish colliders, landing, infantry AI,
 network projection, repeated cohorts or complete gameplay.
 

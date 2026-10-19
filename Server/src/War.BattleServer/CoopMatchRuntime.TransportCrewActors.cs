@@ -104,4 +104,19 @@ internal sealed partial class CoopMatchRuntime
             _transportCrewActors.Add(actor.EntityId, actor);
         }
     }
+
+    private void DestroyAttachedTransportCrew(ulong aircraftId, ulong impactTick, CoopHostEnemyHitCredit? credit)
+    {
+        TransportCrewActorState[] attached = _transportCrewActors.Values
+            .Where(actor => actor.AircraftId == aircraftId && actor.IsAttached && actor.Health > 0)
+            .OrderBy(actor => actor.Slot).ToArray();
+        foreach (TransportCrewActorState actor in attached)
+        {
+            // Helicopter.OnOnDeath invokes DestroySoldier in seat order before its own OnKilled.
+            if (!ApplyHostCrewDamage(actor, actor.Health, impactTick, credit))
+            {
+                throw new InvalidDataException("Source attached crew death failed mission authority.");
+            }
+        }
+    }
 }

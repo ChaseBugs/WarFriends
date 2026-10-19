@@ -7,7 +7,7 @@ namespace War.BattleServer;
 /// This is battle authority only; network admission, AI damage, and rewards still
 /// need Worker integration.
 /// </summary>
-public sealed class CoopMissionEngine
+public sealed partial class CoopMissionEngine
 {
     private const ulong MaximumHostTick = 10_000_000;
     private readonly HashSet<string> participants = new(StringComparer.Ordinal);

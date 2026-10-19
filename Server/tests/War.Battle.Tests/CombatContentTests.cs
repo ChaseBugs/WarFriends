@@ -85,6 +85,7 @@ internal static class CombatContentTests
             content.Stats.SceneRevision, content.Stats.Revision);
         int coopAssertions = VerifyCoopMissionEngine(catalog, skillShots);
         coopAssertions += MissionTransportCrewTests.Run(catalog);
+        coopAssertions += MissionDeathCascadeTests.Run(catalog);
         CoopSurvivorMissionTests.Run(catalog, skillShots);
         int allocationAssertions = VerifyCoopAllocation(
             directory, catalog, content);
@@ -5510,6 +5511,8 @@ internal static class CombatContentTests
             transportRuntime.PlaceTransportGunner(transport.EntityId) == null)
             throw new Exception("Co-op gunner did not return at the source respawn tick.");
         TransportCrewHostDamageTests.Verify(transportRuntime, transport.EntityId, gunnerDue);
+        ulong[] initialCrewIds = transportRuntime.TransportCrewIdentities(transport.EntityId)
+            .Select(identity => identity.EntityId).ToArray();
         if (!transportRuntime.ApplyHostEnemyDamage(transport.EntityId,
                 transport.MaxHealth, gunnerDue) ||
             transportRuntime.ReservedAirPath(transport.EntityId) != null ||
@@ -5521,6 +5524,10 @@ internal static class CombatContentTests
             transportRuntime.Snapshot().Coop.EnemySpawns.Single(enemy =>
                 enemy.EntityId == transport.EntityId).GunnerHealth != 0)
             throw new Exception("Co-op transport Helicopter death retained its path or hitboxes.");
+        if (initialCrewIds.Any(actorId => transportRuntime.TransportCrewActor(actorId) is not { Health: 0 }))
+        {
+            throw new Exception("Source aircraft destruction retained a living attached crew actor.");
+        }
         CoopTransportGunnerTargetTests.RequireNoTargets(transportRuntime, transport.EntityId);
         CoopTransportLandingTests.Finish(transportRuntime, transport.EntityId, content.HelicopterRope);
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
