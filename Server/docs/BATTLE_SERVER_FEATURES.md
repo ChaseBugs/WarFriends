@@ -34,6 +34,25 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+### Native helicopter world checkpoint — 2026-10-19
+
+`NativeHelicopterPhysicsWorld` now owns multiple isolated native rope scenes under one
+match clock. Joining preserves existing clock debt and records each member's physical
+birth boundary. Render inputs are validated as a complete roster before execution;
+leases include a world ID and generation so stale or foreign owners cannot remove a
+current entity. A failed execution closes the whole world instead of permitting a
+partially applied frame to resume. Snapshots contain copied, ordered member state.
+
+The Windows and actual Ubuntu WSL native runners each pass 5,907 checks, including shared-clock admission,
+retained snapshots, stale/foreign lease rejection, invalid-input rejection and carried
+debt after a timing change. Solution build passes with no warnings or errors.
+Partial-frame failure cleanup now passes a real native derived-transform rejection
+test on Windows and actual Ubuntu WSL (5,916 checks each): after earlier frame work, all publication and
+retry paths close and a replacement world can allocate all 64 native registry slots.
+Worker registration, flight/collision integration and normal rendered gameplay remain
+open. These tests do not complete the helicopter feature or establish original Unity
+5.2 physics parity. Existing tilted-pose discrepancies remain diagnostic.
+
 B22 now has a source-backed fixed/render phase clock instead of a 1:1 step assumption.
 Actual automatic Unity traces produce 130 physical callbacks per thirty render updates,
 or 121 with the captured pause/mode-change window. The clock preserves owed time,

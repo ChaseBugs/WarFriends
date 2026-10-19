@@ -222,7 +222,7 @@ internal sealed class NativeHelicopterRope : IDisposable
         return new HelicopterRopeMotionBody(new HelicopterRopeBodyPose(position, rotation), velocity, angular);
     }
 
-    private static void ValidateAircraftTransform(HelicopterRopeBodyPose aircraft)
+    internal static void ValidateAircraftTransform(HelicopterRopeBodyPose aircraft)
     {
         ArgumentNullException.ThrowIfNull(aircraft);
         float length = aircraft.Rotation.LengthSquared();

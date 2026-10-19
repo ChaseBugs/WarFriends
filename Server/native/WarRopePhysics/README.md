@@ -138,3 +138,11 @@ publish. Publishing alone is not Linux execution evidence. The library is not ye
 into Worker deployments; missing native packages cannot silently select a different solver.
 See [physics evidence](../../docs/HELICOPTER_ROPE_PHYSICS.md) and
 [SDK build instructions](../../tools/NativeRopeProbe/README.md).
+
+The managed `NativeHelicopterPhysicsWorld` owns isolated rope scenes and one match
+clock. A lease binds a world ID, entity ID and generation. Failed frame execution
+faults the whole owner and releases its scenes; it cannot publish partial state or
+retry already executed physics. A native derived-transform rejection test exercises
+this path after physics and an earlier member's render, then reallocates the entire
+64-slot registry before disposing the failed owner. This does not introduce shared
+collision solving between ropes or register the adapter in the Worker.

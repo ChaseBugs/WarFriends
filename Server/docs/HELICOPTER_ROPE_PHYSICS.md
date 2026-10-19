@@ -431,3 +431,25 @@ extension with the physical timestep; bind signed content and current crew poses
 verify descent, NavMesh landing and live co-op combat through the normal Unity Client.
 No Worker registration, live co-op Fire, Mongo settlement or normal match acceptance
 is established by these frame tests.
+
+## Shared native world failure acceptance — 2026-10-19
+
+`NativeHelicopterPhysicsWorld` owns one clock and generation-bound rope members.
+The native-world test advances physics for two ropes, renders the first member,
+then submits a bounded aircraft pose whose inherited rope root exceeds the native
+coordinate limit. The actual native transform call rejects this derived pose.
+The test requires the native failure exception, rather than accepting any rejection
+from preflight as evidence of partial-frame cleanup.
+
+After failure, snapshot publication, replaying the frame, adding a member and arming
+extension are rejected. A previously returned snapshot remains unchanged. Before
+disposing the failed managed owner, a replacement world fills all 64 process-wide
+native registry slots; this proves failed-world cleanup released both native scenes.
+Disposal of the failed owner remains idempotent. No fake physics callback or
+test-only production failure switch is used.
+
+Windows and actual Ubuntu WSL native validation each pass 5,916 checks in
+`.local/native-world-failure-windows.log` and `.local/native-world-failure-linux.log`.
+This covers a native derived-transform rejection after partial frame execution,
+not every SDK failure or operating-system allocation failure. Worker ownership,
+shared collision scenes, flight, crew descent and landing remain open.

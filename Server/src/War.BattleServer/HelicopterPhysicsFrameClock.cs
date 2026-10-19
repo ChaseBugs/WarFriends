@@ -38,12 +38,17 @@ internal sealed class HelicopterPhysicsFrameClock
     internal void BeginFrame(float scaledDeltaTime)
     {
         RequirePhase(Phase.Idle);
+        ValidateDeltaTime(scaledDeltaTime);
+        _remainingSeconds += scaledDeltaTime;
+        _phase = Phase.Physics;
+    }
+
+    internal static void ValidateDeltaTime(float scaledDeltaTime)
+    {
         if (!float.IsFinite(scaledDeltaTime) || scaledDeltaTime < 0 || scaledDeltaTime > MaximumRenderDelta)
         {
             throw new InvalidDataException("Physics clock requires a bounded finite scaled render delta.");
         }
-        _remainingSeconds += scaledDeltaTime;
-        _phase = Phase.Physics;
     }
 
     internal HelicopterPhysicsQuantum? TakePhysicsStep()
