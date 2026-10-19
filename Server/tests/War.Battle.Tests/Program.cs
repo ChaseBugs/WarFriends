@@ -1466,7 +1466,8 @@ if (args is ["--helicopter-rope-initialization-only"])
         throw new FileNotFoundException("The recovered rope initialization reference was not found.");
     }
     int count = HelicopterRopeInitializationTests.Run(Path.Combine(root.FullName, "content"));
-    Console.WriteLine($"PASS: {count} rope initialization and composed extension checks");
+    count += HelicopterRopeConstraintFrameTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {count} rope initialization, extension and constraint frame checks");
     return;
 }
 

@@ -332,8 +332,9 @@ The normalized-LF artifact digest is
 `dcd98cbe299229188790412d601a2ebef4ded4e8aa2fc0ab75286bda346563e4`.
 The final capture exits zero with no logged exceptions at
 `.local/helicopter-rope-initialization-unity-composed.log`. The active Client was
-not modified. The focused runner `--helicopter-rope-initialization-only` passes
-541 checks, with position/quaternion comparison tolerance `0.00001` and measured
+not modified. The initialization/extension subset contributes 541 checks to
+`--helicopter-rope-initialization-only`, with position/quaternion comparison
+tolerance `0.00001` and measured
 distance tolerance `0.000001`. This is Unity 2018.3.0f2 evidence; original Unity
 5.2 native physics/animation equivalence and normal match acceptance remain open.
 The solution builds with zero warnings/errors and protocol tests pass. The Windows
@@ -350,6 +351,10 @@ rope solver. The composed command fixture deliberately has no intervening gravit
 constraint or collision solve and cannot establish the moving rope's actual path.
 
 ## Remaining integration
+
+The [physical connection boundary](HELICOPTER_ROPE_PHYSICS.md) now covers active
+automatic anchors and prepared aircraft/chain rest frames. Earlier inactive zero
+connected-anchor values must not be used as effective solved physical frames.
 
 The server still needs current rope-joint physics, the current blended left-palm
 pose, integration of the root update ordering, NavMesh sampling and the landing

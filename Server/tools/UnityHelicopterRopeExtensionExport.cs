@@ -39,6 +39,7 @@ public static class UnityHelicopterRopeExtensionExport
     /// <summary>Runs an animation-free, inactive-joint command fixture in a disposable project.</summary>
     public static void Run()
     {
+        SessionState.SetBool(Active + ".Physics", false);
         SessionState.SetBool(Active + ".Initialization", false);
         Begin(OutputVariable);
     }
@@ -46,8 +47,17 @@ public static class UnityHelicopterRopeExtensionExport
     /// <summary>Captures actual prefab spline generation and physical connection setup before simulation.</summary>
     public static void RunInitialization()
     {
+        SessionState.SetBool(Active + ".Physics", false);
         SessionState.SetBool(Active + ".Initialization", true);
         Begin("WAR_ROPE_INITIALIZATION_OUTPUT");
+    }
+
+    /// <summary>Activates stripped source ropes to observe realized joint frames and native physical steps.</summary>
+    public static void RunPhysics()
+    {
+        SessionState.SetBool(Active + ".Physics", true);
+        SessionState.SetBool(Active + ".Initialization", false);
+        Begin("WAR_ROPE_PHYSICS_OUTPUT");
     }
 
     private static void Begin(string outputVariable)
@@ -80,7 +90,14 @@ public static class UnityHelicopterRopeExtensionExport
         }
         try
         {
-            if (SessionState.GetBool(Active + ".Initialization", false))
+            if (SessionState.GetBool(Active + ".Physics", false))
+            {
+                if (!UnityHelicopterRopePhysicsCapture.Advance())
+                {
+                    return;
+                }
+            }
+            else if (SessionState.GetBool(Active + ".Initialization", false))
             {
                 UnityHelicopterRopeInitializationCapture.Run();
             }
