@@ -36,6 +36,19 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The next descent boundary now consumes a complete native world publication and a
+fresh host-observed soldier/palm frame through `HelicopterCrewDescentState`. It
+owns the original rope lease and ordered render cursor; replayed/skipped frames,
+missing ropes, foreign worlds and reused entity generations reject before progress
+changes. Joint positions come directly from that publication in source order.
+Tests exercise real native scenes, not a substitute rope solver. Normal runtime
+registration remains pending because the true Driving-to-Spawning pose, animation
+phase and callback ordering still need capture; this class does not fabricate
+those inputs or authorize landing, collision or rewards.
+Windows and actual Ubuntu WSL pass 7,256 native/query checks, including this
+ownership test. Logs: `.local/crew-descent-owner-windows.log` and
+`.local/crew-descent-owner-linux.log`; the build has zero warnings/errors.
+
 Animation-state research now covers disabling the Animation component mid-slide
 fade and enabling it again. Actual Unity observations hold layer clocks/weights
 and sampled local pose while disabled, then catch up on resume. The new 30 Hz

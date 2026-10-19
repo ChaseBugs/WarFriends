@@ -1481,6 +1481,7 @@ if (args is ["--native-helicopter-rope-only"])
     nativeRopeChecks += HelicopterRopeDefinitionTests.Run(Path.Combine(root.FullName, "content"));
     nativeRopeChecks += HelicopterRopeActivationTests.Run(Path.Combine(root.FullName, "content"));
     nativeRopeChecks += HelicopterSlideMixerTests.Run(Path.Combine(root.FullName, "content"));
+    nativeRopeChecks += HelicopterCrewDescentStateTests.Run();
     Console.WriteLine($"PASS: {nativeRopeChecks} native rope ownership and motion checks");
     return;
 }
