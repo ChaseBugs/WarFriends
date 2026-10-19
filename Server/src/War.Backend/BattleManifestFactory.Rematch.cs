@@ -69,6 +69,10 @@ public sealed partial class BattleManifestFactory
         {
             throw new InvalidDataException("Rematch requires current host policy and a fresh bonus admission ledger.");
         }
+        if (weapons is IBattleArmyManifestCatalog pairedArmyCatalog)
+        {
+            pairedArmyCatalog.PrepareArmyCombatRefresh(source, previous);
+        }
         foreach (JsonNode? node in source["Players"]!.AsArray())
         {
             var player = node?.AsObject() ?? throw new InvalidDataException("Rematch participant is absent.");

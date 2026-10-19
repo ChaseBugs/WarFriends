@@ -55,6 +55,10 @@ public sealed partial class BattleManifestFactory
             participant["PlayerId"]=playerIds[i];
         }
         if(root.ContainsKey("SceneMasterPlayerId"))root["SceneMasterPlayerId"]=playerIds[0];
+        if (weapons is IBattleArmyManifestCatalog armyCatalog)
+        {
+            armyCatalog.BindArmyCombat(players, views);
+        }
         root["Allocations"]=JsonSerializer.SerializeToNode(trusted);
         root["Presentations"]=JsonSerializer.SerializeToNode(views);
         byte[] bytes=JsonSerializer.SerializeToUtf8Bytes(root);

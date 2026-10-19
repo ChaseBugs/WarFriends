@@ -69,7 +69,7 @@ recovered input class. The first report also records an `ArgumentOutOfRangeExcep
 That unchecked card-animation indexing remains a separate unresolved UI/lifecycle defect; this
 checkpoint does not establish its root cause or claim it fixed.
 
-## Combined run remains failed
+## Earlier failed combined run
 
 `.local/client-boot-e9df0198f6864093bbe806f9a326c74e` uses the corrected sniper input sequence.
 The initiating report records the completed request separately from observed one-round consumption,
@@ -89,10 +89,22 @@ completed ordinary boots, but its second paired Editor stalled at startup. The f
 `hasStartedSearch=false`, `hasReachedRunning=false` and zero exceptions. It exits nonzero without
 reproducing the infantry rejection; no particular field group is established by that attempt.
 
-Next investigate the actual rejected row and the normal army manifest's combat authority.
-`BattleArmyManifestProjection.Build` currently binds only unit identities and three upgrade lanes;
-`InitializeArmyVitality` requires `ArmyHealthFactors` to create health, while a row without vitality
-gets zero health during realtime deployment. This is a source-backed projection gap to resolve,
-not proof of the exact rejected field in the failed run. Do not accept zero-health infantry or
-invent earned perk modifiers to make the renderer pass. Reproduce with a complete durable combat
-projection and separately repair terminal card-animation indexing.
+## Passing combined checkpoint
+
+The missing normal army factor projection is now implemented; see
+[army perk projection](ARMY_PERK_PROJECTION.md). The failed run above did not identify its exact
+rejected field, so it remains failure provenance rather than a retroactively diagnosed pass.
+
+`.local/client-boot-5c9559a5c2f9492ebc4e653e18fe89fa` exits zero. Both normal controllers
+reach Running in match `m887230cf0e54448d8748de9132be5ed5`. The initiator observes sniper
+one-round consumption, the real HUD reload callback, pending reload and completion. Its peer
+also observes pending/completed reload. Reconnect performs one rebuild and resumes from tick
+928 to 933, then satisfies the ninety-tick continuation requirement without recovery failure.
+Report-time exception counts are zero, with 142/141 error-level diagnostics.
+
+Both logs subsequently record shutdown NullReferenceExceptions in `Crane.OnDestroy` and
+`DeathMatchUnitsGuiElementFixed.get_isActive`, after `UNITY_NORMAL_BOOT_OBSERVED`. Therefore
+zero report exceptions is not a clean whole-process lifecycle result. The earlier terminal
+card-animation indexing defect also remains open. This uses the diagnostic thirty-second
+admission window and prepared sniper input; default admission, pointer firing, all families,
+terminal/rematch gameplay, Android and external-network isolation remain separate gates.

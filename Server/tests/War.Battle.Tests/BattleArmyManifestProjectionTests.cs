@@ -20,11 +20,13 @@ internal static class BattleArmyManifestProjectionTests
         JsonObject root = CreateTemplate(content, contentDirectory);
         var catalog = new BattleMixedManifestCatalog(content);
         var allocations = new List<BattleAllocationProjection>();
+        var views = new List<BattlePlayerPresentation>();
         foreach (JsonNode? node in root["Players"]!.AsArray())
         {
             JsonObject participant = node!.AsObject();
             string playerId = participant["PlayerId"]!.GetValue<string>();
             BattlePlayerPresentation view = CreateStarterView(playerId);
+            views.Add(view);
             catalog.Bind(participant, view);
             Require(participant["EquippedArmyUnitIds"]!.Deserialize<string[]>()!.SequenceEqual(StarterUnitIds),
                 "Army unit identities do not match the Client presentation order.");
@@ -35,10 +37,11 @@ internal static class BattleArmyManifestProjectionTests
             CheckRejectedMutation(catalog, participant, view);
         }
 
+        catalog.BindArmyCombat(root["Players"]!.AsArray(), views);
         MatchManifest manifest = MatchManifest.Parse(JsonSerializer.SerializeToUtf8Bytes(root));
         content.ValidateAllocation(manifest);
         var map = content.Maps.Single(candidate => candidate.SourceHash == manifest.MapRevision);
-        var host = new MatchEngine(manifest, map, content);
+        var host = new MatchEngine(manifest, map, content, armyChoice: _ => 0);
         host.ConfigureBattleAllocations(allocations);
         foreach (BattleAllocationProjection allocation in allocations)
         {
@@ -58,7 +61,38 @@ internal static class BattleArmyManifestProjectionTests
                 CommandId = 2, SelectCards = selection
             }).Code == "cards-selected", "The source starter army echo was rejected.");
         }
-        return 14;
+        return 14 + VerifySpawnedVitality(host, manifest);
+    }
+
+    private static int VerifySpawnedVitality(MatchEngine host, MatchManifest manifest)
+    {
+        int checks = 0;
+        foreach (ParticipantManifest player in manifest.Players)
+        {
+            Require(host.Command(player.PlayerId, new MatchCommand
+            {
+                CommandId = 3, Ready = new() { ManifestHash = host.ManifestHash }
+            }).Code == "ready", "The durable starter host could not acknowledge readiness.");
+            checks++;
+        }
+        host.Advance(60);
+        Require(host.Snapshot().Phase == BattlePhase.Running, "The durable starter host did not start.");
+        string ownerId = manifest.Players[0].PlayerId;
+        Require(host.Command(ownerId, new MatchCommand
+        {
+            CommandId = 4, DeployArmy = new() { OptionIndex = host.ArmyBatch(ownerId).OptionIndexes.First() }
+        }).Code == "army-deploying", "The durable starter deployment was rejected.");
+        host.Advance(61);
+        var entities = host.ArmyEntityBatch(ownerId, 0, 0).Entities;
+        Require(entities.Count > 0, "The durable starter deployment did not spawn an entity.");
+        foreach (BattleArmyEntityState entity in entities)
+        {
+            Require(entity.MaxHealth > 0f && entity.Health > 0f && entity.Health <= entity.MaxHealth &&
+                host.ArmyHealth(entity.EntityKey) == entity.Health,
+                "A durable starter unit lacks host-owned vitality or publishes an invalid live health row.");
+            checks++;
+        }
+        return checks + 3;
     }
 
     internal static BattleCombatContent LoadContent(string directory)

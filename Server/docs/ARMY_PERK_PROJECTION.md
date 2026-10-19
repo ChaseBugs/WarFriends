@@ -68,13 +68,29 @@ every player-target membership, all 876 column formulas and buff/debuff counts, 
 It passed **2,425 checks** and exited zero at `.local/army-perk-source-audit.log`.
 No scene/prefab/account data was saved or changed. This is not original Unity 5.2 or Android proof.
 
-## Implementation still required
+## Server implementation and verification
 
-The artifact and recovered-code comparison do not yet change allocation or combat behavior.
-Next implement a validated immutable server perk catalog, compute both players' coefficients
-from their durable equipped elite lanes in source order, bind complete source-backed army combat
-factors into initial and refreshed manifests, and verify real spawned vitality plus the normal
-two-Unity reload/reconnect gate. Recompute from current authority on rematch rather than carrying
-old factors or accepting arbitrary template modifiers. Keep the infantry renderer's rejection
-rules intact while identifying the exact failed field. Terminal unit-card animation indexing
-remains a separate pending defect.
+`BattleArmyPerkCatalog` loads an immutable, SHA-256-pinned embedded artifact. Startup also
+requires the exact deployment and source-sheet revisions. Every equipped stage is checked
+against the source lane before calculation; an ELITE column alone cannot authorize a lane.
+The calculator applies allied buffs followed by opposing debuffs in recovered order with
+binary32 intermediate results.
+
+`BattleArmyCombatProjection` binds both participants' health, damage, speed, accuracy and
+shot-speed arrays during initial mixed allocation. Normal PvP health/damage scaling is one,
+as in recovered `UnitUpgrades(1f)`; elite perks do not change damage. Both sides are calculated
+before publication. Rematch first validates the accepted old arrays against the old presentations,
+then removes them and rebuilds from fresh durable equipped-unit snapshots. Altered factors and
+unsupported template modifiers remain rejected.
+
+The current Release build passes with zero warnings/errors. Focused native verification passes
+46 bilateral perk checks and 20 starter host checks, including a real deployed unit with positive
+source-derived vitality. Isolated Mongo rematch verification also passes at
+`.local/army-perks-mongo-final-430f2073ae724a039de32fd7fd21e391/rematch-tests.log`.
+
+The normal two-Unity run at `.local/client-boot-5c9559a5c2f9492ebc4e653e18fe89fa`
+exits zero after diagnostic sniper input, real HUD reload and live reconnect. See
+[NORMAL_UNITY_RELOAD.md](NORMAL_UNITY_RELOAD.md) for the exact limits and shutdown errors.
+The additional source-sheet revision guard was added afterward; native and Mongo checks were
+rerun after that guard. This does not establish full combat, clean shutdown, original Unity 5.2,
+Android or blocked-external-network acceptance.

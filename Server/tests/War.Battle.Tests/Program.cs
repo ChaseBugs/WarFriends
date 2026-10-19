@@ -22,6 +22,18 @@ using War.Persistence;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
+if (args is ["--army-perks-only"])
+{
+    var directory = new DirectoryInfo(AppContext.BaseDirectory);
+    while (directory != null && !File.Exists(Path.Combine(directory.FullName, "content/recovered-army-perks.json")))
+    {
+        directory = directory.Parent;
+    }
+    if (directory == null) throw new FileNotFoundException("Recovered army perk content is missing.");
+    War.Battle.Tests.BattleArmyPerkTests.Run(Path.Combine(directory.FullName, "content"));
+    return;
+}
+
 if (args is ["--battle-map-only"])
 {
     War.Battle.Tests.BattleMapIdentityTests.Run();
@@ -3808,6 +3820,7 @@ checks += LegacyInitialLoadoutTests.Run(Path.Combine(contentRoot.FullName, "cont
 checks += BattleWeaponOwnershipTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleUnitProjectionTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleArmyManifestProjectionTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += War.Battle.Tests.BattleArmyPerkTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleClientWeaponIndexTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleScoreSnapshotTests.Run();
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));

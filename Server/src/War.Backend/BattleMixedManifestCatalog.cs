@@ -14,6 +14,8 @@ public sealed class BattleMixedManifestCatalog : IBattleArmyManifestCatalog
     {
         this.content=content??throw new ArgumentNullException(nameof(content));
         if(content.MixedRevision==null)throw new InvalidDataException("Mixed combat content is incomplete.");
+        // Validate the embedded source snapshot before accepting matchmaking traffic.
+        BattleArmyPerkCatalog.Recovered.ValidateSource(content.Army);
     }
 
     public void ValidateTemplate(JsonObject template)
@@ -50,5 +52,17 @@ public sealed class BattleMixedManifestCatalog : IBattleArmyManifestCatalog
         participant["WeaponUpgrade"]=resolved[0].equipped.UpgradeIndex;
         participant["WeaponSlots"]=slots;
         BattleArmyManifestProjection.Apply(participant, armyFields);
+    }
+
+    /// <summary>Binds source-derived PvP combat lanes after both durable player views have been resolved.</summary>
+    public void BindArmyCombat(JsonArray participants, IReadOnlyList<BattlePlayerPresentation> views)
+    {
+        BattleArmyCombatProjection.Bind(content, participants, views);
+    }
+
+    /// <summary>Recomputes accepted factors before allowing fresh rematch account state to replace them.</summary>
+    public void PrepareArmyCombatRefresh(JsonObject source, MatchManifest previous)
+    {
+        BattleArmyCombatProjection.PrepareRefresh(content, source, previous);
     }
 }

@@ -129,10 +129,10 @@ internal static class RematchArmyManifestTests
             JsonNode value = field switch
             {
                 "ArmyHealthFactors" => JsonSerializer.SerializeToNode(
-                    Enumerable.Repeat(new ArmyHealthFactors(1, 1), count))!,
+                    Enumerable.Repeat(new ArmyHealthFactors(2, 1), count))!,
                 "NewArmyUnitIds" => JsonSerializer.SerializeToNode(previous.Players[0].EquippedArmyUnitIds)!,
                 "ShieldLevel" => JsonValue.Create(0)!,
-                _ => JsonSerializer.SerializeToNode(Enumerable.Repeat(1f, count))!
+                _ => JsonSerializer.SerializeToNode(Enumerable.Repeat(2f, count))!
             };
             foreach (JsonNode? participant in source["Players"]!.AsArray())
             {

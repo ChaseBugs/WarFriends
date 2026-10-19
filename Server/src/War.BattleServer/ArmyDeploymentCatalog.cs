@@ -85,6 +85,8 @@ public sealed partial class ArmyDeploymentCatalog
         "SoldierBehaviourSwat","SoldierBehaviourWarper"
     };
     public string Revision { get; }
+    /// <summary>Gets the exact source-sheet snapshot only after its complete validation succeeds.</summary>
+    public string? SourceSheetRevision { get; private set; }
     public float MaxEnergy { get; }
     public float BaseCooldown { get; }
     public ArmyAgentConfig InfantryAgent { get; }
@@ -725,7 +727,9 @@ public sealed partial class ArmyDeploymentCatalog
 
     public void ValidateSourceSheet(string contentPath)
     {
-        using var document=JsonDocument.Parse(File.ReadAllBytes(contentPath));
+        SourceSheetRevision = null;
+        byte[] sourceBytes = File.ReadAllBytes(contentPath);
+        using var document=JsonDocument.Parse(sourceBytes);
         var sheet=document.RootElement.GetProperty("sheets").EnumerateArray()
             .Single(x=>x.GetProperty("type").GetString()=="Google2u.ArmyUpgrades");
         var rows=sheet.GetProperty("rows").EnumerateArray().ToDictionary(
@@ -946,6 +950,7 @@ public sealed partial class ArmyDeploymentCatalog
         droneShieldProbability=acceptedDroneShieldProbability??throw new InvalidDataException("Drone shield probability authority absent.");
         assaultHelicopterShieldProbability=acceptedAssaultHelicopterShieldProbability??
             throw new InvalidDataException("Assault Helicopter shield probability authority absent.");
+        SourceSheetRevision = Convert.ToHexStringLower(SHA256.HashData(sourceBytes));
     }
 
     private static bool ValidCoopScale(float scale)
