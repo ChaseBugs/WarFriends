@@ -1453,6 +1453,23 @@ if (args is ["--observed-obstacle-catalog-only"])
     return;
 }
 
+if (args is ["--helicopter-rope-initialization-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName,
+        "content/recovered-helicopter-rope-initialization-unity-reference.json")))
+    {
+        root = root.Parent;
+    }
+    if (root == null)
+    {
+        throw new FileNotFoundException("The recovered rope initialization reference was not found.");
+    }
+    int count = HelicopterRopeInitializationTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {count} rope initialization and composed extension checks");
+    return;
+}
+
 if (args is ["--helicopter-rope-alignment-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);

@@ -39,8 +39,21 @@ public static class UnityHelicopterRopeExtensionExport
     /// <summary>Runs an animation-free, inactive-joint command fixture in a disposable project.</summary>
     public static void Run()
     {
+        SessionState.SetBool(Active + ".Initialization", false);
+        Begin(OutputVariable);
+    }
+
+    /// <summary>Captures actual prefab spline generation and physical connection setup before simulation.</summary>
+    public static void RunInitialization()
+    {
+        SessionState.SetBool(Active + ".Initialization", true);
+        Begin("WAR_ROPE_INITIALIZATION_OUTPUT");
+    }
+
+    private static void Begin(string outputVariable)
+    {
         if (!Application.dataPath.Replace('\\', '/').Contains("/Server/.local/") ||
-            string.IsNullOrEmpty(Environment.GetEnvironmentVariable(OutputVariable)))
+            string.IsNullOrEmpty(Environment.GetEnvironmentVariable(outputVariable)))
         {
             throw new InvalidOperationException("Use a disposable project and explicit output path.");
         }
@@ -67,7 +80,14 @@ public static class UnityHelicopterRopeExtensionExport
         }
         try
         {
-            WriteReference();
+            if (SessionState.GetBool(Active + ".Initialization", false))
+            {
+                UnityHelicopterRopeInitializationCapture.Run();
+            }
+            else
+            {
+                WriteReference();
+            }
             Finish(0);
         }
         catch (Exception exception)

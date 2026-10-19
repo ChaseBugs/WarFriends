@@ -34,6 +34,19 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now creates the original zero-control-point rope spline, generated joint
+poses, initial measured spacing and body/next-joint connection setup. Nine native
+fixtures cover root transforms and vertical/near-vertical controls. Host checks
+match 36 joint setups and 72 subsequent source extension calls through the first
+insertion, using the generated spacing around 0.3500239 rather than 0.35.
+A native adjacent-float probe also verifies the near-collinear rotation cutoff.
+Windows and self-contained Linux/Ubuntu WSL combat-content tests each exit zero
+with 27,489 assertions; build and protocol checks pass. See
+[initial spline setup](HELICOPTER_ROPE_ALIGNMENT.md). Physics
+adapter activation, automatic anchors, aircraft attachment, constraint/gravity
+solving, current blended crew poses and landing remain pending. The setup is not
+yet in the signed live content package, and live co-op Fire remains closed.
+
 B22 now prepares the recovered Helicopter rope-extension command's joint movement
 and strict single-insertion geometry. Eight direct QuickRope2 calls cover the
 exact threshold, tilted and degenerate directions, and far-stretched heads.

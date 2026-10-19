@@ -285,6 +285,70 @@ This command evidence is not dynamic rope parity: spline initialization, mass,
 damping, gravity, angular constraints, joint insertion/connection, aircraft motion
 and update ordering still need integration before supplying live descent joints.
 
+## Initial spline and connection setup
+
+`HelicopterRopeInitialization.Create` now generates the Helicopter prefab's
+zero-control-point Catmull-Rom spline with the source's repeatedly accumulated
+`0.0001f` sampling step and distance-based point selection. It keeps the original
+endpoint positions, derives each initial joint facing and measures the first
+joint distance from the generated result. Returned poses and setup records are
+immutable and the sequence is owned/read-only. Invalid endpoints, spacing,
+degenerate facing and arithmetic overflow fail before a setup is returned.
+
+The ordinary prefab produces four joints and an initial distance around
+`0.3500239`, rather than the requested `0.35`. Translation/rotation changes the
+last float bits of that measurement. The orientation helper also follows the
+observed near-collinear path: near vertical it uses the shortest rotation from
+forward +Z, preserving small lateral components, rather than choosing an
+arbitrary perpendicular axis. This is confined to rope initialization; it does
+not replace other existing aircraft heading rules.
+The companion `RunOrientationBoundary` probe bisects native `LookRotation` on
+`(x, 1, 0)` down to adjacent float values. The last fallback is float bits
+925353387 (`9.999999E-06`); the first matrix path is 925353388 (`1E-05`). Its
+small [boundary reference](../content/recovered-helicopter-rope-orientation-boundary-unity-reference.json)
+and `.local/helicopter-rope-orientation-boundary.log` record the result; the native
+Edit Mode process exits zero. This verifies the cutoff for the captured Unity version.
+
+The setup retains source mass 1, drag 0.2, angular drag 0.05, gravity, dynamic
+unfrozen bodies, next-joint connection identity, locked linear axes, limited
+angular axes, -60/60 X and 35-degree Y/Z stops, and automatic connected-anchor
+configuration. These are connection/body **intent**, not a physical solver.
+The aircraft attachment FixedJoint, spring/bounce/break behavior, activation,
+automatic anchor realization and subsequent physics still require integration.
+Inactive captured connected-anchor coordinates must not be treated as solved frames.
+
+`UnityHelicopterRopeExtensionExport.RunInitialization` delegates to the companion
+`UnityHelicopterRopeInitializationCapture` in the disposable Play Mode project.
+It calls actual `ApplyRopeSettings` and `Start` on the original inactive prefab
+before any physics solve. Nine fixtures cover original, translated/yawed and
+tilted roots plus vertical/upward/near-vertical endpoint controls. The controls
+deliberately move the instance's endpoint; they are not alternate recovered assets.
+It records 36 joint setups, then invokes eight real extension calls per fixture
+using the measured distance. Native comparisons cover those 72 composed commands
+through the first insertion, not just an isolated extension with an injected spacing.
+
+The source prefab and QuickRope2 hashes match the previous extension reference.
+The normalized-LF artifact digest is
+`dcd98cbe299229188790412d601a2ebef4ded4e8aa2fc0ab75286bda346563e4`.
+The final capture exits zero with no logged exceptions at
+`.local/helicopter-rope-initialization-unity-composed.log`. The active Client was
+not modified. The focused runner `--helicopter-rope-initialization-only` passes
+541 checks, with position/quaternion comparison tolerance `0.00001` and measured
+distance tolerance `0.000001`. This is Unity 2018.3.0f2 evidence; original Unity
+5.2 native physics/animation equivalence and normal match acceptance remain open.
+The solution builds with zero warnings/errors and protocol tests pass. The Windows
+combat-content run exits zero with 27,489 assertions at
+`.local/helicopter-rope-initialization-host.log`, including the 541 new checks.
+Existing physics/navigation diagnostics retain their documented deviations.
+The self-contained executable at `.local/linux-rope-initialization` also exits
+zero under Ubuntu WSL with 27,489 combat-content assertions; the log is
+`.local/helicopter-rope-initialization-linux.log`. This is not a full Battle test
+run, Mongo integration or normal Unity match acceptance.
+
+This setup is not yet in the signed live content package or wired into a battle
+rope solver. The composed command fixture deliberately has no intervening gravity,
+constraint or collision solve and cannot establish the moving rope's actual path.
+
 ## Remaining integration
 
 The server still needs current rope-joint physics, the current blended left-palm
