@@ -68,14 +68,23 @@ public sealed class CoopPlayerWeaponState
     public bool ConfirmHostShot(int slot, ulong tick)
     {
         if (CheckShot(slot, tick) != CoopShotAvailability.Ready)
+        {
             return false;
+        }
         SlotState weapon = GetSlot(slot);
+
+        // Prepare every checked value before spending ammunition. A rejected
+        // host clock must not leave a shot or automatic reload partially applied.
+        ulong nextFireTick = checked(tick + TickDuration(weapon.Weapon.Weapon.CadenceSeconds));
+        ulong shotsFired = checked(weapon.ShotsFired + 1);
+        ulong reloadEndTick = weapon.Clip == 1 && weapon.Reserve > 0
+            ? checked(tick + TickDuration(weapon.Weapon.Weapon.ReloadSeconds))
+            : 0;
+
         weapon.Clip--;
-        weapon.ShotsFired = checked(weapon.ShotsFired + 1);
-        weapon.NextFireTick = checked(tick + TickDuration(
-            weapon.Weapon.Weapon.CadenceSeconds));
-        if (weapon.Clip == 0 && weapon.Reserve > 0)
-            StartReload(weapon, tick);
+        weapon.ShotsFired = shotsFired;
+        weapon.NextFireTick = nextFireTick;
+        weapon.ReloadEndTick = reloadEndTick;
         return true;
     }
 

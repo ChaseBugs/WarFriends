@@ -1159,6 +1159,7 @@ internal static class CombatContentTests
             playerWeaponContent: content);
         CoopPlayerWeapon firstSourceWeapon = playerWeapons.ForPlayer(
             coop.Players[0].PlayerId).Single();
+        CoopWeaponAtomicityTests.Run(firstSourceWeapon);
         var weaponState = new CoopPlayerWeaponState([firstSourceWeapon], 0);
         CoopWeaponReadiness initialAmmo = weaponState.Readiness(firstSourceWeapon.Slot);
         ulong cadenceTicks = (ulong)Math.Ceiling(

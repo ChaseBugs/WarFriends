@@ -34,6 +34,17 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 co-op weapon state now prepares the next-fire tick, shot counter and any automatic-reload
+deadline before mutating ammunition. Previously a checked clock overflow could consume the
+round and increment its shot counter before failing, or leave the last round spent without
+its automatic reload. A source-bound fixture now rejects cadence overflow and a separate
+last-round reload overflow while preserving clip, reserve, reload, cadence and shot count.
+Normal source `Weapon.Fire` last-round auto-reload behavior is retained. The solution build
+passes with zero warnings/errors, the protocol executable passes, and `--combat-content-only`
+exits zero with 26,396 focused assertions including these regression checks. This is weapon-state
+atomicity, not a complete projectile/animation transaction. Co-op Fire routing, registration,
+collision fidelity and normal Unity multiplayer acceptance remain closed or unverified.
+
 B36's bounded progress probe now localizes the rendered stall to Splash frame two, with
 GameView focused, no pause/compilation, and time scale one. An empty Unity 2018.3 control
 without WarFriends code reproduces the stall, including when runtime background execution
