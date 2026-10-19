@@ -410,3 +410,8 @@ Server/tools/extract_mortar_weapon_pool.py text eol=lf
 Server/src/War.BattleServer/MortarWeaponPool.cs text eol=lf
 Server/src/War.BattleServer/MortarWeaponPoolSource.cs text eol=lf
 Server/tests/War.Battle.Tests/MortarWeaponPoolTests.cs text eol=lf
+
+# Source-backed army perk extraction and executable Unity comparison.
+Server/content/recovered-army-perks.json text eol=lf
+Server/tools/extract_army_perks.py text eol=lf
+Server/tools/UnityArmyPerkAudit.cs text eol=lf

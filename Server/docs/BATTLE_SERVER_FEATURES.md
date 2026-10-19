@@ -61,6 +61,12 @@ infantry on reconnect. It is not a passing combined gate. Resolve the normal arm
 projection and identify the rejected visual field without weakening validation; terminal card GUI
 indexing and a later second-Editor startup stall also remain separately recorded in the evidence.
 
+[Army perk projection research](ARMY_PERK_PROJECTION.md) now supplies 24 source-ordered player
+families, seven modifying elite recipes and 876 complete column cells with exact target Type
+membership. The actual recovered Unity methods pass 2,425 comparisons. Runtime allocation still
+needs bilateral durable perk calculation and complete combat factors; this data/verification
+checkpoint does not fix infantry restoration or complete normal army combat.
+
 Normal recovered DeathMatch now has a real Unity-to-Backend queue admission gate via
 `ClientBootSmoke.ps1 -VerifyNormalQueue`. It preserves source bot-routing rules, logs in a
 synthetic returning account and observes its durable scoped queue ticket and validated allocation
