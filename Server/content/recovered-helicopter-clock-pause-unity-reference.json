@@ -1,0 +1,1463 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "client": "1.4.0",
+  "timeSource": "Assets/Scripts/Assembly-CSharp/TimeManager.cs",
+  "timeSha256": "5196b3cd5b3ef3c4e519bd58dab6747e048a96f5ef7b15e703a989ae2a9c78af",
+  "captureRate": 30,
+  "autoSimulation": true,
+  "hasPauseFixture": true,
+  "initialTime": 0.02,
+  "initialFixedTime": 0.02,
+  "events": [
+    {
+      "kind": "fixed",
+      "frame": 3,
+      "time": 0.04,
+      "fixedTime": 0.04,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 3,
+      "time": 0.0533333346,
+      "fixedTime": 0.04,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 4,
+      "time": 0.06,
+      "fixedTime": 0.06,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "fixed",
+      "frame": 4,
+      "time": 0.08,
+      "fixedTime": 0.08,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 4,
+      "time": 0.08666667,
+      "fixedTime": 0.08,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 5,
+      "time": 0.099999994,
+      "fixedTime": 0.099999994,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "fixed",
+      "frame": 5,
+      "time": 0.12,
+      "fixedTime": 0.12,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 5,
+      "time": 0.120000005,
+      "fixedTime": 0.12,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 6,
+      "time": 0.14,
+      "fixedTime": 0.14,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 6,
+      "time": 0.153333336,
+      "fixedTime": 0.14,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 0.0
+    },
+    {
+      "kind": "render",
+      "frame": 7,
+      "time": 0.153333336,
+      "fixedTime": 0.14,
+      "deltaTime": 0.0,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 0.0,
+      "timeScale": 0.0
+    },
+    {
+      "kind": "render",
+      "frame": 8,
+      "time": 0.153333336,
+      "fixedTime": 0.14,
+      "deltaTime": 0.0,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": false,
+      "ragdoll": true,
+      "previousTimeScale": 0.0,
+      "timeScale": 0.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 9,
+      "time": 0.144,
+      "fixedTime": 0.144,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 9,
+      "time": 0.148,
+      "fixedTime": 0.148,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 9,
+      "time": 0.152,
+      "fixedTime": 0.152,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 9,
+      "time": 0.153333336,
+      "fixedTime": 0.152,
+      "deltaTime": 0.0,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": true,
+      "ragdoll": true,
+      "previousTimeScale": 0.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 10,
+      "time": 0.156,
+      "fixedTime": 0.156,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 10,
+      "time": 0.16,
+      "fixedTime": 0.16,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 10,
+      "time": 0.164,
+      "fixedTime": 0.164,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 10,
+      "time": 0.168,
+      "fixedTime": 0.168,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 10,
+      "time": 0.171999991,
+      "fixedTime": 0.171999991,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 10,
+      "time": 0.176,
+      "fixedTime": 0.176,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 10,
+      "time": 0.179999992,
+      "fixedTime": 0.179999992,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 10,
+      "time": 0.184,
+      "fixedTime": 0.184,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 10,
+      "time": 0.186666667,
+      "fixedTime": 0.184,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": true,
+      "ragdoll": true,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 11,
+      "time": 0.188,
+      "fixedTime": 0.188,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 11,
+      "time": 0.192,
+      "fixedTime": 0.192,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 11,
+      "time": 0.196,
+      "fixedTime": 0.196,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 11,
+      "time": 0.2,
+      "fixedTime": 0.2,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 11,
+      "time": 0.204,
+      "fixedTime": 0.204,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 11,
+      "time": 0.208,
+      "fixedTime": 0.208,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 11,
+      "time": 0.212,
+      "fixedTime": 0.212,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 11,
+      "time": 0.216,
+      "fixedTime": 0.216,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 11,
+      "time": 0.22,
+      "fixedTime": 0.22,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 11,
+      "time": 0.220000014,
+      "fixedTime": 0.22,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": true,
+      "ragdoll": true,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 12,
+      "time": 0.224,
+      "fixedTime": 0.224,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 12,
+      "time": 0.228,
+      "fixedTime": 0.228,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 12,
+      "time": 0.232000008,
+      "fixedTime": 0.232000008,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 12,
+      "time": 0.236,
+      "fixedTime": 0.236,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 12,
+      "time": 0.24,
+      "fixedTime": 0.24,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 12,
+      "time": 0.244,
+      "fixedTime": 0.244,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 12,
+      "time": 0.248,
+      "fixedTime": 0.248,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 12,
+      "time": 0.252,
+      "fixedTime": 0.252,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 12,
+      "time": 0.25333333,
+      "fixedTime": 0.252,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": true,
+      "ragdoll": true,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 13,
+      "time": 0.256,
+      "fixedTime": 0.256,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 13,
+      "time": 0.26,
+      "fixedTime": 0.26,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 13,
+      "time": 0.264,
+      "fixedTime": 0.264,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 13,
+      "time": 0.268,
+      "fixedTime": 0.268,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 13,
+      "time": 0.272,
+      "fixedTime": 0.272,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 13,
+      "time": 0.276,
+      "fixedTime": 0.276,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 13,
+      "time": 0.28,
+      "fixedTime": 0.28,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 13,
+      "time": 0.284,
+      "fixedTime": 0.284,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 13,
+      "time": 0.2866667,
+      "fixedTime": 0.284,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": true,
+      "ragdoll": true,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 14,
+      "time": 0.288000017,
+      "fixedTime": 0.288000017,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 14,
+      "time": 0.292,
+      "fixedTime": 0.292,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 14,
+      "time": 0.296,
+      "fixedTime": 0.296,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 14,
+      "time": 0.3,
+      "fixedTime": 0.3,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 14,
+      "time": 0.304,
+      "fixedTime": 0.304,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 14,
+      "time": 0.308,
+      "fixedTime": 0.308,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 14,
+      "time": 0.312,
+      "fixedTime": 0.312,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 14,
+      "time": 0.316,
+      "fixedTime": 0.316,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 14,
+      "time": 0.32,
+      "fixedTime": 0.32,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 14,
+      "time": 0.320000023,
+      "fixedTime": 0.32,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": true,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 15,
+      "time": 0.34,
+      "fixedTime": 0.34,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 15,
+      "time": 0.353333354,
+      "fixedTime": 0.34,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 16,
+      "time": 0.36,
+      "fixedTime": 0.36,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "fixed",
+      "frame": 16,
+      "time": 0.38,
+      "fixedTime": 0.38,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 16,
+      "time": 0.3866667,
+      "fixedTime": 0.38,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 17,
+      "time": 0.4,
+      "fixedTime": 0.4,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "fixed",
+      "frame": 17,
+      "time": 0.420000017,
+      "fixedTime": 0.420000017,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 17,
+      "time": 0.420000017,
+      "fixedTime": 0.420000017,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 18,
+      "time": 0.44,
+      "fixedTime": 0.44,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 18,
+      "time": 0.453333348,
+      "fixedTime": 0.44,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 19,
+      "time": 0.46,
+      "fixedTime": 0.46,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "fixed",
+      "frame": 19,
+      "time": 0.48,
+      "fixedTime": 0.48,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 19,
+      "time": 0.486666679,
+      "fixedTime": 0.48,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 20,
+      "time": 0.5,
+      "fixedTime": 0.5,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "fixed",
+      "frame": 20,
+      "time": 0.52,
+      "fixedTime": 0.52,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 20,
+      "time": 0.520000041,
+      "fixedTime": 0.52,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": false,
+      "ragdoll": true,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 21,
+      "time": 0.524,
+      "fixedTime": 0.524,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 21,
+      "time": 0.528,
+      "fixedTime": 0.528,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 21,
+      "time": 0.532,
+      "fixedTime": 0.532,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 21,
+      "time": 0.536,
+      "fixedTime": 0.536,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 21,
+      "time": 0.54,
+      "fixedTime": 0.54,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 21,
+      "time": 0.544,
+      "fixedTime": 0.544,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 21,
+      "time": 0.548,
+      "fixedTime": 0.548,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 21,
+      "time": 0.552,
+      "fixedTime": 0.552,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 21,
+      "time": 0.553333342,
+      "fixedTime": 0.552,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": true,
+      "ragdoll": true,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 22,
+      "time": 0.556,
+      "fixedTime": 0.556,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 22,
+      "time": 0.56,
+      "fixedTime": 0.56,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 22,
+      "time": 0.564,
+      "fixedTime": 0.564,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 22,
+      "time": 0.568,
+      "fixedTime": 0.568,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 22,
+      "time": 0.572,
+      "fixedTime": 0.572,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 22,
+      "time": 0.576,
+      "fixedTime": 0.576,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 22,
+      "time": 0.58,
+      "fixedTime": 0.58,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 22,
+      "time": 0.584,
+      "fixedTime": 0.584,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 22,
+      "time": 0.5866667,
+      "fixedTime": 0.584,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": true,
+      "ragdoll": true,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 23,
+      "time": 0.588,
+      "fixedTime": 0.588,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 23,
+      "time": 0.592,
+      "fixedTime": 0.592,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 23,
+      "time": 0.596,
+      "fixedTime": 0.596,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 23,
+      "time": 0.6,
+      "fixedTime": 0.6,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 23,
+      "time": 0.604000032,
+      "fixedTime": 0.604000032,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 23,
+      "time": 0.608,
+      "fixedTime": 0.608,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 23,
+      "time": 0.612,
+      "fixedTime": 0.612,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 23,
+      "time": 0.616,
+      "fixedTime": 0.616,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 23,
+      "time": 0.62,
+      "fixedTime": 0.62,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 23,
+      "time": 0.62,
+      "fixedTime": 0.62,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": true,
+      "ragdoll": true,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 24,
+      "time": 0.624,
+      "fixedTime": 0.624,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 24,
+      "time": 0.628,
+      "fixedTime": 0.628,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 24,
+      "time": 0.632,
+      "fixedTime": 0.632,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 24,
+      "time": 0.636,
+      "fixedTime": 0.636,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 24,
+      "time": 0.64,
+      "fixedTime": 0.64,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 24,
+      "time": 0.644,
+      "fixedTime": 0.644,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 24,
+      "time": 0.648,
+      "fixedTime": 0.648,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 24,
+      "time": 0.652,
+      "fixedTime": 0.652,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 24,
+      "time": 0.653333366,
+      "fixedTime": 0.652,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": true,
+      "ragdoll": true,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 25,
+      "time": 0.656,
+      "fixedTime": 0.656,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 25,
+      "time": 0.66,
+      "fixedTime": 0.66,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 25,
+      "time": 0.664000034,
+      "fixedTime": 0.664000034,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 25,
+      "time": 0.668,
+      "fixedTime": 0.668,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 25,
+      "time": 0.672,
+      "fixedTime": 0.672,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 25,
+      "time": 0.676,
+      "fixedTime": 0.676,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 25,
+      "time": 0.68,
+      "fixedTime": 0.68,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 25,
+      "time": 0.684,
+      "fixedTime": 0.684,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 25,
+      "time": 0.6866667,
+      "fixedTime": 0.684,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.004,
+      "previousRagdoll": true,
+      "ragdoll": true,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 26,
+      "time": 0.688,
+      "fixedTime": 0.688,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 26,
+      "time": 0.692000031,
+      "fixedTime": 0.692000031,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 26,
+      "time": 0.696,
+      "fixedTime": 0.696,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 26,
+      "time": 0.7,
+      "fixedTime": 0.7,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 26,
+      "time": 0.704,
+      "fixedTime": 0.704,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 26,
+      "time": 0.708,
+      "fixedTime": 0.708,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 26,
+      "time": 0.712,
+      "fixedTime": 0.712,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 26,
+      "time": 0.716,
+      "fixedTime": 0.716,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "fixed",
+      "frame": 26,
+      "time": 0.72,
+      "fixedTime": 0.72,
+      "deltaTime": 0.004,
+      "fixedDeltaTime": 0.004,
+      "ragdoll": true
+    },
+    {
+      "kind": "render",
+      "frame": 26,
+      "time": 0.72,
+      "fixedTime": 0.72,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": true,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 27,
+      "time": 0.74,
+      "fixedTime": 0.74,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 27,
+      "time": 0.7533334,
+      "fixedTime": 0.74,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 28,
+      "time": 0.76,
+      "fixedTime": 0.76,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "fixed",
+      "frame": 28,
+      "time": 0.780000031,
+      "fixedTime": 0.780000031,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 28,
+      "time": 0.7866667,
+      "fixedTime": 0.780000031,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 29,
+      "time": 0.8,
+      "fixedTime": 0.8,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "fixed",
+      "frame": 29,
+      "time": 0.82,
+      "fixedTime": 0.82,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 29,
+      "time": 0.820000052,
+      "fixedTime": 0.82,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 30,
+      "time": 0.840000033,
+      "fixedTime": 0.840000033,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 30,
+      "time": 0.853333354,
+      "fixedTime": 0.840000033,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 31,
+      "time": 0.86,
+      "fixedTime": 0.86,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "fixed",
+      "frame": 31,
+      "time": 0.88,
+      "fixedTime": 0.88,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 31,
+      "time": 0.8866667,
+      "fixedTime": 0.88,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    },
+    {
+      "kind": "fixed",
+      "frame": 32,
+      "time": 0.900000036,
+      "fixedTime": 0.900000036,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "fixed",
+      "frame": 32,
+      "time": 0.92,
+      "fixedTime": 0.92,
+      "deltaTime": 0.02,
+      "fixedDeltaTime": 0.02,
+      "ragdoll": false
+    },
+    {
+      "kind": "render",
+      "frame": 32,
+      "time": 0.9200001,
+      "fixedTime": 0.92,
+      "deltaTime": 0.0333333351,
+      "fixedDeltaTime": 0.02,
+      "previousRagdoll": false,
+      "ragdoll": false,
+      "previousTimeScale": 1.0,
+      "timeScale": 1.0
+    }
+  ]
+}

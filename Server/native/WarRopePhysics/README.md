@@ -91,13 +91,31 @@ implemented by this rope adapter.
 
 ABI 4 requires the step delta explicitly and rejects every other float, including
 zero, NaN, Infinity and a render interval such as 1/30. It never rounds an unsupported
-interval or silently substitutes 20ms. Pause must stop physical calls rather than send
-zero. Older native libraries must be rebuilt because the step signature changed.
+interval or silently substitutes 20ms. A zero render delta is not a zero physical quantum:
+the phase clock may still dispatch previously owed work after a mode change. Older native
+libraries must be rebuilt because the step signature changed.
 
 `NominalPhysicsMilliseconds` accumulates the exact nominal 20/4ms quanta only after
 successful simulation. This is not wall time or a Unix timestamp, and StepCount must
 not be multiplied by one fixed duration after timing transitions. The SDK receives the
 original float constants directly, not milliseconds multiplied by a float conversion.
+
+## Fixed/render phase clock
+
+`HelicopterPhysicsFrameClock` retains fractional physical time across render frames.
+Its intended owner is the match, not each newly spawned rope. BeginFrame accepts bounded
+scaled game time, including zero. TakePhysicsStep dispatches due 20/4ms quanta until it
+returns null; only then can rendering complete. Mode changes in the render phase affect
+the next frame and do not discard the remainder. A failed world execution must Fault the
+clock; consumed SDK work cannot be safely replayed by resetting counters.
+
+Actual automatic Unity traces cover normal/ragdoll switches and a zero-timescale window.
+Lowering the quantum during pause causes previously owed work to run on a zero-delta
+frame. The clock reproduces that behavior instead of suppressing all paused physics.
+Tests dispatch every scheduled quantum into a real native rope and apply render updates
+only after physics drains. This does not register the clock in the Worker or prove full
+NPC/crew collision behavior. Startup alignment, hitch limits and mode changes originating
+inside physical collision callbacks need further integrated acceptance.
 
 ## Verification
 

@@ -326,7 +326,7 @@ is about 0.000100, quaternion-component distance 0.15497, and angular-velocity d
 Automatic render/fixed scheduling, pause/time-scale handling, global ragdoll-mode fan-out,
 crew/landing and normal gameplay acceptance remain pending.
 
-The native runner passes 4,796 checks on both Windows and actual Ubuntu WSL:
+The timing-mode checkpoint passed 4,796 checks on Windows and actual Ubuntu WSL:
 472 initial/ownership, 664 aircraft motion, 1,575 extension, 1,482 render-order,
 and 603 timing-mode checks. The new checks prove mode persistence, rejection of
 unknown modes, restoration to normal timing, unchanged bodies during mode selection,
@@ -339,6 +339,65 @@ Evidence is `.local/rope-native-timing-windows.log`, `.local/rope-native-timing-
 and the zero-warning/error solution build at `.local/rope-native-timing-dotnet.log`.
 The Linux evidence runs `.local/linux-native-rope-timing/War.Battle.Tests` with the
 actual ABI 4 shared library; cross-publishing alone is not the claimed proof.
+
+## Actual automatic fixed/render ordering
+
+`UnityHelicopterClockExport` now captures actual Unity FixedUpdate and Update callbacks
+without calling Physics.Simulate. Install the exporter under the disposable project's
+Assets/Editor and `UnityHelicopterClockRecorder` outside Editor so it can be attached.
+The recorder uses capture rate 30, automatic physics, the active 20ms profile and original
+inactive TimeManager mode selection. Thirty render updates switch ragdoll on at six and
+eighteen, and restore normal timing at twelve and twenty-four. A second fixture sets
+Time.timeScale to zero at update four and restores one at update seven. This directly
+tests Unity's scaled-time loop, not the full network FreezeGame callback or TimeTweener.
+
+The normal trace contains 130 fixed callbacks before thirty render callbacks, totaling
+1,000 nominal milliseconds. The pause trace has 121 fixed callbacks and thirty render
+callbacks, totaling 900 nominal milliseconds. In the paused trace, lowering the step
+from 20ms to 4ms leaves enough owed time for three fixed callbacks on the next zero-delta
+render frame. Therefore a paused render delta must not discard existing physical debt.
+All callbacks in each captured frame precede its render callback; the post-render mode
+change affects the following frame's physical work.
+
+Normalized-LF capture identities:
+
+- `recovered-helicopter-clock-unity-reference.json`:
+  `3f71e40e662eea6051dd5ebe3f0993df2b673dce415bd99f06b95a5b28fe5c8f`.
+- `recovered-helicopter-clock-pause-unity-reference.json`:
+  `3c16d9cb90eb2bd67064cc690279b0759a938b7921135812b340fb9f931871d4`.
+
+Both owned Unity runs exit zero at `.local/rope-clock-unity.log` and
+`.local/rope-clock-pause-unity.log`. The inactive timing component does not start
+Photon/base-manager lifecycle. Active Client files remain unchanged; the disposable
+profile is temporarily aligned and restored afterward. The exporter now fails if the
+recorder cannot attach and has a bounded completion deadline instead of hanging.
+Reproduce with `WAR_ROPE_CLOCK_OUTPUT`, optional `WAR_ROPE_CLOCK_PAUSE=1`, and
+`UnityHelicopterClockExport.Run`; use a fresh process and the active TimeManager profile.
+
+The new match-owned `HelicopterPhysicsFrameClock` preserves a double remainder, uses
+the source float quanta directly, and performs no epsilon rounding, debt reset or
+one-render/one-physical-step substitution. A phase guard requires physics to drain
+before rendering and prevents overlapping frames. Its input bound comes from the
+active 0.2-second Maximum Allowed Timestep; this is not a hitch-behavior proof. Unknown
+modes and malformed frame time reject before state mutation. Fault is terminal so a
+failed world cannot replay consumed physical work as if it rolled back.
+
+The native runner also replays both traces into an actual native scene, checking each
+quantum's mode, delta, sequence and render boundary against the original callback tape.
+It verifies physical/render counters and nominal milliseconds against the SDK adapter.
+This is source-backed scheduling plus native execution evidence, not normal Client
+gameplay, collision-time mode switching or full match restart/phase-alignment acceptance.
+Global Worker fan-out, flight inputs, collision shapes, crew, descent and landing remain
+required; the known tilted-physics differences remain open.
+
+The expanded native runner passes 5,891 checks on both Windows and actual Ubuntu WSL,
+including 1,095 frame-clock/trace checks. Tests cover both actual callback tapes, native
+execution counts, preserved zero-delta debt, invalid input rejection, overlapping frames,
+premature rendering and terminal fault behavior. The full solution builds with zero
+warnings/errors at `.local/rope-frame-clock-build.log`. Platform evidence is
+`.local/rope-frame-clock-windows.log` and `.local/rope-frame-clock-linux.log`; the Linux
+run executes the self-contained publish in `.local/linux-rope-frame-clock` with ABI 4.
+No source or native body-trajectory differences were hidden or relaxed by these clock checks.
 
 ## Verification and remaining work
 

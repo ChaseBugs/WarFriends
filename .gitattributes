@@ -421,3 +421,7 @@ Server/content/recovered-helicopter-rope-motion-unity-reference.json text eol=lf
 Server/content/recovered-helicopter-rope-extension-physics-unity-reference.json text eol=lf
 Server/content/recovered-helicopter-rope-combined-unity-reference.json text eol=lf
 Server/content/recovered-helicopter-rope-timing-unity-reference.json text eol=lf
+Server/content/recovered-helicopter-clock-unity-reference.json text eol=lf
+Server/content/recovered-helicopter-clock-pause-unity-reference.json text eol=lf
+Server/tools/UnityHelicopterClockExport.cs text eol=lf
+Server/tools/UnityHelicopterClockRecorder.cs text eol=lf

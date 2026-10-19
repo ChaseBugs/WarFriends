@@ -34,6 +34,15 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now has a source-backed fixed/render phase clock instead of a 1:1 step assumption.
+Actual automatic Unity traces produce 130 physical callbacks per thirty render updates,
+or 121 with the captured pause/mode-change window. The clock preserves owed time,
+including three physical steps on a zero-delta paused frame after a 20ms-to-4ms change.
+Native trace replay verifies phase ordering, mode, counts and nominal elapsed quanta;
+Windows/Linux runners pass 5,891 checks each.
+It is match-scoped infrastructure; Worker fan-out, collision callbacks, flight/crew
+and complete gameplay acceptance remain pending. See [automatic ordering evidence](HELICOPTER_ROPE_PHYSICS.md).
+
 B22 now supports both recovered global physics quanta: normal 20ms and player-ragdoll
 4ms, with explicit mode selection and ABI 4 validation. A corrected active-profile
 Unity capture invokes original TimeManager switching and restoration through twelve
