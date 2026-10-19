@@ -156,6 +156,7 @@ internal static class CoopTransportLandingTests
         {
             throw new Exception("Transport crew lacks distinct reserved identities outside its mission actor records.");
         }
+        CoopTransportCrewIdentityTests.VerifyClaims(runtime, entityId, identities);
         return identities;
     }
 

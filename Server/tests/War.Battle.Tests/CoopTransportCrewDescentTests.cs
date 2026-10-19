@@ -25,7 +25,8 @@ internal sealed class CoopTransportCrewDescentTests
             CoopMatchRuntime.TransportCrewDescentSnapshot before = Snapshot(runtime, entityId, slot);
             HelicopterDescentResult result = runtime.AdvanceTransportCrewDescent(entityId, slot, frame, FrameDelta);
             CoopMatchRuntime.TransportCrewDescentSnapshot accepted = Snapshot(runtime, entityId, slot);
-            if (accepted.Pose != result || accepted.RenderFrame != before.RenderFrame + 1 ||
+            if (accepted.ActorEntityId != before.ActorEntityId ||
+                accepted.Pose != result || accepted.RenderFrame != before.RenderFrame + 1 ||
                 accepted.StartTick != before.StartTick || accepted.PhysicsSequence < before.PhysicsSequence ||
                 before.Pose.Progress >= accepted.Pose.Progress)
             {
@@ -73,7 +74,8 @@ internal sealed class CoopTransportCrewDescentTests
         Reject(() => runtime.BeginTransportCrewDescent(entityId, drop.Slot, root with { Rotation = default }));
         runtime.BeginTransportCrewDescent(entityId, drop.Slot, root);
         CoopMatchRuntime.TransportCrewDescentSnapshot started = Snapshot(runtime, entityId, drop.Slot);
-        if (started.StartTick != drop.StartTick || started.RenderFrame != drop.RenderFrame ||
+        if (started.ActorEntityId != drop.Birth.ActorEntityId ||
+            started.StartTick != drop.StartTick || started.RenderFrame != drop.RenderFrame ||
             started.PhysicsSequence != drop.PhysicsSequence || started.Pose.Progress != 0 ||
             started.Pose.Position != root.Position || started.Pose.Rotation != root.Rotation)
         {

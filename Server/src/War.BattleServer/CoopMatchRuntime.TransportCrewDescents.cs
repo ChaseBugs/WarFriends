@@ -7,6 +7,7 @@ internal sealed partial class CoopMatchRuntime
     /// </summary>
     internal sealed record TransportCrewDescentSnapshot
     {
+        internal required ulong ActorEntityId { get; init; }
         internal required int Slot { get; init; }
         internal required ulong StartTick { get; init; }
         internal required ulong RenderFrame { get; init; }
@@ -35,9 +36,15 @@ internal sealed partial class CoopMatchRuntime
         }
         HelicopterPhysicsWorldSnapshot physics = TransportRopeSnapshot ??
             throw new InvalidOperationException("Crew descent requires the match-owned native world.");
+        TransportCrewIdentity identity = RequireTransportCrewIdentity(entityId, slot, drop.Birth.ActorEntityId);
+        if (drop.Slot != identity.Slot || drop.Birth.Slot != identity.Slot)
+        {
+            throw new InvalidDataException("Crew descent drop and birth must identify the same reserved seat.");
+        }
         HelicopterCrewDescentState state = HelicopterCrewDescentState.FromDrop(drop, observedRoot, physics);
         var snapshot = new TransportCrewDescentSnapshot
         {
+            ActorEntityId = identity.EntityId,
             Slot = slot, StartTick = drop.StartTick, RenderFrame = physics.RenderFrames,
             PhysicsSequence = physics.PhysicsSteps,
             Pose = new HelicopterDescentResult(observedRoot.Position, observedRoot.Rotation, state.Progress),

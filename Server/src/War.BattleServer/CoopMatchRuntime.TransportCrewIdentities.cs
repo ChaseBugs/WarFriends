@@ -14,6 +14,22 @@ internal sealed partial class CoopMatchRuntime
         return _transportCrewIdentities.GetValueOrDefault(aircraftId) ?? Array.Empty<TransportCrewIdentity>();
     }
 
+    /// <summary>Resolves a claimed child identity only within its live match-owned aircraft and seat binding.</summary>
+    internal TransportCrewIdentity RequireTransportCrewIdentity(ulong aircraftId, int slot, ulong actorId)
+    {
+        if (Terminal || !_transportCrewIdentities.TryGetValue(aircraftId,
+            out IReadOnlyList<TransportCrewIdentity>? identities))
+        {
+            throw new InvalidDataException("Transport crew identity has no live aircraft cohort.");
+        }
+        TransportCrewIdentity? identity = identities.SingleOrDefault(candidate => candidate.Slot == slot);
+        if (identity == null || identity.EntityId != actorId)
+        {
+            throw new InvalidDataException("Transport crew actor does not belong to the claimed aircraft seat.");
+        }
+        return identity;
+    }
+
     private void ReserveTransportCrewIdentities(ulong aircraftId, HelicopterCrewState crew)
     {
         if (_transportCrewIdentities.ContainsKey(aircraftId))

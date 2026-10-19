@@ -1241,3 +1241,22 @@ native helpers and 9,997 native ownership/motion checks. Windows separately pass
 remain zero. Evidence is `.local/crew-identity-windows.log`,
 `.local/crew-identity-linux.log`, `.local/crew-identity-default-windows.log`,
 `.local/crew-identity-native-windows.log` and `.local/crew-identity-native-linux.log`.
+
+### Crew identity claim binding
+
+`RequireTransportCrewIdentity` resolves actor identity within the current match's
+live aircraft cohort and claimed seat. It rejects missing/retired cohorts or an
+actor ID that differs from that seat's reserved ID. This is internal host binding,
+not a substitute for network match admission or a proof of actor health.
+
+BeginTransportCrewDescent now validates the drop birth against this binding and
+checks that birth/drop refer to the same seat. TransportCrewDescentSnapshot adds
+ActorEntityId; accepted updates retain it while replacing pose/frame information.
+The runtime fixture validates every legitimate cohort identity, rejects missing
+aircraft, negative seats, zero/parent aliases and cross-seat substitution, then
+checks the original mapping remains usable. Initial and updated descent snapshots
+must retain the exact birth actor ID. Independent actor registration and automatic
+fallback-owner creation still require life/health/provenance and source callback gates.
+Windows and actual Ubuntu WSL pass 28,870 focused combat-content assertions plus
+identity-claim helper checks with zero build warnings/errors. Evidence is
+`.local/crew-identity-binding-windows.log` and `.local/crew-identity-binding-linux.log`.

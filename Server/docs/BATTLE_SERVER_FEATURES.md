@@ -36,6 +36,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Crew identity claims now resolve through the live match-owned aircraft/seat
+binding. Descent start checks the birth's actor ID against that binding and
+requires matching drop/birth seats before creating state. Internal descent
+snapshots retain ActorEntityId through accepted updates. Tests reject missing
+aircraft, invalid seats, zero/parent substitutions and another seat's actor ID,
+then verify the valid binding remains unchanged. This binds reserved identity
+to descent ownership only; it does not authorize life/health, create a fallback
+retry owner automatically or register combat entities.
+Windows and actual Ubuntu WSL pass 28,870 focused combat-content assertions plus
+the new identity-claim checks with zero build warnings/errors. Logs:
+`.local/crew-identity-binding-windows.log` and `.local/crew-identity-binding-linux.log`.
+
 Co-op now reserves distinct secondary crew IDs at transport spawn through the
 same allocator used by SpawnEnemy. Immutable aircraft/seat/point bindings exist
 with or without native rope opt-in; native birth records carry the reserved actor
