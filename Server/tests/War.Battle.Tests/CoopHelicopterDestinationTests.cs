@@ -1,3 +1,5 @@
+using System.Numerics;
+
 using War.BattleServer;
 
 /// <summary>
@@ -40,6 +42,7 @@ internal static class CoopHelicopterDestinationTests
         }
         VerifyRollback(map, masks, combat, point);
         VerifyExitBranches(map, masks, combat, spawns);
+        VerifyRetrySelection(map, masks, combat);
         Console.WriteLine("PASS: helicopter Assaulter destinations share reservations and roll back failed placement.");
     }
 
@@ -104,6 +107,35 @@ internal static class CoopHelicopterDestinationTests
         if (state.ResolveHelicopterAssaulterExit(700, spawns, _ => 0) is not CoopHelicopterEnemyTarget)
         {
             throw new Exception("Fallback choice leaked occupancy or prevented later free-point selection.");
+        }
+    }
+
+    private static void VerifyRetrySelection(CoopMapEnemyPoints source, CoopEnemyPointMaskCatalog masks,
+        CoopEnemyCombatCatalog combat)
+    {
+        CoopEnemyPoint template = source.Points.Single();
+        CoopEnemyPoint far = template with
+        {
+            Order = 0, ComponentFileId = 1, TransformPosition = new Vector3(20, 0, 0),
+        };
+        CoopEnemyPoint near = template with { Order = 1, ComponentFileId = 2, TransformPosition = Vector3.Zero };
+        CoopMapEnemyPoints map = source with { Points = new[] { far, near } };
+        var state = new CoopEnemyDestinationState(map, masks, combat, () => ObstacleFraction,
+            chooseNextPoint: _ => throw new Exception("Retry incorrectly used random next-point selection."));
+        CoopAssignedEnemyDestination? selected = state.RetryHelicopterAssaulterPoint(900, Vector3.Zero);
+        if (selected?.PointComponentFileId != near.ComponentFileId)
+        {
+            throw new Exception("Helicopter retry did not select the nearest free initial point.");
+        }
+        state.TryAssignInitial(901, "Assaulter", true, far.TransformPosition);
+        if (state.RetryHelicopterAssaulterPoint(902, Vector3.Zero) != null || state.ForEnemy(902) != null)
+        {
+            throw new Exception("Full retry point list fabricated a destination or reservation.");
+        }
+        state.Release(900);
+        if (state.RetryHelicopterAssaulterPoint(902, Vector3.Zero)?.PointComponentFileId != near.ComponentFileId)
+        {
+            throw new Exception("Later retry did not reserve a newly freed nearest point.");
         }
     }
 }

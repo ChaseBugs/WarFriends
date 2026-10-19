@@ -1104,3 +1104,24 @@ NavMesh movement and repeatable scaled coroutine timing remain pending.
 Windows and actual Ubuntu WSL pass 28,618 focused combat-content assertions plus
 the new exit-branch checks with zero build warnings/errors. Evidence is
 `.local/crew-exit-target-windows.log` and `.local/crew-exit-target-linux.log`.
+
+### Deferred nearest-point retry selection
+
+`RetryHelicopterAssaulterPoint` delegates to the existing initial Assaulter
+selection/reservation path using the current host position. The card-spawn flag
+is retained because SpawnAssaulter calls SpawnByCard before activation. Unlike
+the completion callback, GenerateInitPoint ordinarily uses GetPoint's nearest
+Transform position comparison; it does not consume random next-point choice.
+
+The fixture supplies far-first/near-second source-shaped obstacle points and
+throws if next-point randomness is used. It verifies the near point is selected,
+all occupied points yield no reservation, and releasing a point permits a later
+retry to claim the nearest destination through shared occupancy. The stored point's
+effective obstacle position remains separately generated after reservation.
+
+This helper does not start a timer, validate callback timing, move an agent or
+create a combat-ready actor. The caller still needs scaled WaitForSeconds-equivalent
+scheduling, life/transition ownership and repeated five-second waits when it returns null.
+Windows and actual Ubuntu WSL pass 28,618 focused combat-content assertions plus
+the nearest-retry checks with zero build warnings/errors. Evidence is
+`.local/crew-point-retry-windows.log` and `.local/crew-point-retry-linux.log`.

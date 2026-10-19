@@ -36,6 +36,17 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The deferred Assaulter target retry now has an explicit destination-state API.
+`RetryHelicopterAssaulterPoint` uses source GetInitPoint's nearest free selection
+with shared reservations and the soldier's card-spawn identity. Tests place a
+farther point first and forbid the random next-point chooser, then verify a full
+point list creates no assignment and a later freed nearest point can be claimed.
+This executes target selection only after a caller-provided retry callback;
+scaled timer scheduling, movement and automatic actor handoff remain pending.
+Windows and actual Ubuntu WSL pass 28,618 focused combat-content assertions plus
+the nearest-retry helper checks with zero build warnings/errors. Logs:
+`.local/crew-point-retry-windows.log` and `.local/crew-point-retry-linux.log`.
+
 The completion target resolver now combines shared point reservation and Normal
 spawn fallback as separate result types. It requires matching spawn/destination
 scene identities before selection. A free point returns a reserved enemy target

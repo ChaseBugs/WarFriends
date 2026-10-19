@@ -1,7 +1,17 @@
+using System.Numerics;
+
 namespace War.BattleServer;
 
 public sealed partial class CoopEnemyDestinationState
 {
+    /// <summary>Runs the source GetInitPoint selection after the caller observes the scaled retry callback.</summary>
+    internal CoopAssignedEnemyDestination? RetryHelicopterAssaulterPoint(ulong entityId, Vector3 currentPosition)
+    {
+        // GenerateInitPoint uses nearest initial selection, not GetNextFreeEnemyPoint's random selection.
+        // Helicopter.SpawnAssaulter marks its soldier with SpawnByCard before activating its behaviour.
+        return TryAssignInitial(entityId, "Assaulter", true, currentPosition);
+    }
+
     /// <summary>
     /// Resolves one live completion callback after the caller validates actor life and transition ownership.
     /// </summary>
