@@ -1,7 +1,10 @@
 namespace War.BattleServer;
 
 internal sealed record HelicopterCrewMemberSnapshot(int Slot,int PointComponentFileId,
-    float Health,float Maximum,ulong SpawnTick,ulong DropStartTick);
+    float Health,float Maximum,ulong SpawnTick,ulong DropStartTick)
+{
+    internal bool IsAttached { get; init; } = true;
+}
 internal sealed record HelicopterCrewDescentSnapshot(int Slot,ulong StartTick,float Progress,
     bool AnimationComplete);
 
@@ -36,12 +39,25 @@ internal sealed class HelicopterCrewState
         members[slot] = members[slot] with { Health = health };
     }
 
+    internal void PublishSeatRelease(int slot)
+    {
+        if (slot < 0 || slot >= members.Length || members[slot].Health <= 0 || !members[slot].IsAttached)
+        {
+            throw new InvalidDataException("Only a living attached crew member can release its seat.");
+        }
+
+        members[slot] = members[slot] with { IsAttached = false };
+    }
+
     internal IReadOnlyList<HelicopterCrewDescentSnapshot> DescentSnapshot(ulong tick)
     {
         var result=new List<HelicopterCrewDescentSnapshot>(members.Length);
         foreach(var member in members)
         {
-            if(member.DropStartTick==0||tick<member.DropStartTick)continue;
+            if (!member.IsAttached || member.Health <= 0 || member.DropStartTick == 0 || tick < member.DropStartTick)
+            {
+                continue;
+            }
             ulong elapsed=tick-member.DropStartTick;
             // EnemyController.HelicopterUpdate accumulates deltaTime and clamps at one.
             // The host's fixed 30 Hz clock describes animation only, not NavMesh landing.
@@ -50,14 +66,17 @@ internal sealed class HelicopterCrewState
         }
         return result.AsReadOnly();
     }
-    internal void Advance(HelicopterCrewSchedule schedule,ulong tick)
+    internal void Advance(HelicopterCrewSchedule schedule, ulong tick)
     {
         ArgumentNullException.ThrowIfNull(schedule);
-        for(int slot=0;slot<members.Length;slot++)
+        for (int slot = 0; slot < members.Length; slot++)
         {
-            ulong due=schedule.DueTick(slot);
-            if(tick>=due&&members[slot].DropStartTick==0)
-                members[slot]=members[slot] with{DropStartTick=due};
+            ulong due = schedule.DueTick(slot);
+            HelicopterCrewMemberSnapshot member = members[slot];
+            if (tick >= due && member.DropStartTick == 0 && member.IsAttached && member.Health > 0)
+            {
+                members[slot] = member with { DropStartTick = due };
+            }
         }
     }
 }

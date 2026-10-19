@@ -31,6 +31,20 @@ already reserved for that actor in the shared scene-point state. A completed
 animation or fallback movement without a reserved point cannot detach a soldier.
 This is a host confirmation seam, not a normal SetFinalTarget callback yet.
 
+Seat release now updates both the independent actor ledger and the source crew
+projection. Detached/dead members no longer produce attached poses or projected
+descent animation. A separate real-match fixture reserves an Assaulter scene point,
+confirms seat release, destroys the aircraft and verifies that the detached actor
+keeps its health and destination while the other attached actor dies. The survivor
+then takes independent lethal host damage, releases its point and rejects replay.
+This uses explicit host transitions; it does not prove physical descent completion,
+walking, normal callback dispatch or automatic fallback/retry integration.
+
+Validation: Windows and actual WSL Linux native-enabled combat-content runs passed
+28,903 counted assertions plus the uncounted detached-survival fixture. Logs:
+`.local/crew-detached-survival-windows.log`, `.local/crew-detached-survival-linux.log`.
+The final readability-only schedule-loop cleanup also passed a zero-warning/error build.
+
 Parent lethal hits now preserve the initial rope-crew part of `Helicopter.OnOnDeath`:
 living attached crew receive confirmed deaths in seat order before the aircraft's
 own death. Detached and already dead actors are excluded. A synchronous mission
@@ -39,7 +53,8 @@ and aircraft cleanup finish. This permits later deaths in the same chain to
 contribute even when an earlier soldier reaches the target. The real co-op fixture
 checks attached actor death after aircraft destruction; focused objective tests
 check both target-crossing modes. A full runtime target-crossing/attributed-score
-cascade and detached-survivor scenario still need acceptance coverage.
+cascade still needs acceptance coverage. Detached-survivor host transitions are
+covered by the separate fixture above; normal automatic gameplay remains pending.
 
 The source turret soldier dies after the aircraft's `OnKilled`. Its existing
 cleanup disables gunner health/respawn, but a distinct turret actor identity and

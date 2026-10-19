@@ -21,11 +21,13 @@ internal sealed partial class CoopMatchRuntime
             observedTick >= mission.DeadlineTick ||
             enemyDestinations?.ForEnemy(actorId) == null ||
             !_transportCrewActors.TryGetValue(actorId, out TransportCrewActorState? actor) ||
+            !transportHelicopterCrew.TryGetValue(actor.AircraftId, out HelicopterCrewState? crew) ||
             !actor.Detach(observedTick))
         {
             return false;
         }
 
+        crew.PublishSeatRelease(actor.Slot);
         stateRevision++;
         return true;
     }

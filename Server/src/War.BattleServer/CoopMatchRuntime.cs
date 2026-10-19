@@ -717,7 +717,8 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         IReadOnlyList<HelicopterCrewMemberSnapshot> members = crew.Snapshot();
         IReadOnlyList<HelicopterCrewPose> poses = transportCrewPoints.PlaceAttached(
             position, rotation, members.Count);
-        return poses.Where(pose => members[pose.Slot].DropStartTick == 0)
+        return poses.Where(pose => members[pose.Slot].DropStartTick == 0 &&
+                members[pose.Slot].IsAttached && members[pose.Slot].Health > 0)
             .ToArray();
     }
 
