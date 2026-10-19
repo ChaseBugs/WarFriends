@@ -238,6 +238,53 @@ The observed Unity 2018 transition does not establish original Unity 5.2 native
 animation equivalence, despite the matching managed default. Hand positions in
 this temporal artifact are diagnostic; the clock tests do not validate them.
 
+## Rope extension command
+
+`HelicopterRopeExtension.Prepare` implements the position calculation in
+`Helicopter.Update`'s `QuickRope2.ExtendRope(0.7f)` call. It prepares movement of
+joint one away from the anchor in the direction of joint two, then tests the
+strict `distance > initialDistance * 1.5` insertion condition. It inserts at most
+one position even when the head is stretched much farther. It does not silently
+cap extension at the controller's configured maximum length: that check belongs
+to the separate keyboard-controller update, not this explicit Helicopter call.
+
+The spacing argument means the initial **measured** first-joint distance captured
+by `QuickRope2.Start`, not the requested spline spacing. The two can differ after
+the source spline is sampled. Live initialization still needs that measurement.
+The helper validates inputs and intermediate overflow before returning immutable
+command geometry; it does not mutate or solve the caller's joint state.
+
+`UnityHelicopterRopeExtensionExport` directly calls the recovered method in Play
+Mode on inactive synthetic joints, without an intervening physics solve. Its
+eight cases cover ordinary movement, below/exact/above insertion distance,
+far stretching, a tilted direction and zero/sub-epsilon direction. The fixture
+deliberately injects the prefab's requested 0.35 spacing into `distBetweenJoints`;
+it is not a capture of the real rope's initialization. It also records completion
+of native anchor reconnection and first-joint dynamic flags. The position-only
+host helper does not yet implement those body/constraint operations or insertion rotation.
+
+The recovered prefab hash is `e91c07c1552988601ada89c769056354ebd5d94ea88356eeacc5fa3f3fb76408`;
+the artifact includes the current matching QuickRope2 and Helicopter script hashes.
+Its normalized-LF SHA-256 is
+`28132ffe6c3619d07f2c1156d4efa32f168f336a5e89e3e9a9db80f93f15cc2e`.
+The final Unity 2018.3.0f2 capture exits zero with no logged exceptions at
+`.local/helicopter-rope-extension-unity-final.log`.
+
+The solution builds with zero warnings/errors and protocol checks pass. The
+Windows combat-content group exits zero with 26,948 assertions at
+`.local/helicopter-rope-extension-host.log`. New checks compare moved/inserted
+positions and insertion presence for all eight native cases, then reject invalid
+positions, distances, deltas and overflow. Existing physics/navigation diagnostics
+retain their documented differences; this is not full match acceptance.
+The self-contained `.local/linux-rope-extension` executable also exits zero under
+Ubuntu WSL with 26,948 combat-content assertions at
+`.local/helicopter-rope-extension-linux.log`. No Mongo smoke or normal Unity
+match acceptance is claimed by these command/geometry checks.
+
+This command evidence is not dynamic rope parity: spline initialization, mass,
+damping, gravity, angular constraints, joint insertion/connection, aircraft motion
+and update ordering still need integration before supplying live descent joints.
+
 ## Remaining integration
 
 The server still needs current rope-joint physics, the current blended left-palm

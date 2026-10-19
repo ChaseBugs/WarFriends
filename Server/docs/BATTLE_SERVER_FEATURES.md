@@ -34,6 +34,17 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now prepares the recovered Helicopter rope-extension command's joint movement
+and strict single-insertion geometry. Eight direct QuickRope2 calls cover the
+exact threshold, tilted and degenerate directions, and far-stretched heads.
+The host takes the initial measured joint distance rather than substituting the
+requested spline spacing, and rejects malformed/overflowing inputs. Windows
+combat-content tests exit zero with 26,948 assertions, and the self-contained
+Linux run under Ubuntu WSL passes the same group and count; the build and protocol
+checks pass. See [rope extension command](HELICOPTER_ROPE_ALIGNMENT.md). Spline
+initialization, physical body/constraint changes, insertion rotation, gravity,
+aircraft coupling and landing remain pending; this is not a live rope solver.
+
 B22 now has a source-checked ordinary-idle to rope-slide transition clock.
 The original APK's managed wrapper confirms the 0.3-second default, and a final
 clean-exit Unity Play Mode fixture records sixteen frames at three idle phases.
