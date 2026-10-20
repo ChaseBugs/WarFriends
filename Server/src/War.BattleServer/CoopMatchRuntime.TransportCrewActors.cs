@@ -28,6 +28,7 @@ internal sealed partial class CoopMatchRuntime
         }
 
         crew.PublishSeatRelease(actor.Slot);
+        PublishTransportCrewActor(actor);
         stateRevision++;
         return true;
     }
@@ -66,6 +67,7 @@ internal sealed partial class CoopMatchRuntime
         {
             enemyDestinations?.Release(actor.EntityId);
         }
+        PublishTransportCrewActor(actor);
 
         stateRevision++;
         if (mission.Outcome == MissionOutcome.Succeeded)
@@ -104,6 +106,7 @@ internal sealed partial class CoopMatchRuntime
         foreach (TransportCrewActorState actor in actors)
         {
             _transportCrewActors.Add(actor.EntityId, actor);
+            PublishTransportCrewActor(actor);
         }
         RegisterTransportGunnerActor(aircraftId);
     }
@@ -121,5 +124,28 @@ internal sealed partial class CoopMatchRuntime
                 throw new InvalidDataException("Source attached crew death failed mission authority.");
             }
         }
+    }
+
+    private void PublishTransportCrewActor(TransportCrewActorState actor)
+    {
+        BattleCoopEnemySpawn aircraft = enemySpawns.Single(enemy => enemy.EntityId == actor.AircraftId);
+        BattleCoopCrewActor? row = aircraft.CrewActors.SingleOrDefault(member => member.EntityId == actor.EntityId);
+        if (row == null)
+        {
+            row = new BattleCoopCrewActor
+            {
+                EntityId = actor.EntityId,
+                Slot = (uint)actor.Slot,
+                PointComponentFileId = actor.SeatComponentFileId,
+                MaxHealth = actor.MaximumHealth,
+                SpawnTick = aircraft.SpawnTick,
+            };
+            aircraft.CrewActors.Add(row);
+        }
+
+        // Keep this durable match row after the parent or its active seat registry is removed.
+        row.Health = actor.Health;
+        row.DeathTick = actor.DeathTick;
+        row.IsAttached = actor.IsAttached;
     }
 }

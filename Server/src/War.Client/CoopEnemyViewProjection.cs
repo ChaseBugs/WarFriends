@@ -44,6 +44,7 @@ namespace War.Client
             }
 
             var views = new List<CoopEnemyViewState>(snapshot.Coop.EnemySpawns.Count);
+            CoopCrewSnapshotValidation.Validate(snapshot);
             ulong minimumId = FirstEnemyId;
             foreach (BattleCoopEnemySpawn enemy in snapshot.Coop.EnemySpawns)
             {

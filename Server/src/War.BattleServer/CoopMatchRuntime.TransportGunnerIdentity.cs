@@ -22,6 +22,7 @@ internal sealed partial class CoopMatchRuntime
         }
 
         _transportGunnerActorIds[aircraftId] = actorId;
+        enemySpawns.Single(enemy => enemy.EntityId == aircraftId).GunnerEntityId = actorId;
     }
 
     private bool ApplyHostTransportGunnerDamage(ulong aircraftId, float damage,

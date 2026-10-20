@@ -35,5 +35,11 @@ internal static class TransportCrewDetachedSurvivalTests
         {
             throw new Exception("Detached actor lost independent damage, one-time death or destination cleanup.");
         }
+        var publishedParent = runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == aircraftId);
+        if (publishedParent.CrewActors.Any(actor => actor.Health != 0) ||
+            publishedParent.CrewActors.Single(actor => actor.EntityId == detachedId).IsAttached)
+        {
+            throw new Exception("Detached actor death was lost after its parent's active registry was removed.");
+        }
     }
 }

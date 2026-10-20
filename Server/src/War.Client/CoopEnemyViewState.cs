@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using War.Protocol;
 
 namespace War.Client
@@ -67,6 +68,12 @@ namespace War.Client
         /// <summary>Gets the immutable confirmed base-layer frame, or null for an unrepresented state.</summary>
         public InfantryAnimationFrameView InfantryAnimation { get; }
 
+        /// <summary>Gets the immutable initial rope-crew roster, including detached and dead actors.</summary>
+        public IReadOnlyList<CoopCrewActorViewState> CrewActors { get; }
+
+        /// <summary>Gets the current turret life identity, retained after death until respawn replaces it.</summary>
+        public ulong GunnerEntityId { get; }
+
         internal CoopEnemyViewState(BattleCoopEnemySpawn source, InfantryAnimationFrameView animation)
         {
             EntityId = source.EntityId;
@@ -88,6 +95,13 @@ namespace War.Client
             InfantryVisualSampleTick = source.InfantryVisualSampleTick;
             InfantryAnimation = animation;
             _rotation = source.CurrentRotation == null ? null : source.CurrentRotation.Clone();
+            var crew = new List<CoopCrewActorViewState>(source.CrewActors.Count);
+            foreach (BattleCoopCrewActor actor in source.CrewActors)
+            {
+                crew.Add(new CoopCrewActorViewState(actor));
+            }
+            CrewActors = crew.AsReadOnly();
+            GunnerEntityId = source.GunnerEntityId;
         }
     }
 }

@@ -8,6 +8,28 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Secondary actor protobuf and portable view
+
+The [secondary actor contract](COOP_SECONDARY_ACTOR_WIRE.md) adds initial crew
+lifetimes and the current turret identity to co-op enemy snapshots. Host damage,
+seat release and creation/respawn update these fields; retained parent rows preserve
+detached actor deaths after active parent cleanup. The portable SDK validates the
+whole current identity set and source lifetime structure before publishing immutable
+crew views. The real-match fixture round-trips these fields through protobuf,
+checks view isolation, and rejects parent aliases, turret aliases, malformed health
+and missing seats. This is transport/view structure, not completed rendering,
+collision, automatic descent or live two-Unity-client acceptance.
+
+Validation: complete solution build passed with zero warnings/errors; 1,360
+protocol/admission/replay and 74 native MongoDB/HTTP/protobuf/UDP smoke checks
+passed. Native-enabled Windows and actual WSL Linux combat-content runs each
+passed 28,908 counted assertions plus the new uncounted crew-wire fixture.
+The SDK pair compiled in the disposable Unity 2018.3 project (exit 0) and that
+exact DLL pair was installed in the active Client with updated manifest hashes.
+Logs: `.local/coop-crew-wire-{protocol,smoke,windows,linux,unity}.log`.
+The final changes after the functional build were comment/line-wrap cleanup;
+the Release portable SDK was rebuilt before Unity validation.
+
 ### Shared allocator and portable enemy roster compatibility
 
 `CoopEnemyViewProjection` previously required ordinary enemy IDs to be contiguous.
@@ -20,7 +42,7 @@ It retains identity ordering and duplicate rejection without renumbering host ID
 A real transport-mission snapshot with subsequent ordinary spawns is projected
 through the Unity-facing SDK. The fixture checks unchanged IDs and rejects duplicate,
 zero and exhaustion-sentinel IDs. This repairs an existing Client presentation
-boundary; secondary actor wire fields and visual creation are still pending.
+boundary. Secondary wire fields are now described above; visual creation remains pending.
 
 Validation: the complete .NET solution built with zero warnings/errors; 1,360
 protocol/admission/replay checks and 74 live isolated MongoDB/HTTP/protobuf/UDP
@@ -99,7 +121,7 @@ scope, and removes its current ID binding during cleanup.
 Focused tests cover overlapping lives, replay, distinct respawn IDs, death
 accounting and dead-parent rejection. The actual co-op fixture checks initial and
 respawn identities, old-ID rejection and parent cleanup. Attributed Score runtime
-cascades, target-crossing runtime teardown, wire projection of these secondary
+cascades, target-crossing runtime teardown, live delivery/reconnect of these secondary
 identities and normal gameplay hit routing still need acceptance coverage. This
 does not close complete crew integration.
 
@@ -116,7 +138,7 @@ the real-match fixture's uncounted checks. Logs:
 These operations are not yet connected to normal hitbox selection,
 SetFinalTarget callbacks or complete turret-inclusive parent-death scoring. Initial
 actor health registration does not establish colliders, landing, infantry AI,
-network projection, repeated cohorts or complete gameplay.
+secondary actor rendering, repeated cohorts or complete gameplay.
 
 Validation: zero-warning/error build, then native-enabled Windows and actual WSL
 Linux combat-content runs each passed 28,896 assertions. Logs:

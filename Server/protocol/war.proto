@@ -746,6 +746,15 @@ message BattleCoopEnemySpawn {
   uint64 infantry_visual_sample_tick = 31;
   // Validated base-layer presentation only; never damage or reward authority.
   BattleInfantryAnimationFrame infantry_animation = 32;
+  // Initial rope crew identities and health; no landing or collision pose is implied.
+  repeated BattleCoopCrewActor crew_actors = 33;
+  // Current turret life, replaced only by a newly allocated respawn identity.
+  uint64 gunner_entity_id = 34;
+}
+message BattleCoopCrewActor {
+  uint64 entity_id = 1; uint32 slot = 2; int32 point_component_file_id = 3;
+  float max_health = 4; float health = 5;
+  uint64 spawn_tick = 6; uint64 death_tick = 7; bool is_attached = 8;
 }
 enum BattleInfantryAnimationWrap {
   BATTLE_INFANTRY_ANIMATION_WRAP_UNSPECIFIED = 0;
