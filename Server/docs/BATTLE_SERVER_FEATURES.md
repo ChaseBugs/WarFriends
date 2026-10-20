@@ -8,6 +8,37 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Crew rifle execution through a host weapon producer
+
+The prepared shot-start path now retains a `TransportCrewRifleVolley` on its current
+navigation owner. `ExecuteTransportCrewRifleRound` runs one later native frame through
+an explicitly supplied host weapon producer. It uses the actor-owned global-time
+cadence, source batch/mask and retained callback aim. Real rounds consume no fake-shot
+draws; fake rounds use the source cross-product direction, distance then side draw,
+and half-metre vertical offset. Every Update permits at most one producer invocation.
+
+Successful producer return advances the persistent weapon clock and local round
+counter. The final round invokes the existing source EndShooting return in that same
+Update, before ObstacleHidingUpdate. A throwing producer faults the volley because it
+may already have emitted a projectile; a retry must not duplicate that uncertain
+effect. The host must terminate/recover that fault explicitly rather than resume it.
+Changing navigation or preparing a later volley replaces volley state while preserving
+the surviving actor's weapon cadence.
+
+The runtime does not install a default producer or accept one from the wire. The
+native fixtures supply a recording producer, synthetic actor roots and host clocks,
+then exercise the complete prepared batch and final return for all four acquisition
+cases. Separate scalar checks cover real/fake geometry, strict cadence equality,
+exhaustion and producer failure. These checks prove execution ordering and callbacks;
+they do not prove a physical muzzle, emitted projectile, collision or damage. The
+actual animated weapon/projectile producer and normal Worker co-op admission remain
+open. Existing diagnostic infantry projectile code is not promoted to crew authority.
+
+Validation: zero-warning/error solution build; Windows and actual WSL Linux each
+passed 29,172 counted combat-content checks plus the extended native acquisition,
+callback and full-batch recording-producer fixtures. Logs:
+`.local/crew-round-execution-{build,publish,windows,linux}.log`.
+
 ### Persistent Assaulter weapon cadence
 
 `AssaulterWeaponFireClock` captures the recovered infinite-ammo, non-reloadable rifle's
@@ -20,9 +51,9 @@ AI time and from the coroutine deadline used to start a volley.
 `ObserveFired` is reserved for completed source Weapon.Shoot execution, not readiness,
 target selection, a scheduled callback or a network acknowledgement. Gun.Shoot calls
 base Weapon.Shoot even when the projectile pool returns null; source cadence therefore
-advances in that case without establishing an emitted projectile. Native animated crew
-weapon execution and a producer that invokes this clock remain unimplemented. Merely
-owning this state does not enable crew firing or change the existing Worker admission.
+advances in that case without establishing an emitted projectile. The host-producer
+execution path above now consumes this clock. The actual native animated weapon
+producer remains unimplemented, and Worker admission remains unchanged.
 
 Tests cover initial/next strict float boundaries, duplicate fire, monotonic time and
 non-finite/negative inputs. This is a prerequisite for round execution, not proof of

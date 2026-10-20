@@ -128,6 +128,8 @@ internal sealed partial class CoopMatchRuntime
         internal TransportCrewTargetPlan? AcquiredCrewTarget { get; set; }
 
         internal TransportCrewPreparedShot? PreparedCrewShot { get; set; }
+
+        internal TransportCrewRifleVolley? CrewRifleVolley { get; set; }
     }
 
     /// <summary>Immutable navigation input; it does not assert a simulated pose, arrival or combat readiness.</summary>

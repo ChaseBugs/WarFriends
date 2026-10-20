@@ -26,6 +26,8 @@ internal sealed partial class CoopMatchRuntime
         AssaulterAimPrediction aim = weapon.StartPlayerShot(observedWeaponMuzzle,
             prepared.Target.PreparedAimPosition, player.MovementVelocity);
         clock.ObserveShotStarted(prepared.Callback, observation);
+        owner.CrewRifleVolley = new TransportCrewRifleVolley(prepared.Batch, aim, weapon.FireClock,
+            observation.Frame);
         return aim;
     }
 }

@@ -8092,6 +8092,7 @@ internal static class CombatContentTests
         count += TransportCrewShotCallbackTests.Run();
         count += CoopTargetScopeTests.Run();
         count += AssaulterWeaponFireClockTests.Run();
+        count += TransportCrewRifleVolleyTests.Run();
         count+=DroneOrientationTests.Run(directory);
         count+=DroneTargetTests.Run();
         count+=DroneTargetRegistryTests.Run();

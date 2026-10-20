@@ -182,6 +182,42 @@ internal static class CoopCrewTargetAcquisitionTests
             runtime.TransportCrewObstacleState(command)!.IsShooting,
             "Shot start resampled the transform or failed to commit its callback flags.");
         Reject(() => runtime.StartTransportCrewPreparedShot(command, prepared, start, muzzle));
+        VerifyRoundExecution(runtime, command, prepared, (start, pending.Position));
+    }
+
+    private static void VerifyRoundExecution(CoopMatchRuntime runtime,
+        CoopMatchRuntime.TransportCrewNavigationCommand command,
+        CoopMatchRuntime.TransportCrewPreparedShot prepared,
+        (TransportCrewObstacleClock.ShotObservation Clock, Vector3 ActorPosition) source)
+    {
+        TransportCrewObstacleClock.ShotObservation start = source.Clock;
+        int calls = 0;
+        float previousFireTime = 0;
+        ulong startedTick = runtime.Snapshot().ServerTick;
+        for (int offset = 1; offset <= 200 && runtime.TransportCrewObstacleState(command)!.IsShooting; offset++)
+        {
+            CoopTransportLandingTests.AdvanceTo(runtime, startedTick + (ulong)offset);
+            float elapsed = offset / (float)MatchManifest.TickRate;
+            var clock = new TransportCrewObstacleClock.ShotObservation(runtime.TransportRopeSnapshot!.RenderFrames,
+                start.ControllerTime + elapsed, start.CoroutineTime + elapsed);
+            var observation = new CoopMatchRuntime.CrewRoundObservation(clock, source.ActorPosition);
+            int before = calls;
+            bool fired = runtime.ExecuteTransportCrewRifleRound(command, observation, round =>
+            {
+                Require(round.Index == calls && round.Real == ((prepared.Batch.RealShotMask & (1 << calls)) != 0),
+                    "Crew execution lost source round order or its real/fake mask.");
+                Require(clock.CoroutineTime > previousFireTime + 0.35f,
+                    "Crew execution used the controller clock or an inclusive cadence boundary.");
+                calls++;
+                previousFireTime = clock.CoroutineTime;
+            });
+            Require(fired == (calls == before + 1), "Crew fire result disagreed with the host producer call.");
+            Reject(() => runtime.ExecuteTransportCrewRifleRound(command, observation, _ =>
+                throw new Exception("Repeated source Update invoked the producer.")));
+        }
+        Require(calls == prepared.Batch.Count && runtime.TransportCrewObstacleState(command)!.IsCrawling &&
+            !runtime.TransportCrewObstacleState(command)!.HasPendingVolley,
+            "Final source round did not return from shooting in the same Update.");
     }
 
     private static void Reject(Action action)
