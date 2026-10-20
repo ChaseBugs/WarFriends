@@ -30,6 +30,15 @@ Logs: `.local/coop-crew-wire-{protocol,smoke,windows,linux,unity}.log`.
 The final changes after the functional build were comment/line-wrap cleanup;
 the Release portable SDK was rebuilt before Unity validation.
 
+The subsequent signed-UDP fixture (`CoopCrewUdpTests`) adds two SDK sockets,
+secondary-state chunk reassembly, host-confirmed health changes, distinct turret
+respawn and a fresh authenticated reconnect generation. It preserves normal
+endpoint budgets and compares secondary lifetimes while flight time advances.
+See the [UDP checkpoint](COOP_SECONDARY_ACTOR_WIRE.md#signed-udp-acceptance-checkpoint)
+for the exact host-fixture boundary. Normal Worker/Unity gameplay acceptance remains open.
+Windows and actual WSL Linux native-enabled runs passed this checkpoint and the
+28,908 counted regression assertions; the new UDP checks are reported separately.
+
 ### Shared allocator and portable enemy roster compatibility
 
 `CoopEnemyViewProjection` previously required ordinary enemy IDs to be contiguous.

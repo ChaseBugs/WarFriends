@@ -48,3 +48,30 @@ publishes `CoopEnemiesReceived`. New secondary visuals, host-owned collision pos
 automatic descent callbacks, and two-Unity-client reconnect acceptance remain
 separate integration work. Protobuf round trips and Editor compilation do not
 establish that gameplay acceptance.
+
+## Signed UDP acceptance checkpoint
+
+`CoopCrewUdpTests` uses two independent portable SDK sockets against the actual
+authenticated `MatchEndpoint` and a source-backed mission-46 runtime. It compares
+secondary lifetimes across both clients, applies explicit host-confirmed crew
+damage and gunner death, advances to the recovered gunner respawn deadline, then
+reconnects one participant with a new socket, ticket and connection generation.
+Crew IDs/health and the current turret life must survive that replacement.
+At least one secondary-state poll must use the SDK's real reply-chunk path.
+
+The fixture advances its controlled clock for received datagrams, preserving the
+endpoint's per-tick budget. Aircraft pose may legitimately advance between polls;
+the comparison owns secondary lifetime fields rather than freezing flight poses.
+An initial frozen-clock fixture exhausted that budget during chunk retrieval;
+that failed attempt is not validation evidence and no production limit was relaxed.
+
+This is real SDK/UDP delivery and session replacement, not two Unity processes or
+the normal Worker clock. Host impacts are explicit fixture inputs, not validated
+player-shot collisions. Automatic crew descent, rendering, Worker scheduling,
+packet-loss scenarios and full gameplay reconnect remain separate acceptance work.
+
+Validation: the test build passed with zero warnings/errors. Native-enabled Windows
+and actual WSL Linux runs passed the new UDP checkpoint and all 28,908 counted
+combat-content assertions. The UDP fixture prints its own PASS marker and does not
+increase that legacy counter. Logs: `.local/coop-crew-udp-windows-final.log` and
+`.local/coop-crew-udp-linux.log`.
