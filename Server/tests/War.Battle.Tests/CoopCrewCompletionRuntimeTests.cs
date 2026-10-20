@@ -210,8 +210,17 @@ internal static class CoopCrewCompletionRuntimeTests
         return new CoopMatchRuntime(manifest, sources.Missions, sources.Spawns, sources.Routes, sources.Combat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0, playerWeaponContent: sources.Content,
             chooseInfantryShotFraction: () => 0.99f, chooseInfantryRepositionFraction: () => 0,
+            chooseInfantryPlayer: options?.TargetIndex, chooseInfantryShieldRoll: options?.ShieldRoll,
             enemyDestinations: destinations, coopAirWaypoints: CoopAirWaypointCatalog.Load(
                 Path.Combine(directory, "recovered-coop-air-waypoint-routes.json"), sources.Spawns));
+    }
+
+    internal static CoopMatchRuntime CreateTargetingRuntime(CoopObstacleVolleyRuntimeTests.Sources sources,
+        string directory, out CoopEnemyDestinationState destinations,
+        (Func<int, int> Index, Func<float> Shield) choices)
+    {
+        return CreateRuntime(sources, directory, out destinations,
+            new FixtureOptions(true, () => 0.5f, choices.Index, choices.Shield));
     }
 
     private static void VerifyCompletion(CoopMatchRuntime runtime, CoopEnemyDestinationState destinations,
@@ -276,7 +285,8 @@ internal static class CoopCrewCompletionRuntimeTests
         }
     }
 
-    private sealed record FixtureOptions(bool PreferObstacle, Func<float> ObstacleFraction);
+    private sealed record FixtureOptions(bool PreferObstacle, Func<float> ObstacleFraction,
+        Func<int, int>? TargetIndex = null, Func<float>? ShieldRoll = null);
 
     private sealed record RetryScenario(ulong ActorId, HelicopterCrewRetryObservation Origin, ulong Occupant);
 }

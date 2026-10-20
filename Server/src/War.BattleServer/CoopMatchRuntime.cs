@@ -620,10 +620,8 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         if (towardEnemy.LengthSquared() == 0)
             return null;
 
-        // The same Client rule is used by stationary Heavy Turret targeting:
-        // >50 degrees or a successful HITSHIELDPROB roll chooses Shield (2);
-        // otherwise the stationary WholeBody targets use mask 9.
-        int targetMask = MatchEngine.HeavyTurretStationaryTargetMask(
+        // SoldierBehaviour uses <= for its shield roll; TurretWeaponBasic uses a different strict comparison.
+        int targetMask = MatchEngine.SoldierStationaryTargetMask(
             PlayerAimForward(playerId), towardEnemy,
             shieldProbability, chooseInfantryShieldRoll);
         return new CoopInfantryPlayerTargetPlan(
@@ -3983,6 +3981,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         _transportCrewNavigation.Clear();
         _transportCrewAgentRecovery.Clear();
         _transportCrewWalkingFrames.Clear();
+        _transportCrewAimWeapons.Clear();
         _transportGunnerActorIds.Clear();
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();

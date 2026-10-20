@@ -52,6 +52,13 @@ internal sealed partial class CoopMatchRuntime
             if (clock.PendingAction.HasValue)
             {
                 owner.PendingObstacleObservation = observation;
+                if (clock.PendingAction == TransportCrewObstacleClock.ActionKind.ShotPreparationRequired)
+                {
+                    owner.CrewTargetChoiceAttempted = false;
+                    owner.CrewTargetChoice = null;
+                    owner.AcquiredCrewTarget = null;
+                    owner.PreparedCrewShot = null;
+                }
             }
         }
         return action;

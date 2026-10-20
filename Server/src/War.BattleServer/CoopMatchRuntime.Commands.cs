@@ -6,6 +6,10 @@ internal sealed partial class CoopMatchRuntime
 {
     private string Apply(Participant participant, MatchCommand command)
     {
+        if (!CoopCommandCapabilities.Supports(command.IntentCase))
+        {
+            return "coop-command-unavailable";
+        }
         switch (command.IntentCase)
         {
             case MatchCommand.IntentOneofCase.Ready:

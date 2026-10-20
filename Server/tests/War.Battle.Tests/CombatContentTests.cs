@@ -2893,6 +2893,7 @@ internal static class CombatContentTests
         CoopDepartureUdpTests.Run(volleySources).GetAwaiter().GetResult();
         CoopCrewUdpTests.Run(volleySources, directory).GetAwaiter().GetResult();
         CoopCrewCompletionRuntimeTests.Run(volleySources, directory);
+        CoopCrewTargetAcquisitionTests.Run(volleySources, directory);
         TransportCrewPointChangeTests.Run(volleySources);
         CoopObstacleVolleyRuntimeTests.Run(volleySources);
         CoopObstaclePreparationRuntimeTests.Run(volleySources);
@@ -3340,7 +3341,7 @@ internal static class CombatContentTests
             reachedEnemy.CurrentX - mainAnchors[0].Position.X,
             reachedEnemy.CurrentY - mainAnchors[0].Position.Y,
             reachedEnemy.CurrentZ - mainAnchors[0].Position.Z);
-        int expectedTargetMask = MatchEngine.HeavyTurretStationaryTargetMask(
+        int expectedTargetMask = MatchEngine.SoldierStationaryTargetMask(
             arrivalRuntime.PlayerAimForward(firstPlayer), towardAssaulter,
             shieldProbability: 0f, () => 0.5f);
         CoopInfantryPlayerTargetPlan? targetPlan = arrivalRuntime
@@ -8089,6 +8090,7 @@ internal static class CombatContentTests
         count += TransportCrewPointEntryTests.Run(directory, content);
         count += TransportCrewObstacleClockTests.Run();
         count += TransportCrewShotCallbackTests.Run();
+        count += CoopTargetScopeTests.Run();
         count+=DroneOrientationTests.Run(directory);
         count+=DroneTargetTests.Run();
         count+=DroneTargetRegistryTests.Run();

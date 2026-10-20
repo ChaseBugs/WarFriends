@@ -75,6 +75,7 @@ internal sealed partial class CoopMatchRuntime
             RetireTransportCrewNavigation(actor.EntityId);
             _transportCrewAgentRecovery.Remove(actor.EntityId);
             _transportCrewWalkingFrames.Remove(actor.EntityId);
+            _transportCrewAimWeapons.Remove(actor.EntityId);
             _transportCrewExits.Remove(actor.EntityId);
         }
         PublishTransportCrewActor(actor);
@@ -116,6 +117,10 @@ internal sealed partial class CoopMatchRuntime
         foreach (TransportCrewActorState actor in actors)
         {
             _transportCrewActors.Add(actor.EntityId, actor);
+            if (assaulterWeapon != null)
+            {
+                _transportCrewAimWeapons.Add(actor.EntityId, new AssaulterWeaponAimState(assaulterWeapon));
+            }
             PublishTransportCrewActor(actor);
         }
         RegisterTransportGunnerActor(aircraftId);

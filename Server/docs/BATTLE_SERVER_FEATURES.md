@@ -8,6 +8,42 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Match-owned obstacle-crew player acquisition and preparation
+
+`CoopMatchRuntime.TransportCrewTargets` now derives a crew target from the admitted,
+ready, live player roster in source scene-master/peer registration order. This applies
+only to the current restricted co-op runtime: accepted commands cannot deploy opposing
+army, Decoys or War Cards. `CoopCommandCapabilities` shares that command boundary with
+dispatch and closes this assumption when a new command is accepted. Future automatic
+entity producers also require an explicit scope review and shared target registry;
+this checkpoint does not implement the complete Assaulter entity-target hierarchy.
+
+Selection preserves the Soldier's inclusive shield roll (`<=`), the separate
+HeavyTurret's strict roll (`<`), walking shield probability scaling, the single-element
+shield random draw, and source serialized nearest-body selection. Moving body targets
+use the actor-owned rifle prediction state; moving shields retain their raw position.
+Missing pose or muzzle evidence retains the chosen player/branch without rerolling or
+inventing a NoTarget outcome. Target plans require their exact owner, native frame,
+tick and match revision. Actor death and match end retire owned aim state.
+
+`PrepareTransportCrewShot` consumes that exact target and the crew's source card/rifle
+profile to derive the batch size and real/fake-shot mask before scheduling the existing
+source callback clock. Repeated preparation returns the same prepared object without
+new batch or timer draws. This is preparation data, not a weapon launch or damage proof.
+
+Four native-frame fixtures cover stationary/moving shield/body acquisition, source-role
+order independent of roster storage, missing muzzle retry, forged ownership, unchanged
+published state and preparation replay. They use actual server player poses/routes but
+synthetic crew roots and muzzle positions. They do not prove physical crew locomotion,
+weapon muzzle placement, animation execution, actual rounds or collision.
+
+Validation: zero-warning/error solution build; Windows and actual WSL Linux each passed
+29,152 counted combat-content checks plus the new native acquisition fixtures. The
+protocol executable passed 1,360 checks and the Mongo/HTTP/protobuf/UDP smoke passed 74.
+Logs: `.local/crew-target-{build,publish,windows,linux,protocol,smoke}.log`.
+Actual callback-start aim, rifle execution, projectile authority and normal Worker
+integration remain open. Normal Worker co-op admission remains closed.
+
 ### Observed obstacle-crew shot callback lifecycle
 
 `TransportCrewObstacleClock.ShotCallbacks` and the runtime's internal observation
@@ -41,7 +77,8 @@ it is not evidence that a real volley occurred. A fixture-only alternate reserva
 is held and released within the callback frame to prevent ordinary spawns consuming
 the test capacity. Old shot tickets fail after the new walking owner takes over.
 
-Actual target acquisition, batch/round production, muzzle/aim evidence, animation and
+The restricted player acquisition and batch preparation above now supply one producer.
+Full entity targeting, round production, muzzle/aim evidence, animation and
 weapon execution, projectile collision and normal Worker integration remain open.
 Normal Worker co-op admission remains closed, and observed callbacks must never be
 used as kill, round-count, reward or settlement receipts.
