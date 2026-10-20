@@ -8,6 +8,40 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Crew descent-to-point host path motor
+
+`TryBeginTransportCrewMotor` now plans a covered corridor from the exact accepted
+descent root to the exact reserved point or fallback destination, using the pinned
+co-op navigation geometry. It rejects substituted endpoints rather than teleporting
+the actor to make a query succeed. The motor retains the current navigation identity,
+source infantry-agent configuration and crew movement speed. Copied commands and
+duplicate starts cannot claim it.
+
+`AdvanceTransportCrewMotor` requires consecutive server ticks on current native frames.
+It advances the shared host corridor model, then supplies that generated root to the
+existing XZ arrival test. A pending walking-shot flag prevents source point entry;
+fallback movement does not invent an authored point or hidden state. Actual arrival
+can enter the existing obstacle state in the same frame. Duplicate walking observations,
+lost reservations, superseded owners and already-entered points reject before moving.
+
+The native fixture follows a real helicopter descent completion into this motor,
+walks to its reserved obstacle without injecting an arrival position, checks source
+speed bounds and enters the source hidden state. It also checks copied commands,
+duplicate startup, same-tick startup movement and duplicate motion updates.
+
+This is a host path model, not a native Unity NavMeshAgent reconstruction. Its shared
+`ArmyNavMeshMotionState` still has measured candidate braking and estimated path-facing;
+avoidance, acceleration/turning fidelity and broader source comparison remain open.
+The generated facing must not become collision rotation or an authoritative world
+muzzle by itself. No network pose or hit authority is published here; normal Worker
+co-op admission remains closed. Preparation rotation, actual rig execution and the
+physical projectile producer are still required for full battle integration.
+
+Validation: zero-warning/error solution build; Windows and actual WSL Linux each
+passed 29,172 counted combat checks plus the new native descent-to-point fixture.
+Logs: `.local/crew-path-motor-{build,publish,windows,linux}.log`. This fixture covers
+one actual crew route in the selected mission, not all maps or Unity crowd fidelity.
+
 ### Crew local rifle muzzle and distinct source clocks
 
 The first completed-crawl obstacle volley can now sample its source local rifle muzzle

@@ -353,6 +353,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
             throw new InvalidDataException(
                 "Co-op infantry navigation needs host-owned enemy destinations.");
         this.infantryNavigation = infantryNavigation;
+        _transportCrewAgent = playerWeaponContent?.Army.InfantryAgent;
         this.chooseInfantryShotFraction = chooseInfantryShotFraction ??
             Random.Shared.NextSingle;
         this.chooseInfantryRepositionFraction =

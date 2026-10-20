@@ -111,6 +111,14 @@ internal sealed partial class CoopMatchRuntime
 
         internal bool HasBegun { get; set; }
 
+        internal ArmyNavMeshMotionState? PathMotor { get; set; }
+
+        internal bool HasPathMotor { get; set; }
+
+        internal Vector3? PathMotorFacing { get; set; }
+
+        internal ulong PathMotorTick { get; set; }
+
         internal TransportCrewPointArrival? Arrival { get; set; }
 
         internal TransportCrewPointEntry? PointEntry { get; set; }

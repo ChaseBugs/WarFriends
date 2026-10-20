@@ -2894,6 +2894,7 @@ internal static class CombatContentTests
         CoopCrewUdpTests.Run(volleySources, directory).GetAwaiter().GetResult();
         CoopCrewCompletionRuntimeTests.Run(volleySources, directory);
         CoopCrewTargetAcquisitionTests.Run(volleySources, directory);
+        CoopCrewMotorRuntimeTests.Run(volleySources, directory);
         TransportCrewPointChangeTests.Run(volleySources);
         CoopObstacleVolleyRuntimeTests.Run(volleySources);
         CoopObstaclePreparationRuntimeTests.Run(volleySources);
