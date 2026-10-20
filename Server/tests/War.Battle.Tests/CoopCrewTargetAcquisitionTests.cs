@@ -149,6 +149,39 @@ internal static class CoopCrewTargetAcquisitionTests
             ReferenceEquals(runtime.PrepareTransportCrewShot(command, target, CoroutineOrigin), prepared) &&
             clock == runtime.TransportCrewObstacleState(command),
             "Preparation did not bind its source target, batch and replay identity.");
+        VerifyShotStart(runtime, command, pending, prepared);
+    }
+
+    private static void VerifyShotStart(CoopMatchRuntime runtime,
+        CoopMatchRuntime.TransportCrewNavigationCommand command,
+        CoopMatchRuntime.TransportCrewObstacleObservation pending,
+        CoopMatchRuntime.TransportCrewPreparedShot prepared)
+    {
+        var early = new TransportCrewObstacleClock.ShotObservation(pending.Clock.Frame,
+            pending.Clock.ControllerTime, prepared.Callback.CoroutineDeadline);
+        Vector3 muzzle = pending.Position + Vector3.UnitY * SyntheticMuzzleHeight;
+        Reject(() => runtime.StartTransportCrewPreparedShot(command, prepared, early, muzzle));
+        BattlePlayerState previousPlayer = runtime.Snapshot().Players.Single(
+            player => player.PlayerId == prepared.Target.PlayerId);
+        CoopTransportLandingTests.AdvanceTo(runtime, runtime.Snapshot().ServerTick + 1);
+        BattlePlayerState currentPlayer = runtime.Snapshot().Players.Single(
+            player => player.PlayerId == prepared.Target.PlayerId);
+        Vector3 expectedVelocity = new Vector3(currentPlayer.PositionX - previousPlayer.PositionX,
+            currentPlayer.PositionY - previousPlayer.PositionY, currentPlayer.PositionZ - previousPlayer.PositionZ) *
+            MatchManifest.TickRate;
+        var start = early with { Frame = runtime.TransportRopeSnapshot!.RenderFrames };
+        var before = runtime.TransportCrewObstacleState(command);
+        Reject(() => runtime.StartTransportCrewPreparedShot(command, prepared with { }, start, muzzle));
+        Reject(() => runtime.StartTransportCrewPreparedShot(command, prepared, start, new Vector3(float.NaN)));
+        Require(before == runtime.TransportCrewObstacleState(command), "Invalid aim consumed the start callback.");
+        AssaulterAimPrediction aim = runtime.StartTransportCrewPreparedShot(command, prepared, start, muzzle);
+        Vector3 expected = CoopAssaulterMovingAim.AtShotStart(muzzle, prepared.Target.PreparedAimPosition,
+            expectedVelocity, aim.Inputs.BulletSpeed);
+        Require(aim.Inputs.Velocity == expectedVelocity &&
+            aim.Inputs.InputPosition == prepared.Target.PreparedAimPosition && aim.TargetPosition == expected &&
+            runtime.TransportCrewObstacleState(command)!.IsShooting,
+            "Shot start resampled the transform or failed to commit its callback flags.");
+        Reject(() => runtime.StartTransportCrewPreparedShot(command, prepared, start, muzzle));
     }
 
     private static void Reject(Action action)

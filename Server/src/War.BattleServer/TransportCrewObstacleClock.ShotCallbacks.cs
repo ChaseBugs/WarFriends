@@ -51,18 +51,23 @@ internal sealed partial class TransportCrewObstacleClock
 
     internal void ObserveShotStarted(ShotCallbackTicket ticket, ShotObservation observation)
     {
-        RequireShot(ticket, observation);
-        if (IsShooting || observation.Frame <= ticket.ScheduledFrame ||
-            observation.CoroutineTime < ticket.CoroutineDeadline)
-        {
-            throw new InvalidOperationException("Shot-start callback is early or already consumed.");
-        }
+        RequireShotStart(ticket, observation);
         IsShooting = true;
         _shotStartedFrame = observation.Frame;
         // WaitForSeconds resumes after Update; this frame cannot run another obstacle/gameplay update.
         _lastFrame = observation.Frame;
         _lastTime = observation.ControllerTime;
         _lastCoroutineTime = observation.CoroutineTime;
+    }
+
+    internal void RequireShotStart(ShotCallbackTicket ticket, ShotObservation observation)
+    {
+        RequireShot(ticket, observation);
+        if (IsShooting || observation.Frame <= ticket.ScheduledFrame ||
+            observation.CoroutineTime < ticket.CoroutineDeadline)
+        {
+            throw new InvalidOperationException("Shot-start callback is early or already consumed.");
+        }
     }
 
     internal void RequireShotEnd(ShotCallbackTicket ticket, ShotObservation observation)

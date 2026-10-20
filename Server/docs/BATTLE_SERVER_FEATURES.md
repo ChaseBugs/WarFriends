@@ -8,6 +8,30 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Prepared crew shot-start aim
+
+`StartTransportCrewPreparedShot` now connects the exact prepared volley to the delayed
+source start callback. It validates the live navigation owner and current callback
+ticket before touching mutable rifle state. Invalid muzzle inputs, copied preparation
+objects, early callbacks and repeated starts cannot consume a valid pending start.
+
+Recovered `SoldierBehaviourAssaulter.ShootJustStarted` predicts from the retained
+`targetPosition`, using the target's velocity at callback time and player bullet-speed
+multiplier one. It does not replace that position with a new target transform. This
+also applies to a shield selected while walking. The runtime follows that order and
+commits the clock's shooting flags only after aim calculation succeeds.
+
+The native acquisition fixtures now continue through this callback for all four
+stationary/moving shield/body cases. Expected current velocity is derived independently
+from consecutive authoritative player positions. Crew roots, callback time and muzzle
+positions are fixture observations; the returned aim is not launch or collision proof.
+Normal Worker co-op admission and actual crew animation/weapon execution remain open.
+
+Validation: zero-warning/error build and native-enabled Windows/actual WSL Linux runs,
+each passing 29,152 counted checks plus the extended four callback fixtures. Logs:
+`.local/crew-start-aim-{build,publish,windows,linux}.log`. No Client asset or protocol
+schema changed in this checkpoint.
+
 ### Match-owned obstacle-crew player acquisition and preparation
 
 `CoopMatchRuntime.TransportCrewTargets` now derives a crew target from the admitted,
@@ -41,7 +65,8 @@ Validation: zero-warning/error solution build; Windows and actual WSL Linux each
 29,152 counted combat-content checks plus the new native acquisition fixtures. The
 protocol executable passed 1,360 checks and the Mongo/HTTP/protobuf/UDP smoke passed 74.
 Logs: `.local/crew-target-{build,publish,windows,linux,protocol,smoke}.log`.
-Actual callback-start aim, rifle execution, projectile authority and normal Worker
+The callback-start aim checkpoint above adds the later prediction. Rifle execution,
+projectile authority and normal Worker
 integration remain open. Normal Worker co-op admission remains closed.
 
 ### Observed obstacle-crew shot callback lifecycle
