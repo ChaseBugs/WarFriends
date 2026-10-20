@@ -110,6 +110,8 @@ internal sealed partial class CoopMatchRuntime
         internal TransportCrewNavigationCommand Command { get; }
 
         internal bool HasBegun { get; set; }
+
+        internal TransportCrewPointArrival? Arrival { get; set; }
     }
 
     /// <summary>Immutable navigation input; it does not assert a simulated pose, arrival or combat readiness.</summary>

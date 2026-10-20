@@ -8,6 +8,34 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Crew authored-point arrival requests
+
+`EnemyPointArrivalPolicy` follows `EnemyPoint.IsEnemyPointReached`,
+`VectorEx.PlanarDistance`, and `EnemyController.WalkingUpdate`: XZ distance must be
+strictly below `0.04f`, and `mWillShoot` must be false. Height and a projected route
+endpoint do not replace the authored destination.
+
+`ObserveTransportCrewWalk` accepts only the current begun command, current native
+frame, a finite host-observed position and one callback per actor/frame. Rejected
+input does not consume the frame. Callback history survives destination replacement;
+death and teardown remove it. An arrival request binds the reserved point and its
+source ObstacleHiding/CornerHiding state. A normal-spawn fallback never requests
+ground-point entry because the recovered fallback remains in Helicopter state.
+
+This is a host transition request, not executed state-entry effects or motor proof.
+Stop/crawl/idle callbacks, corner tweens, source random shooting/reposition clocks,
+real walking observations and their producer/consumer integration remain required.
+Synthetic fixture observations test ownership and the request contract; they do not
+assert that the crew walked to those positions. No combat pose or shot permission
+is published by this API, and normal Worker co-op admission stays closed.
+
+Validation: zero-warning/error build and native-enabled Windows plus actual WSL Linux
+runs each passed 28,958 counted combat-content checks. Native completion/retry fixtures
+also check synthetic arrival requests, fallback isolation, invalid-position atomicity,
+copied/stale command rejection and callback retirement on death/replacement/teardown.
+Logs: `.local/crew-arrival-{build,windows,linux}.log`. No Unity runtime locomotion proof
+or Client asset change is included in this checkpoint.
+
 ### Native-agent stuck recovery prelude
 
 `NavigationAgentRecoveryState` preserves the recovered `NavigationAgent.Updatenavigation`

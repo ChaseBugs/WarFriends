@@ -74,6 +74,7 @@ internal sealed partial class CoopMatchRuntime
             CancelTransportCrewRetry(actor.EntityId);
             RetireTransportCrewNavigation(actor.EntityId);
             _transportCrewAgentRecovery.Remove(actor.EntityId);
+            _transportCrewWalkingFrames.Remove(actor.EntityId);
             _transportCrewExits.Remove(actor.EntityId);
         }
         PublishTransportCrewActor(actor);

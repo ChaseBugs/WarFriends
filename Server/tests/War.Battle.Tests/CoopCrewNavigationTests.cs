@@ -36,6 +36,7 @@ internal static class CoopCrewNavigationTests
             throw new Exception("Crew navigation accepted a copied handoff or began its current input twice.");
         }
         VerifyAgentCallback(runtime, command);
+        CoopCrewArrivalTests.VerifyIssued(runtime, command);
         return command;
     }
 
@@ -86,5 +87,6 @@ internal static class CoopCrewNavigationTests
         {
             throw new Exception("Retired or superseded crew navigation remained consumable.");
         }
+        CoopCrewArrivalTests.VerifyRetired(runtime, previous);
     }
 }
