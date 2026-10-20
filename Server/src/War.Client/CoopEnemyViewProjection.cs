@@ -44,25 +44,32 @@ namespace War.Client
             }
 
             var views = new List<CoopEnemyViewState>(snapshot.Coop.EnemySpawns.Count);
-            ulong expectedId = FirstEnemyId;
+            ulong minimumId = FirstEnemyId;
             foreach (BattleCoopEnemySpawn enemy in snapshot.Coop.EnemySpawns)
             {
-                ValidateIdentity(enemy, expectedId, snapshot);
+                if (views.Count == 0 && enemy.EntityId != FirstEnemyId)
+                {
+                    throw new InvalidDataException("Complete enemy roster must retain its first host allocation.");
+                }
+                ValidateIdentity(enemy, minimumId, snapshot);
                 ValidateVitality(enemy, snapshot.ServerTick);
                 ValidatePose(enemy, snapshot.ServerTick);
                 ValidateAnimation(enemy, snapshot.ServerTick, snapshot.Phase);
                 InfantryAnimationFrameView animation = InfantryAnimationFrameView.FromEnemy(
                     enemy, snapshot, observedPoseCatalogRevision);
                 views.Add(new CoopEnemyViewState(enemy, animation));
-                expectedId++;
+                // The shared allocator also issues secondary crew and respawn IDs.
+                // Ordinary enemy rows preserve allocation order, with legitimate gaps.
+                minimumId = enemy.EntityId + 1;
             }
 
             return views.AsReadOnly();
         }
 
-        private static void ValidateIdentity(BattleCoopEnemySpawn enemy, ulong expectedId, MatchSnapshot snapshot)
+        private static void ValidateIdentity(BattleCoopEnemySpawn enemy, ulong minimumId, MatchSnapshot snapshot)
         {
-            if (enemy.EntityId != expectedId || !Behaviours.Contains(enemy.Behaviour) || enemy.Level < 0 ||
+            if (enemy.EntityId < minimumId || enemy.EntityId == ulong.MaxValue ||
+                !Behaviours.Contains(enemy.Behaviour) || enemy.Level < 0 ||
                 enemy.SpawnComponentFileId <= 0 || enemy.SpawnTick < snapshot.StartTick ||
                 enemy.SpawnTick > snapshot.ServerTick || enemy.SpawnTick >= snapshot.Coop.DeadlineTick)
             {

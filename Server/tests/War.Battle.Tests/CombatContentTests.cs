@@ -5513,6 +5513,7 @@ internal static class CombatContentTests
             transportRuntime.PlaceTransportGunner(transport.EntityId) == null)
             throw new Exception("Co-op gunner did not return at the source respawn tick.");
         TransportCrewHostDamageTests.Verify(transportRuntime, transport.EntityId, gunnerDue);
+        CoopEnemyIdentityGapTests.Verify(transportRuntime.Snapshot(), firstPlayer);
         ulong respawnedGunnerId = transportRuntime.TransportGunnerActorId(transport.EntityId) ??
             throw new Exception("Respawned transport gunner has no host identity.");
         if (transportRuntime.TransportCrewIdentities(transport.EntityId)

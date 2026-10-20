@@ -8,6 +8,36 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Shared allocator and portable enemy roster compatibility
+
+`CoopEnemyViewProjection` previously required ordinary enemy IDs to be contiguous.
+That assumption became invalid when the same host allocator began issuing rope-crew
+and turret-respawn identities. The portable SDK now preserves the first allocation
+and requires strictly increasing, nonzero ordinary IDs below the allocator's
+exhaustion sentinel, while allowing legitimate intervening secondary allocations.
+It retains identity ordering and duplicate rejection without renumbering host IDs.
+
+A real transport-mission snapshot with subsequent ordinary spawns is projected
+through the Unity-facing SDK. The fixture checks unchanged IDs and rejects duplicate,
+zero and exhaustion-sentinel IDs. This repairs an existing Client presentation
+boundary; secondary actor wire fields and visual creation are still pending.
+
+Validation: the complete .NET solution built with zero warnings/errors; 1,360
+protocol/admission/replay checks and 74 live isolated MongoDB/HTTP/protobuf/UDP
+smoke checks passed. Native-enabled Windows and actual WSL Linux combat-content
+runs passed 28,908 counted assertions plus the uncounted gap fixture. Logs:
+`.local/coop-identity-gap-protocol.log`, `.local/coop-identity-gap-smoke.log`,
+`.local/coop-identity-gap-windows-final.log`, `.local/coop-identity-gap-linux.log`.
+An earlier test accidentally overlapped its build; that lock-failed attempt and
+its old-binary run are excluded from this evidence.
+
+The rebuilt portable DLL pair compiled in the disposable Unity 2018.3 project
+and exited successfully (`.local/coop-identity-gap-unity.log`). That exact pair
+was installed in the active Client, with `sdk-manifest.json` updated after checking
+the five existing runtime dependency hashes. Original plugin metadata and the
+owner's concurrent ignore-file changes were preserved. This proves compilation,
+not two running Unity clients, reconnect rendering or complete secondary actor transport.
+
 ### Initial crew actor health registration
 
 The normal timed/automatic parent creation path now constructs match-owned
