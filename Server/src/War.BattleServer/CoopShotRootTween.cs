@@ -27,6 +27,12 @@ internal sealed class CoopShotRootTween
 
     internal bool IsRunning { get; private set; }
 
+    /// <summary>Continues a source component whose one-time Start ran during helicopter entry.</summary>
+    internal static CoopShotRootTween ForStartedComponent(float durationSeconds)
+    {
+        return new CoopShotRootTween(durationSeconds) { _hasStarted = true };
+    }
+
     internal void Begin(Quaternion startRotation, Quaternion targetRotation)
     {
         ValidateRotation(startRotation);

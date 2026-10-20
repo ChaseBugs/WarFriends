@@ -80,9 +80,44 @@ internal static class CoopCrewMotorRuntimeTests
                 next / (float)MatchManifest.TickRate);
             Require(entry.IsCrawling && runtime.TransportCrewHiddenEntry(command) == entry,
                 "Generated path arrival did not enter its source obstacle state.");
+            VerifyPreparedTurn(runtime, command, sample, entry);
             return;
         }
         throw new Exception("Host crew path did not reach its authored point within the bounded fixture.");
+    }
+
+    private static void VerifyPreparedTurn(CoopMatchRuntime runtime,
+        CoopMatchRuntime.TransportCrewNavigationCommand command,
+        CoopMatchRuntime.TransportCrewMotorSample sample, TransportCrewPointEntry entry)
+    {
+        ulong preparationTick = (ulong)MathF.Ceiling(entry.NextShootTime * MatchManifest.TickRate) + 1;
+        CoopTransportLandingTests.AdvanceTo(runtime, preparationTick);
+        float time = preparationTick / (float)MatchManifest.TickRate;
+        var pending = new CoopMatchRuntime.TransportCrewObstacleObservation(
+            new TransportCrewObstacleClock.Observation(runtime.TransportRopeSnapshot!.RenderFrames,
+                time, false, true), sample.Position);
+        Require(runtime.AdvanceTransportCrewObstacle(command, pending) ==
+            TransportCrewObstacleClock.ActionKind.ShotPreparationRequired, "Motor crew shot was not due.");
+        var target = runtime.AcquireTransportCrewTarget(command, pending, null).Target ??
+            throw new Exception("Stationary motor crew did not acquire its source player target.");
+        var prepared = runtime.PrepareTransportCrewShot(command, target, time);
+        Vector3 facing = sample.PathFacing ?? throw new Exception("Moving crew route had no path facing.");
+        Quaternion root = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.Atan2(facing.X, facing.Z));
+        var begin = new TransportCrewShotTurn.Observation(pending.Clock.Frame, root, 0);
+        Reject(() => runtime.BeginTransportCrewShotTurn(command, prepared with { }, begin));
+        runtime.BeginTransportCrewShotTurn(command, prepared, begin);
+        Reject(() => runtime.BeginTransportCrewShotTurn(command, prepared, begin));
+        for (ulong offset = 1; offset <= 8; offset++)
+        {
+            CoopTransportLandingTests.AdvanceTo(runtime, preparationTick + offset);
+            var observation = new TransportCrewShotTurn.Observation(runtime.TransportRopeSnapshot!.RenderFrames,
+                root, 1f / MatchManifest.TickRate);
+            root = runtime.AdvanceTransportCrewShotTurn(command, observation);
+            Reject(() => runtime.AdvanceTransportCrewShotTurn(command, observation));
+        }
+        Quaternion expected = CoopAssaulterShotRotation.Obstacle(sample.Position, target.PreparedAimPosition);
+        Require(1 - MathF.Abs(Quaternion.Dot(root, expected)) < 0.000001f,
+            "Motor crew did not reach its source obstacle preparation rotation.");
     }
 
     private static void Require(bool condition, string message)

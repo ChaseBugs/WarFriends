@@ -148,6 +148,8 @@ internal sealed partial class CoopMatchRuntime
         internal float? CrewLastRoundScaledTime { get; set; }
 
         internal bool HasPriorCrewShotReturn { get; set; }
+
+        internal TransportCrewShotTurn? ShotTurn { get; set; }
     }
 
     /// <summary>Immutable navigation input; it does not assert a simulated pose, arrival or combat readiness.</summary>

@@ -59,6 +59,7 @@ internal sealed partial class CoopMatchRuntime
                     owner.AcquiredCrewTarget = null;
                     owner.PreparedCrewShot = null;
                     owner.CrewRifleVolley = null;
+                    owner.ShotTurn = null;
                 }
             }
         }

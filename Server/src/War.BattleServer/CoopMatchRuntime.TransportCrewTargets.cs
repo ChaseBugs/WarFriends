@@ -129,6 +129,7 @@ internal sealed partial class CoopMatchRuntime
         var plan = new TransportCrewTargetPlan
         {
             ActorId = owner.Command.ActorEntityId,
+            ActorPosition = pending.Position,
             PlayerId = player.PlayerId,
             Frame = pending.Clock.Frame,
             Tick = tick,
@@ -174,6 +175,7 @@ internal sealed partial class CoopMatchRuntime
     internal sealed record TransportCrewTargetPlan
     {
         internal required ulong ActorId { get; init; }
+        internal required Vector3 ActorPosition { get; init; }
         internal required string PlayerId { get; init; }
         internal required ulong Frame { get; init; }
         internal required ulong Tick { get; init; }

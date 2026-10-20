@@ -3983,6 +3983,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         _transportCrewAgentRecovery.Clear();
         _transportCrewWalkingFrames.Clear();
         _transportCrewAimWeapons.Clear();
+        _transportCrewRootTweens.Clear();
         _transportGunnerActorIds.Clear();
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();

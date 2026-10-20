@@ -8,6 +8,34 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Crew obstacle preparation root turn
+
+`BeginTransportCrewShotTurn` now binds the exact prepared shot, acquisition root and
+current navigation owner to the recovered 0.2-second obstacle rotation. An active path
+motor must still have that same root; a copied preparation cannot start a turn. The
+actor retains its tween across navigation/volley replacements, and death/match end
+retires it. A new owner can no longer consume an old owner's turn observation.
+
+The source already called `TweenRotation.Begin` in `SwitchStateToHelicopter`. Its
+one-time Unity Start has therefore occurred before accepted descent completion.
+`CoopShotRootTween.ForStartedComponent` preserves that lifecycle instead of performing
+the fresh-component double Update again at the first crew shot. Tween frames use
+observed scaled delta, permit pause, reject duplicate frames and preserve later host
+root writes after the component disables. The normal fresh-tween path is unchanged.
+
+The native crew fixture now continues from generated route arrival through target
+acquisition/preparation into this turn, checking the final source target rotation.
+Scalar checks separately cover the reused first Update, pause, duplicate/invalid
+observations and post-completion root ownership. The fixture still supplies the tween
+Update phase and an estimated path-facing start rotation. This is not a complete
+automatic crew Update loop, proof of Unity navigation rotation, or a world muzzle/hit
+authority. The observed initial pool has identity parent rotation; later moving-parent
+histories and procedural rig/upper-body execution remain separate requirements.
+
+Validation: zero-warning/error solution build; Windows and actual WSL Linux each
+passed 29,179 counted combat checks plus the extended native motor/preparation-turn
+fixture. Logs: `.local/crew-shot-turn-{build,publish,windows,linux}.log`.
+
 ### Crew descent-to-point host path motor
 
 `TryBeginTransportCrewMotor` now plans a covered corridor from the exact accepted

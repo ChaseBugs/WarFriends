@@ -76,6 +76,7 @@ internal sealed partial class CoopMatchRuntime
             _transportCrewAgentRecovery.Remove(actor.EntityId);
             _transportCrewWalkingFrames.Remove(actor.EntityId);
             _transportCrewAimWeapons.Remove(actor.EntityId);
+            _transportCrewRootTweens.Remove(actor.EntityId);
             _transportCrewExits.Remove(actor.EntityId);
         }
         PublishTransportCrewActor(actor);
