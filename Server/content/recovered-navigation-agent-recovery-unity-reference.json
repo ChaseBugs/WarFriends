@@ -1,0 +1,398 @@
+{
+    "_version": 1,
+    "_unityVersion": "2018.3.0f2",
+    "_sourceSha256": "4cad6f1a7f11f5323363ec0064b6b1e4f9c01a57f655da74f45e70c8f62830d5",
+    "_expressionSha256": "79061471eafb50ec3afc3142069a2cf263977ab947dc3c7a488e11cba13a2e5e",
+    "_operations": [
+        "Stop",
+        "ResetPath",
+        "SetDestination",
+        "Resume"
+    ],
+    "_cases": [
+        {
+            "_id": "stuck",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 1065353216,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": true
+        },
+        {
+            "_id": "wrapper-stopped",
+            "_stopped": true,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 1065353216,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": false
+        },
+        {
+            "_id": "partial-path",
+            "_stopped": false,
+            "_status": 1,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 1065353216,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": false
+        },
+        {
+            "_id": "invalid-path",
+            "_stopped": false,
+            "_status": 2,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 1065353216,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": false
+        },
+        {
+            "_id": "path-pending",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": true,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 1065353216,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": false
+        },
+        {
+            "_id": "same-endpoint",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                0,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 0,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": false
+        },
+        {
+            "_id": "distance-below",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1036831948,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 1036831948,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": false
+        },
+        {
+            "_id": "distance-float-equal",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1036831949,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 1036831949,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": true
+        },
+        {
+            "_id": "distance-above",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1036831950,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 1036831950,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": true
+        },
+        {
+            "_id": "vertical-distance",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                0,
+                1038174126,
+                0
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 1038174126,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": true
+        },
+        {
+            "_id": "short-diagonal",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1028443341,
+                1028443341,
+                1028443341
+            ],
+            "_velocityBits": [
+                0,
+                0,
+                0
+            ],
+            "_distanceBits": 1035033772,
+            "_velocitySquaredBits": 0,
+            "_shouldRecover": false
+        },
+        {
+            "_id": "moving",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_distanceBits": 1065353216,
+            "_velocitySquaredBits": 1065353216,
+            "_shouldRecover": false
+        },
+        {
+            "_id": "two-component-velocity",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                1036831949,
+                1045220557,
+                0
+            ],
+            "_distanceBits": 1065353216,
+            "_velocitySquaredBits": 1028443341,
+            "_shouldRecover": false
+        },
+        {
+            "_id": "velocity-below",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                1046804781,
+                0,
+                0
+            ],
+            "_distanceBits": 1065353216,
+            "_velocitySquaredBits": 1028443339,
+            "_shouldRecover": true
+        },
+        {
+            "_id": "velocity-above",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                1046804783,
+                0,
+                0
+            ],
+            "_distanceBits": 1065353216,
+            "_velocitySquaredBits": 1028443342,
+            "_shouldRecover": false
+        },
+        {
+            "_id": "velocity-exact-squared-threshold",
+            "_stopped": false,
+            "_status": 0,
+            "_pending": false,
+            "_pathEndBits": [
+                0,
+                0,
+                0
+            ],
+            "_destinationBits": [
+                1065353216,
+                0,
+                0
+            ],
+            "_velocityBits": [
+                1040187392,
+                1040187392,
+                1040988044
+            ],
+            "_distanceBits": 1065353216,
+            "_velocitySquaredBits": 1028443341,
+            "_shouldRecover": false
+        }
+    ]
+}

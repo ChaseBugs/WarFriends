@@ -8,6 +8,35 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Native-agent stuck recovery prelude
+
+`NavigationAgentRecoveryState` preserves the recovered `NavigationAgent.Updatenavigation`
+recovery predicate and the ordered Stop, ResetPath, SetDestination, Resume plan.
+It compares the source float distance against a double `0.1` literal and uses raw native
+velocity squared strictly below `0.05f`. The current native destination is retained,
+including a temporary destination different from the final scene point.
+
+The match accepts observations only for a current begun crew navigation command and
+its current native frame. Recovery history survives destination replacement; actor
+death and match teardown remove it. Rejected malformed observations do not consume a
+callback frame. This does not schedule the source 10 Hz scaled coroutine or execute
+native navigation operations.
+
+`prepare_navigation_recovery_reference.py` extracts the active source predicate and
+checks the operation order. `UnityNavigationRecoveryExport.cs` evaluated that expression
+in disposable Unity 2018.3.0f2 using real Unity Vector3 math and supplied agent values.
+The checked-in reference contains 16 cases, including the float-distance/double-literal
+edge and exact squared-speed threshold. This is expression/math evidence, not native
+NavMeshAgent getter, locomotion, obstacle avoidance, or Unity 5.2 runtime verification.
+The normal Worker co-op admission guard remains closed.
+
+Validation: the build passed with zero warnings/errors. Native-enabled Windows and
+actual WSL Linux combat-content runs each passed 28,947 counted assertions, plus
+native crew fixtures covering copied-command rejection, one callback per frame and
+preservation of a temporary native destination. Logs are
+`.local/navigation-recovery-{build,windows,linux}.log`; the Unity export log is
+`.local/navigation-recovery-unity.log`. No active Unity Client assets were changed.
+
 ### Crew navigation handoff inputs
 
 Completion and successful retry now preserve their accepted start position in a

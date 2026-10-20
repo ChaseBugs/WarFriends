@@ -35,7 +35,48 @@ internal static class CoopCrewNavigationTests
         {
             throw new Exception("Crew navigation accepted a copied handoff or began its current input twice.");
         }
+        VerifyAgentCallback(runtime, command);
         return command;
+    }
+
+    private static void VerifyAgentCallback(CoopMatchRuntime runtime,
+        CoopMatchRuntime.TransportCrewNavigationCommand command)
+    {
+        Vector3 nativeDestination = command.Destination + Vector3.UnitY;
+        var observation = new NavigationAgentRecoveryState.Observation
+        {
+            Frame = command.IssuedRenderFrame,
+            WrapperIsStopped = false,
+            Status = NavigationAgentRecoveryState.PathStatus.Complete,
+            PathPending = false,
+            PathEndPosition = command.Destination,
+            NativeDestination = nativeDestination,
+            RawVelocity = Vector3.Zero,
+        };
+        try
+        {
+            runtime.ObserveTransportCrewNavigationAgent(command with { }, observation);
+            throw new Exception("Copied command authorized a native agent callback.");
+        }
+        catch (InvalidOperationException)
+        {
+            // The copied command must not consume the real owner's callback frame.
+        }
+        NavigationAgentRecoveryState.Recovery? recovery =
+            runtime.ObserveTransportCrewNavigationAgent(command, observation);
+        if (recovery?.NativeDestination != nativeDestination)
+        {
+            throw new Exception("Agent recovery replaced the native temporary destination with its final target.");
+        }
+        try
+        {
+            runtime.ObserveTransportCrewNavigationAgent(command, observation);
+            throw new Exception("Duplicate native agent callback was accepted.");
+        }
+        catch (InvalidOperationException)
+        {
+            // A callback frame belongs to one source wrapper update.
+        }
     }
 
     internal static void VerifyRetired(CoopMatchRuntime runtime,

@@ -10,6 +10,7 @@ internal sealed partial class CoopMatchRuntime
     private const float MaximumCrewMovementSpeed = 100f;
 
     private readonly Dictionary<ulong, TransportCrewNavigationOwner> _transportCrewNavigation = new();
+    private readonly Dictionary<ulong, NavigationAgentRecoveryState> _transportCrewAgentRecovery = new();
 
     internal TransportCrewNavigationCommand? TransportCrewNavigation(ulong actorId)
     {
@@ -75,6 +76,23 @@ internal sealed partial class CoopMatchRuntime
                 ? assigned.Destination.PointComponentFileId : null,
         };
         _transportCrewNavigation[actor.EntityId] = new TransportCrewNavigationOwner(command);
+        _transportCrewAgentRecovery.TryAdd(actor.EntityId, new NavigationAgentRecoveryState());
+    }
+
+    /// <summary>Accepts one real host wrapper callback; native movement and avoidance remain producer-owned.</summary>
+    internal NavigationAgentRecoveryState.Recovery? ObserveTransportCrewNavigationAgent(
+        TransportCrewNavigationCommand command, NavigationAgentRecoveryState.Observation observation)
+    {
+        ArgumentNullException.ThrowIfNull(observation);
+        if (!IsTransportCrewNavigationCurrent(command) ||
+            !_transportCrewNavigation.TryGetValue(command.ActorEntityId, out TransportCrewNavigationOwner? owner) ||
+            !owner.HasBegun || TransportRopeSnapshot?.RenderFrames != observation.Frame ||
+            !_transportCrewAgentRecovery.TryGetValue(command.ActorEntityId, out NavigationAgentRecoveryState? state))
+        {
+            throw new InvalidOperationException("Agent callback requires current begun navigation and its host frame.");
+        }
+
+        return state.Observe(observation);
     }
 
     private void RetireTransportCrewNavigation(ulong actorId)
