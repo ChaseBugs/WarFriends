@@ -14,6 +14,8 @@ internal sealed class AssaulterWeaponAimState
     private readonly CoopAssaulterWeaponCatalog _source;
     private float _speedMultiplier = PlayerSpeedMultiplier;
 
+    internal AssaulterWeaponFireClock FireClock { get; }
+
     internal float RealBulletSpeed => _source.RealBulletSpeed * _speedMultiplier;
 
     // BulletSetup.fakeSpeed reads speed * fakeSpeedFactor, not speedMultiplayer.
@@ -22,6 +24,7 @@ internal sealed class AssaulterWeaponAimState
     internal AssaulterWeaponAimState(CoopAssaulterWeaponCatalog source)
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
+        FireClock = new AssaulterWeaponFireClock(source.CadenceSeconds);
     }
 
     internal AssaulterAimPrediction SelectMovingPlayer(Vector3 muzzle, Vector3 position, Vector3 velocity)

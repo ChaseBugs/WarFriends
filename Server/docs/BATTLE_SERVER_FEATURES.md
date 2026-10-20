@@ -8,6 +8,31 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Persistent Assaulter weapon cadence
+
+`AssaulterWeaponFireClock` captures the recovered infinite-ammo, non-reloadable rifle's
+global-time gate: `realTimeWithoutPauses > lastShotTime + (float)cadence`. Equality is
+ineligible; the first representable float above the boundary is eligible. This clock
+belongs to the retained `AssaulterWeaponAimState`, so constructing a new target or
+volley does not reset the weapon's last-shot time. It is separate from enemy-controller
+AI time and from the coroutine deadline used to start a volley.
+
+`ObserveFired` is reserved for completed source Weapon.Shoot execution, not readiness,
+target selection, a scheduled callback or a network acknowledgement. Gun.Shoot calls
+base Weapon.Shoot even when the projectile pool returns null; source cadence therefore
+advances in that case without establishing an emitted projectile. Native animated crew
+weapon execution and a producer that invokes this clock remain unimplemented. Merely
+owning this state does not enable crew firing or change the existing Worker admission.
+
+Tests cover initial/next strict float boundaries, duplicate fire, monotonic time and
+non-finite/negative inputs. This is a prerequisite for round execution, not proof of
+a completed volley or a physics hit.
+
+Validation: zero-warning/error build and 29,163 focused combat-content checks passed
+without the optional native transport fixture. Logs:
+`.local/crew-fire-clock-{build,tests}.log`. This run does not replace the native
+callback checks recorded below.
+
 ### Prepared crew shot-start aim
 
 `StartTransportCrewPreparedShot` now connects the exact prepared volley to the delayed
