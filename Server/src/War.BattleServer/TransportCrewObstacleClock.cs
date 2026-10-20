@@ -1,12 +1,11 @@
 namespace War.BattleServer;
 
 /// <summary>Preserves ObstacleHidingUpdate ordering while shot preparation still requires its own consumer.</summary>
-internal sealed class TransportCrewObstacleClock
+internal sealed partial class TransportCrewObstacleClock
 {
     private const float MinimumRepositionDelay = 2f;
     private const float RepositionDelayRange = 4f;
 
-    private readonly TransportCrewPointEntry _entry;
     private ulong _lastFrame;
     private float _lastTime;
     private Observation? _pendingObservation;
@@ -18,6 +17,12 @@ internal sealed class TransportCrewObstacleClock
 
     internal float NextEnemyChangeTime { get; private set; }
 
+    internal float NextShootTime { get; private set; }
+
+    internal bool IsCrawling { get; private set; } = true;
+
+    internal bool HasPendingVolley { get; private set; }
+
     internal TransportCrewObstacleClock(TransportCrewPointEntry entry, ulong frame)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -25,9 +30,9 @@ internal sealed class TransportCrewObstacleClock
         {
             throw new InvalidDataException("Obstacle updates require an obstacle-hiding entry.");
         }
-        _entry = entry;
         NextRepositionTime = deadline;
         NextEnemyChangeTime = entry.NextEnemyChangeTime;
+        NextShootTime = entry.NextShootTime;
         _lastFrame = frame;
         _lastTime = entry.ControllerTime;
     }
@@ -45,16 +50,17 @@ internal sealed class TransportCrewObstacleClock
             throw new InvalidOperationException(
                 "A required source action must be handled before later obstacle updates.");
         }
-        if (observation.ControllerTime > _entry.NextShootTime)
+        if (IsCrawling && observation.ControllerTime > NextShootTime)
         {
             // Source ignores mWillShoot in this first branch. Do not let a due reposition bypass it.
             return ActionKind.ShotPreparationRequired;
         }
-        if (observation.ControllerTime > NextRepositionTime && !observation.IsPreparingShot)
+        bool willShoot = HasPendingVolley || observation.IsPreparingShot;
+        if (observation.ControllerTime > NextRepositionTime && !willShoot)
         {
             return ActionKind.Reposition;
         }
-        if (observation.ControllerTime > NextEnemyChangeTime && !observation.IsPreparingShot &&
+        if (IsCrawling && observation.ControllerTime > NextEnemyChangeTime && !willShoot &&
             observation.CanChangePosition)
         {
             return ActionKind.PointChangeRequired;
@@ -100,10 +106,15 @@ internal sealed class TransportCrewObstacleClock
 
     internal void RequirePointChange(Observation observation)
     {
-        if (_isRetired || PendingAction != ActionKind.PointChangeRequired ||
+        RequirePendingObservation(observation, ActionKind.PointChangeRequired);
+    }
+
+    private void RequirePendingObservation(Observation observation, ActionKind action)
+    {
+        if (_isRetired || PendingAction != action ||
             !ReferenceEquals(_pendingObservation, observation))
         {
-            throw new InvalidOperationException("Point change requires its exact pending source callback.");
+            throw new InvalidOperationException("Source action requires its exact pending callback.");
         }
     }
 

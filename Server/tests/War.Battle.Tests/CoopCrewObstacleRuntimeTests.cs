@@ -50,7 +50,7 @@ internal static class CoopCrewObstacleRuntimeTests
         Reject(() => runtime.ResolveTransportCrewPointChange(replacement with { }, shotObservation));
         Console.WriteLine(
             "PASS: native crew same-obstacle handoff retains hidden state, clocks and source branch priority.");
-        return replacement;
+        return CoopCrewShotCallbackRuntimeTests.Verify(runtime, replacement, shotObservation, destinations);
     }
 
     private static void Reject(Action action)

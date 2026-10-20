@@ -8,6 +8,51 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Observed obstacle-crew shot callback lifecycle
+
+`TransportCrewObstacleClock.ShotCallbacks` and the runtime's internal observation
+methods now retain source preparation/start/end flags and deadlines. These methods
+consume host signal observations only. They do not select a target, start a weapon,
+emit a round, grant projectile authority, apply damage or prove a completed volley.
+There is no wire command for supplying these outcomes. A complete host target/weapon
+producer is still required before this path can drive normal gameplay.
+
+The source branches differ: `mCanShoot == false` returns without drawing a shot delay;
+`StartShooting == false` draws a fresh delay; success calls `Shoot`, which also draws
+a delay before scheduling its callback. All three branches then clear crawling and
+draw the source 2–3 second reposition delay. A rejected preparation is not silently
+rearmed to shoot: the original also clears crawling on that branch.
+
+`EnemyController.mTime` owns AI deadlines. The delayed `WaitForSeconds` callback uses
+a separate observed scaled coroutine clock and the recovered `stand_up_begin` length
+plus `0.05f`. Start requires its exact current ticket, a later frame and the due
+coroutine deadline. It runs after Update, so this frame cannot perform another AI
+update. Observed rifle EndShooting requires a later frame and runs before that frame's
+ObstacleHidingUpdate. It clears pending/shooting flags, restores crawling and draws
+a new card-derived shot deadline without resetting position/point-change deadlines.
+The mutable obstacle snapshot reflects these callback flags; `TransportCrewPointEntry`
+remains the initial entry snapshot.
+
+Scalar tests cover success and both rejected preparation branches. The live-native-frame
+fixture supplies synthetic preparation/start/end signals, checks published match bytes
+do not change from those signals, then exercises actual runtime point-change wiring
+using real card delays. Its deliberately late EndShooting isolates the change branch;
+it is not evidence that a real volley occurred. A fixture-only alternate reservation
+is held and released within the callback frame to prevent ordinary spawns consuming
+the test capacity. Old shot tickets fail after the new walking owner takes over.
+
+Actual target acquisition, batch/round production, muzzle/aim evidence, animation and
+weapon execution, projectile collision and normal Worker integration remain open.
+Normal Worker co-op admission remains closed, and observed callbacks must never be
+used as kill, round-count, reward or settlement receipts.
+
+Validation: zero-warning/error build; native-enabled Windows and actual WSL Linux
+combat-content runs each passed 29,145 counted checks plus the callback/return/retarget
+fixtures. Tests cover rejected observations without mutation, forged/replayed tickets,
+separate controller/coroutine time, callback/Update order and unchanged published match
+bytes for preparation/end signals. Logs:
+`.local/crew-shot-callback-{build,windows,linux}.log`.
+
 ### Crew different-point selection and blocked retry
 
 `TransportCrewPointChange` now consumes an exact pending point-change observation.
@@ -35,8 +80,9 @@ Tests exercise the coordinator against real source maps with synthetic eligible 
 including a deliberately long initial shot delay to isolate this branch. That fixture
 does not establish that a live crew reached it through a real volley. Native integration
 tests additionally reject a pending shot as authority for a point change. The preceding
-shot-preparation/EndShooting chain and a successful full runtime/native retarget remain
-unverified; ordinary Worker co-op admission remains closed.
+actual shot-preparation/EndShooting chain remains unverified. Runtime retarget wiring
+is now exercised by the synthetic signal checkpoint above; ordinary Worker co-op
+admission remains closed.
 
 Validation: zero-warning/error build; native-enabled Windows and actual WSL Linux
 runs each passed the existing 29,123 counted regressions and the new uncounted
@@ -62,8 +108,8 @@ timers. The old command is retired; the new handoff must be begun by its consume
 Ordinary Walk callbacks are rejected while a hidden entry owns the actor.
 
 Shot preparation and changing to another point are explicit pending actions. The
-point-change resolver is covered by the checkpoint above; shot preparation and its
-post-preparation state changes still require their consumer.
+point-change resolver is covered above. The callback observer now handles source
+clock/flag signals, but shot preparation still needs its target/weapon producer.
 The clock latches a required action and rejects later obstacle updates until a real
 consumer exists; it does not silently skip it, issue repeated shots, or infer combat
 permission. The current implementation therefore covers the pre-preparation phase,
