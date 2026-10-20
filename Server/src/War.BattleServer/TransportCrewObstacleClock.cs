@@ -9,10 +9,14 @@ internal sealed class TransportCrewObstacleClock
     private readonly TransportCrewPointEntry _entry;
     private ulong _lastFrame;
     private float _lastTime;
+    private Observation? _pendingObservation;
+    private bool _isRetired;
 
     internal float NextRepositionTime { get; private set; }
 
     internal ActionKind? PendingAction { get; private set; }
+
+    internal float NextEnemyChangeTime { get; private set; }
 
     internal TransportCrewObstacleClock(TransportCrewPointEntry entry, ulong frame)
     {
@@ -23,6 +27,7 @@ internal sealed class TransportCrewObstacleClock
         }
         _entry = entry;
         NextRepositionTime = deadline;
+        NextEnemyChangeTime = entry.NextEnemyChangeTime;
         _lastFrame = frame;
         _lastTime = entry.ControllerTime;
     }
@@ -35,7 +40,7 @@ internal sealed class TransportCrewObstacleClock
         {
             throw new InvalidDataException("Obstacle callbacks require increasing frames and coherent scaled time.");
         }
-        if (PendingAction.HasValue)
+        if (_isRetired || PendingAction.HasValue)
         {
             throw new InvalidOperationException(
                 "A required source action must be handled before later obstacle updates.");
@@ -49,7 +54,7 @@ internal sealed class TransportCrewObstacleClock
         {
             return ActionKind.Reposition;
         }
-        if (observation.ControllerTime > _entry.NextEnemyChangeTime && !observation.IsPreparingShot &&
+        if (observation.ControllerTime > NextEnemyChangeTime && !observation.IsPreparingShot &&
             observation.CanChangePosition)
         {
             return ActionKind.PointChangeRequired;
@@ -89,7 +94,40 @@ internal sealed class TransportCrewObstacleClock
         if (action is ActionKind.ShotPreparationRequired or ActionKind.PointChangeRequired)
         {
             PendingAction = action;
+            _pendingObservation = observation;
         }
+    }
+
+    internal void RequirePointChange(Observation observation)
+    {
+        if (_isRetired || PendingAction != ActionKind.PointChangeRequired ||
+            !ReferenceEquals(_pendingObservation, observation))
+        {
+            throw new InvalidOperationException("Point change requires its exact pending source callback.");
+        }
+    }
+
+    internal void CompleteBlockedPointChange(Observation observation)
+    {
+        RequirePointChange(observation);
+        const float RetrySeconds = 10f;
+        float deadline = NextEnemyChangeTime + RetrySeconds;
+        if (!float.IsFinite(deadline) || deadline <= NextEnemyChangeTime)
+        {
+            throw new InvalidDataException("Point-change retry exceeds source float deadline resolution.");
+        }
+        // Source adds ten to the previous deadline; scheduling from current time would change late callbacks.
+        NextEnemyChangeTime = deadline;
+        PendingAction = null;
+        _pendingObservation = null;
+    }
+
+    internal void CompleteSuccessfulPointChange(Observation observation)
+    {
+        RequirePointChange(observation);
+        _isRetired = true;
+        PendingAction = null;
+        _pendingObservation = null;
     }
 
     internal enum ActionKind

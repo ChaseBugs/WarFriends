@@ -49,6 +49,10 @@ internal sealed partial class CoopMatchRuntime
         {
             // Required actions remain explicit: returning one does not execute preparation, shooting or retargeting.
             clock.Accept(observation.Clock);
+            if (clock.PendingAction.HasValue)
+            {
+                owner.PendingObstacleObservation = observation;
+            }
         }
         return action;
     }

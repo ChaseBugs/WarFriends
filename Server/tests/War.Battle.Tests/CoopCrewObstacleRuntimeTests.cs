@@ -46,6 +46,8 @@ internal static class CoopCrewObstacleRuntimeTests
             TransportCrewObstacleClock.ActionKind.ShotPreparationRequired &&
             ReferenceEquals(runtime.TransportCrewNavigation(previous.ActorEntityId), replacement),
             "Required shot preparation was bypassed by a later due reposition.");
+        Reject(() => runtime.ResolveTransportCrewPointChange(replacement, shotObservation));
+        Reject(() => runtime.ResolveTransportCrewPointChange(replacement with { }, shotObservation));
         Console.WriteLine(
             "PASS: native crew same-obstacle handoff retains hidden state, clocks and source branch priority.");
         return replacement;

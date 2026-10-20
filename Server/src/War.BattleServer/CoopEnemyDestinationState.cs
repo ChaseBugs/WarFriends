@@ -148,6 +148,7 @@ public sealed partial class CoopEnemyDestinationState
 
     public bool Release(ulong entityId)
     {
+        _crewRetargetPlans.Remove(entityId);
         if (!assigned.Remove(entityId))
             return false;
         reservations.Release(entityId);

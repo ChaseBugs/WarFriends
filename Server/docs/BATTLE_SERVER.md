@@ -1,10 +1,15 @@
 # Battle Server: implementation and remaining work
 
-Updated 2026-10-19 from [Server_guide.md](../../Server_guide.md) and the linked executable checkpoints.
+Updated 2026-10-20 from [Server_guide.md](../../Server_guide.md) and the linked executable checkpoints.
 This work adds Battle Server code and a portable Unity networking adapter. Backend gameplay is
 outside this task. **This is not yet a complete playable replacement for the recovered Photon battle runtime.**
 
 The full active scope and completion gates are tracked in [BATTLE_SERVER_FEATURES.md](BATTLE_SERVER_FEATURES.md). The opt-in [live stationary rifle mode](LIVE_RIFLE_COMBAT.md) connects real UDP commands to source-bound animation, projectiles, collision and health changes.
+
+The feature checklist also records the isolated helicopter-crew navigation, hiding and
+destination-change checkpoints. Their source-state/component tests do not establish
+walking, crew weapon execution or full Unity co-op gameplay. Normal Worker co-op
+admission remains closed in `MatchRouter.Register` until those integrations are verified.
 
 The [mixed rematch army refresh](REMATCH_ARMY_REFRESH.md) now rebuilds current equipped unit
 identities and upgrade lanes and rejects stale battle allocations before returning successor

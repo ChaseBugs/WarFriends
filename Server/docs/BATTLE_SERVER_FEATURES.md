@@ -8,6 +8,43 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Crew different-point selection and blocked retry
+
+`TransportCrewPointChange` now consumes an exact pending point-change observation.
+It uses the source Assaulter next-free-point mask/order, excludes the current point,
+and draws the new obstacle position before the new walking-shot deadline. A bounded,
+one-plan-per-actor preview retains the current reservation until that deadline validates.
+Only the latest exact plan can commit; stale, foreign, replayed and released-actor
+plans cannot replace a reservation.
+
+On success, `ResolveTransportCrewPointChange` retires the old navigation/hidden owner,
+issues a new walk handoff from the accepted root, and stores its walking-shot deadline.
+`UpgradeSlotsBaseSoldier.LoadDefinitionFromXLS` reads walking and hidden timing from
+the same shot-frequency columns for Assaulter; both use the crew's card-derived stats.
+This frame has already run ObstacleHidingUpdate, so a fresh WalkingUpdate is deferred
+until a later frame. Native motor/Walk animation and actual walking shots still need
+their producers and consumers.
+
+When no other point is free, the current point/navigation stay intact. The clock
+adds exactly ten seconds to the previous change deadline, not the callback time.
+A late callback may therefore leave the next deadline already due; the next source
+update can catch up once per frame. No walking-shot draw occurs on a failed choice.
+Invalid selection/timing leaves the old reservation and pending callback available.
+
+Tests exercise the coordinator against real source maps with synthetic eligible clocks,
+including a deliberately long initial shot delay to isolate this branch. That fixture
+does not establish that a live crew reached it through a real volley. Native integration
+tests additionally reject a pending shot as authority for a point change. The preceding
+shot-preparation/EndShooting chain and a successful full runtime/native retarget remain
+unverified; ordinary Worker co-op admission remains closed.
+
+Validation: zero-warning/error build; native-enabled Windows and actual WSL Linux
+runs each passed the existing 29,123 counted regressions and the new uncounted
+point-change coordinator scenarios. Those scenarios cover success, old-point release,
+invalid draw atomicity, full occupancy, late-callback catch-up, latest-plan ownership,
+foreign/replayed commits and cancellation on release. Logs:
+`.local/crew-point-change-{build,windows,linux}.log`.
+
 ### Source same-obstacle crew reposition
 
 `AdvanceTransportCrewObstacle` now applies the same-point `SetFinalTarget(enemyPoint)`
@@ -24,8 +61,9 @@ obstacle update clock. It does not switch AI state to Walk or initialize new hid
 timers. The old command is retired; the new handoff must be begun by its consumer.
 Ordinary Walk callbacks are rejected while a hidden entry owns the actor.
 
-Shot preparation and changing to another point are explicit pending actions. Their
-consumers and post-preparation state changes are not implemented by this checkpoint.
+Shot preparation and changing to another point are explicit pending actions. The
+point-change resolver is covered by the checkpoint above; shot preparation and its
+post-preparation state changes still require their consumer.
 The clock latches a required action and rejects later obstacle updates until a real
 consumer exists; it does not silently skip it, issue repeated shots, or infer combat
 permission. The current implementation therefore covers the pre-preparation phase,
