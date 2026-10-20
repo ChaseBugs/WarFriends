@@ -2,6 +2,13 @@ namespace War.BattleServer;
 
 internal sealed partial class CoopMatchRuntime
 {
+    internal TransportCrewPointEntry? TransportCrewHiddenEntry(TransportCrewNavigationCommand command)
+    {
+        return IsTransportCrewNavigationCurrent(command) &&
+            _transportCrewNavigation.TryGetValue(command.ActorEntityId, out TransportCrewNavigationOwner? owner)
+                ? owner.PointEntry : null;
+    }
+
     /// <summary>Consumes the exact current arrival once and initializes source hidden-state flags and deadlines.</summary>
     internal TransportCrewPointEntry EnterTransportCrewPoint(TransportCrewNavigationCommand command,
         TransportCrewPointArrival arrival, float controllerTime)
@@ -36,6 +43,7 @@ internal sealed partial class CoopMatchRuntime
         var draws = new TransportCrewPointEntry.RandomDraws(shotFraction, changeSeconds, repositionFraction);
         var entry = new TransportCrewPointEntry(context, shot, draws);
         owner.PointEntry = entry;
+        owner.ObstacleClock = entry.IsCrawling ? new TransportCrewObstacleClock(entry, arrival.Frame) : null;
         return entry;
     }
 }

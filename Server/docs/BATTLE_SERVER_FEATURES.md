@@ -8,6 +8,41 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Source same-obstacle crew reposition
+
+`AdvanceTransportCrewObstacle` now applies the same-point `SetFinalTarget(enemyPoint)`
+branch of `EnemyController.ObstacleHidingUpdate`. It validates current navigation,
+live crew, native frame, controller-time order and the matching obstacle reservation.
+The initial crawling phase checks due shot preparation before reposition, then point
+change. Comparisons remain strict `>`; `mWillShoot` suppresses reposition but does
+not suppress the first crawling-shot branch.
+
+A due reposition draws its next 2–6 second delay, regenerates the reserved obstacle
+position and issues a replacement navigation handoff from the supplied host root.
+It preserves the point identity, initial hidden entry, original shot deadline and
+obstacle update clock. It does not switch AI state to Walk or initialize new hiding
+timers. The old command is retired; the new handoff must be begun by its consumer.
+Ordinary Walk callbacks are rejected while a hidden entry owns the actor.
+
+Shot preparation and changing to another point are explicit pending actions. Their
+consumers and post-preparation state changes are not implemented by this checkpoint.
+The clock latches a required action and rejects later obstacle updates until a real
+consumer exists; it does not silently skip it, issue repeated shots, or infer combat
+permission. The current implementation therefore covers the pre-preparation phase,
+not the full obstacle combat lifecycle.
+
+The native fixture changes the obstacle-position fraction from 0.5 to 0.75 after
+arrival and parent death, checks the actual destination change and retained source
+state, and checks that a later due shot takes priority. Actor roots/controller times
+in this fixture are synthetic host observations; this does not establish walked
+positions, native Resume execution, pose collision authority or normal Worker play.
+
+Validation: zero-warning/error build; native-enabled Windows and actual WSL Linux
+combat-content runs each passed 29,123 counted checks plus the new native reposition
+fixture. Clock checks cover strict deadlines, shot/position-change priority, suppressed
+reposition during preparation, 2–6 second repeat bounds, invalid/replayed observations
+and latched unconsumed actions. Logs: `.local/crew-obstacle-{build,windows,linux}.log`.
+
 ### Crew hidden-state entry and card-derived shot clocks
 
 `EnterTransportCrewPoint` consumes the exact current arrival object once and stores

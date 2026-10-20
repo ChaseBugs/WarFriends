@@ -71,7 +71,7 @@ internal static class TransportCrewPointEntryTests
         return invalid.Length;
     }
 
-    private static TransportCrewPointEntry.EntryContext Context(CoopInfantryPointState state, float controllerTime)
+    internal static TransportCrewPointEntry.EntryContext Context(CoopInfantryPointState state, float controllerTime)
     {
         const int PointFileId = 1;
         string pointType = state == CoopInfantryPointState.ObstacleHiding ? "EnemyPointObstacle" : "EnemyPointCorner";

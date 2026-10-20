@@ -19,12 +19,17 @@ internal static class CoopCrewCompletionRuntimeTests
         }
 
         RunAvailablePoint(sources, directory);
+        RunAvailablePoint(sources, directory, preferObstacle: true);
         RunBlockedPoints(sources, directory);
     }
 
-    private static void RunAvailablePoint(CoopObstacleVolleyRuntimeTests.Sources sources, string directory)
+    private static void RunAvailablePoint(CoopObstacleVolleyRuntimeTests.Sources sources, string directory,
+        bool preferObstacle = false)
     {
-        using CoopMatchRuntime runtime = CreateRuntime(sources, directory, out CoopEnemyDestinationState destinations);
+        float obstacleFraction = 0.5f;
+        var options = new FixtureOptions(preferObstacle, () => obstacleFraction);
+        using CoopMatchRuntime runtime = CreateRuntime(sources, directory,
+            out CoopEnemyDestinationState destinations, options);
         CoopTransportLandingTests.Bind(runtime, directory, sources.Missions);
         foreach (ParticipantManifest player in sources.Manifest.Players)
         {
@@ -56,6 +61,11 @@ internal static class CoopCrewCompletionRuntimeTests
             .CrewActors[0].EntityId;
         CoopMatchRuntime.TransportCrewNavigationCommand command = runtime.TransportCrewNavigation(detachedId) ??
             throw new Exception("Completion fixture lost the surviving navigation input.");
+        if (preferObstacle)
+        {
+            obstacleFraction = 0.75f;
+            command = CoopCrewObstacleRuntimeTests.VerifyReposition(runtime, command, destinations);
+        }
         runtime.Dispose();
         CoopCrewNavigationTests.VerifyRetired(runtime, command);
         Require(runtime.TransportCrewNavigation(detachedId) == null, "Shutdown retained crew navigation state.");
@@ -184,7 +194,7 @@ internal static class CoopCrewCompletionRuntimeTests
     }
 
     private static CoopMatchRuntime CreateRuntime(CoopObstacleVolleyRuntimeTests.Sources sources,
-        string directory, out CoopEnemyDestinationState destinations)
+        string directory, out CoopEnemyDestinationState destinations, FixtureOptions? options = null)
     {
         MissionMapRule map = sources.Missions.MapForMission(MissionIndex);
         MatchManifest manifest = sources.Manifest with
@@ -195,9 +205,11 @@ internal static class CoopCrewCompletionRuntimeTests
         CoopEnemyPointCatalog points = CoopEnemyPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-enemy-points.json"), sources.Missions, sources.Spawns);
         destinations = new CoopEnemyDestinationState(points.MapForMission(sources.Missions, MissionIndex),
-            sources.Masks, sources.Combat, chooseObstacleFraction: () => 0.5f, chooseNextPoint: _ => 0);
+            sources.Masks, sources.Combat, chooseObstacleFraction: options?.ObstacleFraction ?? (() => 0.5f),
+            chooseNextPoint: count => options?.PreferObstacle == true && count > 1 ? 1 : 0);
         return new CoopMatchRuntime(manifest, sources.Missions, sources.Spawns, sources.Routes, sources.Combat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0, playerWeaponContent: sources.Content,
+            chooseInfantryShotFraction: () => 0.99f, chooseInfantryRepositionFraction: () => 0,
             enemyDestinations: destinations, coopAirWaypoints: CoopAirWaypointCatalog.Load(
                 Path.Combine(directory, "recovered-coop-air-waypoint-routes.json"), sources.Spawns));
     }
@@ -263,6 +275,8 @@ internal static class CoopCrewCompletionRuntimeTests
             throw new Exception(message);
         }
     }
+
+    private sealed record FixtureOptions(bool PreferObstacle, Func<float> ObstacleFraction);
 
     private sealed record RetryScenario(ulong ActorId, HelicopterCrewRetryObservation Origin, ulong Occupant);
 }

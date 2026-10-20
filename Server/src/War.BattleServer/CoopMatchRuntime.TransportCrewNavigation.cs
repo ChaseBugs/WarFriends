@@ -114,6 +114,8 @@ internal sealed partial class CoopMatchRuntime
         internal TransportCrewPointArrival? Arrival { get; set; }
 
         internal TransportCrewPointEntry? PointEntry { get; set; }
+
+        internal TransportCrewObstacleClock? ObstacleClock { get; set; }
     }
 
     /// <summary>Immutable navigation input; it does not assert a simulated pose, arrival or combat readiness.</summary>

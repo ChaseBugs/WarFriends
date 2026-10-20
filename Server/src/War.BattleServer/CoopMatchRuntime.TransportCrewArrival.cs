@@ -13,7 +13,7 @@ internal sealed partial class CoopMatchRuntime
         ArgumentNullException.ThrowIfNull(observation);
         if (!IsTransportCrewNavigationCurrent(command) ||
             !_transportCrewNavigation.TryGetValue(command.ActorEntityId, out TransportCrewNavigationOwner? owner) ||
-            !owner.HasBegun || TransportRopeSnapshot?.RenderFrames != observation.Frame ||
+            !owner.HasBegun || owner.PointEntry != null || TransportRopeSnapshot?.RenderFrames != observation.Frame ||
             (_transportCrewWalkingFrames.TryGetValue(command.ActorEntityId, out ulong lastFrame) &&
                 observation.Frame <= lastFrame))
         {
