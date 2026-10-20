@@ -52,6 +52,13 @@ internal static class CoopCrewCompletionRuntimeTests
             observer.Observe(runtime, aircraftId, tick);
         }
         Require(completed, "No source completion callback reached its native frame.");
+        ulong detachedId = runtime.Snapshot().Coop.EnemySpawns.Single(row => row.EntityId == aircraftId)
+            .CrewActors[0].EntityId;
+        CoopMatchRuntime.TransportCrewNavigationCommand command = runtime.TransportCrewNavigation(detachedId) ??
+            throw new Exception("Completion fixture lost the surviving navigation input.");
+        runtime.Dispose();
+        CoopCrewNavigationTests.VerifyRetired(runtime, command);
+        Require(runtime.TransportCrewNavigation(detachedId) == null, "Shutdown retained crew navigation state.");
         Console.WriteLine("PASS: native crew completion reserves a point, releases its seat " +
             "and survives parent death.");
     }
@@ -90,10 +97,13 @@ internal static class CoopCrewCompletionRuntimeTests
         {
             var descent = source.TransportCrewDescentSnapshots(parent).Single(row => row.Slot == slot);
             HelicopterCrewRetryObservation clock = Clock(source, descent);
-            Require(source.CompleteTransportCrewDescent(descent.ActorEntityId, clock) is CoopHelicopterFallbackTarget &&
+            CoopHelicopterExitTarget target = source.CompleteTransportCrewDescent(descent.ActorEntityId, clock);
+            Require(target is CoopHelicopterFallbackTarget &&
                 source.TransportCrewActor(descent.ActorEntityId) is { IsAttached: true } &&
                 destinations.ForEnemy(descent.ActorEntityId) == null,
                 "Full source points did not retain the seat while selecting a normal-spawn fallback.");
+            CoopMatchRuntime.TransportCrewNavigationCommand command =
+                CoopCrewNavigationTests.VerifyIssued(source, descent.ActorEntityId, clock, target);
             if (slot == 0)
             {
                 firstClock = clock;
@@ -106,6 +116,9 @@ internal static class CoopCrewCompletionRuntimeTests
                     source.TransportCrewExit(descent.ActorEntityId) == null,
                     "Fallback actor death retained its pending exit state.");
                 Reject(() => source.AdvanceTransportCrewRetry(descent.ActorEntityId, clock));
+                CoopCrewNavigationTests.VerifyRetired(source, command);
+                Require(source.TransportCrewNavigation(descent.ActorEntityId) == null,
+                    "Dead fallback actor retained its navigation input.");
                 secondCancelled = true;
             }
         };
@@ -125,6 +138,8 @@ internal static class CoopCrewCompletionRuntimeTests
     {
         ulong actorId = scenario.ActorId;
         HelicopterCrewRetryObservation origin = scenario.Origin;
+        CoopMatchRuntime.TransportCrewNavigationCommand previous = runtime.TransportCrewNavigation(actorId) ??
+            throw new Exception("Fallback retry lost its original navigation input.");
         CoopAssignedEnemyDestination released = destinations.ForEnemy(scenario.Occupant)!;
         float deadline = origin.ScaledTime + CoopHelicopterFallbackTarget.RetryDelayScaledSeconds;
         ulong startTick = runtime.Snapshot().ServerTick;
@@ -154,6 +169,8 @@ internal static class CoopCrewCompletionRuntimeTests
                     .Where(row => destinations.ForEnemy(row.EntityId)?.PointComponentFileId ==
                         released.PointComponentFileId).Select(row => row.EntityId)));
             Reject(() => runtime.AdvanceTransportCrewRetry(actorId, observation));
+            CoopCrewNavigationTests.VerifyRetired(runtime, previous);
+            CoopCrewNavigationTests.VerifyIssued(runtime, actorId, observation, runtime.TransportCrewExit(actorId)!);
             return;
         }
         throw new Exception("Crew retry did not execute within the bounded source window.");
@@ -208,6 +225,7 @@ internal static class CoopCrewCompletionRuntimeTests
             runtime.TransportCrewExit(descent.ActorEntityId) == target,
             "Completed native crew did not hand off its shared scene point and source seat.");
         CoopCrewMotionLifetimeTests.VerifyRetired(runtime, aircraftId, motion);
+        CoopCrewNavigationTests.VerifyIssued(runtime, descent.ActorEntityId, clock, target);
         Reject(() => runtime.CompleteTransportCrewDescent(descent.ActorEntityId, clock));
         VerifySurvival(runtime, aircraftId, descent.ActorEntityId);
     }
@@ -216,9 +234,12 @@ internal static class CoopCrewCompletionRuntimeTests
     {
         MatchSnapshot snapshot = runtime.Snapshot();
         BattleCoopEnemySpawn aircraft = snapshot.Coop.EnemySpawns.Single(row => row.EntityId == aircraftId);
+        CoopMatchRuntime.TransportCrewNavigationCommand command = runtime.TransportCrewNavigation(actorId) ??
+            throw new Exception("Detached actor lost its independent navigation input.");
         Require(runtime.ApplyHostEnemyDamage(aircraftId, aircraft.MaxHealth, snapshot.ServerTick) &&
             runtime.TransportCrewActor(actorId) is { IsAttached: false, Health: > 0 } &&
-            runtime.TransportCrewExit(actorId) is CoopHelicopterEnemyTarget,
+            runtime.TransportCrewExit(actorId) is CoopHelicopterEnemyTarget &&
+            runtime.IsTransportCrewNavigationCurrent(command),
             "Source point handoff did not survive the original aircraft's death.");
     }
 

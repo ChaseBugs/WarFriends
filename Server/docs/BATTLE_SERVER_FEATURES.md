@@ -8,6 +8,33 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Crew navigation handoff inputs
+
+Completion and successful retry now preserve their accepted start position in a
+match-owned `TransportCrewNavigationCommand`, together with the source destination,
+scene-point identity when present, Assaulter catalog speed, zero stopping distance,
+and native issue frame/physics sequence. The input is immutable; it does not turn
+the recorded position into a walked, grounded or collision-authoritative pose.
+
+A host navigation consumer can begin the exact current command once and check
+`IsTransportCrewNavigationCurrent` before each later update. An equal copied record
+is not ownership. A point retry replaces the fallback command; seat reassignment,
+actor death and match teardown retire stale commands. A detached actor retains its
+current command when its original aircraft dies.
+
+Native completion fixtures now verify accepted position/target/frame preservation,
+one-time consumption, copied-command rejection, retry replacement, actor-death and
+shutdown retirement, and survival across parent destruction. A real navigation
+consumer, original agent acceleration/steering/avoidance, host walking observations,
+arrival transitions and Worker integration are still required. No approximate path
+sample is promoted into crew collision or combat authority by this handoff.
+
+Validation: zero-warning/error build; native-enabled Windows and actual WSL Linux
+combat-content runs each passed 28,908 counted regressions plus the expanded native
+handoff checks. Logs: `.local/crew-navigation-handoff-windows.log` and
+`.local/crew-navigation-handoff-linux.log`. No Unity runtime or agent-motion
+acceptance is claimed by these input/ownership checks.
+
 ### Accepted crew completion and fallback retry ownership
 
 `CompleteTransportCrewDescent` binds one explicit host callback to the living

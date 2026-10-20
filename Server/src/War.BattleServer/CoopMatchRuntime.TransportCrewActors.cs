@@ -30,6 +30,7 @@ internal sealed partial class CoopMatchRuntime
         crew.PublishSeatRelease(actor.Slot);
         RemoveTransportCrewMotion(actor);
         CancelTransportCrewRetry(actorId);
+        RetireTransportCrewNavigation(actorId);
         _transportCrewExits[actorId] = new CoopHelicopterEnemyTarget(enemyDestinations.ForEnemy(actorId)!);
         PublishTransportCrewActor(actor);
         stateRevision++;
@@ -71,6 +72,7 @@ internal sealed partial class CoopMatchRuntime
             enemyDestinations?.Release(actor.EntityId);
             RemoveTransportCrewMotion(actor);
             CancelTransportCrewRetry(actor.EntityId);
+            RetireTransportCrewNavigation(actor.EntityId);
             _transportCrewExits.Remove(actor.EntityId);
         }
         PublishTransportCrewActor(actor);

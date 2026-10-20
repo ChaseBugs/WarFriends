@@ -45,6 +45,7 @@ internal sealed partial class CoopMatchRuntime
             stateRevision++;
         }
 
+        IssueTransportCrewNavigation(actor, clock, target);
         return target;
     }
 
@@ -52,7 +53,7 @@ internal sealed partial class CoopMatchRuntime
     internal CoopAssignedEnemyDestination? AdvanceTransportCrewRetry(
         ulong actorId, HelicopterCrewRetryObservation observation)
     {
-        RequireCrewCallback(actorId, observation);
+        TransportCrewActorState actor = RequireCrewCallback(actorId, observation);
         if (!_transportCrewRetries.TryGetValue(actorId, out CoopHelicopterFallbackRetry? retry))
         {
             throw new InvalidOperationException("Crew actor has no pending fallback retry.");
@@ -62,6 +63,10 @@ internal sealed partial class CoopMatchRuntime
         if (destination != null && !ConfirmTransportCrewSeatReleased(actorId, tick))
         {
             throw new InvalidDataException("Crew retry reserved a point without releasing its source seat.");
+        }
+        if (destination != null)
+        {
+            IssueTransportCrewNavigation(actor, observation, new CoopHelicopterEnemyTarget(destination));
         }
 
         return destination;

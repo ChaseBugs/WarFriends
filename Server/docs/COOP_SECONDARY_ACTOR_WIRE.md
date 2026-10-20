@@ -35,6 +35,13 @@ invented by this contract.
 - Turret health/creation/respawn times remain in parent fields 24-28. The current
   turret ID remains in the dead snapshot and changes only on a new life.
 
+Completion and retry also issue a server-internal navigation handoff carrying the
+exact accepted start position, destination, source speed/stopping-distance inputs
+and native frame. It is a memory-owned command, not a wire token or persistence
+guarantee. Its one-time start does not itself simulate movement or establish a
+collision pose. A future motor must check current ownership on every update;
+superseded targets, dead actors and match teardown invalidate old commands.
+
 ## Portable SDK boundary
 
 `CoopCrewSnapshotValidation` validates the complete current snapshot before any
