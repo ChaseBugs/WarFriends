@@ -40,7 +40,8 @@ internal sealed partial class CoopMatchRuntime
         var ropes = physics.Members.ToDictionary(member => member.Lease.EntityId);
         foreach ((ulong entityId, HelicopterCrewState crew) in transportHelicopterCrew)
         {
-            HelicopterCrewMemberSnapshot[] due = crew.Snapshot().Where(member => member.DropStartTick == tick &&
+            HelicopterCrewMemberSnapshot[] due = crew.Snapshot().Where(member =>
+                member.IsAttached && member.Health > 0 && member.DropStartTick == tick &&
                 !_transportCrewDrops.ContainsKey((entityId, member.Slot))).ToArray();
             if (due.Length == 0)
             {

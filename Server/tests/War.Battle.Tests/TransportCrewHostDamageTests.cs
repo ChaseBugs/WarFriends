@@ -25,6 +25,8 @@ internal static class TransportCrewHostDamageTests
             throw new Exception("Host crew damage did not preserve its independent source health.");
         }
 
+        CoopCrewMotionLifetimeTests.Observation? motion =
+            CoopCrewMotionLifetimeTests.Capture(runtime, aircraftId, identity.Slot);
         if (!runtime.ApplyHostEnemyDamage(identity.EntityId, before.Health, tick) ||
             runtime.TransportCrewActor(identity.EntityId) is not { Health: 0 } dead || dead.DeathTick != tick ||
             runtime.ApplyHostEnemyDamage(identity.EntityId, 1, tick) ||
@@ -32,5 +34,6 @@ internal static class TransportCrewHostDamageTests
         {
             throw new Exception("Host crew death failed confirmation, publication or duplicate protection.");
         }
+        CoopCrewMotionLifetimeTests.VerifyRetired(runtime, aircraftId, motion);
     }
 }

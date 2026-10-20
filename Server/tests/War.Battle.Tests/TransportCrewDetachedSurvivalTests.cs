@@ -12,6 +12,8 @@ internal static class TransportCrewDetachedSurvivalTests
             throw new Exception("Detached-survival fixture lost its initial actor.");
         CoopAssignedEnemyDestination destination = destinations.TryAssignHelicopterAssaulter(detachedId) ??
             throw new Exception("Source map has no free Assaulter destination for the survival fixture.");
+        CoopCrewMotionLifetimeTests.Observation? motion =
+            CoopCrewMotionLifetimeTests.Capture(runtime, aircraftId, identities[0].Slot);
         if (!runtime.ConfirmTransportCrewSeatReleased(detachedId, tick) ||
             runtime.ConfirmTransportCrewSeatReleased(detachedId, tick) ||
             runtime.TransportCrewMembers(aircraftId)[0].IsAttached ||
@@ -19,6 +21,7 @@ internal static class TransportCrewDetachedSurvivalTests
         {
             throw new Exception("A confirmed scene destination did not release the source seat exactly once.");
         }
+        CoopCrewMotionLifetimeTests.VerifyRetired(runtime, aircraftId, motion);
 
         var aircraft = runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == aircraftId);
         if (!runtime.ApplyHostEnemyDamage(aircraftId, aircraft.MaxHealth, tick) ||

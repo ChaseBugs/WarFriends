@@ -8,6 +8,34 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Current Worker admission and crew motion lifetime
+
+Reinspection confirms `MatchRouter.Register` still returns `mode-unavailable` for
+co-op. Direct-runtime and signed-UDP fixture checks do not prove normal Worker
+co-op admission. The mode remains closed while its collision/combat world and
+automatic source callback/frame scheduling are incomplete; do not remove this
+guard merely because the secondary-state protocol passes.
+
+Crew actor death and confirmed source-seat release now retire that slot's captured
+drop and descent owner. Descent begin/update require the current live attached actor,
+and capture ignores dead or detached members. The parent rope remains owned by the
+aircraft for other seats. This follows the recovered Update dead-actor guard,
+OnHeliSpawnFinished life check and SetFinalTarget seat release, without treating
+animation completion alone as detachment.
+
+Native fixtures exercise both death and detachment after real drop/descent capture,
+assert removal of that actor's motion state, retain the shared rope lease and reject
+stale begin/update callbacks. The detached-survivor fixture now runs the same native
+arrival/drop setup when native testing is enabled. These fixtures still author
+observed roots/palms; normal animation callbacks and Worker co-op admission remain open.
+
+Validation: zero-warning/error test build. Native-enabled Windows and actual WSL
+Linux runs passed 28,908 counted assertions plus the new lifetime checks; Windows
+with native transport opt-in disabled also passed. Logs:
+`.local/crew-motion-lifetime-windows.log`, `.local/crew-motion-lifetime-linux.log`,
+`.local/crew-motion-lifetime-default-windows.log`. Native runs include two complete
+activation/arrival/death/disposal/registry-reuse scenarios, covering both retirement paths.
+
 ### Secondary actor protobuf and portable view
 
 The [secondary actor contract](COOP_SECONDARY_ACTOR_WIRE.md) adds initial crew

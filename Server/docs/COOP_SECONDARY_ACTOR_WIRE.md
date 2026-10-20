@@ -22,6 +22,8 @@ invented by this contract.
   publication of lethal health.
 - A host-confirmed destination reservation and seat release publish
   `is_attached=false`; animation completion alone does not release the seat.
+- Death or confirmed detachment removes that slot's pending drop/descent state;
+  old motion callbacks cannot use a retired life, and other seats retain their rope.
 - Parent destruction kills still-attached actors, preserves detached survivors,
   and confirms the current living turret soldier after the aircraft death.
 - Enemy rows retain the secondary lifetime data after active parent registries are

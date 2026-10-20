@@ -28,6 +28,7 @@ internal sealed partial class CoopMatchRuntime
         }
 
         crew.PublishSeatRelease(actor.Slot);
+        RemoveTransportCrewMotion(actor);
         PublishTransportCrewActor(actor);
         stateRevision++;
         return true;
@@ -66,6 +67,7 @@ internal sealed partial class CoopMatchRuntime
         if (actor.Health == 0)
         {
             enemyDestinations?.Release(actor.EntityId);
+            RemoveTransportCrewMotion(actor);
         }
         PublishTransportCrewActor(actor);
 
@@ -147,5 +149,24 @@ internal sealed partial class CoopMatchRuntime
         row.Health = actor.Health;
         row.DeathTick = actor.DeathTick;
         row.IsAttached = actor.IsAttached;
+    }
+
+    private void RequireLiveAttachedTransportCrew(ulong aircraftId, int slot, ulong actorId)
+    {
+        RequireTransportCrewIdentity(aircraftId, slot, actorId);
+        if (!_transportCrewActors.TryGetValue(actorId, out TransportCrewActorState? actor) ||
+            actor.AircraftId != aircraftId || actor.Slot != slot || actor.Health <= 0 || !actor.IsAttached)
+        {
+            throw new InvalidOperationException("Crew motion requires the living actor's current source seat.");
+        }
+    }
+
+    private void RemoveTransportCrewMotion(TransportCrewActorState actor)
+    {
+        // A soldier leaving this lifetime must not consume old drop/animation callbacks.
+        // The shared aircraft rope remains alive for its other seats.
+        var key = (actor.AircraftId, actor.Slot);
+        _transportCrewDrops.Remove(key);
+        _transportCrewDescents.Remove(key);
     }
 }

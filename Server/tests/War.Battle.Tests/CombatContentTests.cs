@@ -5557,15 +5557,19 @@ internal static class CombatContentTests
             playerWeaponContent: content, enemyDestinations: survivalDestinations,
             coopAirWaypoints: CoopAirWaypointCatalog.Load(Path.Combine(directory,
                 "recovered-coop-air-waypoint-routes.json"), spawnPoints));
+        CoopTransportLandingTests.Bind(survivalRuntime, directory, catalog);
         survivalRuntime.Admit(firstPlayer);
         survivalRuntime.Admit(secondPlayer);
         survivalRuntime.Command(firstPlayer, transportReady);
         survivalRuntime.Command(secondPlayer, transportReady);
-        survivalRuntime.Advance(transportTick);
-        ulong survivalAircraftId = survivalRuntime.Snapshot().Coop.EnemySpawns
-            .Single(enemy => enemy.Behaviour == "DeployHeli").EntityId;
+        CoopTransportLandingTests.AdvanceTo(survivalRuntime, transportTick);
+        BattleCoopEnemySpawn survivalAircraft = survivalRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.Behaviour == "DeployHeli");
+        ulong survivalTick = CoopTransportLandingTests.AdvanceAndVerify(survivalRuntime, survivalAircraft,
+            transportTick + 15UL * MatchManifest.TickRate, content.HelicopterRope);
         TransportCrewDetachedSurvivalTests.Verify(
-            survivalRuntime, survivalDestinations, survivalAircraftId, transportTick);
+            survivalRuntime, survivalDestinations, survivalAircraft.EntityId, survivalTick);
+        CoopTransportLandingTests.Finish(survivalRuntime, survivalAircraft.EntityId, content.HelicopterRope);
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, skillShotScores: skillShots);

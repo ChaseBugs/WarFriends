@@ -37,6 +37,7 @@ internal sealed partial class CoopMatchRuntime
         HelicopterPhysicsWorldSnapshot physics = TransportRopeSnapshot ??
             throw new InvalidOperationException("Crew descent requires the match-owned native world.");
         TransportCrewIdentity identity = RequireTransportCrewIdentity(entityId, slot, drop.Birth.ActorEntityId);
+        RequireLiveAttachedTransportCrew(entityId, slot, identity.EntityId);
         if (drop.Slot != identity.Slot || drop.Birth.Slot != identity.Slot)
         {
             throw new InvalidDataException("Crew descent drop and birth must identify the same reserved seat.");
@@ -62,6 +63,7 @@ internal sealed partial class CoopMatchRuntime
         {
             throw new InvalidOperationException("Crew descent has no live match-owned start.");
         }
+        RequireLiveAttachedTransportCrew(entityId, slot, owner.Snapshot.ActorEntityId);
         HelicopterPhysicsWorldSnapshot physics = TransportRopeSnapshot ??
             throw new InvalidOperationException("Crew descent lost its match-owned native world.");
         HelicopterDescentResult result = owner.State.Advance(
