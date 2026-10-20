@@ -53,6 +53,7 @@ internal sealed partial class CoopMatchRuntime
         clock.RequireShotEnd(ticket, observation);
         ArmyBaseShotStats shot = CrewShotStats(command);
         clock.ObserveShotEnded(ticket, observation, shot, chooseInfantryShotFraction());
+        owner.HasPriorCrewShotReturn = true;
     }
 
     internal TransportCrewObstacleSnapshot? TransportCrewObstacleState(TransportCrewNavigationCommand command)

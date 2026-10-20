@@ -8,6 +8,40 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Crew local rifle muzzle and distinct source clocks
+
+The first completed-crawl obstacle volley can now sample its source local rifle muzzle
+through `ObserveTransportCrewLocalRifleMuzzle`. It uses the reviewed gameplay-phase
+obstacle/muzzle catalogs and the current preparation tick plus successfully executed
+round offsets. OnShot changes the next transform evaluation; recording a round cannot
+retroactively change the muzzle returned for that same Update.
+
+This remains local, conditional geometry. The sampler declines incomplete entry crawl,
+prior shot-return histories, expired source hide windows, missing catalogs and phases
+before queued fire. It does not substitute a prefab rest pose or assume an unmeasured
+interrupted mixer. Native crew root motion/rotation and rig execution are still needed
+before transforming this sample into an authoritative world launch origin. No crew
+projectile or collision authority is granted by this checkpoint.
+
+Source inspection also corrected the preceding execution adapter's time binding:
+`Gun.willShoot` reads `TimeManager.realTimeWithoutPauses`, whereas
+`SoldierAnimationController.ShootFromCrawl` uses `Time.time + hideAfter` and delayed
+coroutines use scaled time. `TimeManager.Update` accumulates clamped real deltas while
+unfrozen; it is not an alias for scaled time. `CrewRoundObservation.WeaponTime` now
+supplies the distinct weapon clock. Hide-window observations retain the separate scaled
+clock. Enemy-controller elapsed time is used only for the initial crawl-duration check.
+
+The native fixture now waits the source callback duration in simulation ticks instead
+of jumping only its synthetic coroutine value. Its weapon clock initially sits exactly
+at the cadence boundary while controller/scaled clocks are already beyond it; no round
+may fire until weapon time advances. Local muzzle sampling is checked before and after
+producer calls for stationary/moving shield/body scenarios. Roots and the recording
+producer remain fixture inputs, not actual physical weapon execution.
+
+Validation: zero-warning/error solution build; native-enabled Windows and actual WSL
+Linux each passed 29,172 counted checks plus the extended crew fixtures. Logs:
+`.local/crew-local-muzzle-{build,publish,windows,linux}.log`. No Client asset changed.
+
 ### Crew rifle execution through a host weapon producer
 
 The prepared shot-start path now retains a `TransportCrewRifleVolley` on its current
@@ -38,6 +72,8 @@ Validation: zero-warning/error solution build; Windows and actual WSL Linux each
 passed 29,172 counted combat-content checks plus the extended native acquisition,
 callback and full-batch recording-producer fixtures. Logs:
 `.local/crew-round-execution-{build,publish,windows,linux}.log`.
+The later local-muzzle checkpoint corrects this checkpoint's original coupling of
+weapon cadence to coroutine time; use the explicit weapon-time input going forward.
 
 ### Persistent Assaulter weapon cadence
 

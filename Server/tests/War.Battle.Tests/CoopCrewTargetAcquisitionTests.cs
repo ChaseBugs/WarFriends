@@ -11,6 +11,7 @@ internal static class CoopCrewTargetAcquisitionTests
     private const float SyntheticCrewDistance = 4f;
     private const float SyntheticMuzzleHeight = 0.2f;
     private const float CoroutineOrigin = 100f;
+    private const float InitialWeaponCadenceBoundary = 0.35f;
     private const int ShieldTargetMask = 2;
     private const int WholeBodyTargetMask = 9;
     private const int MovingTargetMask = 16;
@@ -161,6 +162,9 @@ internal static class CoopCrewTargetAcquisitionTests
             pending.Clock.ControllerTime, prepared.Callback.CoroutineDeadline);
         Vector3 muzzle = pending.Position + Vector3.UnitY * SyntheticMuzzleHeight;
         Reject(() => runtime.StartTransportCrewPreparedShot(command, prepared, early, muzzle));
+        ulong callbackTicks = (ulong)MathF.Ceiling(
+            (prepared.Callback.CoroutineDeadline - CoroutineOrigin) * MatchManifest.TickRate);
+        CoopTransportLandingTests.AdvanceTo(runtime, runtime.Snapshot().ServerTick + callbackTicks - 1);
         BattlePlayerState previousPlayer = runtime.Snapshot().Players.Single(
             player => player.PlayerId == prepared.Target.PlayerId);
         CoopTransportLandingTests.AdvanceTo(runtime, runtime.Snapshot().ServerTick + 1);
@@ -169,7 +173,11 @@ internal static class CoopCrewTargetAcquisitionTests
         Vector3 expectedVelocity = new Vector3(currentPlayer.PositionX - previousPlayer.PositionX,
             currentPlayer.PositionY - previousPlayer.PositionY, currentPlayer.PositionZ - previousPlayer.PositionZ) *
             MatchManifest.TickRate;
-        var start = early with { Frame = runtime.TransportRopeSnapshot!.RenderFrames };
+        float elapsed = callbackTicks / (float)MatchManifest.TickRate;
+        var start = new TransportCrewObstacleClock.ShotObservation(runtime.TransportRopeSnapshot!.RenderFrames,
+            pending.Clock.ControllerTime + elapsed, CoroutineOrigin + elapsed);
+        Require(runtime.ObserveTransportCrewLocalRifleMuzzle(command, start) != null,
+            "Source callback had no local gameplay-phase rifle muzzle.");
         var before = runtime.TransportCrewObstacleState(command);
         Reject(() => runtime.StartTransportCrewPreparedShot(command, prepared with { }, start, muzzle));
         Reject(() => runtime.StartTransportCrewPreparedShot(command, prepared, start, new Vector3(float.NaN)));
@@ -200,18 +208,26 @@ internal static class CoopCrewTargetAcquisitionTests
             float elapsed = offset / (float)MatchManifest.TickRate;
             var clock = new TransportCrewObstacleClock.ShotObservation(runtime.TransportRopeSnapshot!.RenderFrames,
                 start.ControllerTime + elapsed, start.CoroutineTime + elapsed);
-            var observation = new CoopMatchRuntime.CrewRoundObservation(clock, source.ActorPosition);
+            var observation = new CoopMatchRuntime.CrewRoundObservation(clock, source.ActorPosition,
+                InitialWeaponCadenceBoundary + (offset - 1) / (float)MatchManifest.TickRate);
             int before = calls;
+            CoopQueuedMuzzleSample muzzle = runtime.ObserveTransportCrewLocalRifleMuzzle(command, clock) ??
+                throw new Exception("Crew round lost its source local muzzle before OnShot.");
             bool fired = runtime.ExecuteTransportCrewRifleRound(command, observation, round =>
             {
                 Require(round.Index == calls && round.Real == ((prepared.Batch.RealShotMask & (1 << calls)) != 0),
                     "Crew execution lost source round order or its real/fake mask.");
-                Require(clock.CoroutineTime > previousFireTime + 0.35f,
+                Require(observation.WeaponTime > previousFireTime + 0.35f,
                     "Crew execution used the controller clock or an inclusive cadence boundary.");
                 calls++;
-                previousFireTime = clock.CoroutineTime;
+                previousFireTime = observation.WeaponTime;
             });
             Require(fired == (calls == before + 1), "Crew fire result disagreed with the host producer call.");
+            if (runtime.TransportCrewObstacleState(command)!.HasPendingVolley)
+            {
+                Require(runtime.ObserveTransportCrewLocalRifleMuzzle(command, clock) == muzzle,
+                    "OnShot retroactively changed this Update's sampled muzzle.");
+            }
             Reject(() => runtime.ExecuteTransportCrewRifleRound(command, observation, _ =>
                 throw new Exception("Repeated source Update invoked the producer.")));
         }

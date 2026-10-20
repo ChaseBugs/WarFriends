@@ -130,6 +130,16 @@ internal sealed partial class CoopMatchRuntime
         internal TransportCrewPreparedShot? PreparedCrewShot { get; set; }
 
         internal TransportCrewRifleVolley? CrewRifleVolley { get; set; }
+
+        internal float? CrewPreparationControllerTime { get; set; }
+
+        internal float? CrewPreparationScaledTime { get; set; }
+
+        internal List<ulong> CrewExecutedRoundOffsets { get; } = new();
+
+        internal float? CrewLastRoundScaledTime { get; set; }
+
+        internal bool HasPriorCrewShotReturn { get; set; }
     }
 
     /// <summary>Immutable navigation input; it does not assert a simulated pose, arrival or combat readiness.</summary>

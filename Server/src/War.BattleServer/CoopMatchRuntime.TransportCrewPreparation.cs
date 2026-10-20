@@ -39,6 +39,10 @@ internal sealed partial class CoopMatchRuntime
                 throw new InvalidDataException("Source preparation failed to create its scheduled callback.");
         var prepared = new TransportCrewPreparedShot(target, batch, ticket, assaulterWeapon.WeaponPrefabGuid);
         owner.PreparedCrewShot = prepared;
+        owner.CrewPreparationControllerTime = pending.Clock.ControllerTime;
+        owner.CrewPreparationScaledTime = coroutineTime;
+        owner.CrewExecutedRoundOffsets.Clear();
+        owner.CrewLastRoundScaledTime = null;
         return prepared;
     }
 

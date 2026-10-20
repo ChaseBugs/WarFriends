@@ -20,9 +20,15 @@ internal sealed partial class CoopMatchRuntime
         // EndShooting must run before this frame's AI update, also constraining intermediate rounds.
         owner.ObstacleClock!.RequireShotEnd(prepared.Callback, observation.Clock);
         var fireObservation = new TransportCrewRifleVolley.FireObservation(observation.Clock.Frame,
-            observation.Clock.CoroutineTime, observation.ActorPosition);
+            observation.WeaponTime, observation.ActorPosition);
         bool fired = volley.TryFire(fireObservation,
             new TransportCrewRifleVolley.FakeDraws(chooseInfantryFakeDistance, chooseInfantryFakeSideRoll), fire);
+        if (fired)
+        {
+            // OnShot resets the fire loop after the producer sampled this Update's muzzle.
+            owner.CrewExecutedRoundOffsets.Add(tick - prepared.Target.Tick);
+            owner.CrewLastRoundScaledTime = observation.Clock.CoroutineTime;
+        }
         if (fired && volley.IsComplete)
         {
             ObserveTransportCrewShotEnded(command, prepared.Callback, observation.Clock);
@@ -31,5 +37,5 @@ internal sealed partial class CoopMatchRuntime
     }
 
     internal sealed record CrewRoundObservation(TransportCrewObstacleClock.ShotObservation Clock,
-        Vector3 ActorPosition);
+        Vector3 ActorPosition, float WeaponTime);
 }
