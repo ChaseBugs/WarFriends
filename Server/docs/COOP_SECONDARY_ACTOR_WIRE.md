@@ -22,6 +22,10 @@ invented by this contract.
   publication of lethal health.
 - A host-confirmed destination reservation and seat release publish
   `is_attached=false`; animation completion alone does not release the seat.
+- Accepted completed descent may reserve a scene point and then release the seat.
+  Without a free point, the source starts walking to a normal-spawn fallback while
+  retaining that seat binding until a later five-second scaled retry succeeds.
+  `is_attached` describes ownership of the source seat, not proof of world placement.
 - Death or confirmed detachment removes that slot's pending drop/descent state;
   old motion callbacks cannot use a retired life, and other seats retain their rope.
 - Parent destruction kills still-attached actors, preserves detached survivors,

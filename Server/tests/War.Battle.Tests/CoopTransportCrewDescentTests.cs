@@ -13,6 +13,8 @@ internal sealed class CoopTransportCrewDescentTests
     private int _starts;
     private int _updates;
 
+    internal event Action<CoopMatchRuntime, ulong, int>? Completed;
+
     internal void Observe(CoopMatchRuntime runtime, ulong entityId, ulong tick)
     {
         if (!runtime.HasNativeTransportRopes)
@@ -44,6 +46,7 @@ internal sealed class CoopTransportCrewDescentTests
             if (result.AnimationComplete)
             {
                 _pending.Remove(slot);
+                Completed?.Invoke(runtime, entityId, slot);
             }
             else
             {

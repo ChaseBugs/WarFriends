@@ -8,6 +8,42 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Accepted crew completion and fallback retry ownership
+
+`CompleteTransportCrewDescent` binds one explicit host callback to the living
+attached actor, current native render frame and accepted completed descent pose.
+It uses the match's shared scene-point state and source spawn selector. A successful
+ordinary point reservation confirms SetFinalTarget-style seat release and retires
+descent motion. Invalid clocks and replayed completion cannot reserve a second point.
+
+When no point is available, the runtime retains the source seat binding, records
+the normal-spawn fallback target and owns a `CoopHelicopterFallbackRetry`.
+`AdvanceTransportCrewRetry` accepts current host frame/scaled-time/position
+observations, preserves the recovered five-second wait and nearest initial-point
+selection, and detaches only after a successful reservation. Actor death cancels
+pending retries and removes its exit target; match teardown clears all callback
+ownership. A detached actor's assigned target survives its original aircraft.
+
+Native fixtures exercise the accepted completion frame, invalid-clock/replay
+rejection, full point occupancy, no early claim even when a point is free at an
+early callback, due retry, cancellation on another actor's death, and survival
+after aircraft destruction. The fixture controls occupancy during retry callbacks
+so ordinary wave spawns cannot consume its test point between observations;
+an initial failed fixture confirmed that ordinary actor 10 correctly won that
+competition. No production reservation or clock rule was relaxed.
+
+These APIs still require a host producer for observed poses and scaled callbacks.
+Fallback walking, normal agent handoff, automatic Worker dispatch, the source
+empty-rope completion branch and normal Unity rendering remain unverified. The
+co-op Worker admission guard remains closed. This is explicit callback ownership,
+not complete landing or combat readiness.
+
+Validation: native-enabled Windows and actual WSL Linux runs passed both new
+completion/fallback scenarios and the existing 28,908 counted regression assertions.
+The new scenarios print separate PASS markers. The final declaration-order-only
+cleanup also passed a zero-warning/error build. Logs:
+`.local/crew-exit-callback-windows-final.log`, `.local/crew-exit-callback-linux.log`.
+
 ### Current Worker admission and crew motion lifetime
 
 Reinspection confirms `MatchRouter.Register` still returns `mode-unavailable` for

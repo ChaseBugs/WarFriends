@@ -213,6 +213,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
     private readonly HelicopterCrewPointCatalog? transportCrewPoints;
     private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
+    private readonly CoopAiSpawnSelector? _crewExitSpawns;
     private readonly CoopAirPathReservations? airPathReservations;
     private readonly CoopAirWaypointCatalog? coopAirRoutes;
     private readonly CoopMapSpawnPoints? airSpawnMap;
@@ -454,6 +455,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
             }
             CoopMapRoutes routes = paths.MapForMission(catalog, missionIndex);
             var selector = new CoopAiSpawnSelector(catalog, spawnPoints, missionIndex);
+            _crewExitSpawns = selector;
             playerPositions = map.PlayerPositions;
             routeBetween = routes.Between;
             alliedFirstCover = 0;
@@ -3972,6 +3974,12 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         _transportCrewBirths.Clear();
         _transportCrewIdentities.Clear();
         _transportCrewActors.Clear();
+        foreach (CoopHelicopterFallbackRetry retry in _transportCrewRetries.Values)
+        {
+            retry.Cancel();
+        }
+        _transportCrewRetries.Clear();
+        _transportCrewExits.Clear();
         _transportGunnerActorIds.Clear();
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
