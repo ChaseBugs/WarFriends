@@ -136,6 +136,13 @@ public sealed class CoopEnemyCombatCatalog
         return army.CoopHelicopterCrew(normalUpgradeIndex);
     }
 
+    internal ArmyBaseShotStats TransportCrewShot(int normalUpgradeIndex)
+    {
+        // Helicopter.SpawnAssaulter calls SpawnByCard with the aircraft's actual/max level ratio.
+        float progress = army.NormalLevelProgress(UnitIdFor("DeployHeli"), normalUpgradeIndex);
+        return CardShot("Assaulter", progress);
+    }
+
     internal int TransportGunnerRespawnTicks()
     {
         return army.VehiclePassengerRespawnTicks(UnitIdFor("DeployHeli"));

@@ -8,6 +8,43 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Crew hidden-state entry and card-derived shot clocks
+
+`EnterTransportCrewPoint` consumes the exact current arrival object once and stores
+`TransportCrewPointEntry` on that navigation lifetime. It initializes stopped-agent,
+crawling/corner-hiding flags, the source `stand_up_crawl`/`idle_1` animation selection,
+and float deadlines from the host's `EnemyController.mTime` observation. Draw order
+is shot float, point-change integer in 10–19, then obstacle-only reposition float
+in 2–4 seconds. These are controller-time deadlines, not converted fixed ticks.
+
+The shot range comes from the spawned Assaulter's card rows. `Helicopter.SpawnAssaulter`
+uses `GetActualLevelForIndex(index) / maxLevelOfUnit`, so the source Helicopter's
+30 starting levels and 71 normal Tier rows produce `(index + 30) / 101`.
+`ArmyDeploymentCatalog` validates starting levels and normal Tier counts before
+publishing those bounds; `TransportCrewShot` uses that progress for card interpolation.
+Using ordinary Assaulter upgrades or `index / 70` would select different source rules.
+
+Corner entry stores the half-second position/rotation tween targets, preserving the
+accepted actor height and looking opposite the authored corner direction. It does
+not sample or execute a tween. NGUI timing remains a separate integration requirement;
+`UITweener` defaults to realtime and a reused component may retain its settings.
+
+The stored state and deadlines are executable host data, but native Stop/Crawl/Idle,
+animation/tween output, scheduled shooting/reposition callbacks and a real walking
+producer still need consumers. Synthetic arrival tests do not establish those effects
+or normal Worker gameplay. Parent/crew identity, current reservation, exact arrival
+ownership and frame are checked before publication; invalid or duplicate entry does
+not publish a second state. Retargeting/death/teardown retire the navigation owner
+and its stored point entry. Normal Worker co-op admission remains closed.
+
+Validation: zero-warning/error build; native-enabled Windows and actual WSL Linux
+combat-content runs each passed 29,109 counted checks plus the native arrival/entry
+fixtures. New checks cover both hidden states, float timing endpoints, corner height
+and direction, malformed entry data, all 71 Helicopter progress/card-shot bindings,
+exact-arrival ownership and one-time entry. Logs:
+`.local/crew-point-entry-{build,windows,linux}.log`. No Unity gameplay or native
+Stop/animation/tween execution is claimed from these state checks.
+
 ### Crew authored-point arrival requests
 
 `EnemyPointArrivalPolicy` follows `EnemyPoint.IsEnemyPointReached`,
@@ -23,8 +60,9 @@ source ObstacleHiding/CornerHiding state. A normal-spawn fallback never requests
 ground-point entry because the recovered fallback remains in Helicopter state.
 
 This is a host transition request, not executed state-entry effects or motor proof.
-Stop/crawl/idle callbacks, corner tweens, source random shooting/reposition clocks,
-real walking observations and their producer/consumer integration remain required.
+Stop/crawl/idle callbacks, corner tween execution, source scheduled actions,
+real walking observations and their producer/consumer integration remain required;
+the hidden-entry checkpoint above now initializes the source flags and deadlines.
 Synthetic fixture observations test ownership and the request contract; they do not
 assert that the crew walked to those positions. No combat pose or shot permission
 is published by this API, and normal Worker co-op admission stays closed.

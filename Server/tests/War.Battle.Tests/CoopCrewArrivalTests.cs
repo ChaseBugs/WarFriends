@@ -33,12 +33,30 @@ internal static class CoopCrewArrivalTests
             {
                 throw new Exception("Crew point arrival lost its authored target, frame or source state.");
             }
+            VerifyEntry(runtime, command, arrival);
         }
         else if (arrival != null)
         {
             throw new Exception("Fallback walk incorrectly entered a ground-point state.");
         }
         Reject(() => runtime.ObserveTransportCrewWalk(command, observation));
+    }
+
+    private static void VerifyEntry(CoopMatchRuntime runtime,
+        CoopMatchRuntime.TransportCrewNavigationCommand command, CoopMatchRuntime.TransportCrewPointArrival arrival)
+    {
+        const float ControllerTime = 1.25f;
+        Reject(() => runtime.EnterTransportCrewPoint(command, arrival with { }, ControllerTime));
+        Reject(() => runtime.EnterTransportCrewPoint(command, arrival, float.NaN));
+        TransportCrewPointEntry entry = runtime.EnterTransportCrewPoint(command, arrival, ControllerTime);
+        if (entry.State != arrival.State || !entry.IsAgentStopped || entry.NextShootTime < ControllerTime ||
+            entry.NextEnemyChangeTime < ControllerTime + 10 || entry.NextEnemyChangeTime >= ControllerTime + 20 ||
+            (entry.IsCrawling && entry.NextRepositionTime is null) ||
+            (entry.IsHidingBehindCorner && entry.CornerTweenPosition?.Y != arrival.ObservedPosition.Y))
+        {
+            throw new Exception("Runtime point entry changed its accepted source state or scaled clocks.");
+        }
+        Reject(() => runtime.EnterTransportCrewPoint(command, arrival, ControllerTime));
     }
 
     internal static void VerifyRetired(CoopMatchRuntime runtime,

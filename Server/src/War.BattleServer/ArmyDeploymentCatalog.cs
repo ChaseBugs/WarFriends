@@ -93,6 +93,7 @@ public sealed partial class ArmyDeploymentCatalog
     public IReadOnlyList<ArmyDeploymentFamily> Families { get; }
     private readonly IReadOnlyDictionary<int,ArmyDeploymentOption> options;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyBaseCombatStats>>? baseStats;
+    private IReadOnlyDictionary<string, int>? _startingLevels;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>? upgradeShots;
     private IReadOnlyList<ArmyGrenadeDamageStats>? grenadierDamageStages;
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? specialValues;
@@ -749,6 +750,7 @@ public sealed partial class ArmyDeploymentCatalog
         var acceptedShieldProbabilities=new Dictionary<string,float>(StringComparer.Ordinal);
         var acceptedVehicleCannons=new Dictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>(StringComparer.Ordinal);
         var acceptedLaneEnds=new Dictionary<string,int>(StringComparer.Ordinal);
+        var acceptedStartingLevels = new Dictionary<string, int>(StringComparer.Ordinal);
         var acceptedEliteStarts=new Dictionary<string,int>(StringComparer.Ordinal);
         float? acceptedDroneBulletSpeed=null;
         float? acceptedDroneShieldProbability=null;
@@ -834,10 +836,18 @@ public sealed partial class ArmyDeploymentCatalog
             if(stageRows.GetArrayLength() is < 1 or > 256)
                 throw new InvalidDataException("Army normal-upgrade stage count is invalid.");
             int normalLaneEnd=row.GetProperty("STARTINGSPECIAL").GetInt32();
+            int startingLevel = row.GetProperty("STARTINGLEVEL").GetInt32();
             int eliteLaneStart=row.GetProperty("STARTINGELITE").GetInt32();
             if(normalLaneEnd is < 1 or > 255 || normalLaneEnd>=stageRows.GetArrayLength() ||
                (eliteLaneStart!=-1 && (eliteLaneStart<=normalLaneEnd || eliteLaneStart>=stageRows.GetArrayLength())))
                 throw new InvalidDataException("Army upgrade lane offsets differ from recovered source.");
+            int normalPower = stageRows.EnumerateArray().Count(stage =>
+                stage.GetProperty("TIER").GetInt32() >= 0 && stage.GetProperty("TIER").GetInt32() / 10 == 0);
+            if (startingLevel < 0 || startingLevel > int.MaxValue - normalLaneEnd || normalPower != normalLaneEnd)
+            {
+                throw new InvalidDataException("Army starting level or normal Tier count differs from source bounds.");
+            }
+            acceptedStartingLevels.Add(family.UnitId, startingLevel);
             var stages=new ArmyBaseCombatStats[stageRows.GetArrayLength()];
             var shots=new ArmyUpgradeShotStats[stageRows.GetArrayLength()];
             var grenadeStages=family.UnitId=="ID_UNIT-GRENADIER"
@@ -944,6 +954,7 @@ public sealed partial class ArmyDeploymentCatalog
         vehiclePassengerHealth=acceptedPassengerHealth;
         vehiclePassengerRespawnSeconds=acceptedPassengerRespawn;
         normalLaneEnds=acceptedLaneEnds;
+        _startingLevels = acceptedStartingLevels;
         eliteLaneStarts=acceptedEliteStarts;
         runtimeBulletSpeeds=acceptedBulletSpeeds;
         droneBulletSpeed=acceptedDroneBulletSpeed??throw new InvalidDataException("Drone bullet speed authority absent.");
