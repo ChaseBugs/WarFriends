@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "description": "Two identical original-engine source-bound bazooka traces captured before state extraction/C30. Historical source hashes are provenance, not current pins. PendingProjectileCount is private and absent from wire hashes; C30 has separate red/green regression proof. Not normal Unity gameplay verification.",
+  "observations": 914,
+  "inputs": {
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.cs": "657b0f09301f5719c7a4ebdc8d30921977ff678b4060bfd56678d9332de39890",
+    "Server/src/War.Battle.Simulation/Projectiles/Bazookas/BazookaMissileFlight.cs": "f35c0230e58a560d037aa871303376464bf662f0c9eed63024e7659774c3eb32",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/PvpBazookaFixture.cs": "3826f92595db0c36182d3d849df145b35ca908e49f750d735ea89708425455aa",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/PvpBazookaTraceTests.cs": "1fa38d269a59d43d61dcf83506481f909b9184440ec689ec4ba47d7fae88e118",
+    "Server/tests/War.Battle.Tests/Match/Tracing/MatchEngineTrace.cs": "79998e3355b49f62fe08aff2d5ab293f453de271108a3696f00a9899f6472584",
+    "Server/content/bazooka-content-manifest.json": "69de5e182b67f40e7996bf10854a077e253347ebefa9342895b4ac40aaaf0719",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Bazooka.cs": "4f140159c18b81141eb844948d254eea851e84d9925ad84df0a20acf164fef13",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BazookaFangs.cs": "ce0b2423eb2836c37f8b0d303cd878fe7b5bc0102c9df6d3ad57e81b97bf1463",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Missile.cs": "0f6cb525bbdced8701efbf170759e58e8e4cc0c74d91f9c383d4c65716a5c1ba"
+  }
+}

@@ -13,7 +13,7 @@ internal static class PoseCapabilityTests
 
     internal static void Run(CoopObstacleVolleyRuntimeTests.Sources sources)
     {
-        string signingKey = Convert.ToBase64String(new byte[SigningKeyBytes]);
+        string signingKey = Convert.ToBase64String(Enumerable.Repeat((byte)1, SigningKeyBytes).ToArray());
         var runtime = new CoopMatchRuntime(sources.Manifest, sources.Missions, sources.Spawns,
             sources.Routes, sources.Combat, chooseBehaviour: _ => 0, playerWeaponContent: sources.Content);
         var endpoint = new MatchEndpoint(sources.Manifest, signingKey, runtime, 0);

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "description": "Two identical original-engine captures before army Rocket/Mortar flight ownership extraction. Fake cases use a trusted 0.5 accuracy coefficient; captures include existing impact-history and terminal boundaries. Hashes are historical inputs, not current source pins.",
+  "observations": 10789,
+  "inputs": {
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.CardUnits.cs": "ba88a08fabde90039d1c5702abfe985a0e685b2d4a208154acfe2cbbdb1e7623",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.MortarShooting.cs": "5f8b886664780ce81a120cbcd4384ad18f75e0700c1993930d1f2fb3a295569f",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.SicknessRocket.cs": "860af3128f4913de8b0c85496da6d4be8334a7b661404cff13127f3c2f4a3362",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.cs": "3ec29cab61769efea890c6fdee69af1fba426133e8e25dc8da4edcf36b5cc9c7",
+    "Server/src/War.Battle.Simulation/Cards/CardRocketMissileFlight.cs": "cd3f9f65c7486b8afb6e7b1ce3792f4016fd48b4e7e39c0c12f3ed33068a6cdf",
+    "Server/src/War.Battle.Simulation/Cards/CardRocketExplosion.cs": "cb6f127951e25cb8d59061441c53a634b72339e98a0cc0fea917258350c4aaf7",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.OrdinaryRocket.cs": "76db8f1acbfc87634b59314b089a03193d20f771f68e944824e9805a87efd004",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.OrdinaryMortar.cs": "4fbbdf21c3ab8492dcf5e52337faeebb97ed81995e0b494843b70adde3d16702",
+    "Server/tests/War.Battle.Tests/OrdinaryArmyTestHost.cs": "2bfc2af1c2cc5974893eb159bc7ab2dcebe51f0d09e167887bd5addf94bd9d1d",
+    "Server/tests/War.Battle.Tests/Match/Tracing/MatchEngineTrace.cs": "f91f35c311f2fbf0c69951222eac2028ab966e7e0778670ab3d536964bd3ae14",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/PvpArmyMissileCardHost.cs": "20839d7c63c43dee6f396db364fd5f53e7c3f389496813d2c957009968933fc7",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/PvpArmyMissileTraceFixture.cs": "c0acd2535ef3005cb29a29ebb6d2ca9be454fc5e307c83ac7ff23c7c6d7bd6e5",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/PvpArmyMissileTraceTests.cs": "0ad076d371f31a5c108420e8ab0e12b014a7d41124440e69e16130c0b2ae1b32",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Missile.cs": "0f6cb525bbdced8701efbf170759e58e8e4cc0c74d91f9c383d4c65716a5c1ba",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Mortar.cs": "210babe06a1cfc0e1b12336ae6c00809b779f383cc84d8232b71a5ab6c1ed3d5",
+    "Server/content/recovered-rusher-weapon-bindings.json": "3c1d9f194edc2e023be94eb5832e7c43a93abbcd87de1f3bf83a72cd3c9efcba"
+  }
+}

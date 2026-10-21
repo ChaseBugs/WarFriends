@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using War.Persistence.Legacy.Buffers;
 
 namespace War.Persistence;
 
@@ -14,10 +15,16 @@ public sealed class LegacyBufferEntry
     public int ActionId { get; set; }
 
     /// <summary>
-    /// The <c>DatabaseResult</c> integer, or null while the request is claimed but not yet applied.
-    /// A null that survives a restart means the outcome is unknown — see <see cref="LegacyBufferStore"/>.
+    /// The committed <c>DatabaseResult</c> integer. A null is an old, incomplete claim whose outcome
+    /// is unknown and must never authorize reapplication.
     /// </summary>
     public int? Result { get; set; }
+
+    public string? PayloadDigest { get; set; }
+
+    public string? ResponseJson { get; set; }
+
+    public LegacyBufferedDelivery? Delivery { get; set; }
 }
 
 /// <summary>
@@ -29,16 +36,9 @@ public sealed class LegacyBufferEntry
 /// response arrives. A dropped response therefore replays the whole buffer, so every buffered
 /// effect must apply at most once. Idempotency is keyed by player + buffer id + request index,
 /// exactly as <c>Server/AGENTS.md</c> requires.</para>
-/// <para><b>Claim before apply.</b> Each request is first claimed by pushing an entry with a null
-/// <see cref="LegacyBufferEntry.Result"/>, and the result is set after the effect lands. The claim
-/// is conditional on the index being absent, so two concurrent replays cannot both execute the
-/// same request. If a process dies between claim and set, the entry stays null and replay reports
-/// the outcome as unknown rather than re-applying it: for an economy, failing to grant twice
-/// matters more than failing to grant once.</para>
-/// <para>Receipts and player state live in different collections, and this deployment targets a
-/// standalone Mongo, so the pair is not written in one transaction. The claim ordering is what
-/// bounds the damage. Genuine atomicity needs a replica set, which <c>README.md</c> already lists
-/// as a prerequisite for economy settlement.</para>
+/// <para>Player mutation and the complete response commit in one replica-set transaction. Historical
+/// entries lacking payload/response evidence remain closed to replay; they cannot safely be upgraded
+/// by guessing whether their separately written effect landed.</para>
 /// </remarks>
 public sealed class LegacyBufferReceipt
 {
@@ -50,71 +50,44 @@ public sealed class LegacyBufferReceipt
     public DateTime CreatedUtc { get; set; }
 }
 
-public sealed class LegacyBufferStore
+public sealed partial class LegacyBufferStore
 {
-    /// <summary>
-    /// How long a receipt is retained. It must comfortably outlive any window in which a client
-    /// could still be replaying a buffer; the client retains unsent buffers across restarts, so
-    /// this is deliberately far longer than a session.
-    /// </summary>
-    public static readonly TimeSpan RetentionPeriod = TimeSpan.FromDays(30);
-
     private readonly IMongoCollection<LegacyBufferReceipt> receipts;
+    private readonly IMongoDatabase _database;
 
-    public LegacyBufferStore(IMongoDatabase database) => receipts = database.GetCollection<LegacyBufferReceipt>("legacyBufferReceipts");
+    public LegacyBufferStore(IMongoDatabase database)
+    {
+        _database = database;
+        receipts = database.GetCollection<LegacyBufferReceipt>("legacyBufferReceipts");
+    }
 
     public LegacyBufferStore(string uri, string databaseName)
     {
         if (!Regex.IsMatch(databaseName, @"\A[A-Za-z0-9_]{1,64}\z")) throw new ArgumentException("Invalid Mongo database name.");
         var settings = MongoClientSettings.FromConnectionString(uri);
         settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
-        receipts = new MongoClient(settings).GetDatabase(databaseName).GetCollection<LegacyBufferReceipt>("legacyBufferReceipts");
+        _database = new MongoClient(settings).GetDatabase(databaseName);
+        receipts = _database.GetCollection<LegacyBufferReceipt>("legacyBufferReceipts");
     }
 
-    public Task Initialize(CancellationToken ct) => receipts.Indexes.CreateManyAsync([
-        new CreateIndexModel<LegacyBufferReceipt>(Builders<LegacyBufferReceipt>.IndexKeys.Ascending(x => x.PlayerId)),
-        new CreateIndexModel<LegacyBufferReceipt>(Builders<LegacyBufferReceipt>.IndexKeys.Ascending(x => x.CreatedUtc),
-            new CreateIndexOptions { ExpireAfter = RetentionPeriod })
-    ], ct);
+    public async Task Initialize(CancellationToken ct)
+    {
+        await receipts.Indexes.CreateOneAsync(new CreateIndexModel<LegacyBufferReceipt>(
+            Builders<LegacyBufferReceipt>.IndexKeys.Ascending(x => x.PlayerId)), cancellationToken: ct);
+        // The Client persists unsent buffers indefinitely. Expiry would reopen a paid request.
+        using var cursor = await receipts.Indexes.ListAsync(ct);
+        var indexes = await cursor.ToListAsync(ct);
+        foreach (var index in indexes)
+        {
+            if (index.Contains("expireAfterSeconds"))
+            {
+                await receipts.Indexes.DropOneAsync(index["name"].AsString, ct);
+            }
+        }
+    }
 
     private static string Key(string playerId, string bufferId) => $"{playerId}:{bufferId}";
 
     public Task<LegacyBufferReceipt?> Find(string playerId, string bufferId, CancellationToken ct) =>
         receipts.Find(x => x.Id == Key(playerId, bufferId)).FirstOrDefaultAsync(ct)!;
-
-    /// <summary>
-    /// Claims one request for execution. Returns true when this caller now owns it; false when the
-    /// index was already claimed, in which case the caller must reuse the recorded outcome.
-    /// </summary>
-    public async Task<bool> TryClaim(string playerId, string bufferId, int index, int actionId, CancellationToken ct)
-    {
-        string key = Key(playerId, bufferId);
-        // Upsert the receipt first so the conditional push below has a document to match.
-        await receipts.UpdateOneAsync(x => x.Id == key,
-            Builders<LegacyBufferReceipt>.Update
-                .SetOnInsert(x => x.PlayerId, playerId)
-                .SetOnInsert(x => x.BufferId, bufferId)
-                .SetOnInsert(x => x.CreatedUtc, DateTime.UtcNow),
-            new UpdateOptions { IsUpsert = true }, ct);
-
-        var filter = Builders<LegacyBufferReceipt>.Filter.And(
-            Builders<LegacyBufferReceipt>.Filter.Eq(x => x.Id, key),
-            Builders<LegacyBufferReceipt>.Filter.Not(
-                Builders<LegacyBufferReceipt>.Filter.ElemMatch(x => x.Entries, e => e.Index == index)));
-        var result = await receipts.UpdateOneAsync(filter,
-            Builders<LegacyBufferReceipt>.Update.Push(x => x.Entries, new LegacyBufferEntry { Index = index, ActionId = actionId, Result = null }),
-            cancellationToken: ct);
-        return result.ModifiedCount == 1;
-    }
-
-    /// <summary>Records the outcome of a request this caller claimed.</summary>
-    public Task Complete(string playerId, string bufferId, int index, int result, CancellationToken ct)
-    {
-        string key = Key(playerId, bufferId);
-        var filter = Builders<LegacyBufferReceipt>.Filter.And(
-            Builders<LegacyBufferReceipt>.Filter.Eq(x => x.Id, key),
-            Builders<LegacyBufferReceipt>.Filter.ElemMatch(x => x.Entries, e => e.Index == index));
-        return receipts.UpdateOneAsync(filter,
-            Builders<LegacyBufferReceipt>.Update.Set("Entries.$.Result", result), cancellationToken: ct);
-    }
 }

@@ -1,0 +1,533 @@
+{
+  "schemaVersion": 1,
+  "restorationCommit": "f9f63d037d3a62466e224559bd3154b325ec312c",
+  "restorationRecordSha256": "24a94bfeb701ac863df4200baf093bb34a5288ed6eef2c8c8ba1f635c830dfda",
+  "scene": "Clients/ExportedProject/Assets/Scenes/MainScene.unity",
+  "beforeSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "afterSha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff",
+  "serializedObjectCount": 51581,
+  "changedComponentFileIds": [
+    45847
+  ],
+  "restoredPointerCounts": {
+    "weaponLevelsSetups": 66,
+    "behaviours": 24,
+    "additionalBehaviours": 3
+  },
+  "unchangedMissionValues": {
+    "maps": 5,
+    "bossMaps": 5,
+    "missions": 75
+  },
+  "releaseVerified": false,
+  "remainingGate": "Re-extract or independently validate every affected artifact and dependent package.",
+  "affectedArtifacts": [
+    {
+      "path": "Server/content/bazooka-content-manifest.json",
+      "sha256": "69de5e182b67f40e7996bf10854a077e253347ebefa9342895b4ac40aaaf0719",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json",
+        "Server/content/recovered-bazooka-bindings.json"
+      ]
+    },
+    {
+      "path": "Server/content/combat-content-manifest.json",
+      "sha256": "c1a2ecd8ae15cbe76ff80585802b5d0088abb1dbd6775176e0503864919f70ee",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-air-unit-geometry.json",
+        "Server/content/recovered-all-weapon-bindings.json",
+        "Server/content/recovered-army-deployment.json",
+        "Server/content/recovered-battle-content.json",
+        "Server/content/recovered-heavy-turret-source.json",
+        "Server/content/recovered-landmine-source.json",
+        "Server/content/recovered-player-poses.json",
+        "Server/content/recovered-player-shot-targets.json",
+        "Server/content/recovered-rifle-bindings.json",
+        "Server/content/recovered-rusher-weapon-bindings.json"
+      ]
+    },
+    {
+      "path": "Server/content/grenade-content-manifest.json",
+      "sha256": "c3ed40ce16a9fa04728b12041892e3a3d03a4fec0234f25fe114edd35f58e41c",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json",
+        "Server/content/recovered-grenade-bindings.json",
+        "Server/content/recovered-grenade-poses.json"
+      ]
+    },
+    {
+      "path": "Server/content/legacy-catalog-profile.json",
+      "sha256": "72d54e655c5ee773903ed341bdfacb6ffe1f55a2956236f1335999309b68f179",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json"
+      ]
+    },
+    {
+      "path": "Server/content/lmg-content-manifest.json",
+      "sha256": "e92074088d342fcc56bb8818750ed3759dc992f0f384c9d38ad7e4b3a6ec27c1",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json",
+        "Server/content/recovered-lmg-bindings.json"
+      ]
+    },
+    {
+      "path": "Server/content/minigun-content-manifest.json",
+      "sha256": "703723780fed050e07a527f2056af57a62418b58ba956ea4116ccbd8a8975dd3",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json",
+        "Server/content/recovered-minigun-binding.json"
+      ]
+    },
+    {
+      "path": "Server/content/pistol-content-manifest.json",
+      "sha256": "5d25e81f83d4034a225a674930ba12b32e7a92498b0f7796c1b03f434d25618b",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json",
+        "Server/content/recovered-pistol-bindings.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-air-unit-geometry.json",
+      "sha256": "b5199c611d5c3d5bcdd313197543ff9c262619560374c2d79449266eec8b25f1",
+      "oldSceneReference": false,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-army-deployment.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-all-weapon-bindings.json",
+      "sha256": "2b8e0b531a6bf46bac199218bc74440938f8d535000565eb197a2384aae7daaa",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-army-deployment.json",
+      "sha256": "6373ad1809e2a3091f3a3f9b285d7e607653e2f6abc4822ed1c4eb9522fec9ec",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-army-perks.json",
+      "sha256": "b9597a7c47a00e1ff07a0dc2006f3c885f20b8733dc14636490cf9b15924ce35",
+      "oldSceneReference": true,
+      "currentSceneReference": true,
+      "affectedDependencies": [
+        "Server/content/recovered-army-deployment.json",
+        "Server/content/recovered-battle-content.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-battle-content.json",
+      "sha256": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-battle-unit-rules.json",
+      "sha256": "9d125ace3216536ae03f743d94e058a9e13df1552c57cc0a357a042db83fc2e8",
+      "oldSceneReference": false,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-bazooka-bindings.json",
+      "sha256": "53ff0e0111a50619a84b0db5eaf9d7be42e7a84c5f6fe0cd140e778c116616b8",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-coop-assaulter-weapon.json",
+      "sha256": "e96e82fb348a1f74c08b19ae0f153173aea14115c0a008302e921ad4b8570f8a",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-coop-boss-anchors.json",
+      "sha256": "31f9b4cbb39e3e65dbac7eb547c04e6673d760af73c5e444b727ad5722bce71e",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-coop-boss-attack-timing.json",
+      "sha256": "de5c55d26a745842b2a15f4013cd465dba1bbfa868e405aae1295ac3b5777da0",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-coop-bot-rules.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-coop-boss-loadouts.json",
+      "sha256": "7206b1e4536c05be870b87054a013983a937bb42bed7b58debfd5a0b9df1b3b4",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-coop-boss-attack-timing.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-coop-boss-paths.json",
+      "sha256": "12e42d2f5b492a5b8e499743096fb25c0ad5bc52ee512a9c098c866fd11eacee",
+      "oldSceneReference": false,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-coop-boss-anchors.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-coop-bot-health.json",
+      "sha256": "062b83733295b3b7c80c3ae7288d2a56931f012648ad2d36b7374ca81342db25",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-coop-bot-rules.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-coop-bot-rules.json",
+      "sha256": "b0a713650355cad6ea8ccaeec64a3ca89e035e0fe8793f58714db78005bc7048",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-coop-card-rows.json",
+      "sha256": "70dc7c72567798c346f69e281c72df2c7869faead8db680e5d0601a2b06b86e0",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-army-deployment.json",
+        "Server/content/recovered-battle-content.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-coop-enemy-point-masks.json",
+      "sha256": "af006a1b961d38addc05ca60e90aa63b881467145c7e88fe35e9afb481eb853b",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-coop-navmesh-detail.json",
+      "sha256": "ba29ce1669ebafb282bdc97e5e156e9c5b41053442e6f8819085fa88cfb2ad64",
+      "oldSceneReference": false,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-coop-navmesh-sources.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-coop-navmesh-paths.json",
+      "sha256": "7753a0add536af88018794a9118560d22940a9cad2989b6cc3876e731ee542b1",
+      "oldSceneReference": false,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-coop-navmesh-sources.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-coop-navmesh-sources.json",
+      "sha256": "8a3e7b87defcdd70d5ba5b89b2c2b26cb25e052698db9016033fdc0a4703977f",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-coop-navmesh-triangulation.json",
+      "sha256": "87b0d457300a7e88bd7166d1a12e021f7ef73e1ba57b1e97831df4788fb314de",
+      "oldSceneReference": false,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-coop-navmesh-sources.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-coop-prefab-colliders.json",
+      "sha256": "4ab361718d06ca8c0ecd9d0bb1553ef4b2d3e1e1a22539f7cdcfc35e6d3bda70",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-coop-prefab-mesh-geometry.json",
+      "sha256": "e0dce5662aaf15d2287a0daa2c308759367d207dd5574cf56070b67abf0b560a",
+      "oldSceneReference": false,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-coop-prefab-colliders.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-coop-shield-states.json",
+      "sha256": "02ed9bc14a3fd96ff799da9299c84f46f00cf59e5717bbc9187039fab2e7dd63",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-coop-skillshot-scores.json",
+      "sha256": "4813a3a2404bb0ad2e08035eec0de1ad954b315446e71c8c0dcb0b23d431e5fd",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-grenade-bindings.json",
+      "sha256": "1cddd325d8c706dd6418a4cfb2cdb39a04fa9a03e1abfcae42f48cbea0423fa8",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-grenade-poses.json",
+      "sha256": "65c500de32c26c63d9626f111ef09b1c4bc62bc4180dd16a57a5fabd1a4c911f",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-grenade-rig.json",
+      "sha256": "842f1a0afe05f1d4065f3f5092aefe4f84baa8c8cd169dd7a136e2fbd7cb8365",
+      "oldSceneReference": true,
+      "currentSceneReference": true,
+      "affectedDependencies": [
+        "Server/content/recovered-all-weapon-bindings.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-grenade-shot-targets.json",
+      "sha256": "f5ca429dd4d044f7ad7eea528bffcae806ce3243e5398b9b7d4ad85578b5be9d",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-heavy-turret-source.json",
+      "sha256": "a758c197659d6776bb252237862d882702ba3ba0fe70d9cbadced8aeafba8887",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-landmine-source.json",
+      "sha256": "61829b6a5fea9fb306a22aada2220b5de151936622affca43ccfcd36a2843dc3",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-lmg-bindings.json",
+      "sha256": "a672598a365f0a812018819b67d5d63e8076511c0f39b6413b1ed3a6648ef14c",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-minigun-binding.json",
+      "sha256": "76a8f0cef7499cf65c15401c2ad528fe5b365cb61fdb8af2123901aa82cad13f",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-mission-catalog.json",
+      "sha256": "d94c4dff6480b9f226bcbb3d573876c3519c3dedf421d8593d6c45c9dae0f8ad",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-mortar-weapon-pool.json",
+      "sha256": "b47c3e88b9d70a48508e125f4e10712fc207f814bf239a20b01887a996620d3e",
+      "oldSceneReference": true,
+      "currentSceneReference": true,
+      "affectedDependencies": [
+        "Server/content/recovered-army-deployment.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-ordinary-card-identities.json",
+      "sha256": "6d65e9de3e33729c2cebe3b54ff40e8ea8ebb1a0df1222eb86b591d17ed25408",
+      "oldSceneReference": false,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-pistol-bindings.json",
+      "sha256": "815fd2412b579db4526d9d40ef42a6af94a3ccd1f6a23952a3dc5542d73afd7c",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-player-collision.json",
+      "sha256": "e33988ec4161737aed8577f03590cd8737ec0abffb20d9b7d526c9962a5152df",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-player-poses.json",
+      "sha256": "7ae1c13e99da53b32b49dd963c18b49659290e13e69cc87d32e6e3a7b64440ef",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-player-shot-targets.json",
+      "sha256": "5001dd7507806dc716764517b27223c98de19a41dfafbdba28301e32521f7254",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-player-weapon-indexes.json",
+      "sha256": "fba01c40e4eb76df1050cb3eef8142bd74db2ff055a684f8618e986df1778779",
+      "oldSceneReference": false,
+      "currentSceneReference": true,
+      "affectedDependencies": [
+        "Server/content/recovered-all-weapon-bindings.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-pvp-bonus-catalog.json",
+      "sha256": "ee973a140c6e9dbd231ff53327dc68aea7e68934607f087420c7d321f8a2cacd",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-pvp-score-streak-policy.json",
+      "sha256": "7ff8de88e288ab40f188d25e22b8460de6555adaf3c76353a522e06b2775042b",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-pvp-skillshot-scores.json",
+      "sha256": "7358effb84b956ee67b29cb4faa48e80703af73e48d4c9651494b97c5f2fcbc4",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json"
+      ]
+    },
+    {
+      "path": "Server/content/recovered-rifle-bindings.json",
+      "sha256": "9d64fa20c13c6a9688a0097a91aa81298346413e803240488f5c2c53eb7c9a12",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-rig-blend-reference.json",
+      "sha256": "19e5edf7c63d8cc91d9527f2c93bd648f7c67b98a422bbe1aeeac633af514f0e",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-rusher-weapon-bindings.json",
+      "sha256": "3c1d9f194edc2e023be94eb5832e7c43a93abbcd87de1f3bf83a72cd3c9efcba",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-shotgun-bindings.json",
+      "sha256": "529bd8a806f53162b266f8e725ac8a896ad557fe073df42910adcdc22471b7f0",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-smg-bindings.json",
+      "sha256": "e5b93babb9fb29181800962dab4c7e7156e9b8b1cfe27faa71d73ec9fff6fdae",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-sniper-bindings.json",
+      "sha256": "9e02551af3591afe8be49939d2f1693093faa784ed835672bb25f432b8acd3fd",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/recovered-walking-shot-reference.json",
+      "sha256": "789d79bffaad214a4e87455fd2cca95e419c2cb8840b2b53cef7933b89eabfc0",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    },
+    {
+      "path": "Server/content/shotgun-content-manifest.json",
+      "sha256": "73fbabf4c8009ab2344d13c7365635bc8a1d1ac947d1022848bc5dd7252dc245",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json",
+        "Server/content/recovered-shotgun-bindings.json"
+      ]
+    },
+    {
+      "path": "Server/content/smg-content-manifest.json",
+      "sha256": "9e7a64b74be5834529fb5ac029fbb49a150c2adc238f944bec1113a46b0cbf1a",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json",
+        "Server/content/recovered-smg-bindings.json"
+      ]
+    },
+    {
+      "path": "Server/content/sniper-content-manifest.json",
+      "sha256": "74c96a1f25710b5f7febc2a85a7492c4f0a0b2098b25b63af23eb2bdd5683122",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": [
+        "Server/content/recovered-battle-content.json",
+        "Server/content/recovered-sniper-bindings.json"
+      ]
+    },
+    {
+      "path": "Server/content/unity-player-explosion-overlap-reference.json",
+      "sha256": "f18f140200c3e5c0a630c3116dfefa2760b7647e730f3effaa3982434d508cf6",
+      "oldSceneReference": true,
+      "currentSceneReference": false,
+      "affectedDependencies": []
+    }
+  ]
+}

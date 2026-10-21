@@ -4,6 +4,7 @@ using War.Backend;
 using War.Backend.Legacy;
 using War.BattleServer;
 using War.Persistence;
+using War.Battle.Tests.Support;
 using War.Shared;
 
 /// <summary>Checks non-granting account inventory projection before automatic matchmaking is enabled.</summary>
@@ -51,7 +52,7 @@ internal static class BattleAllocationSourceTests
         }
 
         player.Serialized["CardManagerData"] = PlayerState.Write(cards);
-        await players.Insert(player, LegacyPlayerStore.NewPassword(), deadline.Token);
+        await LegacyTestAccounts.InsertAsync(uri, databaseName, player, deadline.Token);
         var source = new BattleAllocationSource(players);
         BattleAllocationProjection projected = await source.GetAsync(player.Id, deadline.Token);
         var allocations = new BattleAllocationStore(uri, databaseName);

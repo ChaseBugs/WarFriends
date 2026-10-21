@@ -1,0 +1,66 @@
+[
+  {
+    "Scenario": "path-Aztec_Multiplayer",
+    "Observations": 19,
+    "Sha256": "c73cff0c0791df878d79584c83afdc1a889fd0d048dff284359740b76a6985b7",
+    "FinalPhase": "Running",
+    "FinalTick": 154,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "path-City_Multiplayer",
+    "Observations": 19,
+    "Sha256": "99f77298fa29d585f4d118e9885b6b9cca1f2f2fb8cf590d02c02542a1035213",
+    "FinalPhase": "Running",
+    "FinalTick": 154,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "path-Desert_Multiplayer",
+    "Observations": 19,
+    "Sha256": "de01aea64f2bb9a38df784d6e36f6284bed4ee4276daf60c8e6b5f006ab44906",
+    "FinalPhase": "Running",
+    "FinalTick": 154,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "path-Park_Multiplayer",
+    "Observations": 19,
+    "Sha256": "7e30ff56f467efd45fbfa82ca19925d1f23b1f83f53e608f3ff25ba1c4b5a1ba",
+    "FinalPhase": "Running",
+    "FinalTick": 154,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "path-Snow_Multiplayer",
+    "Observations": 19,
+    "Sha256": "d93ae03ac5124408433909c21f766bfd5c3f356307551f8ce198a2146f7d1dc2",
+    "FinalPhase": "Running",
+    "FinalTick": 154,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "slow-route-replay-and-expiry",
+    "Observations": 311,
+    "Sha256": "0bca1d9dd0e0dd019622a2aaf02d09a70e0f7d3874225e074057dd976214561b",
+    "FinalPhase": "Running",
+    "FinalTick": 362,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "paused-route-has-no-catch-up",
+    "Observations": 15,
+    "Sha256": "c68faa46caa3245d7f6c37cae275a8bb53ddd0c2781e0257d811f65a6d3a30b8",
+    "FinalPhase": "Running",
+    "FinalTick": 300,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "death-cancels-route-before-terminal",
+    "Observations": 10,
+    "Sha256": "bf7632c61b086e55b81ff7747f03157bb3ee316e7e8a820e72f21f56fe3a29fc",
+    "FinalPhase": "Ended",
+    "FinalTick": 62,
+    "TerminalReason": "player-killed"
+  }
+]

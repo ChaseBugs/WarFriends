@@ -1,6 +1,8 @@
 """Verify the six Unity-exported co-op prefab meshes against source assets."""
 
 import json
+import hashlib
+import argparse
 import math
 from pathlib import Path
 
@@ -13,14 +15,13 @@ COLLIDERS = ROOT / "Server/content/recovered-coop-prefab-colliders.json"
 GEOMETRY = ROOT / "Server/content/recovered-coop-prefab-mesh-geometry.json"
 
 
-def verify():
-    colliders = json.loads(COLLIDERS.read_bytes())
-    geometry = json.loads(GEOMETRY.read_bytes())
+def validate(colliders_bytes, geometry):
+    colliders = json.loads(colliders_bytes)
     if set(geometry) != {"version", "client", "unity",
                          "colliderSourceSha256", "meshes"} or \
             geometry["version"] != 1 or geometry["client"] != "1.4.0" or \
             geometry["unity"] != "2018.3.0f2" or \
-            geometry["colliderSourceSha256"] != digest(COLLIDERS):
+            geometry["colliderSourceSha256"] != hashlib.sha256(colliders_bytes).hexdigest():
         raise ValueError("co-op prefab mesh provenance changed")
 
     expected = {row["shape"]["meshGuid"]
@@ -52,7 +53,7 @@ def verify():
             raise ValueError("co-op prefab mesh geometry size changed")
         for vertex in vertices:
             if len(vertex) != 3 or any(
-                    not isinstance(value, (int, float)) or
+                    type(value) not in (int, float) or
                     not math.isfinite(value) or abs(value) >= 10_000
                     for value in vertex):
                 raise ValueError("co-op prefab mesh vertex is invalid")
@@ -63,8 +64,31 @@ def verify():
         triangle_count += len(triangles) // 3
     if vertex_count != 176 or triangle_count != 284:
         raise ValueError("co-op prefab mesh geometry count changed")
-    print(f"{len(meshes)} prefab meshes, {vertex_count} vertices, "
-          f"{triangle_count} triangles")
+    return len(meshes), vertex_count, triangle_count
+
+
+def build_document(colliders_bytes):
+    previous_bytes = COLLIDERS.read_bytes()
+    geometry = json.loads(GEOMETRY.read_bytes())
+    validate(previous_bytes, geometry)
+    previous = json.loads(previous_bytes)
+    candidate = json.loads(colliders_bytes)
+    previous.pop("mainSceneSha256")
+    candidate.pop("mainSceneSha256")
+    # Retain the existing native export only when every collider and source identity is unchanged.
+    if json.dumps(previous, allow_nan=False) != json.dumps(candidate, allow_nan=False):
+        raise ValueError("co-op prefab collider geometry changed; native recapture required")
+    geometry["colliderSourceSha256"] = hashlib.sha256(colliders_bytes).hexdigest()
+    validate(colliders_bytes, geometry)
+    return geometry
+
+
+def verify():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true")
+    parser.parse_args()
+    meshes, vertices, triangles = validate(COLLIDERS.read_bytes(), json.loads(GEOMETRY.read_bytes()))
+    print(f"{meshes} prefab meshes, {vertices} vertices, {triangles} triangles")
 
 
 if __name__ == "__main__":

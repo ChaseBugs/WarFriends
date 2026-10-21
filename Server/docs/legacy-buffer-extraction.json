@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "description": "Original planner file provenance and unchanged action-body token hashes at transplant; later readability changes are covered by executable Client contracts.",
+  "sources": [
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.Cards.cs",
+      "originalSha256": "80e6d26bd1c2fcc3dadc7e4c6f6ce69b77c9c8856d88cc4b7e32f53ff6b917a7"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.Cosmetics.cs",
+      "originalSha256": "c0a7a6bea2c9205ee206ba2f921bac3c2c4b30904fda98bbcce81819402ca6b6"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.Elite.cs",
+      "originalSha256": "e5f768b16f9263836e0a0f8f834efa6a4ce5d0de2d06683c2d6d7747dde5f907"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.Equipment.cs",
+      "originalSha256": "e2c1c909b9f0cd6c86c40422c4a080f1be6ca4cf3004ffb247d746d347ed69c4"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.Helpers.cs",
+      "originalSha256": "b04ef1f957fd4fe1e2e7837b5e4396f5b4e54a2dbe32d5b56ce0a95b3cd703d4"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.Markers.cs",
+      "originalSha256": "723ea6ece84fba68bea3138ee981706a66e57cf358953d80c7e21086052d3eb0"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.Rows.cs",
+      "originalSha256": "f59b4cddf1e05bf4d5cc3b56e18809f6182c2f3f72ffe18a61380311332810e8"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.State.cs",
+      "originalSha256": "709cfacfa7a7dfdf54c3e6dac1062b04aeedadb32841d2d9ef4ba208db8a504a"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.Units.cs",
+      "originalSha256": "74f6f0d38edcaa70c6928b44d92ada395d8c4df3791337dfbedf49fbf735544a"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.UnitUpgrades.cs",
+      "originalSha256": "e86133a1f82a18dfb1adef11fc638a902d80e2442a45e30955ed5136ef75d146"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.UpgradeAdmission.cs",
+      "originalSha256": "b03acaf537cf3788647cc1be6b3cedb55c0ef47ae073fe72b19c10fe69646942"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.Weapons.cs",
+      "originalSha256": "2a0cf29da2f5da5931d57515186bc9d5177fe578a9f53cb27aeadba6e6f8cbb3"
+    },
+    {
+      "from": "Server/src/War.Backend/Legacy/Buffering/LegacyBufferPlanner.WeaponUpgrades.cs",
+      "originalSha256": "9a78baaad818a429367a25b336325589c698b6f49de9ea189346334a582d5254"
+    }
+  ],
+  "actions": [
+    "ActivateUnit",
+    "ActivateUnitUpgrade",
+    "ActivateWeapon",
+    "ActivateWeaponUpgrade",
+    "ArmyUnitWasShown",
+    "BuyCardPack",
+    "BuyDecal",
+    "BuyUnit",
+    "BuyUnitUpgrade",
+    "BuyWeapon",
+    "BuyWeaponUpgrade",
+    "ConvertPartsToScraps",
+    "ConvertScrapsToParts",
+    "EquipDecal",
+    "EquipWeapon",
+    "InstantBuyUnit",
+    "InstantBuyWeapon",
+    "InstantUnitUpgrade",
+    "InstantWeaponUpgrade",
+    "PromoteUnit",
+    "SaveLastSeenSquadChatTimeStamp",
+    "UpdateEquippedUnits",
+    "UpgradeEliteSlot",
+    "VisualWasShown",
+    "WeaponWasShown"
+  ],
+  "actionBodyTokenSha256": {
+    "ActivateUnit": "1ac8278af197e20b6f0fa9cdb7d521f2ed44d9e02a35f631193b4835321de8cf",
+    "ActivateUnitUpgrade": "03e3999f5fc97815691ee36b20b3da32ed25075fd1636cb907a62fccf416eda5",
+    "ActivateWeapon": "e1c061c70917a4337232e68cb1d8c44eacfa52b2958cf1feb51f491e7b467c9f",
+    "ActivateWeaponUpgrade": "7c21a30195e7628b5d09729eed3295b3a193ee922116e3e0266bb6abaa74618f",
+    "ArmyUnitWasShown": "536dd6a5f3f7d311537e4e3834cc74677088a824748c90e725d30482cd666680",
+    "BuyCardPack": "7e7812c4a9dcbf4dcfa83319522375c040fa67d4feb2a3030e9f5f4519de7924",
+    "BuyDecal": "d3583c77f11ea9067a5aa8c699ae3b08dd30e8744d1435c1eb1d3973aa80d97d",
+    "BuyUnit": "87af593891ec6cbbf05615cc3e4e56d02212df9b5b3623ad694c68d5526a639d",
+    "BuyUnitUpgrade": "f4b33ff8e9b29221756798c8ff9ea3ee9fbafc5688f4d65c323f1e2aab326e39",
+    "BuyWeapon": "cc11fbfc1b4d532e755cf0a73f0de467cb88ebb90a72779df633ebde29583a92",
+    "BuyWeaponUpgrade": "36bbf5056513c35cf15d3ad6987201ab78b6da97daaf75ca1866dbf4adc59b9f",
+    "ConvertPartsToScraps": "026e549623d582667666848a8d487e594dcbe9cfc711a2d3cec7cc4c4d3695bc",
+    "ConvertScrapsToParts": "de7fc63526aecef4ed2e1f2f2e2e2193726332e29a3c05d539935ffcfc00202f",
+    "EquipDecal": "0ea0f806c7f700535ad2a8583009a541b8e5f3aec7d8b59a365db7c4316b8cd7",
+    "EquipWeapon": "477110f0fa985543f75fc7f944c9fc9585960522206d4accb343224aa99f18a1",
+    "InstantBuyUnit": "0a5d4571691064374f674a55d23072bd155ac03896216c1449baf39ddca86a09",
+    "InstantBuyWeapon": "b4fecff4fcc7f7b7ef91158abc9272a04bceeb9d8f9538299d47bba2645cbfed",
+    "InstantUnitUpgrade": "46b08d92019fcbed1410d740aa0f0e0a82eef85572fb4ebce409c4fa0e6f0be1",
+    "InstantWeaponUpgrade": "ec4f97f5ff621e9cc9f6c21199a994b0885a66301dc998e61d4c573f47a07e08",
+    "PromoteUnit": "65affea7722eeeba5251c88c6d209357f63a867e5198deaaf10fa44d4d908ff2",
+    "SaveLastSeenSquadChatTimeStamp": "8ea2ef6b75321b011bd3edfb90a4331785b7422419fa42fa00c0d87c23e09f52",
+    "UpdateEquippedUnits": "6049bc66547f9a970c1b16d9a4cc3616eb8c85c77d852982592cce8d25c590da",
+    "UpgradeEliteSlot": "f422102d9e1f579307271e0cbc98052a6fe96da1316abfb8cc10a3effe9155d9",
+    "VisualWasShown": "18bb5e86d16eba9b3772903e594b1b24b26aa690d11492e873f14a66b54f045c",
+    "WeaponWasShown": "1d2bf4f3070de1d1b85c3b77b1a754b7074a12791a469afd74775a6e5736e9df"
+  },
+  "targets": [
+    "Server/src/War.Backend/Legacy/Buffering/Cards/LegacyBufferedCardPacks.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Dispatch/LegacyBufferedActionRegistration.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Dispatch/LegacyBufferedActionRegistry.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Dispatch/LegacyBufferedFeature.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Economy/LegacyBufferedPartsConversion.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Execution/LegacyBufferedCatalogValues.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Execution/LegacyBufferedDeliveryRules.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Execution/LegacyBufferedResults.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Execution/LegacyBufferedSlots.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Execution/LegacyBufferedState.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Execution/LegacyBufferedUnitResults.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Execution/LegacyBufferedUpgradeAdmission.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Inventory/LegacyBufferedCosmetics.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Inventory/LegacyBufferedElite.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Inventory/LegacyBufferedEquipment.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Inventory/LegacyBufferedInventoryMarkers.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Inventory/LegacyBufferedUnits.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Inventory/LegacyBufferedUnitUpgrades.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Inventory/LegacyBufferedWeapons.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Inventory/LegacyBufferedWeaponUpgrades.cs",
+    "Server/src/War.Backend/Legacy/Buffering/Squads/LegacyBufferedSquadChat.cs"
+  ],
+  "actionBodyTokenSha256Stage": "Immediately after the transplant, before explicit-brace/readability cleanup."
+}

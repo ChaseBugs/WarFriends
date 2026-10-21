@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\War.Shared\War.Shared.csproj" />
+    <ProjectReference Include="..\War.Battle.Domain\War.Battle.Domain.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

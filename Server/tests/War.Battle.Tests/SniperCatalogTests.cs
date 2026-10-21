@@ -86,7 +86,18 @@ internal static class SniperCatalogTests
         aim.Press(20,target,false);aim.Arm(25);Check(aim.Release(31,.17f,false)==target,"sniper scope gate begins when cooldown becomes ready");
         aim.Press(20,target,true);Check(aim.Release(30,.17f,true)==null&&!aim.Active,"sniper swipe cancellation");
         try{catalog.Stage("Google2u.SniperRifle_M24",26);throw new Exception("FAIL: sniper stage bound");}catch(InvalidDataException){checks++;}
-        var shot=catalog.Prepare("Google2u.SniperRifle_M24",0,1,new string('a',32),Vector3.Zero,Vector3.UnitZ,10,0,(_,_,_)=>null);
+        var shot=catalog.Prepare(
+            new WeaponStageSelection("Google2u.SniperRifle_M24", 0),
+            new BulletLaunch
+            {
+                ProjectileId = 1,
+                OwnerId = new string('a',32),
+                MuzzlePosition = Vector3.Zero,
+                TargetPosition = Vector3.UnitZ,
+                SimulationTick = 10,
+                CriticalRoll = 0,
+                TraceCollision = (_,_,_)=>null
+            });
         Check(shot.Damage.Amount==m24.Damage*catalog.Binding("Google2u.SniperRifle_M24").CriticalMultiplier&&shot.WeaponSourceId=="Google2u.SniperRifle_M24",
             "sniper projectile and critical authority");
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"),null,null,null,null,null,

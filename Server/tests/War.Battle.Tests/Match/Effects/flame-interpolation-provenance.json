@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "description": "C32 original managed Mathf.Lerp oracle and inspected Client call sites. The original server hash is historical before correction; inputs are unchanged fidelity evidence, not repaired V07 source digests.",
+  "originalServerSha256": "f62adf1e6f7fa0491d9884887c756f504a7879f9c89bdde8d45a53f26218b5b9",
+  "inputs": {
+    "Clients/AuxiliaryFiles/GameAssemblies/UnityEngine.dll": "e428db4e8652f5d548024ccbbb994dc1636a3c4ad374bac48e18e2fd5db6c76b",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/FlameAmmo.cs": "348d1eede592505e1edff070a6593a18d7c46e77a5b6df4f862c8cd2f9eb511a",
+    "Server/content/recovered-rusher-weapon-bindings.json": "3c1d9f194edc2e023be94eb5832e7c43a93abbcd87de1f3bf83a72cd3c9efcba"
+  }
+}

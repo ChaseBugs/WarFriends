@@ -118,7 +118,7 @@ namespace War.Client
                     if (reply.Code != "paired" ||
                         !System.Text.RegularExpressions.Regex.IsMatch(reply.MatchId ?? "", @"\Am[0-9a-f]{32}\z") ||
                         reply.PlayerIds.Count != 2 || reply.PlayerIds.Distinct(StringComparer.Ordinal).Count() != 2 ||
-                        reply.PlayerIds.Any(x => !Guid.TryParseExact(x, "N", out _) || x != x.ToLowerInvariant()))
+                        reply.PlayerIds.Any(x => !War.Shared.CanonicalGuid.IsCanonical(x)))
                         throw new InvalidOperationException("Backend returned invalid paired matchmaking authority.");
                     var grant = await MatchGrantAsync(reply.MatchId, token, deadline.Token).ConfigureAwait(false);
                     if (grant.MatchId != reply.MatchId || !reply.PlayerIds.Contains(grant.PlayerId) || grant.SessionKey.Length != 32 || grant.SessionId == 0)

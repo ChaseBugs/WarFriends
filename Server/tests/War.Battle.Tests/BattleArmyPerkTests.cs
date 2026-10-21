@@ -136,9 +136,7 @@ internal static class BattleArmyPerkTests
             definition.RootElement.GetProperty("sceneSha256").GetString()!);
         Reject(() => catalog.ValidateSource(army));
         string sourcePath = Path.Combine(directory, "recovered-battle-content.json");
-        string local = Path.Combine(Path.GetDirectoryName(directory)!, ".local",
-            "perk-source-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(local);
+        string local = Directory.CreateTempSubdirectory("warfriends-perk-source-").FullName;
         string changedPath = Path.Combine(local, "changed-source.json");
         try
         {

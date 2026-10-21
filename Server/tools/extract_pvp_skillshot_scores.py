@@ -1,5 +1,6 @@
 """Recover all active PvP skill-shot score rows without changing Client assets."""
 
+import argparse
 import hashlib
 import json
 import re
@@ -16,16 +17,14 @@ def long_shot_distance(scene):
     return float(match.group(1))
 
 
-def main():
-    scene_bytes = source.SCENE.read_bytes()
-    content_bytes = source.CONTENT.read_bytes()
+def build_document(scene_bytes, content_bytes):
     sheet_bytes = source.SHEET_CODE.read_bytes()
     flag_bytes = source.SKILL_CODE.read_bytes()
     scene = scene_bytes.decode("utf-8-sig")
     content = json.loads(content_bytes)
     if content["mainSceneSha256"] != hashlib.sha256(scene_bytes).hexdigest():
         raise ValueError("PvP scores and battle content refer to different scenes")
-    sheet = next(item for item in content["sheets"] if item["type"] == "Google2u.Skillshots")
+    sheet = source.skill_sheet(content)
     names = source.row_names(sheet_bytes.decode("utf-8-sig"))
     flags = source.skill_flags(flag_bytes.decode("utf-8-sig"))
     if len(sheet["rows"]) != len(names):
@@ -39,7 +38,7 @@ def main():
             raise ValueError("Invalid source multiplayer score")
         rows.append({"flag": flag, "name": name, "dictionaryId": dictionary_id,
                      "multiplayerPoints": points})
-    document = {
+    return {
         "version": 1,
         "sceneSha256": hashlib.sha256(scene_bytes).hexdigest(),
         "battleContentSha256": hashlib.sha256(content_bytes).hexdigest(),
@@ -49,10 +48,21 @@ def main():
         "longShotDistance": long_shot_distance(scene),
         "rows": rows,
     }
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate without writing production content")
+    args = parser.parse_args()
+    document = build_document(source.SCENE.read_bytes(), source.CONTENT.read_bytes())
     path = source.ROOT / "Server/content/recovered-pvp-skillshot-scores.json"
-    data = (json.dumps(document, indent=2) + "\n").encode("utf-8")
-    path.write_bytes(data)
-    print(f"Recovered {len(rows)} PvP score rows; SHA-256 {hashlib.sha256(data).hexdigest()}")
+    data = (json.dumps(document, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    if args.check:
+        if not path.exists() or path.read_bytes() != data:
+            raise ValueError("PvP skill-shot scores differ from recovered Client")
+    else:
+        path.write_bytes(data)
+    print(f"Recovered {len(document['rows'])} PvP score rows; SHA-256 {hashlib.sha256(data).hexdigest()}")
 
 
 if __name__ == "__main__":

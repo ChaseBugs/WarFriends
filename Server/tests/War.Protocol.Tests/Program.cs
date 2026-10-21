@@ -12,6 +12,7 @@ if (args is ["--worker-cancellation-live", var cancelEndpoint, var cancelMatchId
 }
 
 int checks = 0;
+checks += War.Protocol.Tests.CanonicalGuidPolicyTests.Run();
 checks += BattleQueueAttemptTokenTests.Run();
 checks += QueueAttemptWireTests.Run();
 checks += RoomTerminalReplayTests.Run();

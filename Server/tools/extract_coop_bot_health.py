@@ -20,10 +20,7 @@ def binary32(value):
     return struct.unpack("<f", struct.pack("<f", value))[0]
 
 
-def main():
-    if sys.argv[1:] not in ([], ["--check"]):
-        raise SystemExit("usage: extract_coop_bot_health.py [--check]")
-    scene_bytes = SCENE.read_bytes()
+def read_health(scene_bytes):
     scene = scene_bytes.decode("utf-8-sig")
     blocks = [block for block in re.split(r"(?=^--- !u!)", scene, flags=re.M)
               if f"guid: {BALANCE_GUID}" in block and "  m_Script:" in block]
@@ -51,7 +48,11 @@ def main():
             raise ValueError(f"balance row {index} has invalid player health")
         health.append(value)
 
-    bots_bytes = BOTS.read_bytes()
+    return health
+
+
+def build_document(scene_bytes, bots_bytes):
+    health = read_health(scene_bytes)
     bots = json.loads(bots_bytes)
     if bots["missionSourceSha256"] != hashlib.sha256(scene_bytes).hexdigest():
         raise ValueError("boss rows differ from the balance-table scene")
@@ -67,11 +68,17 @@ def main():
                             "healthMultiplier": multiplier,
                             "maximumHealth": binary32(health[level] * multiplier)})
 
-    artifact = {"version": 1,
+    return {"version": 1,
                 "sceneSha256": hashlib.sha256(scene_bytes).hexdigest(),
                 "botRulesSha256": hashlib.sha256(bots_bytes).hexdigest(),
                 "playerHealthByLevel": health,
                 "bossHealth": boss_health}
+
+
+def main():
+    if sys.argv[1:] not in ([], ["--check"]):
+        raise SystemExit("usage: extract_coop_bot_health.py [--check]")
+    artifact = build_document(SCENE.read_bytes(), BOTS.read_bytes())
     encoded = (json.dumps(artifact, indent=2) + "\n").encode()
     if sys.argv[1:] == ["--check"]:
         if OUTPUT.read_bytes() != encoded:

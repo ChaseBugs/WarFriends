@@ -2,7 +2,7 @@
 import hashlib
 import json
 import re
-import sys
+import argparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,10 +13,8 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def main():
-    scene_bytes = (ASSETS / "Scenes/MainScene.unity").read_bytes()
+def build_document(scene_bytes, content_bytes):
     scene = scene_bytes.decode("utf-8-sig")
-    content_bytes = (ROOT / "Server/content/recovered-battle-content.json").read_bytes()
     content = json.loads(content_bytes)
     if content["mainSceneSha256"] != digest(scene_bytes):
         raise ValueError("Bonus catalog and content refer to different scenes")
@@ -178,9 +176,18 @@ def main():
                           "lowAmmoThreshold": bonus_value("LowAmmoRatio"),
                           "lowAmmoMultiplier": bonus_value("AmmoCrateOnLowAmmoRatio"),
                           "rankCount": len(levels)}, "rows": rows}
-    data = (json.dumps(document, indent=2) + "\n").encode("utf-8")
+    return document
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true")
+    options = parser.parse_args()
+    scene_bytes = (ASSETS / "Scenes/MainScene.unity").read_bytes()
+    content_bytes = (ROOT / "Server/content/recovered-battle-content.json").read_bytes()
+    data = (json.dumps(build_document(scene_bytes, content_bytes), indent=2) + "\n").encode("utf-8")
     output = ROOT / "Server/content/recovered-pvp-bonus-catalog.json"
-    if "--check" in sys.argv:
+    if options.check:
         if output.read_bytes() != data:
             raise ValueError("Checked-in PvP bonus catalog differs from current source")
     else:

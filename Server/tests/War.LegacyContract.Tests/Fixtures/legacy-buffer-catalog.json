@@ -1,0 +1,650 @@
+{
+  "testOnly": true,
+  "description": "Synthetic branch fixtures, never production balance or recovered release authority.",
+  "sheets": [
+    {
+      "type": "fixture-weapon-wb",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-weapon-gold",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 10,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 10,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-weapon-locked",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-weapon-delivery",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-weapon-free",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-weapon-noshop",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-unit-wb",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-unit-gold",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 10,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 10,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-unit-locked",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-unit-delivery",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-unit-free",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-unit-elite-closed",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "Google2u.WeaponUpgrades",
+      "rows": [
+        {
+          "NAME": "fixture-weapon-wb",
+          "CANBEBOUGHT": 1,
+          "PRICE": 100,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "PURCHASABLE": "shop"
+        },
+        {
+          "NAME": "fixture-weapon-gold",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 10,
+          "DELIVERTIME": 0,
+          "PURCHASABLE": "shop"
+        },
+        {
+          "NAME": "fixture-weapon-locked",
+          "CANBEBOUGHT": 10,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "PURCHASABLE": "shop"
+        },
+        {
+          "NAME": "fixture-weapon-delivery",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 30,
+          "PURCHASABLE": "shop"
+        },
+        {
+          "NAME": "fixture-weapon-free",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "PURCHASABLE": "shop"
+        },
+        {
+          "NAME": "fixture-weapon-noshop",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "PURCHASABLE": "hidden"
+        }
+      ]
+    },
+    {
+      "type": "Google2u.ArmyUpgrades",
+      "rows": [
+        {
+          "NAME": "fixture-unit-wb",
+          "CANBEBOUGHT": 1,
+          "PRICE": 100,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 2,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 43,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-gold",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 10,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 2,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-locked",
+          "CANBEBOUGHT": 10,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 2,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-delivery",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 30,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 2,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-free",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 2,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-elite-closed",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": -1,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-tiered",
+          "CANBEBOUGHT": 1,
+          "PRICE": 100,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 3,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 43,
+          "STARTINGSPECIAL": 3
+        }
+      ]
+    },
+    {
+      "type": "Google2u.PlayerVisuals",
+      "rows": [
+        {
+          "NAME": "fixture-visual-wb",
+          "PURCHASABLE": "shop",
+          "CATEGORYID": 0,
+          "UNLOCKLEVEL": 1,
+          "PRICEGOLD": 0,
+          "PRICEWARBUCKS": 100,
+          "ONLYFORVIP": false
+        },
+        {
+          "NAME": "fixture-visual-gold",
+          "PURCHASABLE": "shop",
+          "CATEGORYID": 0,
+          "UNLOCKLEVEL": 1,
+          "PRICEGOLD": 10,
+          "PRICEWARBUCKS": 0,
+          "ONLYFORVIP": false
+        },
+        {
+          "NAME": "fixture-visual-locked",
+          "PURCHASABLE": "shop",
+          "CATEGORYID": 0,
+          "UNLOCKLEVEL": 10,
+          "PRICEGOLD": 0,
+          "PRICEWARBUCKS": 0,
+          "ONLYFORVIP": false
+        },
+        {
+          "NAME": "fixture-visual-vip",
+          "PURCHASABLE": "shop",
+          "CATEGORYID": 0,
+          "UNLOCKLEVEL": 1,
+          "PRICEGOLD": 0,
+          "PRICEWARBUCKS": 0,
+          "ONLYFORVIP": true
+        },
+        {
+          "NAME": "fixture-visual-noshop",
+          "PURCHASABLE": "arena",
+          "CATEGORYID": 0,
+          "UNLOCKLEVEL": 1,
+          "PRICEGOLD": 0,
+          "PRICEWARBUCKS": 0,
+          "ONLYFORVIP": false
+        },
+        {
+          "NAME": "fixture-visual-free",
+          "PURCHASABLE": "shop",
+          "CATEGORYID": 0,
+          "UNLOCKLEVEL": 1,
+          "PRICEGOLD": 0,
+          "PRICEWARBUCKS": 0,
+          "ONLYFORVIP": false
+        }
+      ]
+    },
+    {
+      "type": "Google2u.Constants",
+      "rows": [
+        {
+          "DBKEY": "GoldCoefficient",
+          "FLOATVALUE": 1
+        },
+        {
+          "DBKEY": "GoldExpCoefficient",
+          "FLOATVALUE": 1
+        },
+        {
+          "DBKEY": "PartToScrapsSell",
+          "FLOATVALUE": 5
+        },
+        {
+          "DBKEY": "PartToScrapsUpgrade",
+          "FLOATVALUE": 24
+        },
+        {
+          "DBKEY": "SilverCardRarityEarly",
+          "FLOATVALUE": 0.8
+        },
+        {
+          "DBKEY": "SilverCardRarity",
+          "FLOATVALUE": 0.8
+        },
+        {
+          "DBKEY": "GoldCardRarityEarly",
+          "FLOATVALUE": 0.95
+        },
+        {
+          "DBKEY": "GoldCardRarity",
+          "FLOATVALUE": 0.95
+        },
+        {
+          "DBKEY": "CardsInPack",
+          "FLOATVALUE": 10
+        },
+        {
+          "DBKEY": "BronzePackBronzeCards",
+          "FLOATVALUE": 3
+        },
+        {
+          "DBKEY": "SilverPackSilverCards",
+          "FLOATVALUE": 3
+        },
+        {
+          "DBKEY": "GoldPackGoldCards",
+          "FLOATVALUE": 3
+        }
+      ]
+    },
+    {
+      "type": "Google2u.CardPacks",
+      "rows": [
+        {
+          "NAME": "BRONZE_CARDPACK",
+          "GOLD": 19,
+          "WARBUCKS": 0
+        },
+        {
+          "NAME": "THREE_CARDS",
+          "GOLD": 0,
+          "WARBUCKS": 100
+        },
+        {
+          "NAME": "fixture-unknown-pack",
+          "GOLD": 0,
+          "WARBUCKS": 0
+        }
+      ]
+    },
+    {
+      "type": "Google2u.CardDefinitions",
+      "rows": [
+        {
+          "NAME": "fixture-card-bronze",
+          "RARITY": 1,
+          "IMPLEMENTED": true
+        },
+        {
+          "NAME": "fixture-card-silver",
+          "RARITY": 2,
+          "IMPLEMENTED": true
+        },
+        {
+          "NAME": "fixture-card-gold",
+          "RARITY": 3,
+          "IMPLEMENTED": true
+        }
+      ]
+    },
+    {
+      "type": "fixture-unit-tiered",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "TIER": 1,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        }
+      ]
+    }
+  ]
+}

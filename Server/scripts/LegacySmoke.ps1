@@ -4,14 +4,19 @@
 # assertions from ServerResponseHandler: this script fails if the server stops speaking what the
 # shipped client parses. It starts an isolated mongod and backend, stops only what it started, and
 # restores the calling environment.
-param([string]$MongoExecutable = 'mongod', [int]$HttpPort = 18081, [int]$MongoPort = 27029, [string]$ContentPath = '')
+param([string]$MongoExecutable = 'mongod', [int]$HttpPort = 18081, [int]$MongoPort = 27029, [string]$ContentPath = '', [switch]$NoBuild, [switch]$KeepArtifacts, [switch]$AllowCatalogFreeStartup)
 $ErrorActionPreference = 'Stop'
 $serverRoot = Split-Path $PSScriptRoot -Parent
 if ([string]::IsNullOrEmpty($ContentPath)) { $ContentPath = Join-Path $serverRoot 'content/recovered-battle-content.json' }
-$runRoot = Join-Path $serverRoot ('.local/legacy-' + [guid]::NewGuid().ToString('N'))
-New-Item -ItemType Directory -Path (Join-Path $runRoot 'mongo') -Force | Out-Null
+. (Join-Path $PSScriptRoot 'TestRun.ps1')
+$runRoot = New-WarTestRun 'legacy'
+$succeeded = $false
+New-Item -ItemType Directory -Path (Join-Path $runRoot 'data/mongo') -Force | Out-Null
 $processes = @()
-$variables = @('ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database', 'Battle__SigningKey', 'Battle__ControlKey', 'Legacy__ContentPath', 'RateLimiting__Api__PermitLimit')
+$variables = @('ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database',
+    'Battle__SigningKey', 'Battle__ControlKey', 'Legacy__ContentPath', 'Legacy__AllowCatalogFreeStartup',
+    'RateLimiting__Api__PermitLimit',
+    'TEMP', 'TMP', 'TMPDIR')
 $prior = @{}
 foreach ($name in $variables) { $prior[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 
@@ -33,12 +38,37 @@ function Send([int]$RequestId, [hashtable]$Fields = @{}, [string]$Token, [string
         -Headers @{ 'App-Version' = '1.4.0' } -UseBasicParsing -TimeoutSec 10
 }
 function SendJson([int]$RequestId, [hashtable]$Fields = @{}, [string]$Token, [string]$PlayerId) {
-    (Send @PSBoundParameters).Content | ConvertFrom-Json
+    $response = (Send @PSBoundParameters).Content | ConvertFrom-Json
+    if ($RequestId -eq 98 -and $response.Result -eq 1) {
+        $identity = "$PlayerId/$($Fields.BufferId)"
+        if (!$script:bufferReplays.ContainsKey($identity)) {
+            $script:bufferReplays[$identity] = @{
+                Fields = $Fields.Clone(); Token = $Token; PlayerId = $PlayerId; Json = $response.RequestsResults
+            }
+        }
+    }
+    return $response
 }
+$script:bufferReplays = @{}
+
+. (Join-Path $PSScriptRoot 'BufferReplayAssertions.ps1')
 
 try {
-    dotnet build (Join-Path $serverRoot 'WarFriendsServer.sln') --nologo -v minimal
-    if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
+    if (!$NoBuild) {
+        dotnet build (Join-Path $serverRoot 'WarFriendsServer.sln') --nologo -v minimal
+        if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
+    }
+    foreach ($project in @('tests/War.Battle.Tests', 'tests/War.LegacyContract.Tests', 'src/War.Backend')) {
+        $name = Split-Path $project -Leaf
+        if (!(Test-Path -LiteralPath (Join-Path $serverRoot "$project/bin/Debug/net10.0/$name.dll"))) {
+            throw 'Required Debug test binaries are missing; run the solution build first.'
+        }
+    }
+    python (Join-Path $serverRoot 'tools/generate_legacy_buffer_oracle.py')
+    if ($LASTEXITCODE -ne 0) { throw 'Client buffer contract provenance check failed' }
+    Set-WarTestTemporaryDirectory $runRoot
+    & dotnet (Join-Path $serverRoot 'tests/War.LegacyContract.Tests/bin/Debug/net10.0/War.LegacyContract.Tests.dll')
+    if ($LASTEXITCODE -ne 0) { throw 'Client buffer contract checks failed' }
     $keyBytes = New-Object byte[] 32
     $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
     $rng.GetBytes($keyBytes)
@@ -56,16 +86,53 @@ try {
     # This script is a single fast sequential client sharing one IP; the production default
     # (120/min, unaffected here) would otherwise 429 once assertion count grows past it.
     $env:RateLimiting__Api__PermitLimit = '2000'
-    # Load the real recovered economy catalog when present, so pricing assertions below check
-    # against verified game-balance numbers rather than a mock. Absent is not a script failure —
-    # the same graceful-degradation path Program.cs takes when Legacy:ContentPath is unset.
-    $catalogLoaded = Test-Path $ContentPath
-    if ($catalogLoaded) { $env:Legacy__ContentPath = $ContentPath } else { Write-Host "Catalog not found at $ContentPath; pricing assertions will check the refusal path instead." }
-    $mongoArgs = @('--dbpath', ('"' + (Join-Path $runRoot 'mongo') + '"'), '--bind_ip', '127.0.0.1', '--port', "$MongoPort", '--replSet', 'wfLegacy', '--logpath', ('"' + (Join-Path $runRoot 'mongo.log') + '"'))
+    # A missing catalog is a test configuration error unless compatibility was selected explicitly.
+    $catalogLoaded = Test-Path -LiteralPath $ContentPath -PathType Leaf
+    if ($catalogLoaded) {
+        $env:Legacy__ContentPath = $ContentPath
+        $env:Legacy__AllowCatalogFreeStartup = 'false'
+    }
+    elseif ($AllowCatalogFreeStartup) {
+        Remove-Item -LiteralPath Env:Legacy__ContentPath -ErrorAction SilentlyContinue
+        $env:Legacy__AllowCatalogFreeStartup = 'true'
+        Write-Host 'Explicit catalog-free compatibility smoke; source-priced assertions remain closed.'
+    }
+    else { throw 'Legacy smoke requires its configured source catalog or -AllowCatalogFreeStartup.' }
+    $mongoArgs = @('--dbpath', ('"' + (Join-Path $runRoot 'data/mongo') + '"'), '--bind_ip', '127.0.0.1', '--port', "$MongoPort", '--replSet', 'wfLegacy', '--logpath', ('"' + (Join-Path $runRoot 'mongo.log') + '"'))
     $processes += Start-Process $MongoExecutable -ArgumentList $mongoArgs -PassThru -WindowStyle Hidden
     $testDll = Join-Path $serverRoot 'tests/War.Battle.Tests/bin/Debug/net10.0/War.Battle.Tests.dll'
     & dotnet $testDll --init-mongo-replica-set "mongodb://127.0.0.1:$MongoPort/?directConnection=true" wfLegacy "127.0.0.1:$MongoPort"
     if ($LASTEXITCODE -ne 0) { throw 'MongoDB replica-set initiation failed' }
+    & dotnet $testDll --legacy-account-only
+    if ($LASTEXITCODE -ne 0) { throw 'Account input and policy checks failed' }
+    & dotnet $testDll --legacy-account-store-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Account publication/session checks failed' }
+    & dotnet $testDll --legacy-dogtags-store-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Dog-tag atomicity and forced-conflict checks failed' }
+    & dotnet $testDll --canonical-account-store-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Canonical modern account identity checks failed' }
+    & dotnet $testDll --legacy-tutorial-store-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Tutorial identity, race and migration checks failed' }
+    & dotnet $testDll --legacy-analytics-store-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Analytics race, buffer and state checks failed' }
+    & dotnet $testDll --legacy-profile-store-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Profile atomicity and forced-conflict checks failed' }
+    & dotnet $testDll --legacy-settings-store-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Settings atomicity and forced-conflict checks failed' }
+    & dotnet $testDll --allocation-inventory-mongo $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Allocation/inventory storage checks failed' }
+    & dotnet $testDll --rematch-manifest-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Rematch source/manifest storage checks failed' }
+    & dotnet $testDll --legacy-buffer-transactions-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Buffered economy transaction checks failed' }
+    & dotnet $testDll --legacy-card-pool-only
+    if ($LASTEXITCODE -ne 0) { throw 'Card-pool rule checks failed' }
+    & dotnet $testDll --legacy-card-pool-transactions-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Card-pool transaction checks failed' }
+    & dotnet $testDll --legacy-squad-only
+    if ($LASTEXITCODE -ne 0) { throw 'Squad rule checks failed' }
+    & dotnet $testDll --legacy-squad-transactions-only $env:Mongo__Uri
+    if ($LASTEXITCODE -ne 0) { throw 'Squad transaction checks failed' }
     $dll = Join-Path $serverRoot 'src/War.Backend/bin/Debug/net10.0/War.Backend.dll'
     $processes += Start-Process dotnet -ArgumentList ('"' + $dll + '"') -WorkingDirectory (Join-Path $serverRoot 'src/War.Backend') `
         -RedirectStandardOutput (Join-Path $runRoot 'backend.log') -RedirectStandardError (Join-Path $runRoot 'backend.error.log') -PassThru -WindowStyle Hidden
@@ -153,14 +220,45 @@ try {
     $noAccount = SendJson -RequestId 30 -Fields @{ Id = 'nobody'; Password = 'wrong'; AccountType = '0' }
     Assert ($noAccount.Result -eq 3001) 'an unknown account returns LoginFailure'
 
-    Write-Host "`nUnimplemented actions"
-    $unimplemented = SendJson -RequestId 62 -Token $token -PlayerId $playerId
-    Assert ($unimplemented.Result -eq 503) 'an unimplemented action reports maintenance rather than a hollow success'
-    Assert ($unimplemented.Result -gt 10) 'the result takes the client failure branch (Result > 10)'
+    Write-Host "`nHost-backed settlement admission"
+    $missingBattle = SendJson -RequestId 62 -Token $token -PlayerId $playerId
+    Assert ($missingBattle.Result -eq 6202) 'settlement rejects a missing BattleId as GameDidntExist'
+    $pendingBattle = SendJson -RequestId 62 -Token $token -PlayerId $playerId -Fields @{
+        BattleId = ('m' + [Guid]::NewGuid().ToString('N')); Experience = '999999'; LevelReward = '999999'
+    }
+    Assert ($pendingBattle.Result -eq 99999) 'settlement without accepted host evidence requests retry, ignoring claimed rewards'
+
+    Write-Host "`nDirect-channel closure matrix"
+    $dispatchEvidence = Get-Content (Join-Path $serverRoot 'docs/legacy-direct-extraction.json') -Raw | ConvertFrom-Json
+    # Preserve the historical extraction evidence; action 62 now owns authenticated settlement.
+    $blockedActions = @($dispatchEvidence.blockedDirectActions | Where-Object { $_.id -ne 62 })
+    Assert ($blockedActions.Count -eq 110) 'the remaining direct-channel closure matrix has all 110 actions'
+    foreach ($blockedAction in $blockedActions) {
+        $anonymousReply = SendJson -RequestId $blockedAction.id -Token 'null' -PlayerId 'null'
+        Assert ($anonymousReply.Result -eq 99990) "$($blockedAction.name) requires a valid session before closure"
+        $authenticatedReply = SendJson -RequestId $blockedAction.id -Token $token -PlayerId $playerId
+        Assert ($authenticatedReply.Result -eq 503) "$($blockedAction.name) remains closed on direct HTTP"
+    }
+    $afterClosure = SendJson -RequestId 34 -Token $token -PlayerId $playerId -Fields @{ Buffers = 'null' }
+    Assert ($afterClosure.PlayerData.Gold.N -ceq $data.PlayerData.Gold.N -and
+        $afterClosure.PlayerData.WarBucks.N -ceq $data.PlayerData.WarBucks.N) `
+        'closed and buffered-only direct requests leave both wallet balances unchanged'
 
     Write-Host "`nSetPlayerStatus (29)"
     $status = SendJson -RequestId 29 -Token $token -PlayerId $playerId -Fields @{ PlayerStatus = '1' }
     Assert ($status.Result -eq 1) 'SetPlayerStatus succeeds'
+    Assert ($status.Time -gt 0) 'SetPlayerStatus carries the Time read by the stock callback'
+    $presenceBefore = SendJson -RequestId 170 -Token $token -PlayerId $playerId -Fields @{ PlayerInfoId = $playerId }
+    Start-Sleep -Milliseconds 1100
+    foreach ($invalidStatus in @('999', '-1', '01', ' 1', 'invalid')) {
+        $invalidHeartbeat = SendJson -RequestId 29 -Token $token -PlayerId $playerId -Fields @{ PlayerStatus = $invalidStatus }
+        Assert ($invalidHeartbeat.Result -eq 1 -and $invalidHeartbeat.Time -gt 0) 'malformed heartbeat remains callback-safe'
+    }
+    $missingStatus = SendJson -RequestId 29 -Token $token -PlayerId $playerId
+    Assert ($missingStatus.Time -gt 0) 'missing status still carries callback time'
+    $presenceAfter = SendJson -RequestId 170 -Token $token -PlayerId $playerId -Fields @{ PlayerInfoId = $playerId }
+    Assert ($presenceAfter.PlayerInfo.Status.N -eq $presenceBefore.PlayerInfo.Status.N) 'invalid heartbeats do not change durable status'
+    Assert ($presenceAfter.PlayerInfo.LastAction.N -eq $presenceBefore.PlayerInfo.LastAction.N) 'invalid heartbeats do not refresh durable presence'
 
     Write-Host "`nSendRequestBuffer (98): WeaponWasShown"
     # RequestBuffer.AddRequest passes the plain sheet name as `data` for WeaponWasShown.
@@ -350,7 +448,7 @@ try {
         $bufUpgrade = @{ '0' = @{ action = 73; data = $upgradeData } } | ConvertTo-Json -Depth 5 -Compress
         $upgradeBuy = (SendJson -RequestId 98 -Token $token -PlayerId $playerId -Fields @{ BufferId = 'buf-upgrade-buy'; Count = '1'; Requests = $bufUpgrade }).RequestsResults | ConvertFrom-Json
         Assert ($upgradeBuy[0].Result -eq 1) 'BuyWeaponUpgrade succeeds for the owned AK47 at BoughtIndex 0'
-        Assert ($upgradeBuy[0].DeliveryTime -eq 60) 'BuyWeaponUpgrade returns the catalog DELIVERYTIME (60s) for the first upgrade'
+        Assert ($upgradeBuy[0].DeliveryTime -gt 0 -and $upgradeBuy[0].DeliveryTime -le 60) 'weapon delivery countdown fits its catalog duration'
         $afterUpgradeBuy = SendJson -RequestId 34 -Token $token -PlayerId $playerId -Fields @{ Locale = 'en'; Buffers = 'null' }
         Assert ([long]$afterUpgradeBuy.PlayerData.WarBucks.N -eq ($warbucksBeforeUpgrade - 500)) 'exactly 500 Warbucks (catalog NEXTUPGRADEPRICE) was debited for the upgrade'
 
@@ -392,7 +490,7 @@ try {
         $bufUnitUpgrade = @{ '0' = @{ action = 77; data = $unitUpgradeData } } | ConvertTo-Json -Depth 5 -Compress
         $unitUpgradeBuy = (SendJson -RequestId 98 -Token $token -PlayerId $playerId -Fields @{ BufferId = 'buf-unitupgrade-buy'; Count = '1'; Requests = $bufUnitUpgrade }).RequestsResults | ConvertFrom-Json
         Assert ($unitUpgradeBuy[0].Result -eq 1) 'BuyUnitUpgrade succeeds for the owned unit at BoughtIndex 0'
-        Assert ($unitUpgradeBuy[0].DeliveryTime -eq 60) 'BuyUnitUpgrade returns the catalog DELIVERYTIME (60s)'
+        Assert ($unitUpgradeBuy[0].DeliveryTime -gt 0 -and $unitUpgradeBuy[0].DeliveryTime -le 60) 'unit delivery countdown fits its catalog duration'
         $afterUnitUpgradeBuy = SendJson -RequestId 34 -Token $token -PlayerId $playerId -Fields @{ Locale = 'en'; Buffers = 'null' }
         Assert ([long]$afterUnitUpgradeBuy.PlayerData.WarBucks.N -eq ($warbucksBeforeUnitUpgrade - 375)) 'exactly 375 Warbucks (catalog NEXTUPGRADEPRICE) was debited for the unit upgrade'
 
@@ -490,6 +588,7 @@ try {
 
         $freeDecalAgain = (SendJson -RequestId 98 -Token $token -PlayerId $playerId -Fields @{ BufferId = 'buf-decal-free-2'; Count = '1'; Requests = $bufFreeDecal }).RequestsResults | ConvertFrom-Json
         Assert ($freeDecalAgain[0].Result -eq 1) 'buying an already-owned visual again is an idempotent success'
+        Assert ($freeDecalAgain[0].DecalId -eq 'CAMOS_DEFAULT' -and $freeDecalAgain[0].ExpiresOn -eq 0) 'an already-owned visual still returns both mandatory Client success fields'
 
         # CAMOS_MACHINEGUNNER: PRICEWARBUCKS=800000 — far beyond any balance this account reaches.
         $expensiveDecalData = @{ Name = 'CAMOS_MACHINEGUNNER'; Warbucks = 800000; Gold = 0; discount = 0; StartTime = 0 } | ConvertTo-Json -Compress
@@ -673,6 +772,48 @@ try {
         Assert ($rename2.Result -eq 503) 'a second rename is refused, not charged an invented price, while no catalog is loaded'
     }
 
+    Write-Host "`nChangePlayerName: concurrent free rename"
+    $renameAccount = SendJson -RequestId 118 -Fields @{ Locale = 'en'; UtcOffset = '0' }
+    $renameId = $renameAccount.Player.Id.S
+    Add-Type -AssemblyName System.Net.Http
+    $renameClient = New-Object System.Net.Http.HttpClient
+    $renameClient.Timeout = [TimeSpan]::FromSeconds(10)
+    $renameForms = @()
+    $renameTasks = @()
+    $renameResponses = @()
+    try {
+        foreach ($name in @('ParallelA', 'ParallelB')) {
+            $fields = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+            $fields.Add('requestId', '139')
+            $fields.Add('Version', '1.4.0')
+            $fields.Add('Os', 'android')
+            $fields.Add('Token', $renameAccount.Token)
+            $fields.Add('PlayerId', $renameId)
+            $fields.Add('Name', $name)
+            $fields.Add('PayForRename', '0')
+            $form = [System.Net.Http.FormUrlEncodedContent]::new($fields)
+            $renameForms += $form
+            $renameTasks += $renameClient.PostAsync("http://127.0.0.1:$HttpPort/index_09_25_2015.php", $form)
+        }
+        $renameReplies = @()
+        foreach ($task in $renameTasks) {
+            $response = $task.GetAwaiter().GetResult()
+            $renameResponses += $response
+            $response.EnsureSuccessStatusCode() | Out-Null
+            $renameReplies += ($response.Content.ReadAsStringAsync().GetAwaiter().GetResult() | ConvertFrom-Json)
+        }
+        $renameWinners = @($renameReplies | Where-Object { $_.Result -eq 1 })
+        Assert ($renameWinners.Count -eq 1) 'two concurrent no-pay requests authorize exactly one first rename'
+        Assert ($renameWinners[0].RenameCount -eq 1) 'the authorized first rename advances its count once'
+        $renameAfter = SendJson -RequestId 34 -Token $renameAccount.Token -PlayerId $renameId
+        Assert ($renameAfter.PlayerData.Gold.N -eq $renameAccount.PlayerData.Gold.N) 'concurrent first rename does not charge currency'
+    }
+    finally {
+        foreach ($response in $renameResponses) { $response.Dispose() }
+        foreach ($form in $renameForms) { $form.Dispose() }
+        $renameClient.Dispose()
+    }
+
     Write-Host "`nGetPlayerInfo (170)"
     $info = SendJson -RequestId 170 -Token $token -PlayerId $playerId -Fields @{ PlayerInfoId = $playerId }
     Assert ($info.Result -eq 1) 'GetPlayerInfo succeeds for an existing player'
@@ -690,13 +831,15 @@ try {
     $dogtagSnapshot = SendJson -RequestId 34 -Token $token -PlayerId $playerId -Fields @{ Locale = 'en'; Buffers = 'null' }
     $dogTagMax = [int]$dogtagSnapshot.PlayerData.DogTagMax.N
     $dogTagSecondsBefore = [int]$dogtagSnapshot.PlayerData.DogTagSeconds.N
-    Assert ($dogTagSecondsBefore -eq 0) 'a freshly created account starts with zero accumulated DogTagSeconds'
+    $expectedRegenerated = [Math]::Min([long]$dogtagSnapshot.Time - [long]$created.Time, [long]$dogTagMax)
+    Assert ($dogTagSecondsBefore -eq $expectedRegenerated) 'boot rebases dog-tag regeneration to the same response Time'
 
     # PayOneDogTag is not a purchase — every call site spends one already-held dog tag as an
-    # early-quit penalty. With zero seconds accumulated, it must floor at zero, not go negative.
+    # early-quit penalty. The original Client preserves negative base debt; only display clamps.
     $payWithZero = SendJson -RequestId 129 -Token $token -PlayerId $playerId
-    Assert ($payWithZero.Result -eq 1) 'PayOneDogTag always succeeds; it has no evidenced failure code'
-    Assert ($payWithZero.Seconds -eq 0) 'consuming a dog tag with nothing accumulated floors at zero, never negative'
+    Assert ($payWithZero.Result -eq 1) 'PayOneDogTag succeeds for valid authority'
+    $expectedPenalty = [Math]::Min([long]$dogTagSecondsBefore + [long]$payWithZero.LastUpdate - [long]$dogtagSnapshot.Time, [long]$dogTagMax) - 900
+    Assert ($payWithZero.Seconds -eq $expectedPenalty) 'the source penalty retains negative base seconds until regeneration repays the debt'
     Assert ($null -ne $payWithZero.LastUpdate) 'PayOneDogTag carries LastUpdate, an unguarded top-level read in OnPayOneDogTag'
 
     $goldBeforeDogtags = [long]$dogtagSnapshot.PlayerData.Gold.N
@@ -870,6 +1013,24 @@ try {
 
         $withdrawUndeposited2Result = SendJson -RequestId 174 -Token $token -PlayerId $playerId -Fields @{ AddedCards = '{}'; RemovedCards = $depositOwned }
         Assert ($withdrawUndeposited2Result.Result -eq 1) 'un-depositing the same card back succeeds'
+
+        $keyedDeposit = @{ AddedCards = $depositOwned; RemovedCards = '{}'; OperationId = 'pool-deposit-once' }
+        $firstKeyedDeposit = SendJson -RequestId 174 -Token $token -PlayerId $playerId -Fields $keyedDeposit
+        $replayedDeposit = SendJson -RequestId 174 -Token $token -PlayerId $playerId -Fields $keyedDeposit
+        Assert ($firstKeyedDeposit.Result -eq 1 -and $replayedDeposit.Result -eq 1) 'a keyed deposit replays its committed result'
+        $poolAfterReplay = SendJson -RequestId 170 -Token $token -PlayerId $playerId -Fields @{ PlayerInfoId = $playerId }
+        Assert ($poolAfterReplay.PlayerInfo.DepositedCards.M.$ownedCardName.M.Amount.N -eq '1') 'a keyed deposit replay does not deposit a second card'
+        $alteredDeposit = SendJson -RequestId 174 -Token $token -PlayerId $playerId -Fields @{ AddedCards = '{}'; RemovedCards = $depositOwned; OperationId = 'pool-deposit-once' }
+        Assert ($alteredDeposit.Result -eq 11301) 'reusing a card-pool operation identity for different intent rejects'
+        $emptyOperation = SendJson -RequestId 174 -Token $token -PlayerId $playerId -Fields @{ AddedCards = '{}'; RemovedCards = $depositOwned; OperationId = '' }
+        Assert ($emptyOperation.Result -eq 11301) 'an explicitly empty operation identity cannot select the legacy path'
+        $malformedAmounts = @{ $ownedCardName = '{"amount":1}'; BROKEN = '{"amount":-1}' } | ConvertTo-Json -Compress
+        $partialDeposit = SendJson -RequestId 174 -Token $token -PlayerId $playerId -Fields @{ AddedCards = '{}'; RemovedCards = $malformedAmounts }
+        Assert ($partialDeposit.Result -eq 99992) 'one malformed amount rejects the whole card-pool delta'
+        $poolAfterMalformed = SendJson -RequestId 170 -Token $token -PlayerId $playerId -Fields @{ PlayerInfoId = $playerId }
+        Assert ($poolAfterMalformed.PlayerInfo.DepositedCards.M.$ownedCardName.M.Amount.N -eq '1') 'a malformed combined request cannot partially return a card'
+        $returnKeyedDeposit = SendJson -RequestId 174 -Token $token -PlayerId $playerId -Fields @{ AddedCards = '{}'; RemovedCards = $depositOwned; OperationId = 'pool-return-once' }
+        Assert ($returnKeyedDeposit.Result -eq 1) 'own deposited cards return through RemovedCards rather than self-withdrawal'
     } else {
         Write-Host '  (skipped: no owned card available in this run to deposit — BuyCardPack success path above was not reachable either)'
     }
@@ -1046,9 +1207,85 @@ try {
     $arenaShown = SendJson -RequestId 212 -Token $token -PlayerId $playerId -Fields @{ ArenaId = 'arena_1' }
     Assert ($arenaShown.Result -eq 1) 'WarArenaShown succeeds'
 
-    Write-Host "`nLegacy smoke passed: $script:checks assertions. Local test data/logs: $runRoot"
+    Write-Host "`nMalformed buffers reject the complete envelope before mutation"
+    $invalidName = @{ '0' = @{ action = 76; data = '{"Name":true}' } } | ConvertTo-Json -Depth 5 -Compress
+    $invalidPayload = SendJson -RequestId 98 -Token $token -PlayerId $playerId -Fields @{
+        BufferId = 'malformed-payload'; Count = '1'; Requests = $invalidName
+    }
+    $invalidPayloadResults = $invalidPayload.RequestsResults | ConvertFrom-Json
+    Assert ($invalidPayloadResults[0].Result -eq 99992) 'a wrongly typed action payload stays inside its per-action JsonFailure'
+    $malformedRequests = '{"0":{"action":104,"data":"no-partial-request"},"1":{"action":true}}'
+    $invalidBuffer = SendJson -RequestId 98 -Token $token -PlayerId $playerId -Fields @{
+        BufferId = 'malformed-envelope'; Count = '2'; Requests = $malformedRequests
+    }
+    Assert ($invalidBuffer.Result -eq 99992) 'a malformed later entry returns JsonFailure without HTTP 500'
+    $malformedBoot = '{"valid":{"requests":{"0":{"action":104,"data":"no-partial-boot"}}},"invalid":{"requests":[]}}'
+    $invalidBoot = SendJson -RequestId 34 -Token $token -PlayerId $playerId -Fields @{ Buffers = $malformedBoot }
+    Assert ($invalidBoot.Result -eq 99992) 'boot validates all pending buffer envelopes before applying the first'
+    $afterInvalid = SendJson -RequestId 34 -Token $token -PlayerId $playerId -Fields @{ Buffers = 'null' }
+    $afterInvalidLevels = $afterInvalid.PlayerData.LevelManagerData.S | ConvertFrom-Json
+    Assert ($null -eq $afterInvalidLevels.savedWeapons.'no-partial-request') 'rejected request envelope applied no earlier entry'
+    Assert ($null -eq $afterInvalidLevels.savedWeapons.'no-partial-boot') 'rejected boot envelope applied no earlier buffer'
+
+    if ($catalogLoaded) {
+        $bootAccount = SendJson -RequestId 118 -Fields @{ Locale = 'en'; UtcOffset = '0' }
+        $bootPending = [ordered]@{
+            'boot-purchase' = @{ requests = @{
+                '0' = @{ action = 76; data = '{"Name":"Google2u.Grenade_FRAG"}' }
+            } }
+            'boot-followup' = @{ requests = @{
+                '0' = @{ action = 104; data = 'boot-followup-marker' }
+            } }
+        } | ConvertTo-Json -Depth 8 -Compress
+        $bootPurchase = SendJson -RequestId 34 -Token $bootAccount.Token -PlayerId $bootAccount.Player.Id.S `
+            -Fields @{ Buffers = $bootPending }
+        Assert ([long]$bootPurchase.PlayerData.WarBucks.N -eq 14001) 'boot projects the committed purchase debit immediately'
+        $bootLevels = $bootPurchase.PlayerData.LevelManagerData.S | ConvertFrom-Json
+        Assert ($bootLevels.savedWeapons.'Google2u.Grenade_FRAG'.bought -eq $true -and `
+            $bootLevels.savedWeapons.'boot-followup-marker'.showed -eq $true) 'boot preserves purchase state through the following buffer'
+        $bootReplay = SendJson -RequestId 34 -Token $bootAccount.Token -PlayerId $bootAccount.Player.Id.S `
+            -Fields @{ Buffers = $bootPending }
+        Assert ($bootReplay.PlayerData.LevelManagerData.S -ceq $bootPurchase.PlayerData.LevelManagerData.S) 'boot replay preserves ownership'
+        Assert ($bootReplay.PlayerData.WarBucks.N -eq $bootPurchase.PlayerData.WarBucks.N) 'boot replay does not debit twice'
+    }
+
+    Write-Host "`nReplay of all exercised buffered outcomes with deadline-aware delivery projection"
+    $currentReplayStates = @{}
+    foreach ($recorded in @($script:bufferReplays.Values)) {
+        if (!$currentReplayStates.ContainsKey($recorded.PlayerId)) {
+            $current = SendJson -RequestId 34 -Token $recorded.Token -PlayerId $recorded.PlayerId `
+                -Fields @{ Buffers = 'null' }
+            $currentReplayStates[$recorded.PlayerId] = $current.PlayerData
+        }
+        $replayed = SendJson -RequestId 98 -Token $recorded.Token -PlayerId $recorded.PlayerId -Fields $recorded.Fields
+        Assert (Test-BufferReplay $recorded.Json $replayed.RequestsResults $currentReplayStates[$recorded.PlayerId]) `
+            "replay preserves outcome/current rollback/deadline for $($recorded.Fields.BufferId): $script:bufferReplayMismatch"
+    }
+
+    if ($catalogLoaded) {
+        & dotnet $testDll --legacy-dogtags-http-only $env:Mongo__Uri $env:Mongo__Database "http://127.0.0.1:$HttpPort"
+        if ($LASTEXITCODE -ne 0) { throw 'Dog-tag HTTP checks failed' }
+        & dotnet $testDll --legacy-tutorial-http-only $env:Mongo__Uri $env:Mongo__Database "http://127.0.0.1:$HttpPort"
+        if ($LASTEXITCODE -ne 0) { throw 'Tutorial HTTP identity and callback checks failed' }
+        & dotnet $testDll --legacy-analytics-http-only $env:Mongo__Uri $env:Mongo__Database "http://127.0.0.1:$HttpPort"
+        if ($LASTEXITCODE -ne 0) { throw 'Analytics HTTP contract checks failed' }
+        & dotnet $testDll --legacy-profile-http-only $env:Mongo__Uri $env:Mongo__Database "http://127.0.0.1:$HttpPort"
+        if ($LASTEXITCODE -ne 0) { throw 'Profile HTTP contract checks failed' }
+        & dotnet $testDll --legacy-settings-http-only $env:Mongo__Uri $env:Mongo__Database "http://127.0.0.1:$HttpPort"
+        if ($LASTEXITCODE -ne 0) { throw 'Settings/state HTTP checks failed' }
+        & dotnet $testDll --legacy-root-state-http-only $env:Mongo__Uri $env:Mongo__Database "http://127.0.0.1:$HttpPort"
+        if ($LASTEXITCODE -ne 0) { throw 'Root state/economy HTTP checks failed' }
+        & dotnet $testDll --legacy-account-http-only $env:Mongo__Uri $env:Mongo__Database "http://127.0.0.1:$HttpPort"
+        if ($LASTEXITCODE -ne 0) { throw 'Account HTTP contract checks failed' }
+        & dotnet $testDll --legacy-squad-http-only $env:Mongo__Uri $env:Mongo__Database "http://127.0.0.1:$HttpPort"
+        if ($LASTEXITCODE -ne 0) { throw 'Squad HTTP contract checks failed' }
+    }
+
+    $succeeded = $true
+    Write-Host "`nLegacy smoke passed: $script:checks assertions. Reports: $runRoot"
 }
 finally {
-    foreach ($process in $processes) { if (!$process.HasExited) { Stop-Process -Id $process.Id -ErrorAction SilentlyContinue } }
-    foreach ($name in $variables) { [Environment]::SetEnvironmentVariable($name, $prior[$name], 'Process') }
+    $stopped = Stop-WarTestProcesses $processes
+    Restore-WarTestEnvironment $prior
+    if ($stopped) { Complete-WarTestRun $runRoot $succeeded $KeepArtifacts.IsPresent }
 }

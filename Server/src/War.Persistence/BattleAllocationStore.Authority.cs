@@ -10,7 +10,7 @@ public sealed partial class BattleAllocationStore
         IReadOnlyList<string> playerIds, CancellationToken cancellationToken)
     {
         if (playerIds == null || playerIds.Count != 2 || playerIds.Distinct(StringComparer.Ordinal).Count() != 2 ||
-            playerIds.Any(id => !Guid.TryParseExact(id, "N", out Guid parsed) || parsed.ToString("N") != id))
+            playerIds.Any(id => !War.Shared.CanonicalGuid.IsCanonical(id)))
         {
             throw new InvalidDataException("A canonical two-player authority roster is required.");
         }

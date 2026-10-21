@@ -1,0 +1,35 @@
+using Newtonsoft.Json.Linq;
+using War.LegacyContract.Tests;
+
+string matrixPath = Path.Combine(AppContext.BaseDirectory, "legacy-buffer-contracts.json");
+JObject matrix = JObject.Parse(File.ReadAllText(matrixPath));
+Console.WriteLine($"PASS: {CatalogValidationTests.Run()} immutable catalog/schema/numeric/provenance scenarios");
+Console.WriteLine($"PASS: {CatalogReleaseTests.Run()} configured source release/schema/identity scenarios");
+Console.WriteLine($"PASS: {DogTagRulesTests.Run()} source dog-tag debt/VIP/clock and invalid-authority scenarios");
+Console.WriteLine($"PASS: {StoredStateTests.Run()} strict state/default/metadata/resource/serializer groups");
+Console.WriteLine($"PASS: {SettingsContractTests.Run()} recovered complete Settings contract/default/corruption groups");
+Console.WriteLine($"PASS: {RootEconomyTests.Run()} exact BSON/root-domain/source-placement groups");
+Console.WriteLine($"PASS: {ProfileContractTests.Run()} immutable profile/source-price/callback groups");
+Console.WriteLine($"PASS: {AnalyticsContractTests.Run()} recovered analytics/schema/metadata/chat groups");
+Console.WriteLine($"PASS: {TutorialContractTests.Run()} tutorial BSON/migration/source-callback groups");
+int cases = BufferContractMatrixTests.Run(matrix);
+JObject[] groups = matrix["groups"]!.Children<JObject>().ToArray();
+int actions = groups.Sum(group => group["actions"]!.Count());
+int failureBranches = groups.Sum(group => group["actions"]!.Count() * group["failures"]!.Count());
+Console.WriteLine($"PASS: {cases} recovered Client buffer contract checks " +
+    $"({actions} actions, {failureBranches} failure branches)");
+int producerCases = BufferProducerContractTests.Run();
+Console.WriteLine($"PASS: {producerCases} actual server producer scenarios, including current replay");
+int catalogCases = CatalogBufferContractTests.Run(matrix);
+Console.WriteLine($"PASS: {catalogCases} catalog fixture response and current-authority replay scenarios");
+Console.WriteLine($"PASS: {BufferProducerCoverage.RequireComplete(matrix)} reviewed server action/result dispositions");
+int rankCases = CatalogBufferContractTests.Run(matrix, RankGateScenarios.All());
+RankGateScenarios.RejectInvalidAuthority();
+RankGateScenarios.CompareRecoveredRules();
+Console.WriteLine($"PASS: {rankCases} purchase/promotion rank boundary scenarios and invalid-authority rejection");
+Console.WriteLine("PASS: server rank gates agree with unchanged recovered Client predicates at reviewed boundaries");
+UpgradeTrackRulesTests.Run();
+Console.WriteLine("PASS: all recovered weapon/player-unit track boundaries agree with unchanged Client getters");
+int upgradeCases = CatalogBufferContractTests.Run(matrix, UpgradeBoundaryScenarios.All());
+Console.WriteLine($"PASS: {upgradeCases} maximum/tier/kind/delivery/helper admission scenarios");
+Console.WriteLine("Boundary: actual callback/value parsing; instrumented managers/UI; no native Unity/gameplay proof.");

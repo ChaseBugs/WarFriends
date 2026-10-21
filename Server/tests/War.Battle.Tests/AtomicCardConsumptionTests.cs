@@ -1,11 +1,13 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using Google.Protobuf;
+using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using War.Backend.Legacy;
 using War.BattleServer;
 using War.Persistence;
+using War.Battle.Tests.Support;
 using War.Protocol;
 using War.Shared;
 
@@ -23,7 +25,7 @@ internal static class AtomicCardConsumptionTests
         var players = new LegacyPlayerStore(uri, databaseName);
         var stores = new Stores(database, queue, results, players);
         Fixture fixture = await CreateFixtureAsync(queue, cancellationToken);
-        await SaveFixtureAsync(database, players, fixture, cancellationToken);
+        await SaveFixtureAsync(database, fixture, cancellationToken);
         using var changes = await database.WatchAsync(
             new EmptyPipelineDefinition<ChangeStreamDocument<BsonDocument>>(),
             new ChangeStreamOptions { MaxAwaitTime = TimeSpan.FromSeconds(1) }, cancellationToken);
@@ -88,16 +90,16 @@ internal static class AtomicCardConsumptionTests
         return new Fixture(manifest, payload, TerminalResultDigest.Compute(payload));
     }
 
-    private static async Task SaveFixtureAsync(IMongoDatabase database, LegacyPlayerStore players,
+    private static async Task SaveFixtureAsync(IMongoDatabase database,
         Fixture fixture, CancellationToken cancellationToken)
     {
         foreach (ParticipantManifest player in fixture.Manifest.Players)
         {
-            await players.Insert(new LegacyPlayerDocument
+            await LegacyTestAccounts.InsertAsync(database, new LegacyPlayerDocument
             {
                 Id = player.PlayerId, Name = "CardDebit", CreatedUtc = DateTime.UtcNow,
                 Serialized = new Dictionary<string, string> { ["CardManagerData"] = CardState(StartingCopies) }
-            }, LegacyPlayerStore.NewPassword(), cancellationToken);
+            }, cancellationToken);
         }
 
         byte[] manifestBytes = JsonSerializer.SerializeToUtf8Bytes(fixture.Manifest);
@@ -115,9 +117,9 @@ internal static class AtomicCardConsumptionTests
     private static async Task CheckRollbackAsync(Stores stores, CancellationToken cancellationToken)
     {
         Fixture fixture = await CreateFixtureAsync(stores.Queue, cancellationToken);
-        await SaveFixtureAsync(stores.Database, stores.Players, fixture, cancellationToken);
+        await SaveFixtureAsync(stores.Database, fixture, cancellationToken);
         string damagedPlayer = fixture.Manifest.Players[1].PlayerId;
-        await stores.Players.SetSerialized(damagedPlayer, "CardManagerData", CardState(0), cancellationToken);
+        await LegacyTestAccounts.SetCardsForTestAsync(stores.Database, damagedPlayer, CardState(0), cancellationToken);
         try
         {
             await stores.Results.AcceptAndReleasePairAsync(fixture.Manifest.MatchId, fixture.Digest,
@@ -135,7 +137,7 @@ internal static class AtomicCardConsumptionTests
         var first = await stores.Players.ById(fixture.Manifest.Players[0].PlayerId, cancellationToken);
         Require(OrdinaryCardInventory.Read(first!.Serialized["CardManagerData"])[SourceCard] == StartingCopies,
             "One player's inventory changed when the other player could not pay.");
-        await stores.Players.SetSerialized(damagedPlayer, "CardManagerData",
+        await LegacyTestAccounts.SetCardsForTestAsync(stores.Database, damagedPlayer,
             CardState(StartingCopies), cancellationToken);
         Require(await stores.Results.AcceptAndReleasePairAsync(fixture.Manifest.MatchId, fixture.Digest,
             fixture.Payload, cancellationToken) == "accepted", "Rolled-back terminal proof could not retry.");
@@ -146,7 +148,7 @@ internal static class AtomicCardConsumptionTests
     {
         Fixture original = await CreateFixtureAsync(stores.Queue, cancellationToken);
         Fixture fixture = FinishBattle(original.Manifest with { Allocations = null }, original.Manifest.Allocations!);
-        await SaveFixtureAsync(stores.Database, stores.Players, fixture, cancellationToken);
+        await SaveFixtureAsync(stores.Database, fixture, cancellationToken);
         try
         {
             await stores.Results.AcceptAndReleasePairAsync(fixture.Manifest.MatchId, fixture.Digest,
@@ -168,10 +170,11 @@ internal static class AtomicCardConsumptionTests
     private static async Task CheckLastCopyAsync(Stores stores, CancellationToken cancellationToken)
     {
         Fixture fixture = await CreateFixtureAsync(stores.Queue, cancellationToken);
-        await SaveFixtureAsync(stores.Database, stores.Players, fixture, cancellationToken);
+        await SaveFixtureAsync(stores.Database, fixture, cancellationToken);
         foreach (ParticipantManifest player in fixture.Manifest.Players)
         {
-            await stores.Players.SetSerialized(player.PlayerId, "CardManagerData", CardState(1), cancellationToken);
+            await LegacyTestAccounts.SetCardsForTestAsync(
+                stores.Database, player.PlayerId, CardState(1), cancellationToken);
         }
 
         Require(await stores.Results.AcceptAndReleasePairAsync(fixture.Manifest.MatchId, fixture.Digest,
@@ -182,15 +185,23 @@ internal static class AtomicCardConsumptionTests
     private static async Task CheckStaleSubsystemWriteAsync(Stores stores, CancellationToken cancellationToken)
     {
         Fixture fixture = await CreateFixtureAsync(stores.Queue, cancellationToken);
-        await SaveFixtureAsync(stores.Database, stores.Players, fixture, cancellationToken);
+        await SaveFixtureAsync(stores.Database, fixture, cancellationToken);
         string identity = fixture.Manifest.Players[0].PlayerId;
         var stale = await stores.Players.ById(identity, cancellationToken)
             ?? throw new InvalidDataException("Subsystem concurrency fixture account is absent.");
         await stores.Results.AcceptAndReleasePairAsync(fixture.Manifest.MatchId, fixture.Digest,
             fixture.Payload, cancellationToken);
-        var stalePack = new LegacyCardPackUpdate(CardState(StartingCopies + 1), stale.Gold, stale.WarBucks);
-        Require(!await stores.Players.TryPurchaseCardPackAsync(stale, stalePack, cancellationToken),
-            "An earlier-read card pack overwrote a committed battle debit.");
+        var receipts = new LegacyBufferStore(stores.Database);
+        await receipts.Initialize(cancellationToken);
+        var processor = new LegacyBufferProcessor(receipts, LegacyCatalog.Empty,
+            NullLogger<LegacyBufferProcessor>.Instance);
+        var buffer = new ParsedBuffer("after-battle-debit",
+            [new BufferedRequest(0, DatabaseAction.BuyCardPack, "{\"cardPack\":\"THREE_CARDS\"}")]);
+        AppliedLegacyBuffer refused = await processor.ApplyAsync(stale, buffer, cancellationToken);
+        string rollback = refused.Results[0]!["CardManagerData"]!.GetValue<string>();
+        Require(refused.Results[0]!["Result"]!.GetValue<int>() == (int)DatabaseResult.CardPackNotFound &&
+            OrdinaryCardInventory.Read(rollback)[SourceCard] == StartingCopies - 1,
+            "A buffered purchase replayed stale inventory over a committed battle debit.");
         var proposed = new Dictionary<string, string>
         {
             ["CardManagerData"] = CardState(StartingCopies + 1),

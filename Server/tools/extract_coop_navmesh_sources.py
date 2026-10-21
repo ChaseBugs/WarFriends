@@ -18,8 +18,8 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def extract():
-    missions = json.loads(MISSIONS.read_text(encoding="utf-8"))
+def build_document(mission_bytes):
+    missions = json.loads(mission_bytes)
     maps = missions["maps"]
     if len(maps) != 5:
         raise ValueError("expected five recovered co-op scenes")
@@ -78,16 +78,23 @@ def extract():
     }
 
 
+def verify_packaged_assets(manifest):
+    for row in manifest["maps"]:
+        source = CLIENT / row["sourceAsset"]
+        payload = (PACKAGE / row["packagedAsset"]).read_bytes()
+        if payload != source.read_bytes() or digest(payload) != row["sha256"]:
+            raise ValueError(f"packaged co-op NavMesh differs: {source}")
+
+
 def main():
-    manifest = extract()
+    if sys.argv[1:] not in ([], ["--check"]):
+        raise SystemExit("usage: extract_coop_navmesh_sources.py [--check]")
+    manifest = build_document(MISSIONS.read_bytes())
     encoded = (json.dumps(manifest, indent=2) + "\n").encode("utf-8")
     if sys.argv[1:] == ["--check"]:
         if OUTPUT.read_bytes() != encoded:
             raise ValueError("co-op NavMesh manifest differs from the Client")
-        for row in manifest["maps"]:
-            source = CLIENT / row["sourceAsset"]
-            if (PACKAGE / row["packagedAsset"]).read_bytes() != source.read_bytes():
-                raise ValueError(f"packaged co-op NavMesh differs: {source}")
+        verify_packaged_assets(manifest)
     elif not sys.argv[1:]:
         OUTPUT.write_bytes(encoded)
         PACKAGE.mkdir(parents=True, exist_ok=True)

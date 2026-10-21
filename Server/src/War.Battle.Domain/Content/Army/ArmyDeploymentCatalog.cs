@@ -1,0 +1,1064 @@
+using System.Security.Cryptography;
+using System.Numerics;
+using System.Text.Json;
+
+namespace War.BattleServer;
+
+/// <summary>The recovered scene's runtime army options, never a client-submitted catalog.</summary>
+public sealed partial class ArmyDeploymentCatalog
+{
+    private static readonly HashSet<string> RusherTypes=new(StringComparer.Ordinal)
+    {
+        "SoldierBehaviourCommando","SoldierBehaviourFlamethrower",
+        "SoldierBehaviourParachuter","SoldierBehaviourShotgunner",
+        "SoldierBehaviourSwat","SoldierBehaviourWarper"
+    };
+    public string Revision { get; }
+    /// <summary>Gets the exact source-sheet snapshot only after its complete validation succeeds.</summary>
+    public string? SourceSheetRevision { get; private set; }
+    public float MaxEnergy { get; }
+    public float BaseCooldown { get; }
+    public ArmyAgentConfig InfantryAgent { get; }
+    public IReadOnlyList<ArmyDeploymentFamily> Families { get; }
+    private readonly IReadOnlyDictionary<int,ArmyDeploymentOption> options;
+    private IReadOnlyDictionary<string,IReadOnlyList<ArmyBaseCombatStats>>? baseStats;
+    private IReadOnlyDictionary<string, int>? _startingLevels;
+    private IReadOnlyDictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>? upgradeShots;
+    private IReadOnlyList<ArmyGrenadeDamageStats>? grenadierDamageStages;
+    private IReadOnlyDictionary<string,IReadOnlyList<float>>? specialValues;
+    private IReadOnlyList<float>? transporterRepairBotHealth;
+    private IReadOnlyDictionary<string,IReadOnlyList<float>>? vehiclePassengerHealth;
+    private IReadOnlyList<int>? helicopterSeats;
+    private IReadOnlyList<float>? helicopterSoldierHealth;
+    private IReadOnlyList<float>? assaultHelicopterGlassHealth;
+    private IReadOnlyDictionary<string,float>? vehiclePassengerRespawnSeconds;
+    private IReadOnlyDictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>? vehicleCannonStages;
+    private IReadOnlyDictionary<string,ArmyPlayerDamagePolicy>? playerDamagePolicies;
+    private IReadOnlyDictionary<string,ArmyCoopCombatScale>? coopCombatScales;
+    private IReadOnlyDictionary<string,float>? shieldHitProbabilities;
+    private IReadOnlyDictionary<string,int>? normalLaneEnds;
+    private IReadOnlyDictionary<string,int>? eliteLaneStarts;
+    private float? droneBulletSpeed;
+    private float? droneShieldProbability;
+    private float? assaultHelicopterShieldProbability;
+    private IReadOnlyDictionary<string,float>? runtimeBulletSpeeds;
+    private ArmyDeploymentCatalog(string revision,float maxEnergy,float baseCooldown,ArmyAgentConfig infantryAgent,
+        IReadOnlyList<ArmyDeploymentFamily> families,Dictionary<int,ArmyDeploymentOption> options)
+    {Revision=revision;MaxEnergy=maxEnergy;BaseCooldown=baseCooldown;InfantryAgent=infantryAgent;Families=families;this.options=options;}
+
+    public ArmyDeploymentOption Option(int index)
+        =>options.TryGetValue(index,out var value) ? value : throw new ArgumentOutOfRangeException(nameof(index));
+
+    public float ShieldHitProbability(string unitId)
+    {
+        if (shieldHitProbabilities == null ||
+            !shieldHitProbabilities.TryGetValue(unitId, out float probability))
+            throw new InvalidDataException("Army shield-target probability is unavailable.");
+        return probability;
+    }
+
+    /// <summary>Unscaled recovered normal-upgrade row. Stage ownership and perk scales are separate authority.</summary>
+    public ArmyBaseCombatStats BaseStats(string unitId,int normalUpgradeIndex)
+    {
+        if(baseStats==null || !baseStats.TryGetValue(unitId,out var stages) ||
+           normalLaneEnds==null || !normalLaneEnds.TryGetValue(unitId,out int laneEnd) ||
+           normalUpgradeIndex<0 || normalUpgradeIndex>=laneEnd)
+            throw new ArgumentOutOfRangeException(nameof(normalUpgradeIndex));
+        var value=stages[normalUpgradeIndex];
+        if(value.Health<=0)throw new InvalidDataException("Army upgrade stage is an unplayable source sentinel.");
+        return value;
+    }
+
+    /// <summary>
+    /// Mission enemies use their normal upgrade row, then the source
+    /// ArmyUpgrades COOPHP/COOPDAMAGE pair. Heroic mode selects its own pair.
+    /// Card units follow CARDS_MIN/MAX interpolation and do not use this method.
+    /// </summary>
+    public ArmyBaseCombatStats CoopStats(
+        string unitId, int normalUpgradeIndex, bool heroic)
+    {
+        ArmyBaseCombatStats source = BaseStats(unitId, normalUpgradeIndex);
+        if (coopCombatScales == null ||
+            !coopCombatScales.TryGetValue(unitId, out ArmyCoopCombatScale? scale))
+            throw new InvalidDataException("Co-op combat scale is unavailable.");
+        float health = source.Health * (heroic ? scale.HeroicHealth : scale.Health);
+        float damage = source.Damage * (heroic ? scale.HeroicDamage : scale.Damage);
+        if (!float.IsFinite(health) || health <= 0 || health > 10_000_000 ||
+            !float.IsFinite(damage) || damage < 0 || damage > 10_000_000)
+            throw new InvalidDataException("Co-op enemy combat stats exceed source bounds.");
+        return new ArmyBaseCombatStats(health, damage);
+    }
+
+    /// <summary>
+    /// UpgradeSlots.LoadDataForCard interpolates two named source rows before
+    /// the co-op controller applies its enemy HP/damage multipliers.
+    /// </summary>
+    public ArmyBaseCombatStats CoopCardStats(
+        string unitId, int minimumIndex, int maximumIndex,
+        float progress, bool heroic)
+    {
+        if (baseStats == null || !baseStats.TryGetValue(unitId, out var stages) ||
+            coopCombatScales == null ||
+            !coopCombatScales.TryGetValue(unitId, out ArmyCoopCombatScale? scale) ||
+            minimumIndex < 0 || maximumIndex < minimumIndex ||
+            maximumIndex >= stages.Count ||
+            !float.IsFinite(progress) || progress < 0 || progress > 1)
+            throw new InvalidDataException("Invalid co-op card combat selection.");
+
+        ArmyBaseCombatStats minimum = stages[minimumIndex];
+        ArmyBaseCombatStats maximum = stages[maximumIndex];
+        if (minimum.Health <= 0 || maximum.Health <= 0)
+            throw new InvalidDataException("Co-op card row is an unplayable source sentinel.");
+        float health = (minimum.Health + (maximum.Health - minimum.Health) * progress) *
+            (heroic ? scale.HeroicHealth : scale.Health);
+        float damage = (minimum.Damage + (maximum.Damage - minimum.Damage) * progress) *
+            (heroic ? scale.HeroicDamage : scale.Damage);
+        if (!float.IsFinite(health) || health <= 0 || health > 10_000_000 ||
+            !float.IsFinite(damage) || damage < 0 || damage > 10_000_000)
+            throw new InvalidDataException("Co-op card combat stats exceed source bounds.");
+        return new ArmyBaseCombatStats(health, damage);
+    }
+
+    /// <summary>
+    /// CardSpawnUnit uses the owner's source level and the named card rows.
+    /// No packet may choose a unit, an upgrade index, health, or damage.
+    /// This returns base combat and firing fields; card spawning also needs
+    /// the source-specific grenade, drone, rocket, and animation setup.
+    /// </summary>
+    public ArmyCardBaseStats CardBaseStats(string sourceCardId,
+        int playerLevel, int maximumDisplayLevel)
+    {
+        var source = CardSpawnUnitSourceCatalog.Get(sourceCardId);
+        if (maximumDisplayLevel <= 0 || maximumDisplayLevel > 1000 ||
+            playerLevel < 0 || playerLevel > maximumDisplayLevel ||
+            baseStats == null || !baseStats.TryGetValue(source.UnitId, out var stages) ||
+            source.CardMaximumRowIndex >= stages.Count)
+            throw new InvalidDataException("Unit card level or source upgrade rows are invalid.");
+
+        float progress = (float)playerLevel / maximumDisplayLevel;
+        var minimum = stages[source.CardMinimumRowIndex];
+        var maximum = stages[source.CardMaximumRowIndex];
+        float health = minimum.Health + (maximum.Health - minimum.Health) * progress;
+        float damage = minimum.Damage + (maximum.Damage - minimum.Damage) * progress;
+        if (!float.IsFinite(health) || health <= 0 || health > 10_000_000 ||
+            !float.IsFinite(damage) || damage < 0 || damage > 10_000_000)
+            throw new InvalidDataException("Unit card base combat stats exceed source bounds.");
+
+        var shot = ComposeCardShot(source.UnitId, source.CardMinimumRowIndex,
+            source.CardMaximumRowIndex, progress);
+        ArmyGrenadeDamageStats? grenade = source.UnitId == "ID_UNIT-GRENADIER"
+            ? ComposeCardGrenadeDamage(source, progress)
+            : null;
+        ArmyCardDroneRuntime? drone = source.UnitId == "ID_UNIT-DRONE"
+            ? ComposeCardDroneRuntime()
+            : null;
+        ArmyCardRocketRuntime? rocket = source.UnitId == "ID_UNIT-ROCKETSOLDIER"
+            ? ComposeCardRocketRuntime(damage)
+            : null;
+        ArmyCardGrenadierRuntime? grenadier = source.UnitId == "ID_UNIT-GRENADIER"
+            ? ComposeGrenadierRuntime()
+            : null;
+        return new ArmyCardBaseStats(source, progress,
+            new ArmyBaseCombatStats(health, damage), shot, grenade, drone,
+            rocket, grenadier);
+    }
+
+    internal ArmyCardGrenadierRuntime ComposeGrenadierRuntime(float fuseSeconds = 3f)
+    {
+        // SoldierBehaviourGrennader.ApplyWeaponsSetup overrides the prefab's
+        // zero-second fuse. SpawnByCard has no special upgrade, so its normal
+        // three-second branch applies. The throw and blast shape come from
+        // the recovered GrenadeEnemy prefab.
+        float behindShield = PlayerDamagePolicy(
+            "ID_UNIT-GRENADIER").BehindShieldRatio;
+        if (!float.IsFinite(behindShield) || behindShield < 0 ||
+            !float.IsFinite(fuseSeconds) || fuseSeconds < 0f || fuseSeconds > 3f)
+            throw new InvalidDataException("Grenadier weapon fuse or shield damage is invalid.");
+        return new ArmyCardGrenadierRuntime(fuseSeconds, 45f, 0f, 0.9f, 1.2f,
+            behindShield, 0.4f);
+    }
+
+    private ArmyCardRocketRuntime ComposeCardRocketRuntime(float cardDamage)
+    {
+        // SoldierBehaviourBazooka.ApplyWeaponsSetup gives its MissileSetup
+        // one tenth of the card-row damage on direct contact and the full
+        // damage on explosion. SpawnByCard has no special upgrade, so speed
+        // is the source's ordinary 3 units/second branch.
+        float directDamage = cardDamage * 0.1f;
+        float behindShield = PlayerDamagePolicy(
+            "ID_UNIT-ROCKETSOLDIER").BehindShieldRatio;
+        if (!float.IsFinite(directDamage) || directDamage < 0 ||
+            !float.IsFinite(behindShield) || behindShield < 0)
+            throw new InvalidDataException("Rocket card missile setup is invalid.");
+        return new ArmyCardRocketRuntime(directDamage, cardDamage, 3f,
+            behindShield);
+    }
+
+    private ArmyCardDroneRuntime ComposeCardDroneRuntime()
+    {
+        var family = Families.Single(family => family.UnitId == "ID_UNIT-DRONE");
+        if (droneBulletSpeed is not float shotSpeed ||
+            droneShieldProbability is not float shieldProbability)
+            throw new InvalidDataException("Drone card runtime constants are unavailable.");
+
+        // AIObject.SpawnByCard uses a new UnitUpgrades(1f), so isSpecial is
+        // false. Drone's invisibility branch requires hasSpecial and cannot
+        // be enabled by the card's ordinary SPECIAL table column.
+        return new ArmyCardDroneRuntime(family.MovementSpeed, shotSpeed,
+            shieldProbability, CanTurnInvisible: false);
+    }
+
+    private ArmyGrenadeDamageStats ComposeCardGrenadeDamage(
+        CardSpawnUnitSourceCatalog.Row source, float progress)
+    {
+        if (grenadierDamageStages == null ||
+            source.CardMaximumRowIndex >= grenadierDamageStages.Count)
+            throw new InvalidDataException("Grenadier card damage rows are unavailable.");
+
+        var minimum = grenadierDamageStages[source.CardMinimumRowIndex];
+        var maximum = grenadierDamageStages[source.CardMaximumRowIndex];
+
+        // SoldierBehaviourDefinititonGrennader.Interpolate truncates both
+        // grenade fields to integers after interpolating the card rows.
+        float near = (int)(minimum.Minimum +
+            (maximum.Minimum - minimum.Minimum) * progress);
+        float explosion = (int)(minimum.Explosion +
+            (maximum.Explosion - minimum.Explosion) * progress);
+        return new ArmyGrenadeDamageStats(near, explosion);
+    }
+
+    /// <summary>UpgradeSlotsHelicopter adds Seats across selected lanes; GetSoldierHpInMechanic reads only the normal row.</summary>
+    public ArmyHelicopterCrewStats ComposeHelicopterCrew(int normalIndex,int? specialIndex,int? eliteIndex)
+    {
+        const string unitId="ID_UNIT-HELICOPTER";
+        _=BaseStats(unitId,normalIndex);
+        if(helicopterSeats==null||helicopterSoldierHealth==null)
+            throw new InvalidDataException("Helicopter crew upgrade authority is unavailable.");
+        ValidateOptionalLanes(unitId,helicopterSeats.Count,specialIndex,eliteIndex);
+        int seats=helicopterSeats[normalIndex];
+        if(specialIndex.HasValue)seats=checked(seats+helicopterSeats[specialIndex.Value]);
+        if(eliteIndex.HasValue)seats=checked(seats+helicopterSeats[eliteIndex.Value]);
+        float health=helicopterSoldierHealth[normalIndex];
+        if(seats is <0 or >6||!float.IsFinite(health)||health<=0)
+            throw new InvalidDataException("Helicopter crew exceeds source points or lacks normal-row health.");
+        return new(seats,health);
+    }
+    public ArmyHelicopterCrewStats EffectiveHelicopterCrew(int normalIndex,int? specialIndex,
+        int? eliteIndex,ArmyHealthFactors factors)
+    {
+        ArgumentNullException.ThrowIfNull(factors);
+        if(!float.IsFinite(factors.UpgradeScale)||factors.UpgradeScale<=0||factors.UpgradeScale>100)
+            throw new InvalidDataException("Invalid trusted Helicopter crew health scale.");
+        var raw=ComposeHelicopterCrew(normalIndex,specialIndex,eliteIndex);
+        float health=raw.SoldierHealth*factors.UpgradeScale;
+        if(!float.IsFinite(health)||health<=0||health>10_000_000)
+            throw new InvalidDataException("Helicopter crew health is outside source combat bounds.");
+        return raw with{SoldierHealth=health};
+    }
+
+    /// <summary>
+    /// Helicopter.Spawn creates attached soldiers from the normal upgrade row.
+    /// MissionsManager.ScaleUpgradesForMission applies COOPHP to enemy crew
+    /// before Helicopter.SpawnAssaulter sets each soldier's maximum health.
+    /// </summary>
+    public ArmyHelicopterCrewStats CoopHelicopterCrew(int normalIndex, bool heroic = false)
+    {
+        const string unitId = "ID_UNIT-HELICOPTER";
+        ArmyHelicopterCrewStats source = ComposeHelicopterCrew(normalIndex, null, null);
+        if (coopCombatScales == null ||
+            !coopCombatScales.TryGetValue(unitId, out ArmyCoopCombatScale? scale))
+            throw new InvalidDataException("Co-op Helicopter crew scale is unavailable.");
+        float maximumHealth = source.SoldierHealth *
+            (heroic ? scale.HeroicHealth : scale.Health);
+        if (!float.IsFinite(maximumHealth) || maximumHealth <= 0 ||
+            maximumHealth > 10_000_000)
+            throw new InvalidDataException("Co-op Helicopter crew health exceeds source bounds.");
+        return source with { SoldierHealth = maximumHealth };
+    }
+
+    /// <summary>Source LoadData adds each bought lane's row before perk and mode scaling.</summary>
+    public ArmyBaseCombatStats ComposeStats(string unitId,int normalIndex,int? specialIndex,int? eliteIndex)
+    {
+        var normal=BaseStats(unitId,normalIndex);
+        var stages=baseStats![unitId];
+        int specialStart=normalLaneEnds![unitId];
+        int eliteStart=eliteLaneStarts![unitId];
+        if(specialIndex is { } special && (special<specialStart ||
+            special>=(eliteStart==-1 ? stages.Count : eliteStart)))
+            throw new ArgumentOutOfRangeException(nameof(specialIndex));
+        if(eliteIndex is { } elite && (eliteStart==-1 || elite<eliteStart || elite>=stages.Count))
+            throw new ArgumentOutOfRangeException(nameof(eliteIndex));
+        float health=normal.Health,damage=normal.Damage;
+        if(specialIndex.HasValue)
+        { health+=stages[specialIndex.Value].Health;damage+=stages[specialIndex.Value].Damage; }
+        if(eliteIndex.HasValue)
+        { health+=stages[eliteIndex.Value].Health;damage+=stages[eliteIndex.Value].Damage; }
+        if(!float.IsFinite(health) || health<=0 || !float.IsFinite(damage) || damage<0)
+            throw new InvalidDataException("Composed army stats are outside the recovered combat domain.");
+        return new ArmyBaseCombatStats(health,damage);
+    }
+
+    /// <summary>UpgradeSlotsBaseSoldier adds SPECIAL from every selected upgrade lane.</summary>
+    public float ComposeSpecial(string unitId,int normalIndex,int? specialIndex,int? eliteIndex)
+    {
+        _=BaseStats(unitId,normalIndex);
+        if(specialValues==null||!specialValues.TryGetValue(unitId,out var stages))
+            throw new InvalidDataException("Army special upgrade authority is unavailable.");
+        ValidateOptionalLanes(unitId,stages.Count,specialIndex,eliteIndex);
+        float value=stages[normalIndex];
+        if(specialIndex.HasValue)value+=stages[specialIndex.Value];
+        if(eliteIndex.HasValue)value+=stages[eliteIndex.Value];
+        if(!float.IsFinite(value)||Math.Abs(value)>1_000_000)
+            throw new InvalidDataException("Composed army special is outside the recovered combat domain.");
+        return value;
+    }
+
+    private void ValidateOptionalLanes(string unitId,int stageCount,int? specialIndex,int? eliteIndex)
+    {
+        int specialStart=normalLaneEnds![unitId];
+        int eliteStart=eliteLaneStarts![unitId];
+        if(specialIndex is { } special&&(special<specialStart||
+            special>=(eliteStart==-1?stageCount:eliteStart)))
+            throw new ArgumentOutOfRangeException(nameof(specialIndex));
+        if(eliteIndex is { } elite&&(eliteStart==-1||elite<eliteStart||elite>=stageCount))
+            throw new ArgumentOutOfRangeException(nameof(eliteIndex));
+    }
+
+    /// <summary>UpgradeSlotsBaseSoldier zeroes these fields, then adds every selected lane row.</summary>
+    public ArmyBaseShotStats ComposeShot(string unitId,int normalIndex,int? specialIndex,int? eliteIndex,
+        float accuracyCoefficient=1f)
+    {
+        _=BaseStats(unitId,normalIndex);
+        if(upgradeShots==null||!upgradeShots.TryGetValue(unitId,out var stages))
+            throw new InvalidDataException("Army shot upgrade authority is unavailable.");
+        int specialStart=normalLaneEnds![unitId];
+        int eliteStart=eliteLaneStarts![unitId];
+        if(specialIndex is { } special&&(special<specialStart||
+            special>=(eliteStart==-1?stages.Count:eliteStart)))
+            throw new ArgumentOutOfRangeException(nameof(specialIndex));
+        if(eliteIndex is { } elite&&(eliteStart==-1||elite<eliteStart||elite>=stages.Count))
+            throw new ArgumentOutOfRangeException(nameof(eliteIndex));
+        if(!float.IsFinite(accuracyCoefficient)||accuracyCoefficient<=0||accuracyCoefficient>10)
+            throw new InvalidDataException("Invalid trusted army accuracy coefficient.");
+        var selected=new List<ArmyUpgradeShotStats>{stages[normalIndex]};
+        if(specialIndex.HasValue)selected.Add(stages[specialIndex.Value]);
+        if(eliteIndex.HasValue)selected.Add(stages[eliteIndex.Value]);
+        float probability=selected.Sum(x=>x.ProbabilityOfRealShot)*accuracyCoefficient;
+        int minimum=selected.Sum(x=>x.FireBatchSizeMin);
+        int maximum=selected.Sum(x=>x.FireBatchSizeMax);
+        float minTime=selected.Sum(x=>x.MinShootTime);
+        float maxTime=selected.Sum(x=>x.MaxShootTime);
+        if(!float.IsFinite(probability)||probability<0||probability>40||minimum<1||
+           maximum<minimum||maximum>64||!float.IsFinite(minTime)||!float.IsFinite(maxTime)||
+           minTime<0||maxTime<minTime||maxTime>180)
+            throw new InvalidDataException("Composed army shot stats are outside the recovered combat domain.");
+        return new(probability,minimum,maximum,minTime,maxTime);
+    }
+
+    /// <summary>
+    /// UpgradeSlots.LoadDataForCard loads CARDS_MIN and CARDS_MAX separately,
+    /// then SoldierBehaviourDefinititon.Interpolate blends their shot fields.
+    /// The Client truncates interpolated batch sizes toward zero.
+    /// </summary>
+    public ArmyBaseShotStats ComposeCardShot(string unitId,
+        int minimumIndex, int maximumIndex, float progress)
+    {
+        if (upgradeShots == null ||
+            !upgradeShots.TryGetValue(unitId, out var stages) ||
+            baseStats == null || !baseStats.TryGetValue(unitId, out var combatStages) ||
+            minimumIndex < 0 || maximumIndex < minimumIndex ||
+            maximumIndex >= stages.Count || maximumIndex >= combatStages.Count ||
+            !float.IsFinite(progress) || progress is < 0 or > 1 ||
+            combatStages[minimumIndex].Health <= 0 ||
+            combatStages[maximumIndex].Health <= 0)
+            throw new InvalidDataException("Invalid co-op card shot selection.");
+
+        ArmyUpgradeShotStats minimum = stages[minimumIndex];
+        ArmyUpgradeShotStats maximum = stages[maximumIndex];
+        float probability = minimum.ProbabilityOfRealShot +
+            (maximum.ProbabilityOfRealShot - minimum.ProbabilityOfRealShot) * progress;
+        int batchMinimum = (int)(minimum.FireBatchSizeMin +
+            (maximum.FireBatchSizeMin - minimum.FireBatchSizeMin) * progress);
+        int batchMaximum = (int)(minimum.FireBatchSizeMax +
+            (maximum.FireBatchSizeMax - minimum.FireBatchSizeMax) * progress);
+        float timeMinimum = minimum.MinShootTime +
+            (maximum.MinShootTime - minimum.MinShootTime) * progress;
+        float timeMaximum = minimum.MaxShootTime +
+            (maximum.MaxShootTime - minimum.MaxShootTime) * progress;
+        if (!float.IsFinite(probability) || probability is < 0 or > 40 ||
+            batchMinimum < 1 || batchMaximum < batchMinimum ||
+            batchMaximum > 64 || !float.IsFinite(timeMinimum) ||
+            !float.IsFinite(timeMaximum) || timeMinimum < 0 ||
+            timeMaximum < timeMinimum || timeMaximum > 180)
+            throw new InvalidDataException("Co-op card shot stats are outside source bounds.");
+        return new ArmyBaseShotStats(probability, batchMinimum,
+            batchMaximum, timeMinimum, timeMaximum);
+    }
+
+    public ArmyVehicleShotStats ComposeDroneShot(int normalIndex,int? specialIndex,int? eliteIndex,
+        float shotSpeedCoefficient=1)
+    {
+        const string unitId="ID_UNIT-DRONE";
+        _=BaseStats(unitId,normalIndex);
+        if(droneBulletSpeed is not float speed||droneShieldProbability is not float shield||upgradeShots==null||!upgradeShots.TryGetValue(unitId,out var stages))
+            throw new InvalidDataException("Drone runtime shot authority unavailable.");
+        ValidateOptionalLanes(unitId,stages.Count,specialIndex,eliteIndex);
+        if(!float.IsFinite(shotSpeedCoefficient)||shotSpeedCoefficient<=0||shotSpeedCoefficient>10)
+            throw new InvalidDataException("Invalid Drone shot-speed perk.");
+        var selected=new List<ArmyUpgradeShotStats>{stages[normalIndex]};
+        if(specialIndex.HasValue)selected.Add(stages[specialIndex.Value]);
+        if(eliteIndex.HasValue)selected.Add(stages[eliteIndex.Value]);
+        // VehicleBehaviourDefinititon inherits ScaleByPerk: shotSpeed changes, accuracy does not.
+        float probability=selected.Sum(x=>x.ProbabilityOfRealShot);
+        int minimum=selected.Sum(x=>x.FireBatchSizeMin),maximum=selected.Sum(x=>x.FireBatchSizeMax);
+        float minTime=selected.Sum(x=>x.MinShootTime),maxTime=selected.Sum(x=>x.MaxShootTime);
+        float effectiveSpeed=speed*shotSpeedCoefficient;
+        if(!float.IsFinite(probability)||probability<0||probability>3||minimum<0||maximum<minimum||maximum>32||
+           !float.IsFinite(minTime)||!float.IsFinite(maxTime)||minTime<0||maxTime<minTime||maxTime>60||
+           !float.IsFinite(effectiveSpeed)||effectiveSpeed<=0||effectiveSpeed>1000)
+            throw new InvalidDataException("Invalid composed Drone shot contract.");
+        return new(effectiveSpeed,probability,minimum,maximum,minTime,maxTime,0,shield);
+    }
+    /// <summary>Vehicle UpgradesLoaded replaces serialized turret timing with selected upgrade rows.</summary>
+    public ArmyVehicleShotStats ComposeVehicleShot(string unitId,int normalIndex,int? specialIndex,
+        int? eliteIndex,float accuracyCoefficient=1f,float shotSpeedCoefficient=1f)
+        =>ComposeVehicleShotCore(unitId,normalIndex,specialIndex,eliteIndex,
+            accuracyCoefficient,shotSpeedCoefficient,null);
+
+    /// <summary>Helicopter.UpgradesLoaded copies the same VehicleBehaviourDefinititon shot fields to its turret.</summary>
+    public ArmyVehicleShotStats ComposeHelicopterShot(int normalIndex,int? specialIndex,
+        int? eliteIndex,float shotSpeedCoefficient=1f)
+        =>ComposeVehicleShotCore("ID_UNIT-HELICOPTER",normalIndex,specialIndex,eliteIndex,
+            1f,shotSpeedCoefficient,"HelicopterBehaviour");
+
+    /// <summary>AssaultHelicopter.UpgradesLoaded takes firing cadence from its attached AssaultHeli upgrade sheet.</summary>
+    public ArmyVehicleShotStats ComposeAssaultHelicopterShot(int normalIndex,int? specialIndex,
+        int? eliteIndex,float shotSpeedCoefficient=1f)
+        =>ComposeVehicleShotCore("ID_UNIT-ASSAULTHELI",normalIndex,specialIndex,eliteIndex,
+            1f,shotSpeedCoefficient,"AssaultHelicopterBehaviour");
+
+    /// <summary>The Client gives glass its own DestroyableObject and adds GLASSHP from each selected lane.</summary>
+    public float EffectiveAssaultHelicopterGlassHealth(int normalIndex,int? specialIndex,
+        int? eliteIndex,ArmyHealthFactors factors)
+    {
+        ArgumentNullException.ThrowIfNull(factors);
+        _=BaseStats("ID_UNIT-ASSAULTHELI",normalIndex);
+        var stages=assaultHelicopterGlassHealth??
+            throw new InvalidDataException("Assault Helicopter glass upgrade authority is unavailable.");
+        ValidateOptionalLanes("ID_UNIT-ASSAULTHELI",stages.Count,specialIndex,eliteIndex);
+        if(!float.IsFinite(factors.UpgradeScale)||factors.UpgradeScale<=0||factors.UpgradeScale>100)
+            throw new InvalidDataException("Invalid trusted Assault Helicopter glass health scale.");
+        float health=stages[normalIndex];
+        if(specialIndex.HasValue)health+=stages[specialIndex.Value];
+        if(eliteIndex.HasValue)health+=stages[eliteIndex.Value];
+        health*=factors.UpgradeScale;
+        if(!float.IsFinite(health)||health<=0||health>10_000_000)
+            throw new InvalidDataException("Assault Helicopter glass health is outside host bounds.");
+        return health;
+    }
+
+    /// <summary>Reads source infantry bullet speed with the trusted perk coefficient applied once.</summary>
+    public float EffectiveInfantryBulletSpeed(string unitId, float coefficient)
+    {
+        ArmyDeploymentFamily? family = Families.SingleOrDefault(row => row.UnitId == unitId);
+        if (family == null || !family.IsSoldier || runtimeBulletSpeeds == null ||
+            !runtimeBulletSpeeds.TryGetValue(unitId, out float speed) ||
+            !float.IsFinite(coefficient) || coefficient <= 0f || coefficient > 10f)
+        {
+            throw new InvalidDataException("Infantry bullet speed lost its source family or trusted perk.");
+        }
+
+        float result = speed * coefficient;
+        if (!float.IsFinite(result) || result <= 0f || result > 10_000f)
+        {
+            throw new InvalidDataException("Infantry bullet speed exceeds the composed source domain.");
+        }
+
+        return result;
+    }
+
+    private ArmyVehicleShotStats ComposeVehicleShotCore(string unitId,int normalIndex,int? specialIndex,
+        int? eliteIndex,float accuracyCoefficient,float shotSpeedCoefficient,string? requiredAirBehavior)
+    {
+        var family=Families.SingleOrDefault(f=>f.UnitId==unitId)??
+            throw new ArgumentOutOfRangeException(nameof(unitId));
+        if(family.VehicleShot==null||family.IsSoldier||
+           (requiredAirBehavior==null?family.IsAir:family.BehaviorType!=requiredAirBehavior))
+            throw new InvalidDataException("Army family has no matching vehicle shot contract.");
+        _=BaseStats(unitId,normalIndex);
+        if(upgradeShots==null||!upgradeShots.TryGetValue(unitId,out var stages))
+            throw new InvalidDataException("Vehicle shot upgrade authority is unavailable.");
+        ValidateOptionalLanes(unitId,stages.Count,specialIndex,eliteIndex);
+        if(!float.IsFinite(accuracyCoefficient)||accuracyCoefficient<=0||accuracyCoefficient>10)
+            throw new InvalidDataException("Invalid trusted vehicle accuracy coefficient.");
+        var selected=new List<ArmyUpgradeShotStats>{stages[normalIndex]};
+        if(specialIndex.HasValue)selected.Add(stages[specialIndex.Value]);
+        if(eliteIndex.HasValue)selected.Add(stages[eliteIndex.Value]);
+        // Accuracy applies only to SoldierBehaviourDefinititon, not vehicles.
+        float probability=selected.Sum(x=>x.ProbabilityOfRealShot);
+        if(runtimeBulletSpeeds==null||!runtimeBulletSpeeds.TryGetValue(unitId,out float bulletSpeed)||
+           !float.IsFinite(shotSpeedCoefficient)||shotSpeedCoefficient<=0||shotSpeedCoefficient>10)
+            throw new InvalidDataException("Vehicle runtime bullet speed unavailable.");
+        float effectiveSpeed=bulletSpeed*shotSpeedCoefficient;
+        int minimum=selected.Sum(x=>x.FireBatchSizeMin);
+        int maximum=selected.Sum(x=>x.FireBatchSizeMax);
+        float minTime=selected.Sum(x=>x.MinShootTime);
+        float maxTime=selected.Sum(x=>x.MaxShootTime);
+        if(!float.IsFinite(probability)||probability<0||probability>3||!float.IsFinite(effectiveSpeed)||effectiveSpeed<=0||effectiveSpeed>1000||minimum<0||maximum<minimum||maximum>64||
+           !float.IsFinite(minTime)||!float.IsFinite(maxTime)||minTime<0||maxTime<minTime||maxTime>180||
+           (maximum==0&&(minimum!=0||minTime!=0||maxTime!=0)))
+            throw new InvalidDataException("Composed vehicle shot stats are outside the recovered combat domain.");
+        float shieldProbability=unitId=="ID_UNIT-ASSAULTHELI"
+            ? assaultHelicopterShieldProbability??
+                throw new InvalidDataException("Assault Helicopter shield policy is unavailable.")
+            : 0;
+        return new(effectiveSpeed,probability,minimum,maximum,minTime,maxTime,
+            family.VehicleShot.Crew,shieldProbability);
+    }
+
+    /// <summary>Buggy LoadDefinitionFromXLS adds cannon damage and timing from every selected lane.</summary>
+    public ArmyVehicleCannonStats ComposeBuggyCannon(int normalIndex,int? specialIndex,int? eliteIndex)
+        =>ComposeVehicleCannon("ID_UNIT-BUGGY",normalIndex,specialIndex,eliteIndex,1,1);
+
+    /// <summary>Vehicle LoadDefinitionFromXLS composes its cannon lane independently of primary fire.</summary>
+    public ArmyVehicleCannonStats ComposeVehicleCannon(string unitId,int normalIndex,int? specialIndex,
+        int? eliteIndex,float damageScale,float cooldownScale)
+    {
+        _=BaseStats(unitId,normalIndex);
+        if(unitId is not ("ID_UNIT-BUGGY" or "ID_UNIT-TANK")||vehicleCannonStages==null||
+           !vehicleCannonStages.TryGetValue(unitId,out var stages)||!float.IsFinite(damageScale)||
+           damageScale<=0||damageScale>100||!float.IsFinite(cooldownScale)||cooldownScale<=0||cooldownScale>1)
+            throw new InvalidDataException("Vehicle cannon authority is unavailable.");
+        ValidateOptionalLanes(unitId,stages.Count,specialIndex,eliteIndex);
+        var selected=new List<ArmyVehicleCannonStats>{stages[normalIndex]};
+        if(specialIndex.HasValue)selected.Add(stages[specialIndex.Value]);
+        if(eliteIndex.HasValue)selected.Add(stages[eliteIndex.Value]);
+        float damage=selected.Sum(x=>x.Damage)*damageScale;
+        float min=selected.Sum(x=>x.MinShootTime)*cooldownScale;
+        float max=selected.Sum(x=>x.MaxShootTime)*cooldownScale;
+        if(!float.IsFinite(damage)||damage<=0||damage>10_000_000||!float.IsFinite(min)||
+           !float.IsFinite(max)||min<0||max<min||max>180)
+            throw new InvalidDataException("Composed vehicle cannon stats are outside the recovered combat domain.");
+        return new(damage,min,max);
+    }
+
+    /// <summary>UpgradeSlotsGeneric exposes these family-wide source ratios to every spawned weapon.</summary>
+    public ArmyPlayerDamagePolicy PlayerDamagePolicy(string unitId)
+        =>playerDamagePolicies!=null&&playerDamagePolicies.TryGetValue(unitId,out var value)?value:
+            throw new ArgumentOutOfRangeException(nameof(unitId));
+
+    /// <summary>Vehicle.GenerateEnemy replaces the attached soldier's HP from the selected normal row.</summary>
+    public float VehiclePassengerMaximumHealth(string unitId,int normalIndex,float upgradeScale)
+    {
+        _=BaseStats(unitId,normalIndex);
+        if(vehiclePassengerHealth==null||!vehiclePassengerHealth.TryGetValue(unitId,out var stages)||
+           normalIndex>=stages.Count||!float.IsFinite(upgradeScale)||upgradeScale<=0||upgradeScale>100)
+            throw new InvalidDataException("Vehicle passenger health authority is unavailable.");
+        float result=stages[normalIndex]*upgradeScale;
+        if(!float.IsFinite(result)||result<=0||result>10_000_000)
+            throw new InvalidDataException("Vehicle passenger health is outside the recovered domain.");
+        return result;
+    }
+
+    public int VehiclePassengerRespawnTicks(string unitId)
+    {
+        if(vehiclePassengerRespawnSeconds==null||
+           !vehiclePassengerRespawnSeconds.TryGetValue(unitId,out float seconds)||
+           !float.IsFinite(seconds)||seconds<=0||seconds>3600)
+            throw new InvalidDataException("Vehicle passenger respawn authority is unavailable.");
+        return checked((int)MathF.Ceiling(seconds*MatchManifest.TickRate));
+    }
+
+    /// <summary>AICarTransporter creates its two drones only with a selected special lane.</summary>
+    public TransporterRepairDroneStats ComposeTransporterRepairDrone(int normalIndex,int specialIndex,
+        int? eliteIndex,ArmyHealthFactors factors)
+    {
+        ArgumentNullException.ThrowIfNull(factors);
+        _=BaseStats("ID_UNIT-TRANSPORTER",normalIndex);
+        if(transporterRepairBotHealth==null||!float.IsFinite(factors.PerkCoefficient)||
+           factors.PerkCoefficient<=0||factors.PerkCoefficient>100||!float.IsFinite(factors.UpgradeScale)||
+           factors.UpgradeScale<=0||factors.UpgradeScale>100)
+            throw new InvalidDataException("Transporter repair-drone authority is unavailable.");
+        ValidateOptionalLanes("ID_UNIT-TRANSPORTER",transporterRepairBotHealth.Count,specialIndex,eliteIndex);
+        float ratio=transporterRepairBotHealth[normalIndex]+transporterRepairBotHealth[specialIndex];
+        if(eliteIndex.HasValue)ratio+=transporterRepairBotHealth[eliteIndex.Value];
+        // CarTransporterBehaviourDefinititon.ScaleDamageAndHP scales repairBotHP as well as base health.
+        ratio*=factors.UpgradeScale;
+        float heal=ComposeSpecial("ID_UNIT-TRANSPORTER",normalIndex,specialIndex,eliteIndex);
+        float maximum=EffectiveHealth("ID_UNIT-TRANSPORTER",normalIndex,specialIndex,eliteIndex,factors)*ratio;
+        if(!float.IsFinite(heal)||heal<=0||heal>10||!float.IsFinite(ratio)||ratio<=0||ratio>10||
+           !float.IsFinite(maximum)||maximum<=0||maximum>10_000_000)
+            throw new InvalidDataException("Transporter repair-drone stats are outside the recovered domain.");
+        return new(heal,maximum);
+    }
+
+    public float EffectiveHealth(string unitId,int normalIndex,int? specialIndex,int? eliteIndex,
+        ArmyHealthFactors factors)
+    {
+        ArgumentNullException.ThrowIfNull(factors);
+        if(!float.IsFinite(factors.PerkCoefficient) || factors.PerkCoefficient<=0 ||
+           factors.PerkCoefficient>100 || !float.IsFinite(factors.UpgradeScale) ||
+           factors.UpgradeScale<=0 || factors.UpgradeScale>100)
+            throw new InvalidDataException("Invalid trusted army health factors.");
+        float health=ComposeStats(unitId,normalIndex,specialIndex,eliteIndex).Health;
+        health*=factors.PerkCoefficient;
+        health*=factors.UpgradeScale;
+        if(!float.IsFinite(health) || health<=0 || health>10_000_000)
+            throw new InvalidDataException("Army effective health is outside the host combat domain.");
+        return health;
+    }
+
+    // AIObject.SyncUpgradesRPC applies scaleDamage after the upgrade lanes load.
+    // Perk.ScaleByPerk changes HP/speed/shot speed, not damage.
+    public float EffectiveDamage(string unitId,int normalIndex,int? specialIndex,int? eliteIndex,
+        float damageScale)
+    {
+        if(!float.IsFinite(damageScale) || damageScale<=0 || damageScale>100)
+            throw new InvalidDataException("Invalid trusted army damage scale.");
+        float damage=ComposeStats(unitId,normalIndex,specialIndex,eliteIndex).Damage*damageScale;
+        if(!float.IsFinite(damage) || damage<0 || damage>10_000_000)
+            throw new InvalidDataException("Army effective damage is outside the host combat domain.");
+        return damage;
+    }
+
+    // UpgradeSlotsGeneric.LoadData replaces the serialized behavior speed with
+    // ArmyUpgrades.MOVEMENTSPEED, then ScaleByPerk applies speedCoef.
+    public float EffectiveSpeed(string unitId,float perkSpeedCoefficient)
+        =>EffectiveSpeed(unitId,perkSpeedCoefficient,0,null,null,validateUpgrade:false);
+
+    /// <summary>SWAT UpdateVisual multiplies runtime speed by one plus the selected special lane.</summary>
+    public float EffectiveSpeed(string unitId,float perkSpeedCoefficient,int normalIndex,
+        int? specialIndex,int? eliteIndex)
+        =>EffectiveSpeed(unitId,perkSpeedCoefficient,normalIndex,specialIndex,eliteIndex,validateUpgrade:true);
+
+    private float EffectiveSpeed(string unitId,float perkSpeedCoefficient,int normalIndex,
+        int? specialIndex,int? eliteIndex,bool validateUpgrade)
+    {
+        var family=Families.SingleOrDefault(f=>f.UnitId==unitId) ??
+            throw new ArgumentOutOfRangeException(nameof(unitId));
+        if(!float.IsFinite(perkSpeedCoefficient) || perkSpeedCoefficient<=0 ||
+           perkSpeedCoefficient>100)
+            throw new InvalidDataException("Invalid trusted army perk speed coefficient.");
+        float speed=family.MovementSpeed*perkSpeedCoefficient;
+        if(validateUpgrade)
+        {
+            float special=ComposeSpecial(unitId,normalIndex,specialIndex,eliteIndex);
+            if(family.BehaviorType=="SoldierBehaviourSwat"&&specialIndex.HasValue)
+            {
+                if(special<0||special>10)
+                    throw new InvalidDataException("SWAT special speed is outside its recovered combat domain.");
+                speed*=1+special;
+            }
+        }
+        if(!float.IsFinite(speed) || speed<=0 || speed>20)
+            throw new InvalidDataException("Army effective speed is outside the host movement domain.");
+        return speed;
+    }
+
+    public void ValidateSourceSheet(string contentPath)
+    {
+        SourceSheetRevision = null;
+        byte[] sourceBytes = File.ReadAllBytes(contentPath);
+        using var document=JsonDocument.Parse(sourceBytes);
+        var sheet=document.RootElement.GetProperty("sheets").EnumerateArray()
+            .Single(x=>x.GetProperty("type").GetString()=="Google2u.ArmyUpgrades");
+        var rows=sheet.GetProperty("rows").EnumerateArray().ToDictionary(
+            x=>x.GetProperty("NAME").GetString()!,StringComparer.Ordinal);
+        var sourceSheets=document.RootElement.GetProperty("sheets").EnumerateArray()
+            .ToDictionary(x=>x.GetProperty("type").GetString()!,StringComparer.Ordinal);
+        IReadOnlyList<float> mortarBuildTimes = ReadMortarBuildTimes(sourceSheets["Google2u.DBUpgradeSlotsMortar"]);
+        var acceptedStats=new Dictionary<string,IReadOnlyList<ArmyBaseCombatStats>>(StringComparer.Ordinal);
+        var acceptedShots=new Dictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>(StringComparer.Ordinal);
+        var acceptedSpecials=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
+        IReadOnlyList<float>? acceptedRepairBotHealth=null;
+        IReadOnlyList<float>? acceptedAssaultGlassHealth=null;
+        var acceptedPassengerHealth=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
+        var acceptedPassengerRespawn=new Dictionary<string,float>(StringComparer.Ordinal);
+        var acceptedPlayerDamage=new Dictionary<string,ArmyPlayerDamagePolicy>(StringComparer.Ordinal);
+        var acceptedCoopScales=new Dictionary<string,ArmyCoopCombatScale>(StringComparer.Ordinal);
+        var acceptedShieldProbabilities=new Dictionary<string,float>(StringComparer.Ordinal);
+        var acceptedVehicleCannons=new Dictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>(StringComparer.Ordinal);
+        var acceptedLaneEnds=new Dictionary<string,int>(StringComparer.Ordinal);
+        var acceptedStartingLevels = new Dictionary<string, int>(StringComparer.Ordinal);
+        var acceptedEliteStarts=new Dictionary<string,int>(StringComparer.Ordinal);
+        float? acceptedDroneBulletSpeed=null;
+        float? acceptedDroneShieldProbability=null;
+        float? acceptedAssaultHelicopterShieldProbability=null;
+        var acceptedBulletSpeeds=new Dictionary<string,float>(StringComparer.Ordinal);
+        foreach(var family in Families)
+        {
+            if(!rows.TryGetValue(family.SheetRow,out var row))
+                throw new InvalidDataException("Army family has no recovered upgrade row.");
+            var counts=row.GetProperty("SPAWNS").GetString()?.Split(' ',StringSplitOptions.RemoveEmptyEntries);
+            if(counts==null || counts.Length!=family.Options.Count)
+                throw new InvalidDataException("Army spawn options differ from recovered sheet.");
+            int power=row.GetProperty("TOTALPOWER").GetInt32();
+            float cooldown=row.GetProperty("COOLDOWN").GetSingle();
+            float movementSpeed=row.GetProperty("MOVEMENTSPEED").GetSingle();
+            float runtimeBulletSpeed=row.GetProperty("BULLETSPEED").GetSingle();
+            float coopHealth=row.GetProperty("COOPHP").GetSingle();
+            float coopDamage=row.GetProperty("COOPDAMAGE").GetSingle();
+            float heroicCoopHealth=row.GetProperty("HEROICCOOPHP").GetSingle();
+            float heroicCoopDamage=row.GetProperty("HEROICCOOPDAMAGE").GetSingle();
+            float shieldProbability=row.GetProperty("HITSHIELDPROB").GetSingle();
+            if(!float.IsFinite(shieldProbability)||shieldProbability is < -1 or > 1)
+                throw new InvalidDataException("Invalid ArmyUpgrades shield-target probability.");
+            acceptedShieldProbabilities.Add(family.UnitId,shieldProbability);
+            if (!ValidCoopScale(coopHealth) || !ValidCoopScale(coopDamage) ||
+                !ValidCoopScale(heroicCoopHealth) ||
+                !ValidCoopScale(heroicCoopDamage))
+                throw new InvalidDataException("Invalid source co-op combat scale.");
+            acceptedCoopScales.Add(family.UnitId,
+                new ArmyCoopCombatScale(coopHealth, coopDamage,
+                    heroicCoopHealth, heroicCoopDamage));
+            if(!float.IsFinite(runtimeBulletSpeed)||runtimeBulletSpeed<=0||runtimeBulletSpeed>1000)
+                throw new InvalidDataException("Invalid ArmyUpgrades runtime bullet speed.");
+            acceptedBulletSpeeds.Add(family.UnitId,runtimeBulletSpeed);
+            if(family.UnitId=="ID_UNIT-DRONE")
+            {
+                float bulletSpeed=row.GetProperty("BULLETSPEED").GetSingle();
+                if(!float.IsFinite(bulletSpeed)||bulletSpeed<=0||bulletSpeed>1000)
+                    throw new InvalidDataException("Invalid Drone ArmyUpgrades bullet speed.");
+                acceptedDroneBulletSpeed=bulletSpeed;
+                float shield=row.GetProperty("HITSHIELDPROB").GetSingle();
+                if(!float.IsFinite(shield)||shield< -1||shield>1)
+                    throw new InvalidDataException("Invalid Drone ArmyUpgrades shield probability.");
+                acceptedDroneShieldProbability=shield;
+            }
+            if(family.UnitId=="ID_UNIT-ASSAULTHELI")
+            {
+                float shield=row.GetProperty("HITSHIELDPROB").GetSingle();
+                if(!float.IsFinite(shield)||shield< -1||shield>1)
+                    throw new InvalidDataException("Invalid Assault Helicopter shield probability.");
+                acceptedAssaultHelicopterShieldProbability=shield;
+            }
+            float behindShield=row.GetProperty("PLAYERBEHINDSHIELDDMGRATIO").GetSingle();
+            float playerDamage=row.GetProperty("PLAYERDAMAGERATIO").GetSingle();
+            float overtimeDamage=row.GetProperty("PLAYERDAMAGEOVERTIMERATIO").GetSingle();
+            float passengerRespawn=row.GetProperty("UNITINMECHANICALRESPAWN").GetSingle();
+            if(!float.IsFinite(movementSpeed) || movementSpeed<=0 || movementSpeed>20 ||
+               family.MovementSpeed!=movementSpeed||!float.IsFinite(behindShield)||behindShield<0||behindShield>10||
+               !float.IsFinite(playerDamage)||playerDamage<0||playerDamage>10||
+               !float.IsFinite(overtimeDamage)||overtimeDamage<0||overtimeDamage>10)
+                throw new InvalidDataException("Army runtime movement speed differs from recovered sheet.");
+            acceptedPlayerDamage.Add(family.UnitId,new(behindShield,playerDamage,overtimeDamage));
+            bool vehiclePassenger=family.UnitId is "ID_UNIT-HUMVEE" or "ID_UNIT-TANK" or
+                "ID_UNIT-BUGGY" or "ID_UNIT-TRANSPORTER" or "ID_UNIT-HELICOPTER";
+            if(vehiclePassenger)
+            {
+                if(!float.IsFinite(passengerRespawn)||passengerRespawn<=0||passengerRespawn>3600)
+                    throw new InvalidDataException("Vehicle passenger respawn differs from recovered sheet.");
+                acceptedPassengerRespawn.Add(family.UnitId,passengerRespawn);
+            }
+            for(int i=0;i<counts.Length;i++)
+            {
+                if(!int.TryParse(counts[i],System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture,out int count) ||
+                   count!=family.Options[i].Count ||
+                   checked(count*power)!=family.Options[i].Power ||
+                   count*cooldown!=family.Options[i].Cooldown)
+                    throw new InvalidDataException("Army option differs from recovered runtime row.");
+            }
+            if(!sourceSheets.TryGetValue(family.SheetRow,out var stageSheet))
+                throw new InvalidDataException("Army normal-upgrade sheet is absent.");
+            var stageRows=stageSheet.GetProperty("rows");
+            if(stageRows.GetArrayLength() is < 1 or > 256)
+                throw new InvalidDataException("Army normal-upgrade stage count is invalid.");
+            int normalLaneEnd=row.GetProperty("STARTINGSPECIAL").GetInt32();
+            int startingLevel = row.GetProperty("STARTINGLEVEL").GetInt32();
+            int eliteLaneStart=row.GetProperty("STARTINGELITE").GetInt32();
+            if(normalLaneEnd is < 1 or > 255 || normalLaneEnd>=stageRows.GetArrayLength() ||
+               (eliteLaneStart!=-1 && (eliteLaneStart<=normalLaneEnd || eliteLaneStart>=stageRows.GetArrayLength())))
+                throw new InvalidDataException("Army upgrade lane offsets differ from recovered source.");
+            int normalPower = stageRows.EnumerateArray().Count(stage =>
+                stage.GetProperty("TIER").GetInt32() >= 0 && stage.GetProperty("TIER").GetInt32() / 10 == 0);
+            if (startingLevel < 0 || startingLevel > int.MaxValue - normalLaneEnd || normalPower != normalLaneEnd)
+            {
+                throw new InvalidDataException("Army starting level or normal Tier count differs from source bounds.");
+            }
+            acceptedStartingLevels.Add(family.UnitId, startingLevel);
+            var stages=new ArmyBaseCombatStats[stageRows.GetArrayLength()];
+            var shots=new ArmyUpgradeShotStats[stageRows.GetArrayLength()];
+            var grenadeStages=family.UnitId=="ID_UNIT-GRENADIER"
+                ? new ArmyGrenadeDamageStats[stageRows.GetArrayLength()]
+                : null;
+            var specials=new float[stageRows.GetArrayLength()];
+            var passengerHealth=vehiclePassenger?new float[stageRows.GetArrayLength()]:null;
+            var crewSeats=family.UnitId=="ID_UNIT-HELICOPTER"?new int[stageRows.GetArrayLength()]:null;
+            var crewHealth=crewSeats==null?null:new float[stageRows.GetArrayLength()];
+            var repairBotHealth=family.UnitId=="ID_UNIT-TRANSPORTER"?new float[stageRows.GetArrayLength()]:null;
+            var glassHealth=family.UnitId=="ID_UNIT-ASSAULTHELI"?new float[stageRows.GetArrayLength()]:null;
+            var cannons=family.UnitId is "ID_UNIT-BUGGY" or "ID_UNIT-TANK"?
+                new ArmyVehicleCannonStats[stageRows.GetArrayLength()]:null;
+            for(int i=0;i<stages.Length;i++)
+            {
+                var stage=stageRows[i];
+                float hp=stage.GetProperty("HP").GetSingle();
+                float damage=stage.GetProperty("DAMAGE").GetSingle();
+                int batchMin=stage.GetProperty("BATCHSIZEMIN").GetInt32();
+                int batchMax=stage.GetProperty("BATCHSIZEMAX").GetInt32();
+                float frequencyMin=stage.GetProperty("SHOTFREQUENCYMIN").GetSingle();
+                float frequencyMax=stage.GetProperty("SHOTFREQUENCYMAX").GetSingle();
+                float probability=stage.GetProperty("REALSHOTPROBABILITY").GetSingle();
+                float specialValue=stage.GetProperty("SPECIAL").GetSingle();
+                if(grenadeStages!=null)
+                {
+                    float near=stage.GetProperty("GRENADEMINDAMAGE").GetSingle();
+                    float explosion=stage.GetProperty("GRENADEEXPLODEDAMAGE").GetSingle();
+                    if(!float.IsFinite(near)||!float.IsFinite(explosion)||
+                       near<0||explosion<near||explosion>10_000_000)
+                        throw new InvalidDataException("Grenadier damage row is invalid.");
+                    grenadeStages[i]=new ArmyGrenadeDamageStats(near,explosion);
+                }
+                float soldierHp=passengerHealth==null?0:stage.GetProperty("SOLDIERHP").GetSingle();
+                int helicopterSeatCount=crewSeats==null?0:stage.GetProperty("SEATS").GetInt32();
+                float helicopterHp=crewHealth==null?0:stage.GetProperty("SOLDIERHP").GetSingle();
+                float repairBotHp=repairBotHealth==null?0:stage.GetProperty("REPAIRBOTHP").GetSingle();
+                float glassHp=glassHealth==null?0:stage.GetProperty("GLASSHP").GetSingle();
+                // Recovered tables contain zeroed upgrade-lane sentinel rows between
+                // normal and elite ranges; never turn one into a live combat entity.
+                if(!float.IsFinite(hp) || hp<0 || !float.IsFinite(damage) || damage<0 ||
+                   batchMin<0||batchMax<batchMin||batchMax>32||
+                   !float.IsFinite(frequencyMin)||!float.IsFinite(frequencyMax)||
+                   frequencyMin<0||frequencyMax<frequencyMin||frequencyMax>60||
+                   !float.IsFinite(probability)||probability<0||probability>10||
+                   !float.IsFinite(specialValue)||Math.Abs(specialValue)>1_000_000)
+                    throw new InvalidDataException("Army normal-upgrade combat stat is invalid.");
+                if(passengerHealth!=null&&(!float.IsFinite(soldierHp)||soldierHp<0||soldierHp>10_000_000))
+                    throw new InvalidDataException("Vehicle passenger health row is invalid.");
+                if(crewSeats!=null&&(helicopterSeatCount is <0 or >6||!float.IsFinite(helicopterHp)||
+                   helicopterHp<0||helicopterHp>10_000_000||
+                   (i<normalLaneEnd&&(helicopterSeatCount<1||helicopterHp<=0))))
+                    throw new InvalidDataException("Helicopter crew row is outside its source point/health domain.");
+                if(repairBotHealth!=null&&(!float.IsFinite(repairBotHp)||repairBotHp<0||repairBotHp>10))
+                    throw new InvalidDataException("Transporter repair-drone health row is invalid.");
+                if(glassHealth!=null&&(!float.IsFinite(glassHp)||glassHp<0||glassHp>10_000_000||
+                   (i<normalLaneEnd&&glassHp<=0)))
+                    throw new InvalidDataException("Assault Helicopter glass health row is invalid.");
+                stages[i]=new ArmyBaseCombatStats(hp,damage);
+                shots[i]=new ArmyUpgradeShotStats(probability,batchMin,batchMax,frequencyMin,frequencyMax);
+                specials[i]=specialValue;
+                if(passengerHealth!=null)passengerHealth[i]=soldierHp;
+                if(crewSeats!=null){crewSeats[i]=helicopterSeatCount;crewHealth![i]=helicopterHp;}
+                if(repairBotHealth!=null)repairBotHealth[i]=repairBotHp;
+                if(glassHealth!=null)glassHealth[i]=glassHp;
+                if(cannons!=null)
+                {
+                    float cannonDamage=stage.GetProperty("CANNONDAMAGE").GetSingle();
+                    float cannonMin=stage.GetProperty("SHOTFREQUENCYMINCANNON").GetSingle();
+                    float cannonMax=stage.GetProperty("SHOTFREQUENCYMAXCANNON").GetSingle();
+                    if(!float.IsFinite(cannonDamage)||cannonDamage<0||!float.IsFinite(cannonMin)||
+                       !float.IsFinite(cannonMax)||cannonMin<0||cannonMax<cannonMin||cannonMax>60)
+                        throw new InvalidDataException("Vehicle cannon upgrade stage is invalid.");
+                    cannons[i]=new(cannonDamage,cannonMin,cannonMax);
+                }
+            }
+            acceptedStats.Add(family.UnitId,Array.AsReadOnly(stages));
+            if(grenadeStages!=null)
+                grenadierDamageStages=Array.AsReadOnly(grenadeStages);
+            acceptedShots.Add(family.UnitId,Array.AsReadOnly(shots));
+            acceptedSpecials.Add(family.UnitId,Array.AsReadOnly(specials));
+            if(passengerHealth!=null)
+                acceptedPassengerHealth.Add(family.UnitId,Array.AsReadOnly(passengerHealth));
+            if(crewSeats!=null)
+            {helicopterSeats=Array.AsReadOnly(crewSeats);helicopterSoldierHealth=Array.AsReadOnly(crewHealth!);}
+            if(repairBotHealth!=null)acceptedRepairBotHealth=Array.AsReadOnly(repairBotHealth);
+            if(glassHealth!=null)acceptedAssaultGlassHealth=Array.AsReadOnly(glassHealth);
+            acceptedLaneEnds.Add(family.UnitId,normalLaneEnd);
+            acceptedEliteStarts.Add(family.UnitId,eliteLaneStart);
+            if(cannons!=null)acceptedVehicleCannons.Add(family.UnitId,Array.AsReadOnly(cannons));
+        }
+        baseStats=acceptedStats;
+        _mortarBuildTimes = mortarBuildTimes;
+        vehicleCannonStages=acceptedVehicleCannons;
+        upgradeShots=acceptedShots;
+        specialValues=acceptedSpecials;
+        transporterRepairBotHealth=acceptedRepairBotHealth??
+            throw new InvalidDataException("Transporter repair-drone health authority is absent.");
+        assaultHelicopterGlassHealth=acceptedAssaultGlassHealth??
+            throw new InvalidDataException("Assault Helicopter glass health authority is absent.");
+        playerDamagePolicies=acceptedPlayerDamage;
+        coopCombatScales=acceptedCoopScales;
+        shieldHitProbabilities=acceptedShieldProbabilities;
+        vehiclePassengerHealth=acceptedPassengerHealth;
+        vehiclePassengerRespawnSeconds=acceptedPassengerRespawn;
+        normalLaneEnds=acceptedLaneEnds;
+        _startingLevels = acceptedStartingLevels;
+        eliteLaneStarts=acceptedEliteStarts;
+        runtimeBulletSpeeds=acceptedBulletSpeeds;
+        droneBulletSpeed=acceptedDroneBulletSpeed??throw new InvalidDataException("Drone bullet speed authority absent.");
+        droneShieldProbability=acceptedDroneShieldProbability??throw new InvalidDataException("Drone shield probability authority absent.");
+        assaultHelicopterShieldProbability=acceptedAssaultHelicopterShieldProbability??
+            throw new InvalidDataException("Assault Helicopter shield probability authority absent.");
+        SourceSheetRevision = Convert.ToHexStringLower(SHA256.HashData(sourceBytes));
+    }
+
+    private static bool ValidCoopScale(float scale)
+    {
+        return float.IsFinite(scale) && scale > 0 && scale <= 100;
+    }
+
+    public static ArmyDeploymentCatalog Load(string path,string expectedRevision,string expectedSceneRevision)
+    {
+        var bytes=File.ReadAllBytes(path);
+        if(bytes.Length is < 100 or > 65536 ||
+           Convert.ToHexStringLower(SHA256.HashData(bytes))!=expectedRevision)
+            throw new InvalidDataException("Army deployment revision mismatch.");
+        using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=8});
+        var root=document.RootElement;
+        Exact(root,"version","sceneSha256","runtimeRule","maxEnergy","sendUnitsBaseCooldown","infantryAgent","families");
+        if(root.GetProperty("version").GetInt32()!=1 ||
+           root.GetProperty("sceneSha256").GetString()!=expectedSceneRevision ||
+           root.GetProperty("runtimeRule").GetString()!=
+           "SpawningManagerDeathMatch.InstanceOnPlayerDataLoaded replaces serialized unitsCounts with ArmyUpgrades.SPAWNS and reindexes all options")
+            throw new InvalidDataException("Army deployment does not bind recovered scene/runtime rules.");
+        float energy=root.GetProperty("maxEnergy").GetSingle();
+        float baseCooldown=root.GetProperty("sendUnitsBaseCooldown").GetSingle();
+        if(energy!=8 || baseCooldown!=1)throw new InvalidDataException("Wrong recovered army constants.");
+        var agent=root.GetProperty("infantryAgent");
+        Exact(agent,"prefabSha256","radius","acceleration","angularSpeed","height",
+            "stoppingDistance","autoBraking","autoRepath","obstacleAvoidanceType");
+        var infantryAgent=new ArmyAgentConfig(agent.GetProperty("prefabSha256").GetString()??"",
+            agent.GetProperty("radius").GetSingle(),agent.GetProperty("acceleration").GetSingle(),
+            agent.GetProperty("angularSpeed").GetSingle(),agent.GetProperty("height").GetSingle(),
+            agent.GetProperty("stoppingDistance").GetSingle(),
+            agent.GetProperty("autoBraking").GetBoolean(),agent.GetProperty("autoRepath").GetBoolean(),
+            agent.GetProperty("obstacleAvoidanceType").GetInt32());
+        if(!System.Text.RegularExpressions.Regex.IsMatch(infantryAgent.PrefabSha256,@"\A[0-9a-f]{64}\z") ||
+           infantryAgent.Radius!=.17f || infantryAgent.Acceleration!=10f ||
+           infantryAgent.AngularSpeed!=600f || infantryAgent.Height!=.52f ||
+           infantryAgent.StoppingDistance!=0 || !infantryAgent.AutoBraking ||
+           !infantryAgent.AutoRepath || infantryAgent.ObstacleAvoidanceType!=1)
+            throw new InvalidDataException("Recovered infantry NavMeshAgent settings changed.");
+        var entries=root.GetProperty("families");
+        if(entries.GetArrayLength()!=24)throw new InvalidDataException("Incomplete army family set.");
+        var familyIds=new HashSet<int>();var slotIds=new HashSet<int>();
+        var unitIds=new HashSet<string>(StringComparer.Ordinal);
+        int rusherCount=0;
+        var accepted=new ArmyDeploymentFamily[24];
+        var byOption=new Dictionary<int,ArmyDeploymentOption>();
+        for(int i=0;i<24;i++)
+        {
+            var entry=entries[i];
+            bool rusher=RusherTypes.Contains(entry.GetProperty("behaviorType").GetString()??"");
+            bool infantryShooter=rusher ||
+                (entry.GetProperty("behaviorType").GetString()??"") is
+                    "SoldierBehaviourMinigunner" or "SoldierBehaviourSniper";
+            bool vehicle=!entry.GetProperty("isSoldier").GetBoolean() &&
+                (entry.GetProperty("behaviorType").GetString()??"")!="MechBehaviour";
+            if(rusher)rusherCount++;
+            if(infantryShooter)Exact(entry,"behaviorFileId","behaviorType","upgradeSlotsFileId","unitId","sheetRow","unitType",
+                "spawnPointMask","maxGeneratedCount","baseSpeed","baseShot","movementSpeed","isSoldier","isAir","options");
+            else if(vehicle)Exact(entry,"behaviorFileId","behaviorType","upgradeSlotsFileId","unitId","sheetRow","unitType",
+                "spawnPointMask","maxGeneratedCount","baseSpeed","movementSpeed","vehicleShot","isSoldier","isAir","options");
+            else Exact(entry,"behaviorFileId","behaviorType","upgradeSlotsFileId","unitId","sheetRow","unitType",
+                "spawnPointMask","maxGeneratedCount","baseSpeed","movementSpeed","isSoldier","isAir","options");
+            int behavior=entry.GetProperty("behaviorFileId").GetInt32();
+            string behaviorType=entry.GetProperty("behaviorType").GetString()??"";
+            int slot=entry.GetProperty("upgradeSlotsFileId").GetInt32();
+            string unit=entry.GetProperty("unitId").GetString()??"";
+            string row=entry.GetProperty("sheetRow").GetString()??"";
+            int type=entry.GetProperty("unitType").GetInt32();
+            int spawnMask=entry.GetProperty("spawnPointMask").GetInt32();
+            int capacity=entry.GetProperty("maxGeneratedCount").GetInt32();
+            float baseSpeed=entry.GetProperty("baseSpeed").GetSingle();
+            float movementSpeed=entry.GetProperty("movementSpeed").GetSingle();
+            bool soldier=entry.GetProperty("isSoldier").GetBoolean();
+            ArmyBaseShotStats? baseShot=null;
+            ArmyVehicleShotStats? vehicleShot=null;
+            if(infantryShooter)
+            {
+                var shot=entry.GetProperty("baseShot");
+                Exact(shot,"probabilityOfRealShot","fireBatchSizeMin","fireBatchSizeMax",
+                    "minShootTime","maxShootTime");
+                baseShot=new(shot.GetProperty("probabilityOfRealShot").GetSingle(),
+                    shot.GetProperty("fireBatchSizeMin").GetInt32(),
+                    shot.GetProperty("fireBatchSizeMax").GetInt32(),
+                    shot.GetProperty("minShootTime").GetSingle(),
+                    shot.GetProperty("maxShootTime").GetSingle());
+                if(!float.IsFinite(baseShot.ProbabilityOfRealShot) ||
+                   baseShot.ProbabilityOfRealShot is < 0 or > 1 ||
+                   baseShot.FireBatchSizeMin<1 || baseShot.FireBatchSizeMax>14 ||
+                   baseShot.FireBatchSizeMin>baseShot.FireBatchSizeMax ||
+                   !float.IsFinite(baseShot.MinShootTime) || !float.IsFinite(baseShot.MaxShootTime) ||
+                   baseShot.MinShootTime<0 || baseShot.MaxShootTime>60 ||
+                   baseShot.MinShootTime>baseShot.MaxShootTime)
+                    throw new InvalidDataException("Invalid recovered infantry base shot definition.");
+            }
+            if(vehicle)
+            {
+                var shot=entry.GetProperty("vehicleShot");
+                Exact(shot,"shotSpeed","probabilityOfRealShot","fireBatchSizeMin","fireBatchSizeMax",
+                    "minShootTime","maxShootTime","crew");
+                var crewValue=shot.GetProperty("crew").GetSingle();
+                if(!float.IsFinite(crewValue) || crewValue<0 || crewValue>int.MaxValue || crewValue!=MathF.Truncate(crewValue))
+                    throw new InvalidDataException("Invalid recovered vehicle crew count.");
+                vehicleShot=new(shot.GetProperty("shotSpeed").GetSingle(),shot.GetProperty("probabilityOfRealShot").GetSingle(),
+                    shot.GetProperty("fireBatchSizeMin").GetInt32(),shot.GetProperty("fireBatchSizeMax").GetInt32(),
+                    shot.GetProperty("minShootTime").GetSingle(),shot.GetProperty("maxShootTime").GetSingle(),(int)crewValue);
+                if(!float.IsFinite(vehicleShot.ShotSpeed) || vehicleShot.ShotSpeed<=0 ||
+                   !float.IsFinite(vehicleShot.ProbabilityOfRealShot) || vehicleShot.ProbabilityOfRealShot is <0 or >1 ||
+                   vehicleShot.FireBatchSizeMin<0 || vehicleShot.FireBatchSizeMax>14 ||
+                   vehicleShot.FireBatchSizeMin>vehicleShot.FireBatchSizeMax || vehicleShot.Crew<0)
+                    throw new InvalidDataException("Invalid recovered vehicle shot definition.");
+            }
+            if(behavior<=0 || slot<=0 || !familyIds.Add(behavior) || !slotIds.Add(slot) ||
+               !System.Text.RegularExpressions.Regex.IsMatch(behaviorType,@"\A[A-Za-z][A-Za-z0-9]{1,60}\z") ||
+               !System.Text.RegularExpressions.Regex.IsMatch(unit,@"\AID_UNIT-[A-Z0-9-]{1,50}\z") || !unitIds.Add(unit) ||
+               !System.Text.RegularExpressions.Regex.IsMatch(row,@"\AGoogle2u.DBUpgradeSlots[A-Za-z0-9]{1,40}\z") ||
+               type is < 0 or > 10 || capacity is < 0 or > 100 ||
+               !float.IsFinite(baseSpeed) || baseSpeed is <= 0 or > 20 ||
+               !float.IsFinite(movementSpeed) || movementSpeed is <= 0 or > 20 ||
+               (soldier ? spawnMask is not (1 or 2 or 3) : spawnMask!=0))
+                throw new InvalidDataException("Invalid recovered army family identity or limit.");
+            var options=entry.GetProperty("options");
+            if(options.GetArrayLength() is < 1 or > 8)throw new InvalidDataException("Invalid army option count.");
+            var familyOptions=new ArmyDeploymentOption[options.GetArrayLength()];
+            for(int j=0;j<familyOptions.Length;j++)
+            {
+                var option=options[j];Exact(option,"index","count","power","cooldown");
+                int index=option.GetProperty("index").GetInt32();
+                int count=option.GetProperty("count").GetInt32();
+                int power=option.GetProperty("power").GetInt32();
+                float cooldown=option.GetProperty("cooldown").GetSingle();
+                if(index!=byOption.Count || count is < 1 or > 100 || power is < 1 or > 1000 ||
+                   !float.IsFinite(cooldown) || cooldown is < 0 or > 1000)
+                    throw new InvalidDataException("Invalid recovered army option.");
+                var acceptedOption=new ArmyDeploymentOption(index,count,power,cooldown);
+                byOption.Add(index,acceptedOption);familyOptions[j]=acceptedOption;
+            }
+            accepted[i]=new(behavior,behaviorType,slot,unit,row,type,spawnMask,capacity,baseSpeed,movementSpeed,
+                soldier,entry.GetProperty("isAir").GetBoolean(),
+                Array.AsReadOnly(familyOptions),baseShot,vehicleShot);
+        }
+        if(byOption.Count!=45 || rusherCount!=6)
+            throw new InvalidDataException("Incomplete runtime army options or Rusher definitions.");
+        var vehicleSpeeds=new Dictionary<string,float>(StringComparer.Ordinal)
+        {
+            ["ID_UNIT-HELICOPTER"]=3f,["ID_UNIT-HUMVEE"]=1.7f,
+            ["ID_UNIT-DRONE"]=.87f,["ID_UNIT-TANK"]=1f,
+            ["ID_UNIT-BUGGY"]=1.7f,["ID_UNIT-ASSAULTHELI"]=2.5f,
+            ["ID_UNIT-TRANSPORTER"]=1.7f
+        };
+        foreach(var (unit,speed) in vehicleSpeeds)
+        {
+            var family=accepted.SingleOrDefault(f=>f.UnitId==unit);
+            if(family==null || family.IsSoldier || family.MovementSpeed!=speed)
+                throw new InvalidDataException("Incomplete recovered vehicle family contract.");
+        }
+        var vehicleCaps=new Dictionary<string,int>(StringComparer.Ordinal)
+        {["ID_UNIT-HELICOPTER"]=1,["ID_UNIT-HUMVEE"]=1,["ID_UNIT-DRONE"]=2,
+         ["ID_UNIT-TANK"]=1,["ID_UNIT-BUGGY"]=1,["ID_UNIT-ASSAULTHELI"]=1,
+         ["ID_UNIT-TRANSPORTER"]=1};
+        foreach(var (unit,cap) in vehicleCaps)
+            if(accepted.Single(f=>f.UnitId==unit).MaxGeneratedCount!=cap)
+                throw new InvalidDataException("Recovered vehicle generation cap changed.");
+        return new(expectedRevision,energy,baseCooldown,infantryAgent,Array.AsReadOnly(accepted),byOption);
+    }
+
+    private static void Exact(JsonElement value,params string[] fields)
+    {
+        if(value.ValueKind!=JsonValueKind.Object || value.EnumerateObject().Select(p=>p.Name).Order().SequenceEqual(fields.Order())==false)
+            throw new InvalidDataException("Unexpected army catalog field set.");
+    }
+}

@@ -3,7 +3,7 @@
 import hashlib
 import json
 import re
-import sys
+import argparse
 from pathlib import Path
 
 
@@ -30,11 +30,10 @@ def field(block, name):
     return match.group(1)
 
 
-def main():
-    source = SCENE.read_bytes()
+def build_document(source, content_bytes):
     scene = source.decode("utf-8-sig")
     digest = hashlib.sha256(source).hexdigest()
-    content = json.loads(CONTENT.read_text(encoding="utf-8"))
+    content = json.loads(content_bytes)
     if digest != content["mainSceneSha256"]:
         raise ValueError("MainScene differs from recovered battle content")
     sheet = next(x for x in content["sheets"] if x["type"] == "Google2u.ArmyUpgrades")
@@ -88,9 +87,6 @@ def main():
                 sheet_types.append(component_type)
         if len(sheet_types) != 1:
             raise ValueError(f"missing unique attached upgrade sheet for {behavior_type}")
-        if sheet_types[0] != slot_type.group(1):
-            print(f"scene sheet overrides generic: {behavior_type}: "
-                  f"{slot_type.group(1)} -> {sheet_types[0]}")
         row_name = "Google2u." + sheet_types[0]
         row = rows[row_name]
         mask = re.search(r"^  spawnPointType: (\d+)$", behavior, re.M)
@@ -191,17 +187,28 @@ def main():
                 "sendUnitsBaseCooldown": values["SendUnitsCoolDown"],
                 "infantryAgent": infantry_agent,
                 "families": families}
+    return artifact
+
+
+def encode_document(artifact):
     # This hashed artifact is checked out with CRLF on both Windows and Linux.
     serialized = (json.dumps(artifact, indent=2, ensure_ascii=False) + "\n")
-    encoded = serialized.replace("\n", "\r\n").encode("utf-8")
-    if sys.argv[1:] == ["--check"]:
+    return serialized.replace("\n", "\r\n").encode("utf-8")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true")
+    options = parser.parse_args()
+    artifact = build_document(SCENE.read_bytes(), CONTENT.read_bytes())
+    encoded = encode_document(artifact)
+    if options.check:
         if not OUTPUT.exists() or OUTPUT.read_bytes() != encoded:
             raise ValueError("army deployment artifact is stale")
-    elif not sys.argv[1:]:
-        OUTPUT.write_bytes(encoded)
     else:
-        raise ValueError("usage: extract_army_deployment.py [--check]")
-    print(f"{len(families)} families, {option_id} runtime options; {OUTPUT}")
+        OUTPUT.write_bytes(encoded)
+    option_count = sum(len(family["options"]) for family in artifact["families"])
+    print(f"{len(artifact['families'])} families, {option_count} runtime options; {OUTPUT}")
 
 
 if __name__ == "__main__":

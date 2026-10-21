@@ -1,9 +1,9 @@
 """Pin serialized SoldierBehaviour enemy-point masks from MainScene."""
 
+import argparse
 import hashlib
 import json
 import re
-import sys
 from pathlib import Path
 
 
@@ -13,9 +13,8 @@ ARMY = ROOT / "Server/content/recovered-army-deployment.json"
 OUTPUT = ROOT / "Server/content/recovered-coop-enemy-point-masks.json"
 
 
-def main():
-    source = SCENE.read_bytes()
-    army = json.loads(ARMY.read_text(encoding="utf-8"))
+def build_document(source, army_bytes):
+    army = json.loads(army_bytes)
     digest = hashlib.sha256(source).hexdigest()
     if digest != army["sceneSha256"]:
         raise ValueError("MainScene differs from the deployment graph")
@@ -28,10 +27,18 @@ def main():
         )
     }
     rows = []
+    seen_components = set()
+    seen_units = set()
     for family in army["families"]:
+        if type(family["isSoldier"]) is not bool:
+            raise ValueError("Soldier classification must be Boolean")
         if not family["isSoldier"]:
             continue
         component_id = family["behaviorFileId"]
+        if component_id in seen_components or family["unitId"] in seen_units:
+            raise ValueError("Duplicate soldier point-mask identity")
+        seen_components.add(component_id)
+        seen_units.add(family["unitId"])
         match = re.search(r"^  enemyPointType: (\d+)$",
                           blocks[component_id], re.M)
         if not match:
@@ -54,16 +61,21 @@ def main():
         rows.append(row)
     if len(rows) != 16:
         raise ValueError("source soldier mask inventory changed")
-    content = json.dumps({"version": 1, "sceneSha256": digest,
-                          "soldiers": rows}, indent=2) + "\n"
-    if sys.argv[1:] == ["--check"]:
-        if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != content:
+    return {"version": 1, "sceneSha256": digest, "soldiers": rows}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate without writing production content")
+    args = parser.parse_args()
+    document = build_document(SCENE.read_bytes(), ARMY.read_bytes())
+    content = (json.dumps(document, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    if args.check:
+        if not OUTPUT.exists() or OUTPUT.read_bytes() != content:
             raise ValueError("co-op point masks differ from MainScene")
-    elif not sys.argv[1:]:
-        OUTPUT.write_text(content, encoding="utf-8")
     else:
-        raise ValueError("usage: extract_coop_enemy_point_masks.py [--check]")
-    print(f"{len(rows)} source soldier point masks")
+        OUTPUT.write_bytes(content)
+    print(f"{len(document['soldiers'])} source soldier point masks")
 
 
 if __name__ == "__main__":

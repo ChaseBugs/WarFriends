@@ -1,3 +1,5 @@
+using MongoDB.Driver;
+using War.Battle.Tests.Support;
 using War.Backend.Legacy;
 using War.Client;
 using War.Persistence;
@@ -16,7 +18,7 @@ internal static class LiveInactiveRefreshChecks
     {
         var cards = new CardManagerData();
         cards.CardData.Add(CardId, new SavedCardData { Amount = OwnedCopies });
-        await stores.Players.SetSerialized(settings.PlayerId, "CardManagerData",
+        await LegacyTestAccounts.SetCardsForTestAsync(stores.Database, settings.PlayerId,
             PlayerState.Write(cards), cancellationToken);
         bool isActiveRefreshRejected = false;
         try
@@ -52,5 +54,5 @@ internal static class LiveInactiveRefreshChecks
     }
 
     internal sealed record Settings(string PlayerId, string Token);
-    internal sealed record Stores(LegacyPlayerStore Players, BattleAllocationStore Allocations);
+    internal sealed record Stores(IMongoDatabase Database, BattleAllocationStore Allocations);
 }

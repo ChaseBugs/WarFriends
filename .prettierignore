@@ -1,0 +1,26 @@
+# Prettier formats only TypeScript/JavaScript, styles and their package configs.
+# Everything else (docs, recovered output, generated content) keeps its own layout.
+*
+!*/
+!*.ts
+!*.tsx
+!*.js
+!*.jsx
+!*.mjs
+!*.cjs
+!*.css
+!*.scss
+!package.json
+!tsconfig*.json
+!.prettierrc.json
+
+# Recovered client output and generated data are never reformatted.
+Clients/
+Server/content/
+Server/artifacts/
+
+# Build output.
+**/dist/
+**/build/
+**/.next/
+**/coverage/

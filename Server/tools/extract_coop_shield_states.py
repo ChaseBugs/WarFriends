@@ -1,8 +1,8 @@
 """Pin the recovered 1.4.0 per-mission shield starting states."""
 
+import argparse
 import hashlib
 import json
-import sys
 from pathlib import Path
 
 from extract_mission_catalog import SCENE, component_lines
@@ -54,11 +54,12 @@ def shield_states(scene_data, field):
     return result
 
 
-def main():
-    scene_bytes = SCENE.read_bytes()
-    catalog = json.loads(MISSION_CATALOG.read_text(encoding="utf-8"))
+def build_document(scene_bytes, catalog_bytes):
+    catalog = json.loads(catalog_bytes)
     if catalog["sourceSha256"] != hashlib.sha256(scene_bytes).hexdigest():
         raise ValueError("Mission catalog is bound to a different MainScene")
+    if len(catalog["missions"]) != 75:
+        raise ValueError("Shield states require the complete 75-mission catalog")
     rows = []
     lines = component_lines(scene_bytes.decode("utf-8-sig").splitlines())
     for index, raw in enumerate(read_scene_data(lines)):
@@ -72,15 +73,21 @@ def main():
             "player": shield_states(data, "playerShieldStates"),
             "bot": shield_states(data, "botShieldStates"),
         })
-    result = {"version": 1, "sourceSha256": catalog["sourceSha256"],
-              "missions": rows}
-    expected = json.dumps(result, indent=2) + "\n"
-    if "--check" in sys.argv:
-        if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != expected:
+    return {"version": 1, "sourceSha256": catalog["sourceSha256"], "missions": rows}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate without writing production content")
+    args = parser.parse_args()
+    result = build_document(SCENE.read_bytes(), MISSION_CATALOG.read_bytes())
+    expected = (json.dumps(result, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    if args.check:
+        if not OUTPUT.exists() or OUTPUT.read_bytes() != expected:
             raise ValueError("Shield state artifact differs from MainScene")
         print("Verified 75 co-op shield state rows")
     else:
-        OUTPUT.write_text(expected, encoding="utf-8")
+        OUTPUT.write_bytes(expected)
         print("Extracted 75 co-op shield state rows")
 
 

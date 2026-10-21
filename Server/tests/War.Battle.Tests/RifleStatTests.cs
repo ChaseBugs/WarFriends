@@ -49,7 +49,18 @@ internal static class RifleStatTests
         Check(poses.SampleMuzzle("idle",first.SourceId,0,false).SourcePath==ak.MuzzlePath,"pose muzzle bound to weapon catalog");
         Check(ak.InventoryIndex==11 && ak.Speed==30 && ak.CheckDistance==.5f && ak.CriticalMultiplier==2,"AK47 prefab parameters");
         string owner=new string('a',32);
-        PreparedProjectile Prepare(float roll) => bindings.Prepare(catalog,first.SourceId,0,1,owner,Vector3.Zero,new Vector3(10,0,0),0,roll,(_,_,_)=>null);
+        PreparedProjectile Prepare(float roll) => bindings.Prepare(
+            catalog, new WeaponStageSelection(first.SourceId, 0),
+            new BulletLaunch
+            {
+                ProjectileId = 1,
+                OwnerId = owner,
+                MuzzlePosition = Vector3.Zero,
+                TargetPosition = new Vector3(10,0,0),
+                SimulationTick = 0,
+                CriticalRoll = roll,
+                TraceCollision = (_,_,_)=>null
+            });
         Check(Prepare(0).Damage.Amount==first.Damage*2,"source critical multiplier applied once");
         var ordinary=Prepare(first.CriticalProbability);
         Check(ordinary.Damage.Amount==first.Damage && ordinary.Damage.PlayerCoefficient==first.PlayerDamageRatio &&

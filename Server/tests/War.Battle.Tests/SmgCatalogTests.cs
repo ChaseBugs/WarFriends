@@ -36,17 +36,59 @@ internal static class SmgCatalogTests
         }
         Reject(()=>catalog.Stage("Google2u.SMG_missing",0),"unknown SMG rejected");
         Reject(()=>catalog.Stage("Google2u.SMG_MP5",-1),"negative SMG stage rejected");
-        var normal=catalog.Prepare("Google2u.SMG_MP5",0,1,new string('a',32),Vector3.Zero,new Vector3(10,0,0),
-            10,1,(_,_,_)=>null);
-        var critical=catalog.Prepare("Google2u.SMG_MP5",0,2,new string('a',32),Vector3.Zero,new Vector3(10,0,0),
-            10,0,(_,_,_)=>null);
+        var normal=catalog.Prepare(
+            new WeaponStageSelection("Google2u.SMG_MP5", 0),
+            new BulletLaunch
+            {
+                ProjectileId = 1,
+                OwnerId = new string('a',32),
+                MuzzlePosition = Vector3.Zero,
+                TargetPosition = new Vector3(10,0,0),
+                SimulationTick = 10,
+                CriticalRoll = 1,
+                TraceCollision = (_,_,_)=>null
+            });
+        var critical=catalog.Prepare(
+            new WeaponStageSelection("Google2u.SMG_MP5", 0),
+            new BulletLaunch
+            {
+                ProjectileId = 2,
+                OwnerId = new string('a',32),
+                MuzzlePosition = Vector3.Zero,
+                TargetPosition = new Vector3(10,0,0),
+                SimulationTick = 10,
+                CriticalRoll = 0,
+                TraceCollision = (_,_,_)=>null
+            });
         Check(normal.WeaponSourceId=="Google2u.SMG_MP5"&&normal.Damage.Amount==catalog.Stage("Google2u.SMG_MP5",0).Damage,
             "SMG projectile retains source and normal damage");
         Check(Math.Abs(critical.Damage.Amount-normal.Damage.Amount*2)<.0001f,
             "SMG projectile uses recovered critical multiplier");
-        Reject(()=>catalog.Prepare("Google2u.SMG_MP5",0,3,"",Vector3.Zero,new Vector3(1,0,0),0,0,(_,_,_)=>null),
+        Reject(()=>catalog.Prepare(
+            new WeaponStageSelection("Google2u.SMG_MP5", 0),
+            new BulletLaunch
+            {
+                ProjectileId = 3,
+                OwnerId = "",
+                MuzzlePosition = Vector3.Zero,
+                TargetPosition = new Vector3(1,0,0),
+                SimulationTick = 0,
+                CriticalRoll = 0,
+                TraceCollision = (_,_,_)=>null
+            }),
             "SMG projectile rejects empty owner");
-        Reject(()=>catalog.Prepare("Google2u.SMG_MP5",0,3,new string('a',32),Vector3.Zero,new Vector3(1,0,0),0,float.NaN,(_,_,_)=>null),
+        Reject(()=>catalog.Prepare(
+            new WeaponStageSelection("Google2u.SMG_MP5", 0),
+            new BulletLaunch
+            {
+                ProjectileId = 3,
+                OwnerId = new string('a',32),
+                MuzzlePosition = Vector3.Zero,
+                TargetPosition = new Vector3(1,0,0),
+                SimulationTick = 0,
+                CriticalRoll = float.NaN,
+                TraceCollision = (_,_,_)=>null
+            }),
             "SMG projectile rejects nonfinite roll");
         return count;
     }

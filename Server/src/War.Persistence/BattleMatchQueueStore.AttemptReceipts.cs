@@ -1,4 +1,5 @@
 using MongoDB.Driver;
+using War.Battle.Domain.Matchmaking;
 using War.Infrastructure;
 
 namespace War.Persistence;
@@ -165,9 +166,9 @@ public sealed partial class BattleMatchQueueStore
         Validate(attempt.PlayerId, "attempt", now);
         if (!ValidId(attempt.AttemptId) || attempt.IssuedUnixSeconds < 0 ||
             attempt.IssuedUnixSeconds > now.ToUnixTimeSeconds() ||
-            attempt.IssuedUnixSeconds > MaximumAttemptUnixSecond - BattleQueueAttemptTokens.LifetimeSeconds -
+            attempt.IssuedUnixSeconds > MaximumAttemptUnixSecond - BattleQueueAttemptPolicy.LifetimeSeconds -
                 AttemptReceiptRetentionSeconds ||
-            attempt.ExpiresUnixSeconds != attempt.IssuedUnixSeconds + BattleQueueAttemptTokens.LifetimeSeconds)
+            attempt.ExpiresUnixSeconds != attempt.IssuedUnixSeconds + BattleQueueAttemptPolicy.LifetimeSeconds)
         {
             throw new InvalidDataException("Invalid queue attempt authority.");
         }
@@ -180,9 +181,9 @@ public sealed partial class BattleMatchQueueStore
             receipt.Id != receipt.PlayerId + ":" + receipt.AttemptId || receipt.Revision is < 1 or long.MaxValue ||
             receipt.IssuedUtc.Kind != DateTimeKind.Utc || receipt.IssuedUtc < DateTime.UnixEpoch ||
             receipt.IssuedUtc > DateTime.MaxValue.AddSeconds(
-                -BattleQueueAttemptTokens.LifetimeSeconds - AttemptReceiptRetentionSeconds) ||
+                -BattleQueueAttemptPolicy.LifetimeSeconds - AttemptReceiptRetentionSeconds) ||
             receipt.IssuedUtc.Ticks % TimeSpan.TicksPerSecond != 0 || receipt.ExpiresUtc.Kind != DateTimeKind.Utc ||
-            receipt.ExpiresUtc != receipt.IssuedUtc.AddSeconds(BattleQueueAttemptTokens.LifetimeSeconds) ||
+            receipt.ExpiresUtc != receipt.IssuedUtc.AddSeconds(BattleQueueAttemptPolicy.LifetimeSeconds) ||
             receipt.RetainUntilUtc.Kind != DateTimeKind.Utc ||
             receipt.RetainUntilUtc != receipt.ExpiresUtc.AddSeconds(AttemptReceiptRetentionSeconds) ||
             receipt.State is not

@@ -8,8 +8,8 @@ namespace War.Backend.Legacy;
 public static class LegacyInitialLoadout
 {
     private const string ResourceName = "War.Backend.RecoveredInitialClientState";
-    private const string ReviewedSha256 = "30aa7996ab11f46eac9975d918999cc9b9f62c27e1bd9d4bf4f7cc133a5d2bf3";
-    private const string ObservationSha256 = "7e4d56b6dbbfdc832fe65c1a3320c15d4b9c7b80750d7e6ba36f4d45ccb923c5";
+    private const string ReviewedSha256 = "9643f0df8992ca1e427a287e724a1453072d5119e14e6ea4eafbf328fbeeb4dc";
+    private const string ObservationSha256 = "47134e42bab46e5f45534f6749c98335db65acbf85a1f0b2d37de6b6cfe58718";
     private const string MainSceneSha256 = "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff";
     private static readonly IReadOnlyDictionary<string, string> InitialState = LoadReviewedState();
 

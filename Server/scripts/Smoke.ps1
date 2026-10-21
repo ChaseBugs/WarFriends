@@ -1,10 +1,15 @@
-param([string]$MongoExecutable = 'mongod', [int]$HttpPort=18080, [int]$UdpPort=30080, [int]$MongoPort=27028)
+param([string]$MongoExecutable = 'mongod', [int]$HttpPort=18080, [int]$UdpPort=30080, [int]$MongoPort=27028, [switch]$NoBuild, [switch]$KeepArtifacts)
 $ErrorActionPreference='Stop'
 $serverRoot=Split-Path $PSScriptRoot -Parent
-$runRoot=Join-Path $serverRoot ('.local/smoke-'+[guid]::NewGuid().ToString('N'))
-New-Item -ItemType Directory -Path (Join-Path $runRoot 'mongo') -Force | Out-Null
+. (Join-Path $PSScriptRoot 'TestRun.ps1')
+$runRoot=New-WarTestRun 'smoke'
+$succeeded=$false
+New-Item -ItemType Directory -Path (Join-Path $runRoot 'data/mongo') -Force | Out-Null
 $processes=@()
-$variables=@('ASPNETCORE_ENVIRONMENT','ASPNETCORE_URLS','Mongo__Uri','Mongo__Database','Battle__SigningKey','Battle__ControlKey','Battle__Port','Battle__ControlPort','Battle__ServerId','Battle__PublicHost','Battle__BindAddress','Battle__ResultOutboxPath')
+$variables=@('ASPNETCORE_ENVIRONMENT','ASPNETCORE_URLS','Mongo__Uri','Mongo__Database',
+    'Battle__SigningKey','Battle__ControlKey','Battle__Port','Battle__ControlPort','Battle__ServerId',
+    'Battle__PublicHost','Battle__BindAddress','Battle__ResultOutboxPath',
+    'Legacy__AllowCatalogFreeStartup','RateLimiting__Auth__PermitLimit','TEMP','TMP','TMPDIR')
 $prior=@{}
 foreach($name in $variables) { $prior[$name]=[Environment]::GetEnvironmentVariable($name,'Process') }
 function Restart-BattleProcess($current,[string]$label,[string]$root,[string]$run,[int]$port) {
@@ -13,6 +18,8 @@ function Restart-BattleProcess($current,[string]$label,[string]$root,[string]$ru
     if(!$current.WaitForExit(5000)) { throw "BattleServer did not stop for $label restart" }
     $dll=Join-Path $root 'src/War.BattleServer/bin/Debug/net10.0/War.BattleServer.dll'
     $next=Start-Process dotnet -ArgumentList ('"'+$dll+'"') -WorkingDirectory (Join-Path $root 'src/War.BattleServer') -RedirectStandardOutput (Join-Path $run "War.BattleServer-$label.log") -RedirectStandardError (Join-Path $run "War.BattleServer-$label.error.log") -PassThru -WindowStyle Hidden
+    # Register immediately so failed readiness also stops this owned process in finally.
+    $script:processes+=$next
     $ready=$false
     for($i=0;$i -lt 40;$i++) {
         if($next.HasExited) { throw "BattleServer failed $label restart; inspect $run" }
@@ -28,8 +35,17 @@ function Get-MacHex([byte[]]$bytes) {
     finally { $algorithm.Dispose() }
 }
 try {
-    dotnet build (Join-Path $serverRoot 'WarFriendsServer.sln') --nologo -v minimal
-    if($LASTEXITCODE -ne 0) { throw 'Build failed' }
+    if(!$NoBuild) {
+        dotnet build (Join-Path $serverRoot 'WarFriendsServer.sln') --nologo -v minimal
+        if($LASTEXITCODE -ne 0) { throw 'Build failed' }
+    }
+    foreach($project in @('tests/War.Battle.Tests','tests/War.Protocol.Tests','src/War.Backend','src/War.BattleServer','tools/War.SmokeClient')) {
+        $name=Split-Path $project -Leaf
+        if(!(Test-Path -LiteralPath (Join-Path $serverRoot "$project/bin/Debug/net10.0/$name.dll"))) {
+            throw 'Required Debug test binaries are missing; run the solution build first.'
+        }
+    }
+    Set-WarTestTemporaryDirectory $runRoot
     $keyBytes=New-Object byte[] 32
     $rng=[Security.Cryptography.RandomNumberGenerator]::Create()
     $rng.GetBytes($keyBytes)
@@ -44,16 +60,19 @@ try {
     $env:ASPNETCORE_URLS="http://127.0.0.1:$HttpPort"
     $env:Mongo__Uri="mongodb://127.0.0.1:$MongoPort/?replicaSet=wfSmoke"
     $env:Mongo__Database='warfriends_smoke'
+    $env:Legacy__AllowCatalogFreeStartup='true'
+    # One test IP now sends two intentional oversize auth requests before the account suite.
+    $env:RateLimiting__Auth__PermitLimit='20'
     $env:Battle__Port="$UdpPort"
     $env:Battle__ControlPort="$($UdpPort+1)"
     $env:Battle__ServerId='local-1'
     $env:Battle__PublicHost='127.0.0.1'
     $env:Battle__BindAddress='127.0.0.1'
-    $env:Battle__ResultOutboxPath=Join-Path $runRoot 'terminal-outbox'
+    $env:Battle__ResultOutboxPath=Join-Path $runRoot 'data/terminal-outbox'
     $mongoCommand=Get-Command $MongoExecutable -CommandType Application -ErrorAction SilentlyContinue
     if($null -eq $mongoCommand) { throw "MongoDB executable '$MongoExecutable' was not found. Install mongod or pass -MongoExecutable with its full path." }
     $MongoExecutable=if($mongoCommand.Path) { $mongoCommand.Path } else { $mongoCommand.Source }
-    $mongoArgs=@('--dbpath',('"'+(Join-Path $runRoot 'mongo')+'"'),'--bind_ip','127.0.0.1','--port',"$MongoPort",'--replSet','wfSmoke','--logpath',('"'+(Join-Path $runRoot 'mongo.log')+'"'))
+    $mongoArgs=@('--dbpath',('"'+(Join-Path $runRoot 'data/mongo')+'"'),'--bind_ip','127.0.0.1','--port',"$MongoPort",'--replSet','wfSmoke','--logpath',('"'+(Join-Path $runRoot 'mongo.log')+'"'))
     $processes+=Start-Process $MongoExecutable -ArgumentList $mongoArgs -PassThru -WindowStyle Hidden
     $testDll=Join-Path $serverRoot 'tests/War.Battle.Tests/bin/Debug/net10.0/War.Battle.Tests.dll'
     & dotnet $testDll --init-mongo-replica-set "mongodb://127.0.0.1:$MongoPort/?directConnection=true" wfSmoke "127.0.0.1:$MongoPort"
@@ -79,6 +98,8 @@ try {
         try { $null=Invoke-WebRequest "http://127.0.0.1:$HttpPort/health/ready" -UseBasicParsing -TimeoutSec 1; $ready=$true; break } catch { Start-Sleep -Milliseconds 250 }
     }
     if(!$ready) { throw "Backend not ready; inspect $runRoot" }
+    & dotnet $testDll --backend-internal-http-only $env:Mongo__Uri $env:Mongo__Database "http://127.0.0.1:$HttpPort"
+    if($LASTEXITCODE -ne 0) { throw 'Backend internal HTTP boundary checks failed' }
     $controlUrl="http://127.0.0.1:$($UdpPort+1)/internal/matches"
     $controlReady=$false
     for($i=0;$i -lt 40;$i++) {
@@ -86,6 +107,8 @@ try {
         try { $null=Invoke-WebRequest "http://127.0.0.1:$($UdpPort+1)/health/ready" -UseBasicParsing -TimeoutSec 1; $controlReady=$true; break } catch { Start-Sleep -Milliseconds 250 }
     }
     if(!$controlReady) { throw "Battle control endpoint not ready; inspect $runRoot" }
+    & dotnet $testDll --worker-control-http-only "http://127.0.0.1:$($UdpPort+1)"
+    if($LASTEXITCODE -ne 0) { throw 'Worker control HTTP boundary checks failed' }
     $metrics=Invoke-RestMethod "http://127.0.0.1:$($UdpPort+1)/health/metrics" -TimeoutSec 2
     if(!$metrics.ready -or $metrics.received -lt 0 -or $metrics.handled -lt 0 -or
        $metrics.malformedDrops -lt 0 -or $metrics.unownedDrops -lt 0 -or
@@ -136,6 +159,28 @@ try {
     try { $null=Invoke-WebRequest $controlUrl -Method Post -Body $malformed -ContentType 'application/json' -Headers $malformedHeaders -UseBasicParsing }
     catch { $malformedStatus=[int]$_.Exception.Response.StatusCode }
     if($malformedStatus -ne 400) { throw "Signed malformed match returned $malformedStatus" }
+    $identityAliases=@((' '+('a'*32)+' '),('A'*32),(('a'*32)+"`t"))
+    for($identityCase=0;$identityCase -lt $identityAliases.Count;$identityCase++) {
+        $invalidIdentityManifest=$body | ConvertFrom-Json
+        $invalidIdentityManifest.MatchId="smoke-invalid-identity-$identityCase"
+        $invalidIdentityManifest.Players[1].PlayerId=$identityAliases[$identityCase]
+        $identityBody=ConvertTo-Json $invalidIdentityManifest -Depth 8 -Compress
+        $identityStamp=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString([Globalization.CultureInfo]::InvariantCulture)
+        $identityBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$identityStamp`n$identityBody")
+        $identityHeaders=@{'X-War-Control-Time'=$identityStamp;'X-War-Control-Mac'=(Get-MacHex $identityBytes)}
+        $identityStatus=0
+        try {
+            $null=Invoke-WebRequest $controlUrl -Method Post -Body $identityBody -ContentType 'application/json' -Headers $identityHeaders -UseBasicParsing
+        }
+        catch { $identityStatus=[int]$_.Exception.Response.StatusCode }
+        if($identityStatus -ne 400) { throw "Signed aliased roster returned $identityStatus" }
+        $identityMatchId=$invalidIdentityManifest.MatchId
+        if((Test-Path -LiteralPath (Join-Path $env:Battle__ResultOutboxPath "active/$identityMatchId.active")) -or
+           (Test-Path -LiteralPath (Join-Path $env:Battle__ResultOutboxPath "$identityMatchId.wfr"))) {
+            throw 'Rejected canonical identity published active or terminal authority'
+        }
+    }
+    Write-Host 'PASS: 3 correctly signed canonical-roster refusals preserve journal/outbox authority'
     $oldStamp=([long]$stamp-60).ToString([Globalization.CultureInfo]::InvariantCulture)
     $oldBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$oldStamp`n$body")
     $oldHeaders=@{'X-War-Control-Time'=$oldStamp;'X-War-Control-Mac'=(Get-MacHex $oldBytes)}
@@ -215,7 +260,6 @@ try {
     $terminalFiles=@(Get-ChildItem -LiteralPath $env:Battle__ResultOutboxPath -Filter 'smoke-allocated-*.wfr' -File)
     if($terminalFiles.Count -ne 1) { throw "Expected one durable terminal record; found $($terminalFiles.Count)" }
     $battleProcess=Restart-BattleProcess $battleProcess 'pending' $serverRoot $runRoot $UdpPort
-    $processes+=$battleProcess
     if(!(Test-Path -LiteralPath (Join-Path $env:Battle__ResultOutboxPath 'smoke-crash-match.wfr')) -or
        (Test-Path -LiteralPath (Join-Path $env:Battle__ResultOutboxPath 'active/smoke-crash-match.active'))) { throw 'Forced host restart did not publish abandoned runtime allocation' }
     $reuseStamp=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString([Globalization.CultureInfo]::InvariantCulture)
@@ -257,7 +301,6 @@ try {
     $ackHeaders=@{'X-War-Control-Time'=$resultStamp;'X-War-Control-Mac'=(Get-MacHex $ackBytes)}
     $firstAck=Invoke-WebRequest $ackUrl -Method Post -Body $ackBody -ContentType 'application/json' -Headers $ackHeaders -UseBasicParsing
     $battleProcess=Restart-BattleProcess $battleProcess 'acknowledged' $serverRoot $runRoot $UdpPort
-    $processes+=$battleProcess
     $replayStamp=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString([Globalization.CultureInfo]::InvariantCulture)
     $replayAckBytes=[Text.Encoding]::UTF8.GetBytes("war/result/ack/v1/$replayStamp`n$ackBody")
     $replayAckHeaders=@{'X-War-Control-Time'=$replayStamp;'X-War-Control-Mac'=(Get-MacHex $replayAckBytes)}
@@ -308,9 +351,11 @@ try {
     if($findWrongStatus -ne 409) { throw 'Targeted lookup accepted a conflicting manifest hash' }
     Write-Host 'PASS: targeted cancellation evidence survives acknowledgement and rejects conflicting manifest authority'
     Write-Host 'PASS: pending evidence and acknowledged tombstone survive BattleServer restarts; digest-checked ack is idempotent'
-    Write-Host "Smoke passed. Local test data/logs: $runRoot"
+    $succeeded=$true
+    Write-Host "Smoke passed. Reports: $runRoot"
 }
 finally {
-    foreach($process in $processes) { if(!$process.HasExited) { Stop-Process -Id $process.Id -ErrorAction SilentlyContinue } }
-    foreach($name in $variables) { [Environment]::SetEnvironmentVariable($name,$prior[$name],'Process') }
+    $stopped=Stop-WarTestProcesses $processes
+    Restore-WarTestEnvironment $prior
+    if($stopped) { Complete-WarTestRun $runRoot $succeeded $KeepArtifacts.IsPresent }
 }

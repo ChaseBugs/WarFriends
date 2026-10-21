@@ -123,11 +123,11 @@ public sealed partial class BattleGrantStore
     }
     private static (MatchConnectionGrant First,MatchConnectionGrant Second) ValidateDocument(BattleGrantDocument row)
     {
-        if(row==null || !Guid.TryParseExact(row.Id,"N",out _) || row.Id!=row.Id.ToLowerInvariant() ||
+        if(row==null || !War.Shared.CanonicalGuid.IsCanonical(row.Id) ||
            !ValidMatch(row.MatchId) ||
            !System.Text.RegularExpressions.Regex.IsMatch(row.ManifestHash??"",@"\A[0-9a-f]{64}\z") ||
-           !Guid.TryParseExact(row.PlayerA,"N",out _) || row.PlayerA!=row.PlayerA.ToLowerInvariant() ||
-           !Guid.TryParseExact(row.PlayerB,"N",out _) || row.PlayerB!=row.PlayerB.ToLowerInvariant() ||
+           !War.Shared.CanonicalGuid.IsCanonical(row.PlayerA) ||
+           !War.Shared.CanonicalGuid.IsCanonical(row.PlayerB) ||
            row.PlayerA==row.PlayerB || row.GrantA is not {Length:>0 and <=16384} ||
            row.GrantB is not {Length:>0 and <=16384} ||
            row.ExpiresUtc.Kind!=DateTimeKind.Utc || row.ExpiresUtc<DateTime.UnixEpoch)
@@ -161,7 +161,7 @@ public sealed partial class BattleGrantStore
     private static MatchConnectionGrant Validate(MatchConnectionGrant value)
     {
         if(value==null || !ValidMatch(value.MatchId) || !System.Text.RegularExpressions.Regex.IsMatch(value.ManifestHash??"",@"\A[0-9a-f]{64}\z") ||
-            !Guid.TryParseExact(value.PlayerId,"N",out _) || value.PlayerId!=value.PlayerId.ToLowerInvariant() ||
+            !War.Shared.CanonicalGuid.IsCanonical(value.PlayerId) ||
             Uri.CheckHostName(value.Host)==UriHostNameType.Unknown || value.Port is <1 or >65535 || value.Ticket.Length is <10 or >4096 ||
             value.SessionKey.Length!=32 || value.SessionId==0 || value.ExpiresUnixSeconds is <1 or >253402300799)
             throw new InvalidDataException("Invalid battle grant.");
@@ -205,8 +205,7 @@ public sealed partial class BattleGrantStore
     private static bool ValidMatch(string? value)=>System.Text.RegularExpressions.Regex.IsMatch(value??"",@"\A[a-zA-Z0-9_-]{1,64}\z");
     private static void ValidateLookup(string matchId,string playerId,long unixNow)
     {
-        if(!ValidMatch(matchId) || !Guid.TryParseExact(playerId,"N",out _) ||
-           playerId!=playerId.ToLowerInvariant() || unixNow is <0 or >253402300799)
+        if(!ValidMatch(matchId) || !War.Shared.CanonicalGuid.IsCanonical(playerId) || unixNow is <0 or >253402300799)
             throw new InvalidDataException("Invalid battle grant lookup.");
     }
     private static DateTime RetentionDate(long ticketExpiry)

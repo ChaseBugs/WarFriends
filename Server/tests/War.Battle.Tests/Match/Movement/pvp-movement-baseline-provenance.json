@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "description": "Two identical original-engine captures before movement extraction. Recovered map paths with synthetic prototype combat; not Unity gameplay proof. Source hashes are historical provenance, not current pins.",
+  "observations": 431,
+  "inputs": {
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.cs": "33a7566f4ee0454298862ece3069ed23495fa6e1aacf0b2c134697eef266cf20",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.Barrels.cs": "e5f95c8ffedb2e6f943a07a52ee6185e942f04c88344f08fdcfddda3968d2f7f",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.SlowMove.cs": "798a23b6359bb47ef15a7fdc2e3e4cc2600e0790f7d0fc7018d05bf8f606f92c",
+    "Server/tests/War.Battle.Tests/Match/Movement/PvpMovementTraceTests.cs": "fcccb4c92e2238c9eb60f4faf79d41bab3bea3426dfcbdda58659e1349b21c7b",
+    "Server/tests/War.Battle.Tests/Match/Tracing/MatchEngineTrace.cs": "b8f8acc7d8712dce07d2ef125c93af917b5f1d4d665c5ae2c2443104d2b2c7eb",
+    "Server/content/recovered-battle-content.json": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PlayerController.cs": "c713339865746952ff9cf72792348ff4476d37dc988096eba88b5b8fa4a4c677",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameShootableEntity.cs": "92f5a8f2f7ab3190df9f0dc40530506cade8dd58b2f821bce5c60d3db240e174",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardBelovedEnemy.cs": "6b02ebf32bf5c674d366b875e1b6e67ab225290de0b4dc548beb799a7d7c46cd"
+  }
+}

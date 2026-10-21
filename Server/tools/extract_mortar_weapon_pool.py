@@ -40,11 +40,12 @@ def guid(path):
     return matches[0]
 
 
-def extract():
+def build_document(scene_bytes, army_bytes):
+    scene_text = scene_bytes.decode("utf-8-sig").replace("\r\n", "\n")
     pool_guid = guid(NETWORK_POOL)
     weapon_guid = guid(WEAPON)
     candidates = []
-    for block in re.finditer(r"(?ms)^--- !u!114 &(\d+)\n(.*?)(?=^--- !u!|\Z)", read(SCENE)):
+    for block in re.finditer(r"(?ms)^--- !u!114 &(\d+)\n(.*?)(?=^--- !u!|\Z)", scene_text):
         payload = block.group(2)
         if "guid: " + pool_guid not in payload:
             continue
@@ -61,11 +62,12 @@ def extract():
     component, game_object, weapon_component, capacity = candidates[0]
     if not 1 <= capacity <= 256:
         raise ValueError("Mortar pool capacity exceeds the recovered byte-index domain")
-    army_path = ROOT / "Server/content/recovered-army-deployment.json"
-    army_bytes = army_path.read_bytes()
     army = json.loads(army_bytes)
+    if army["sceneSha256"] != hashlib.sha256(scene_bytes).hexdigest():
+        raise ValueError("Mortar pool and deployment refer to different scenes")
     families = [row for row in army["families"] if row["unitId"] == "ID_UNIT-MORTAR"]
-    if len(families) != 1 or families[0]["maxGeneratedCount"] * 2 != capacity:
+    if (len(families) != 1 or type(families[0]["maxGeneratedCount"]) is not int
+            or families[0]["maxGeneratedCount"] * 2 != capacity):
         raise ValueError("Mortar deployment limits no longer conserve the shared two-player weapon pool")
     return {
         "schemaVersion": 2,
@@ -100,7 +102,8 @@ def extract():
             ),
         },
         "sources": [
-            {"source": path, "normalizedUtf8LfSha256": hashlib.sha256(read(path).encode("utf-8")).hexdigest()}
+            {"source": path, "normalizedUtf8LfSha256": hashlib.sha256(
+                (scene_text if path == SCENE else read(path)).encode("utf-8")).hexdigest()}
             for path in SOURCES
         ],
     }
@@ -110,7 +113,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     arguments = parser.parse_args()
-    text = json.dumps(extract(), indent=2) + "\n"
+    document = build_document((CLIENT / SCENE).read_bytes(),
+                              (ROOT / "Server/content/recovered-army-deployment.json").read_bytes())
+    text = json.dumps(document, indent=2, allow_nan=False) + "\n"
     if arguments.check:
         if OUTPUT.read_text(encoding="utf-8") != text:
             raise ValueError("Recovered Mortar weapon pool changed; regenerate and review its source evidence")

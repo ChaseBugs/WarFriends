@@ -5,6 +5,7 @@ using MongoDB.Driver.Core.Events;
 
 using War.Backend;
 using War.Backend.Legacy;
+using War.Battle.Tests.Support;
 using War.BattleServer;
 using War.Persistence;
 using War.Shared;
@@ -25,7 +26,8 @@ internal static partial class RematchReservationStoreTests
                 Queue = new BattleMatchQueueStore(uri, databaseName),
                 Results = new BattleResultStore(uri, databaseName),
                 First = new BattleRematchConsentStore(uri, databaseName),
-                Second = new BattleRematchConsentStore(uri, databaseName), Database = mongo.GetDatabase(databaseName)
+                Second = new BattleRematchConsentStore(uri, databaseName),
+                Database = mongo.GetDatabase(databaseName)
             };
             await stores.Queue.Initialize(deadline.Token);
             await stores.Results.Initialize(deadline.Token);
@@ -103,7 +105,12 @@ internal static partial class RematchReservationStoreTests
         var accounts = stores.Database.GetCollection<LegacyPlayerDocument>("legacyPlayers");
         await accounts.InsertManyAsync(fixture.Players.Select(playerId => new LegacyPlayerDocument
         {
-            Id = playerId, Revision = 1, Level = 1, Name = "RematchRefreshRace", Country = "US", Locale = "en",
+            Id = playerId,
+            Revision = 1,
+            Level = 1,
+            Name = "RematchRefreshRace",
+            Country = "US",
+            Locale = "en",
             Serialized = LegacyInitialLoadout.CreateSerializedState()
         }), cancellationToken: cancellationToken);
         fixture = fixture with
@@ -126,7 +133,8 @@ internal static partial class RematchReservationStoreTests
         await allocations.Put(BattleAllocationSource.Project(account), cancellationToken);
         var cards = new CardManagerData();
         cards.CardData.Add("SLOWDOWN", new SavedCardData { Amount = 2 });
-        await players.SetSerialized(target, "CardManagerData", PlayerState.Write(cards), cancellationToken);
+        await LegacyTestAccounts.SetCardsForTestAsync(
+            stores.Database, target, PlayerState.Write(cards), cancellationToken);
         return new RefreshRaceState(fixture, target, account.Revision + 1,
             new BattleAllocationPreparationStore(uri, stores.Database.DatabaseNamespace.DatabaseName));
     }

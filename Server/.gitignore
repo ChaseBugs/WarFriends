@@ -3,6 +3,7 @@
 .local/
 artifacts/
 *.user
+__pycache__/
 appsettings.Local.json
 # The root Unity ignore rules exclude these; the server projects are authored source.
 !**/*.csproj

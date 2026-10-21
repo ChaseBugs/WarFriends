@@ -57,7 +57,7 @@ public sealed partial class BattleResultStore
             checkedSnapshot.Length is < 1 or > TerminalResultDigest.MaximumPayloadBytes ||
             TerminalResultDigest.Compute(checkedSnapshot)!=checkedDigest)
             throw new InvalidDataException("Invalid battle result envelope.");
-        var terminal=TerminalOutbox.ValidatePayload(checkedSnapshot,checkedMatchId,checkedDigest);
+        var terminal=BattleTerminalEvidenceValidator.ValidatePayload(checkedSnapshot,checkedMatchId,checkedDigest);
         var prior = await results.Find(x => x.MatchId == checkedMatchId).FirstOrDefaultAsync(ct);
         if (prior != null)
         {
@@ -98,7 +98,7 @@ public sealed partial class BattleResultStore
         DateTime now = DateTime.UtcNow;
         if (after != null && (after.AcceptedUtc.Kind != DateTimeKind.Utc ||
             after.AcceptedUtc < DateTime.UnixEpoch || after.AcceptedUtc > now ||
-            !Guid.TryParseExact(after.Id, "N", out _) || after.Id != after.Id.ToLowerInvariant()))
+            !War.Shared.CanonicalGuid.IsCanonical(after.Id)))
             throw new InvalidDataException("Invalid pending battle result cursor.");
 
         var filter = Builders<BattleResultDocument>.Filter;
@@ -120,7 +120,7 @@ public sealed partial class BattleResultStore
         foreach (var row in rows)
         {
             Validate(row, row.MatchId, now);
-            var terminal = TerminalOutbox.ValidatePayload(row.Snapshot, row.MatchId, row.Digest);
+            var terminal = BattleTerminalEvidenceValidator.ValidatePayload(row.Snapshot, row.MatchId, row.Digest);
             if (terminal.Phase != BattlePhase.Ended)
                 continue;
             row.Snapshot = row.Snapshot.ToArray();
@@ -239,7 +239,7 @@ public sealed partial class BattleResultStore
         long removed=0;
         foreach(var row in candidates)
         {
-            var terminal=TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId,row.Digest);
+            var terminal=BattleTerminalEvidenceValidator.ValidatePayload(row.Snapshot,row.MatchId,row.Digest);
             if(row.TerminalPhase==null)
             {
                 // Older rows did not store an indexed phase. Only the validated
@@ -273,7 +273,7 @@ public sealed partial class BattleResultStore
         var row = await Get(matchId!, ct);
         if (row == null) return "missing";
         if (!string.Equals(row.Digest, digest, StringComparison.Ordinal)) return "conflict";
-        if (TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId,row.Digest).Phase!=BattlePhase.Ended)
+        if (BattleTerminalEvidenceValidator.ValidatePayload(row.Snapshot,row.MatchId,row.Digest).Phase!=BattlePhase.Ended)
             throw new InvalidDataException("An aborted battle cannot be marked scored.");
         if (row.Scored) return "already-scored";
         var update = Builders<BattleResultDocument>.Update.Set(x => x.Scored, true).Set(x => x.ScoredUtc, DateTime.UtcNow);
@@ -297,7 +297,7 @@ public sealed partial class BattleResultStore
     }
     private static void Validate(BattleResultDocument row,string? matchId,DateTime now)
     {
-        if(row==null || !Guid.TryParseExact(row.Id,"N",out _) || row.Id!=row.Id.ToLowerInvariant() ||
+        if(row==null || !War.Shared.CanonicalGuid.IsCanonical(row.Id) ||
             row.MatchId!=matchId || !System.Text.RegularExpressions.Regex.IsMatch(row.MatchId??"",@"\A[a-zA-Z0-9_-]{1,64}\z") ||
             !System.Text.RegularExpressions.Regex.IsMatch(row.Digest??"",@"\A[0-9a-f]{64}\z") ||
             row.Snapshot is not {Length:>0 and <= TerminalResultDigest.MaximumPayloadBytes} ||
@@ -308,7 +308,7 @@ public sealed partial class BattleResultStore
                 settled.Kind!=DateTimeKind.Utc || settled<row.ScoredUtc || settled>now : row.SettledUtc!=null) ||
             TerminalResultDigest.Compute(row.Snapshot)!=row.Digest)
             throw new InvalidDataException("Invalid persisted battle result.");
-        var terminal=TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId!,row.Digest!);
+        var terminal=BattleTerminalEvidenceValidator.ValidatePayload(row.Snapshot,row.MatchId!,row.Digest!);
         if(row.TerminalPhase is { } phase && phase!=terminal.Phase)
             throw new InvalidDataException("Persisted battle phase differs from terminal evidence.");
         if(row.Scored && terminal.Phase!=BattlePhase.Ended)

@@ -462,7 +462,7 @@ message MatchSnapshot {
   uint64 server_tick = 4; uint64 start_tick = 5; uint64 end_tick = 6;
   repeated BattlePlayerState players = 7;
   string winner_player_id = 8; string terminal_reason = 9;
-  // Prototype result only: cannot be used as a reward/settlement receipt.
+  // True only for a completed host result with an allocation-frozen settlement policy.
   bool reward_eligible = 10;
   // Orders mutations within the same simulation tick; replay receipts retain it.
   uint64 state_revision = 11;
@@ -511,6 +511,8 @@ message MatchSnapshot {
   // Active host-owned bonus boxes. Reconnect rebuilds their visual state from
   // this list; collected boxes disappear after their terminal host receipt.
   repeated BattlePvpBonusBoxState pvp_bonus_boxes = 37;
+  // Frozen Backend reward policy; present only on explicitly eligible completed matches.
+  string settlement_policy_revision = 38;
 }
 message BattlePvpBonusBoxState {
   string box_id = 1;

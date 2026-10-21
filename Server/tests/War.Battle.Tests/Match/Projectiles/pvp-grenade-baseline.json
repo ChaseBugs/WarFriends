@@ -1,0 +1,58 @@
+[
+  {
+    "Scenario": "source-flight-Google2u.Grenade_FRAG",
+    "Observations": 198,
+    "Sha256": "93333ae25dfb0aa206584cc2476655dc9e0e33308cd3770a8f7973ef23d95ae0",
+    "FinalPhase": "Aborted",
+    "FinalTick": 120,
+    "TerminalReason": "invalid-combat-authority"
+  },
+  {
+    "Scenario": "source-flight-Google2u.GrenadeLauncher_M320",
+    "Observations": 198,
+    "Sha256": "f3074c5f2739eeafe497e7b090c5dbd53d4f1aaa1ad2e9ff7291147ce6399be1",
+    "FinalPhase": "Aborted",
+    "FinalTick": 95,
+    "TerminalReason": "invalid-combat-authority"
+  },
+  {
+    "Scenario": "source-flight-Google2u.Grenade_Molotov",
+    "Observations": 198,
+    "Sha256": "307559832985b51c04c047e9ac83a2dffb1890cd64fd8d0b1eef75b21b00dc1b",
+    "FinalPhase": "Aborted",
+    "FinalTick": 120,
+    "TerminalReason": "invalid-combat-authority"
+  },
+  {
+    "Scenario": "ordinary-terminal-clears-flight",
+    "Observations": 12,
+    "Sha256": "a0c25e1c726fb6f5b34cc8abb8a6043e05ffe2908e471aeea6fd11b96e663166",
+    "FinalPhase": "Ended",
+    "FinalTick": 64,
+    "TerminalReason": "forfeit"
+  },
+  {
+    "Scenario": "burst-replay-collision-then-later-explosion",
+    "Observations": 199,
+    "Sha256": "84eedc07941c35bf9f3e903d32583fa4d0fc47447ff810e2aa6631e506e19dda",
+    "FinalPhase": "Running",
+    "FinalTick": 250,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "existing-burst-terminal-freeze-boundary",
+    "Observations": 17,
+    "Sha256": "ebfe1441b912da9efbc412e706cc327b091ad959f81c19f751a0a8ce859e3d7a",
+    "FinalPhase": "Ended",
+    "FinalTick": 68,
+    "TerminalReason": "forfeit"
+  },
+  {
+    "Scenario": "pause-preserves-card-clock-and-live-flights",
+    "Observations": 253,
+    "Sha256": "d4896bf1fd2252caf4434cec2083da9b290e066761df369cb3a0ae79696ef72b",
+    "FinalPhase": "Running",
+    "FinalTick": 300,
+    "TerminalReason": ""
+  }
+]

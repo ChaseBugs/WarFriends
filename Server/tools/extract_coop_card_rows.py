@@ -1,9 +1,10 @@
 """Pin CARDS_MIN/MAX indexes from the recovered 1.4.0 scene sheets."""
 
+import argparse
 import hashlib
 import json
+import math
 import re
-import sys
 from pathlib import Path
 
 
@@ -29,12 +30,9 @@ def field(block, name):
     return match.group(1)
 
 
-def main():
-    scene_bytes = SCENE.read_bytes()
+def build_document(scene_bytes, content_bytes, army_bytes):
     scene = scene_bytes.decode("utf-8-sig")
     scene_hash = hashlib.sha256(scene_bytes).hexdigest()
-    army_bytes = ARMY.read_bytes()
-    content_bytes = CONTENT.read_bytes()
     army = json.loads(army_bytes)
     content = json.loads(content_bytes)
     if scene_hash != army["sceneSha256"] or scene_hash != content["mainSceneSha256"]:
@@ -53,9 +51,15 @@ def main():
     sheets = {sheet["type"]: sheet for sheet in content["sheets"]}
 
     rows = []
+    seen_behaviors = set()
+    seen_units = set()
     for family in army["families"]:
         if family["behaviorType"] not in CARD_BEHAVIOURS:
             continue
+        if family["behaviorType"] in seen_behaviors or family["unitId"] in seen_units:
+            raise ValueError("co-op card family identity is duplicated")
+        seen_behaviors.add(family["behaviorType"])
+        seen_units.add(family["unitId"])
         slots = blocks[family["upgradeSlotsFileId"]]
         game_object_id = int(re.search(
             r"fileID: (\d+)", field(slots, "m_GameObject")).group(1))
@@ -87,6 +91,10 @@ def main():
             raise ValueError(f"card rows are not adjacent for {family['unitId']}")
         for index in (minimum, maximum):
             stage = sheets[family["sheetRow"]]["rows"][index]
+            for field_name in ("HP", "DAMAGE"):
+                value = stage[field_name]
+                if type(value) not in (int, float) or not math.isfinite(value):
+                    raise ValueError(f"card combat value is not finite numeric data: {family['unitId']}")
             if stage["HP"] <= 0 or stage["DAMAGE"] < 0:
                 raise ValueError(f"card combat row is unplayable for {family['unitId']}")
         rows.append({
@@ -96,24 +104,29 @@ def main():
             "maximumIndex": maximum,
             "hasCardRows": has_card_rows,
         })
-    if len(rows) != len(CARD_BEHAVIOURS):
+    if seen_behaviors != CARD_BEHAVIOURS:
         raise ValueError("co-op card family set is incomplete")
-    artifact = {
+    return {
         "version": 1,
         "sceneSha256": scene_hash,
         "armySha256": hashlib.sha256(army_bytes).hexdigest(),
         "contentSha256": hashlib.sha256(content_bytes).hexdigest(),
         "rows": rows,
     }
-    encoded = json.dumps(artifact, indent=2, ensure_ascii=False) + "\n"
-    if sys.argv[1:] == ["--check"]:
-        if OUTPUT.read_text(encoding="utf-8") != encoded:
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate without writing production content")
+    args = parser.parse_args()
+    artifact = build_document(SCENE.read_bytes(), CONTENT.read_bytes(), ARMY.read_bytes())
+    encoded = (json.dumps(artifact, indent=2, ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
+    if args.check:
+        if OUTPUT.read_bytes() != encoded:
             raise ValueError("co-op card row artifact differs from recovered source")
-    elif not sys.argv[1:]:
-        OUTPUT.write_text(encoded, encoding="utf-8", newline="\n")
     else:
-        raise SystemExit("usage: extract_coop_card_rows.py [--check]")
-    print(f"{len(rows)} co-op card families")
+        OUTPUT.write_bytes(encoded)
+    print(f"{len(artifact['rows'])} co-op card families")
 
 
 if __name__ == "__main__":

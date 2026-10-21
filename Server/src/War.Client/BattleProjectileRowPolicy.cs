@@ -44,8 +44,7 @@ namespace War.Client
         private static void ValidateRow(BattleProjectileState row)
         {
             if (row == null || row.ProjectileId == 0 ||
-                !Guid.TryParseExact(row.OwnerPlayerId, "N", out _) ||
-                row.OwnerPlayerId != row.OwnerPlayerId.ToLowerInvariant() ||
+                !War.Shared.CanonicalGuid.IsCanonical(row.OwnerPlayerId) ||
                 !SupportedKind(row.Kind) ||
                 !ValidWeaponSource(row) ||
                 !ValidArmyIdentity(row) ||

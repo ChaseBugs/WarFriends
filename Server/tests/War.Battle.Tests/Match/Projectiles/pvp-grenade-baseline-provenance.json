@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "description": "Two identical original-engine grenade captures before ownership extraction. Source-bound engine traces, not normal Unity gameplay proof. Includes prior bonus terminal retention as a server behavior boundary, not a certified Client rule. Source hashes are historical provenance, not current pins.",
+  "observations": 1075,
+  "inputs": {
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.cs": "b4fa6642496b166ece437ea3437bc732e568d53c40d38b9910d2f0c6fdd345c5",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.PvpBonuses.cs": "40a27492820881e34675c6c9f1cc47e4de14c836ebb1675bd62580c37454a14a",
+    "Server/src/War.Battle.Simulation/Projectiles/Grenades/GrenadeFlight.cs": "584b83092e7881a73ee40f4a086176358304161e8ad6f95c989d730d048a730a",
+    "Server/src/War.Battle.Simulation/Progression/Pvp/PvpBonusGrenadeExplosion.cs": "6e7e4df5502032daea117fb690d48f5bdbc21cb73d10e286fd22893b7e930847",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/PvpGrenadeFixture.cs": "ba7227871e4d73c772f25ee261ffa26f7bbebc484850471c36ed7fd7be0046ea",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/PvpGrenadeTraceTests.cs": "a31189b25bf3f70acfc7baab9bb343d29c2d9b797b70b243d1557956f5f30ea0",
+    "Server/tests/War.Battle.Tests/Match/Tracing/MatchEngineTrace.cs": "79998e3355b49f62fe08aff2d5ab293f453de271108a3696f00a9899f6472584",
+    "Server/content/grenade-content-manifest.json": "c3ed40ce16a9fa04728b12041892e3a3d03a4fec0234f25fe114edd35f58e41c",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Grenade.cs": "f2ff20e3c35e1bded3ce5c60a737e191223eb7661d5907c9bfdc0d193e669d52",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GrenadeAmmoBase.cs": "99997d9d936f19883d9a04a718d976c13be5cfc5c3cb3a384213017e38599cc8",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GrenadeAmmo.cs": "dd1bdc5172c7ab608dc5bd1c9aa63a61bffb04ead7ab65e6a7bf47d104581735",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardGrenadesBurst.cs": "08d3d9237202954e3cbd21cc2daf47570f38b10d74b47796d2bbb438a2d89893",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/KillStreakBonusGrenades.cs": "7a3ac469486e5220d18e3be54664484d2b207b2e8374e6e2dd9f085f176c3e4c"
+  }
+}

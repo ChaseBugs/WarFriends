@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
+using CodeStage.AntiCheat.ObscuredTypes;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -120,8 +121,9 @@ public static class SelfHostedBattleExport
                     foreach (FieldInfo field in row.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public))
                     {
                         object value = field.GetValue(row);
-                        if (field.FieldType.Name == "ObscuredInt") value = int.Parse(value.ToString(), CultureInfo.InvariantCulture);
-                        else if (field.FieldType.Name == "ObscuredFloat") value = float.Parse(value.ToString(), CultureInfo.InvariantCulture);
+                        // Direct conversion preserves the decrypted binary32 value; Mono ToString rounds it.
+                        if (field.FieldType.Name == "ObscuredInt") value = (int)(ObscuredInt)value;
+                        else if (field.FieldType.Name == "ObscuredFloat") value = (float)(ObscuredFloat)value;
                         fields.Add(field.Name, value);
                     }
                     values.Add(fields);

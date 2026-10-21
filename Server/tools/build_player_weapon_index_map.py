@@ -22,8 +22,8 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def read_observation():
-    observed = json.loads(OBSERVATION.read_text(encoding="utf-8"))
+def read_observation(payload=None):
+    observed = json.loads(OBSERVATION.read_bytes() if payload is None else payload)
     if (observed["schemaVersion"] != 1 or observed["hasMetadataSideEffects"] is not False
             or type(observed["weaponIndexChecks"]) is not int
             or set(observed["source"]["ruleSha256"]) != EXPECTED_RULE_SOURCES
@@ -42,10 +42,23 @@ def read_observation():
     return observed
 
 
-def create_mappings(observed):
+def read_bindings(binding_bytes=None):
     if digest(BINDINGS) != EXPECTED_BINDING_HASH:
         raise ValueError("The reviewed combat binding graph changed.")
-    graph = json.loads(BINDINGS.read_text(encoding="utf-8"))
+    previous = json.loads(BINDINGS.read_bytes())
+    if binding_bytes is None:
+        return previous
+    graph = json.loads(binding_bytes)
+    if graph.get("sha256") != EXPECTED_SCENE_HASH:
+        raise ValueError("Candidate weapon bindings use a different observed scene.")
+    previous["sha256"] = EXPECTED_SCENE_HASH
+    if json.dumps(graph, sort_keys=True, allow_nan=False) != json.dumps(previous, sort_keys=True, allow_nan=False):
+        raise ValueError("Candidate weapon binding values changed beyond reviewed scene provenance.")
+    return graph
+
+
+def create_mappings(observed, binding_bytes=None):
+    graph = read_bindings(binding_bytes)
     expected = {row["id"]: row["inventoryIndex"] for row in graph["weapons"]}
     rows = observed["weapons"]
     if (len(rows) != EXPECTED_WEAPON_COUNT or len(expected) != EXPECTED_WEAPON_COUNT
@@ -62,14 +75,22 @@ def create_mappings(observed):
     return result
 
 
+def build_document(observation_bytes, binding_bytes=None):
+    observed = read_observation(observation_bytes)
+    result = {"schemaVersion": 1, "clientVersion": "1.4.0",
+              "observationSha256": hashlib.sha256(observation_bytes).hexdigest(),
+              "mainSceneSha256": EXPECTED_SCENE_HASH,
+              "combatBindingsSha256": EXPECTED_BINDING_HASH if binding_bytes is None else
+                  hashlib.sha256(binding_bytes).hexdigest(),
+              "mappings": create_mappings(observed, binding_bytes)}
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--write", action="store_true", help="Write the reviewed identity-only artifact.")
     options = parser.parse_args()
-    observed = read_observation()
-    result = {"schemaVersion": 1, "clientVersion": "1.4.0", "observationSha256": digest(OBSERVATION),
-              "mainSceneSha256": EXPECTED_SCENE_HASH, "combatBindingsSha256": EXPECTED_BINDING_HASH,
-              "mappings": create_mappings(observed)}
+    result = build_document(OBSERVATION.read_bytes())
     expected = (json.dumps(result, indent=2) + "\n").encode("utf-8")
     if options.write:
         TARGET.write_bytes(expected)

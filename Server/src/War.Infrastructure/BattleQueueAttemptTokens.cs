@@ -7,7 +7,7 @@ namespace War.Infrastructure;
 /// <summary>Issues player-bound queue attempts without creating or replacing any queue state.</summary>
 public sealed class BattleQueueAttemptTokens
 {
-    public const int LifetimeSeconds = 300;
+    public const int LifetimeSeconds = War.Battle.Domain.Matchmaking.BattleQueueAttemptPolicy.LifetimeSeconds;
     private const long MaximumUnixSecond = 253402300799;
     private const byte FormatVersion = 1;
     private const int IssuedOffset = 1;
@@ -120,7 +120,7 @@ public sealed class BattleQueueAttemptTokens
 
     private static void ValidatePlayer(string playerId)
     {
-        if (!Guid.TryParseExact(playerId, "N", out _) || playerId != playerId.ToLowerInvariant())
+        if (!War.Shared.CanonicalGuid.IsCanonical(playerId))
         {
             throw new InvalidDataException("Invalid queue attempt player identity.");
         }

@@ -28,7 +28,7 @@ public sealed class AccountStore
     private readonly IMongoCollection<AccountDocument> accounts;
     public AccountStore(string uri, string databaseName)
     {
-        if (!Regex.IsMatch(databaseName, @"\A[A-Za-z0-9_]{1,64}\z")) throw new ArgumentException("Invalid Mongo database name.");
+        if (!ValidDatabaseName(databaseName)) throw new ArgumentException("Invalid Mongo database name.");
         var settings = MongoClientSettings.FromConnectionString(uri);
         settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
         database = new MongoClient(settings).GetDatabase(databaseName);
@@ -45,6 +45,8 @@ public sealed class AccountStore
     public Task<BsonDocument> Ping(CancellationToken ct) => database.RunCommandAsync<BsonDocument>(new BsonDocument("ping", 1), cancellationToken: ct);
     public static bool ValidCredentials(string name, string password) => Regex.IsMatch(name, @"\A[a-z0-9_]{3,24}\z") && password.Length is >= 12 and <= 128;
     public static bool ValidLocale(string locale) => Regex.IsMatch(locale, @"\A[a-z]{2,3}(?:[-_][A-Za-z]{2,4})?\z");
+    public static bool ValidDatabaseName(string name) =>
+        name != null && Regex.IsMatch(name, @"\A[A-Za-z0-9_]{1,64}\z");
     public static string HashToken(string token) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
     private static string NewToken() => Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
     public async Task<AccountSession?> Register(RegisterRequest request, CancellationToken ct)
@@ -71,6 +73,10 @@ public sealed class AccountStore
     {
         if (!ValidCredentials(request.Username, request.Password)) return null;
         var account = await accounts.Find(x => x.Username == request.Username).FirstOrDefaultAsync(ct);
+        if (account != null)
+        {
+            Profile(account);
+        }
         if (account != null && (account.PasswordIterations != 600_000 || account.Salt.Length != 16 || account.PasswordHash.Length != 32)) throw new InvalidDataException("Invalid credential authority.");
         byte[] computed = Rfc2898DeriveBytes.Pbkdf2(request.Password, account?.Salt ?? new byte[16], 600_000, HashAlgorithmName.SHA256, 32);
         if (account == null || !CryptographicOperations.FixedTimeEquals(computed, account.PasswordHash)) return null;
@@ -92,7 +98,7 @@ public sealed class AccountStore
     }
     private static PlayerProfile Profile(AccountDocument a)
     {
-        if (!Guid.TryParseExact(a.Id, "N", out _) || !ValidLocale(a.Locale) || !Regex.IsMatch(a.Username, @"\A[a-z0-9_]{3,24}\z") || a.Revision < 1)
+        if (!War.Shared.CanonicalGuid.IsCanonical(a.Id) || !ValidLocale(a.Locale) || !Regex.IsMatch(a.Username, @"\A[a-z0-9_]{3,24}\z") || a.Revision < 1)
             throw new InvalidDataException("Invalid persisted account profile.");
         return new PlayerProfile { PlayerId = a.Id, DisplayName = a.Username, Locale = a.Locale, Revision = a.Revision };
     }

@@ -1,9 +1,13 @@
-using System.Linq.Expressions;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
+using System.Text;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using War.Persistence.Legacy.Accounts;
+using War.Persistence.Legacy.Analytics;
+using War.Persistence.Legacy.Preferences;
+using War.Persistence.Legacy.State;
+using War.Persistence.Legacy.Tutorial;
 
 namespace War.Persistence;
 
@@ -25,6 +29,8 @@ public sealed class LegacyPlayerDocument
     public string Name { get; set; } = "";
     public int AccountType { get; set; }
     public string Locale { get; set; } = "en";
+    /// <summary>Registration diagnostic only; never used for clocks, calendars or eligibility.</summary>
+    public double? InitialUtcOffsetHours { get; set; }
     public string Country { get; set; } = "";
 
     /// <summary>
@@ -34,28 +40,54 @@ public sealed class LegacyPlayerDocument
     /// </summary>
     public byte[] Salt { get; set; } = [];
     public byte[] PasswordHash { get; set; } = [];
-    public int PasswordIterations { get; set; } = 600_000;
+    public int PasswordIterations { get; set; } = LegacyPasswordAuthority.Iterations;
 
     /// <summary>The issued <c>Token</c>, stored hashed. The plaintext never touches the database.</summary>
     public string SessionHash { get; set; } = "";
     public DateTime SessionExpiresUtc { get; set; }
 
     // Progression — server-owned. Never assigned from a client-reported value.
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int Level { get; set; } = 1;
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int LevelExperience { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt64Serializer))]
     public long Experience { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int ArmyPower { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int Reputation { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int Skill { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int MedalsBalance { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int BeginnersLeague { get; set; } = 1;
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int PlacementMatchesRequired { get; set; }
     public string LeagueId { get; set; } = "";
 
     // Wallet — server-owned.
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt64Serializer))]
     public long Gold { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt64Serializer))]
     public long WarBucks { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt64Serializer))]
     public long Tickets { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt64Serializer))]
     public long Scraps { get; set; }
 
     // VIP and dog tags, as unix seconds / counts.
@@ -81,21 +113,31 @@ public sealed class LegacyPlayerDocument
     /// out of scope.
     /// </summary>
     public Dictionary<string, int> DepositedCards { get; set; } = [];
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int SquadPoints { get; set; }
     public int SquadRank { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int Status { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int LastAction { get; set; }
     public int SendLogs { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int Position { get; set; }
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int BattlesLostInRow { get; set; }
 
     /// <summary>
-    /// Tracks <c>PlayerAnalytics.PlayerAnalyticsData.renameCount</c>. Only its zero/non-zero state
-    /// is currently authoritative: <c>PlayerAnalytics.renameGoldPrice</c> is 0 for the first rename
-    /// and <c>2^(renameCount-1) * Constants.rowIds.SecondRenameGoldCost</c> afterward. That row
-    /// value has not been extracted from the Google2u sheets yet, so a priced rename is refused
-    /// rather than charged an invented price — see <c>LegacyEndpoints.ChangePlayerName</c>.
+    /// Tracks the recovered rename counter. The first rename is free; later prices double the
+    /// catalog's SecondRenameGoldCost. LegacyRenamePolicy checks the Client-width price before
+    /// RenamePlayerAsync atomically publishes the name, count and Gold debit against a live session.
     /// </summary>
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int RenameCount { get; set; }
 
     /// <summary>
@@ -104,13 +146,16 @@ public sealed class LegacyPlayerDocument
     /// (verified <c>Google2u.Constants</c> value 50000) — escalates with every squad the player has
     /// created, matching <c>PlayerAnalytics.createSquadWarBucksPrice</c> exactly.
     /// </summary>
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyInt32Serializer))]
     public int SquadCreationsCount { get; set; }
 
     /// <summary>
     /// The server-bound battle identity issued by <c>GameStartedTutorial</c> (119) and echoed back
     /// by the client's own <c>TutorialEnded</c> (120) request. Null once no tutorial battle is
-    /// outstanding (never started, or already completed) — see <c>LegacyEndpoints.TutorialEnded</c>.
+    /// outstanding. ApplyTutorialAsync publishes its versioned identity and terminal mirrors together.
     /// </summary>
+    [BsonSerializer(typeof(LegacyTutorialIdSerializer))]
     public string? PendingTutorialBattleId { get; set; }
 
     /// <summary>
@@ -118,7 +163,14 @@ public sealed class LegacyPlayerDocument
     /// the emitted <c>PlayerData</c> is what tells the client the tutorial is already done, so this
     /// flag alone decides whether a returning player is dropped back into the tutorial.
     /// </summary>
+    [BsonRequired]
+    [BsonSerializer(typeof(LegacyBooleanSerializer))]
     public bool TutorialCompleted { get; set; }
+
+    /// <summary>Absent on old documents; a present container must carry complete versioned identity.</summary>
+    [BsonIgnoreIfNull]
+    [BsonSerializer(typeof(LegacyTutorialStateSerializer))]
+    public LegacyTutorialState? TutorialState { get; set; }
 
     /// <summary>
     /// The per-subsystem blobs, keyed by the exact .NET simple type name each
@@ -174,11 +226,15 @@ public sealed partial class LegacyPlayerStore
         players = new MongoClient(settings).GetDatabase(databaseName).GetCollection<LegacyPlayerDocument>("legacyPlayers");
     }
 
-    public Task Initialize(CancellationToken ct) => players.Indexes.CreateManyAsync([
+    public async Task Initialize(CancellationToken ct)
+    {
+        await players.Indexes.CreateManyAsync([
         new CreateIndexModel<LegacyPlayerDocument>(Builders<LegacyPlayerDocument>.IndexKeys.Ascending(x => x.SessionHash),
             new CreateIndexOptions { Unique = true, Sparse = true }),
         new CreateIndexModel<LegacyPlayerDocument>(Builders<LegacyPlayerDocument>.IndexKeys.Ascending(x => x.Name))
-    ], ct);
+        ], ct);
+        await InitializeCardPoolAsync(ct);
+    }
 
     public static string HashToken(string token) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 
@@ -191,22 +247,34 @@ public sealed partial class LegacyPlayerStore
     /// </summary>
     public static string NewPassword() => Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
 
-    private static byte[] Derive(string password, byte[] salt, int iterations) =>
-        Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, 32);
-
-    public async Task Insert(LegacyPlayerDocument player, string password, CancellationToken ct)
+    public async Task<LegacyPlayerDocument?> ById(string id, CancellationToken ct)
     {
-        player.Salt = RandomNumberGenerator.GetBytes(16);
-        player.PasswordIterations = 600_000;
-        player.PasswordHash = Derive(password, player.Salt, player.PasswordIterations);
-        await players.InsertOneAsync(player, cancellationToken: ct);
+        LegacyPlayerDocument? player = await players.Find(x => x.Id == id).FirstOrDefaultAsync(ct);
+        if (player != null)
+        {
+            LegacyPlayerIdentityAuthority.Validate(player);
+            LegacyPlayerEconomyAuthority.Validate(player);
+            LegacyAnalyticsState.ValidateContainer(player.Serialized);
+            LegacyTutorialAuthority.ValidateForRead(player);
+        }
+
+        return player;
     }
 
-    public Task<LegacyPlayerDocument?> ById(string id, CancellationToken ct) =>
-        players.Find(x => x.Id == id).FirstOrDefaultAsync(ct)!;
+    public async Task<List<LegacyPlayerDocument>> ByIds(IEnumerable<string> ids, CancellationToken ct)
+    {
+        List<LegacyPlayerDocument> selected = await players.Find(
+            Builders<LegacyPlayerDocument>.Filter.In(x => x.Id, ids)).ToListAsync(ct);
+        foreach (LegacyPlayerDocument player in selected)
+        {
+            LegacyPlayerIdentityAuthority.Validate(player);
+            LegacyPlayerEconomyAuthority.Validate(player);
+            LegacyAnalyticsState.ValidateContainer(player.Serialized);
+            LegacyTutorialAuthority.ValidateForRead(player);
+        }
 
-    public Task<List<LegacyPlayerDocument>> ByIds(IEnumerable<string> ids, CancellationToken ct) =>
-        players.Find(Builders<LegacyPlayerDocument>.Filter.In(x => x.Id, ids)).ToListAsync(ct);
+        return selected;
+    }
 
     /// <summary>
     /// Verifies a replayed guest password. Runs the KDF even when the account is missing so a
@@ -215,9 +283,20 @@ public sealed partial class LegacyPlayerStore
     public async Task<LegacyPlayerDocument?> VerifyPassword(string id, string password, CancellationToken ct)
     {
         var player = await ById(id, ct);
-        if (player != null && (player.PasswordIterations != 600_000 || player.Salt.Length != 16 || player.PasswordHash.Length != 32))
+        if (player != null)
+        {
+            LegacySessionAuthority.ValidateStored(player, DateTime.UtcNow);
+        }
+
+        if (player != null && (player.PasswordIterations != LegacyPasswordAuthority.Iterations ||
+            player.Salt == null || player.Salt.Length != LegacyPasswordAuthority.SaltBytes ||
+            player.PasswordHash == null || player.PasswordHash.Length != LegacyPasswordAuthority.HashBytes))
+        {
             throw new InvalidDataException("Invalid persisted credential authority.");
-        byte[] computed = Derive(password, player?.Salt ?? new byte[16], 600_000);
+        }
+
+        byte[] salt = player?.Salt ?? new byte[LegacyPasswordAuthority.SaltBytes];
+        byte[] computed = LegacyPasswordAuthority.Derive(password, salt);
         return player != null && CryptographicOperations.FixedTimeEquals(computed, player.PasswordHash) ? player : null;
     }
 
@@ -231,7 +310,18 @@ public sealed partial class LegacyPlayerStore
         string hash = HashToken(token);
         DateTime now = DateTime.UtcNow;
         var player = await players.Find(x => x.SessionHash == hash && x.SessionExpiresUtc > now).FirstOrDefaultAsync(ct);
-        return player != null && player.Id == playerId ? player : null;
+        if (player == null || player.Id != playerId)
+        {
+            return null;
+        }
+
+        LegacySessionAuthority.ValidateStored(player, now);
+        LegacyPlayerIdentityAuthority.Validate(player);
+        LegacyPlayerEconomyAuthority.Validate(player);
+        LegacyAnalyticsState.ValidateContainer(player.Serialized);
+        LegacyTutorialAuthority.ValidateForRead(player);
+        LegacySettingsSnapshot.ValidateContainer(player.Serialized);
+        return player;
     }
 
     /// <summary>Bearer authentication for the protobuf battle bridge. The session token is unique,
@@ -242,58 +332,18 @@ public sealed partial class LegacyPlayerStore
         string hash = HashToken(token);
         DateTime now = DateTime.UtcNow;
         var player = await players.Find(x => x.SessionHash == hash && x.SessionExpiresUtc > now).FirstOrDefaultAsync(ct);
-        if (player != null && (!Guid.TryParseExact(player.Id, "N", out _) || player.Id != player.Id.ToLowerInvariant()))
+        if (player != null)
+        {
+            LegacySessionAuthority.ValidateStored(player, now);
+            LegacyPlayerIdentityAuthority.Validate(player);
+            LegacyPlayerEconomyAuthority.Validate(player);
+            LegacyAnalyticsState.ValidateContainer(player.Serialized);
+            LegacyTutorialAuthority.ValidateForRead(player);
+            LegacySettingsSnapshot.ValidateContainer(player.Serialized);
+        }
+        if (player != null && (!War.Shared.CanonicalGuid.IsCanonical(player.Id)))
             throw new InvalidDataException("Legacy player identity cannot enter the protobuf battle channel.");
         return player;
     }
 
-    /// <summary>Rotates the session token, returning the new plaintext for the response.</summary>
-    public async Task<string> IssueSession(LegacyPlayerDocument player, TimeSpan lifetime, CancellationToken ct)
-    {
-        string token = NewToken();
-        DateTime expiry = DateTime.UtcNow.Add(lifetime);
-        await players.UpdateOneAsync(x => x.Id == player.Id,
-            Builders<LegacyPlayerDocument>.Update
-                .Set(x => x.SessionHash, HashToken(token))
-                .Set(x => x.SessionExpiresUtc, expiry)
-                .Inc(x => x.Revision, 1), cancellationToken: ct);
-        player.SessionHash = HashToken(token);
-        player.SessionExpiresUtc = expiry;
-        return token;
-    }
-
-    /// <summary>
-    /// Replaces one subsystem blob. Rejects keys outside <see cref="SerializedKeys"/> so a
-    /// misspelled or client-invented name cannot accumulate as data the client will never read.
-    /// </summary>
-    public Task SetSerialized(string playerId, string key, string json, CancellationToken ct)
-    {
-        if (!SerializedKeys.Contains(key)) throw new ArgumentException($"'{key}' is not a subsystem blob the 1.4.0 client reads back.", nameof(key));
-        return players.UpdateOneAsync(x => x.Id == playerId,
-            Builders<LegacyPlayerDocument>.Update.Set($"Serialized.{key}", json).Inc(x => x.Revision, 1), cancellationToken: ct);
-    }
-
-    public Task Update(string playerId, UpdateDefinition<LegacyPlayerDocument> update, CancellationToken ct) =>
-        players.UpdateOneAsync(x => x.Id == playerId, update.Inc(x => x.Revision, 1), cancellationToken: ct);
-
-    /// <summary>
-    /// Atomically applies <paramref name="update"/> only if <paramref name="condition"/> still
-    /// holds on the stored document at the moment of the write, and returns the document as it
-    /// exists after the write — or <c>null</c> if the condition failed.
-    /// </summary>
-    /// <remarks>
-    /// Closes a real race a separate "read balance, check it, then <c>$inc</c>" pattern leaves
-    /// open: two concurrent requests from the same player (a double-tapped buy button, a client
-    /// retry) can both read the same starting balance before either write lands, both pass the
-    /// check against that stale snapshot, and both debit — the second landing on a document that
-    /// no longer actually affords it. A single-document <c>FindOneAndUpdate</c> with the balance
-    /// folded into its filter is atomic on any MongoDB (standalone included, no transaction or
-    /// replica set required) because the match and the write happen as one operation.
-    /// </remarks>
-    public async Task<LegacyPlayerDocument?> TryUpdate(string playerId, Expression<Func<LegacyPlayerDocument, bool>> condition, UpdateDefinition<LegacyPlayerDocument> update, CancellationToken ct) =>
-        await players.FindOneAndUpdateAsync(
-            Builders<LegacyPlayerDocument>.Filter.Where(x => x.Id == playerId) & Builders<LegacyPlayerDocument>.Filter.Where(condition),
-            update.Inc(x => x.Revision, 1),
-            new FindOneAndUpdateOptions<LegacyPlayerDocument> { ReturnDocument = ReturnDocument.After },
-            ct);
 }

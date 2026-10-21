@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "description": "Two identical original-engine captures before player-bullet state extraction. Synthetic prototype flight traces, not real weapon geometry or Unity gameplay proof. Source hashes are historical provenance, not current pins.",
+  "observations": 350,
+  "inputs": {
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.cs": "b75c22f8b390cf5d19268421a3fc54718d3afda09f5de2e3463350b31013033b",
+    "Server/src/War.Battle.Simulation/Projectiles/BulletFlight.cs": "3416ee57f83b859442d87afa3dcf384248cfbe75473f5b2f87d5885615620da8",
+    "Server/src/War.Battle.Simulation/Weapons/Shotguns/ShotgunFakePelletFlight.cs": "afc385704f825981328a257e42b61cd352e67b2db662c5bb67f0060c04a35aab",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/PvpBulletTraceTests.cs": "d85d38b5c55314d31b58d570f45763948434d09221121f922040df3722daf292",
+    "Server/tests/War.Battle.Tests/Match/Tracing/MatchEngineTrace.cs": "b8f8acc7d8712dce07d2ef125c93af917b5f1d4d665c5ae2c2443104d2b2c7eb",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Ammo.cs": "02b91228de5bed10a1dc56cf3ede2f542ce9e23e67678a1d1150ae84cdab6a40",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BulletBase.cs": "5c8cb92b8d53b577b4b765dc486d5b94d49cb2f8515dff72e4a8f7fbee5e7b6b",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BulletSlow.cs": "f53b338a904196c6020115a771529c59eeb7ffed49bffa78ad7f44f08b569195",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BulletShotGun.cs": "62127c498e0a5923978085ee3745afe658a9f0b9187448312bbd26d097540c08"
+  }
+}

@@ -12,12 +12,12 @@ internal static class ArmyFlameBurstTests
 
         string owner=new string('a',32);
         var burst=new ArmyFlameBurst(1,2,owner,0);
-        ulong[] expected=[11,22,33,44,55,66];
+        ulong[] expected=[11,22,32,43,53,64];
         foreach(ulong due in expected)
         {
-            Check(!burst.Due(due-1)&&burst.Due(due),
-                $"flame pulse preserves strict 0.35-second source clock (expected {due}, actual {burst.NextPulseTick})");
-            burst.CommitPulse(due);
+            Check(!burst.Due((due-1)/(float)MatchManifest.TickRate)&&burst.Due(due/(float)MatchManifest.TickRate),
+                $"flame pulse preserves accumulated strict source deadlines (expected frame {due})");
+            burst.CommitPulse(due/(float)MatchManifest.TickRate);
         }
         Check(burst.Finished&&!burst.Due(100),"flame burst terminates after exactly six pulses");
 

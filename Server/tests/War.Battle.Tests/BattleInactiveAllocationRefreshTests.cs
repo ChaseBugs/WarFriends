@@ -2,6 +2,7 @@ using MongoDB.Driver;
 using War.Backend;
 using War.Backend.Legacy;
 using War.Persistence;
+using War.Battle.Tests.Support;
 
 /// <summary>Checks authoritative inactive refresh, retry preservation and active-owner rejection.</summary>
 internal static class BattleInactiveAllocationRefreshTests
@@ -12,14 +13,19 @@ internal static class BattleInactiveAllocationRefreshTests
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         CancellationToken cancellationToken = deadline.Token;
         var fixture = new Fixture(uri, databaseName);
-        await fixture.Players.Insert(new LegacyPlayerDocument
+        await LegacyTestAccounts.InsertAsync(uri, databaseName, new LegacyPlayerDocument
         {
-            Id = fixture.PlayerId, Name = "InactiveRefresh", Country = "US", Locale = "en", Level = 1,
-            CreatedUtc = DateTime.UtcNow, SessionExpiresUtc = DateTime.UtcNow.AddHours(1),
+            Id = fixture.PlayerId,
+            Name = "InactiveRefresh",
+            Country = "US",
+            Locale = "en",
+            Level = 1,
+            CreatedUtc = DateTime.UtcNow,
+            SessionExpiresUtc = DateTime.UtcNow.AddHours(1),
             SessionHash = LegacyPlayerStore.HashToken(LegacyPlayerStore.NewToken()),
             Serialized = LegacyInitialLoadout.CreateSerializedState()
-        }, LegacyPlayerStore.NewPassword(), cancellationToken);
-        await fixture.Players.SetSerialized(fixture.PlayerId, "CardManagerData",
+        }, cancellationToken);
+        await LegacyTestAccounts.SetCardsForTestAsync(fixture.Database, fixture.PlayerId,
             CardState(InitialOwnedCopies), cancellationToken);
         LegacyPlayerDocument initial = await ReadAccountAsync(fixture, cancellationToken);
         await fixture.Preparation.PrepareAsync(fixture.PlayerId, initial.Revision,
@@ -35,7 +41,7 @@ internal static class BattleInactiveAllocationRefreshTests
     {
         LegacyPlayerDocument before = await ReadAccountAsync(fixture, cancellationToken);
         BattleAllocationDocument prior = await ReadAllocationAsync(fixture, cancellationToken);
-        await fixture.Players.SetSerialized(fixture.PlayerId, "CardManagerData", CardState(0), cancellationToken);
+        await LegacyTestAccounts.SetCardsForTestAsync(fixture.Database, fixture.PlayerId, CardState(0), cancellationToken);
         await RejectAsync(() => fixture.Preparation.RefreshInactiveAsync(fixture.PlayerId, before.Revision,
             BattleAllocationSource.Project, cancellationToken));
         LegacyPlayerDocument changed = await ReadAccountAsync(fixture, cancellationToken);
@@ -56,7 +62,7 @@ internal static class BattleInactiveAllocationRefreshTests
     {
         await fixture.Queue.Initialize(cancellationToken);
         await fixture.Queue.Join(fixture.PlayerId, "inactive-refresh.fixture", DateTimeOffset.UtcNow, cancellationToken);
-        await fixture.Players.SetSerialized(fixture.PlayerId, "CardManagerData",
+        await LegacyTestAccounts.SetCardsForTestAsync(fixture.Database, fixture.PlayerId,
             CardState(InitialOwnedCopies), cancellationToken);
         LegacyPlayerDocument account = await ReadAccountAsync(fixture, cancellationToken);
         await RejectAsync(() => fixture.Preparation.RefreshInactiveAsync(fixture.PlayerId, account.Revision,
@@ -141,11 +147,12 @@ internal static class BattleInactiveAllocationRefreshTests
             Players = new LegacyPlayerStore(uri, databaseName);
             Preparation = new BattleAllocationPreparationStore(uri, databaseName);
             Queue = new BattleMatchQueueStore(uri, databaseName);
-            Documents = new MongoClient(uri).GetDatabase(databaseName)
-                .GetCollection<BattleAllocationDocument>("battle_allocations");
+            Database = new MongoClient(uri).GetDatabase(databaseName);
+            Documents = Database.GetCollection<BattleAllocationDocument>("battle_allocations");
         }
 
         internal string PlayerId { get; } = Guid.NewGuid().ToString("N");
+        internal IMongoDatabase Database { get; }
         internal LegacyPlayerStore Players { get; }
         internal BattleAllocationPreparationStore Preparation { get; }
         internal BattleMatchQueueStore Queue { get; }

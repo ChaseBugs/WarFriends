@@ -20,9 +20,13 @@ internal static class OrdinaryArmyTestHost
         return CreateConfigured(content, new Setup(unitId, scene, armyChoice, new UpgradeSelection(0, -1, -1)));
     }
 
-    internal static MatchEngine CreateUpgraded(BattleCombatContent content, string unitId, UpgradeSelection upgrades)
+    internal static MatchEngine CreateUpgraded(BattleCombatContent content, string unitId, UpgradeSelection upgrades,
+        int idleTimeoutSeconds = IdleSeconds)
     {
-        return CreateConfigured(content, new Setup(unitId, "Park", null, upgrades));
+        return CreateConfigured(content, new Setup(unitId, "Park", null, upgrades)
+        {
+            IdleTimeoutSeconds = idleTimeoutSeconds
+        });
     }
 
     internal static MatchEngine CreateWithIdleTimeout(BattleCombatContent content, string unitId, int seconds)
@@ -30,6 +34,23 @@ internal static class OrdinaryArmyTestHost
         return CreateConfigured(content, new Setup(unitId, "Park", null, new UpgradeSelection(0, -1, -1))
         {
             IdleTimeoutSeconds = seconds
+        });
+    }
+
+    internal static MatchEngine CreateWithAccuracy(BattleCombatContent content, string unitId,
+        float accuracyCoefficient, Func<int, int> armyChoice)
+    {
+        var upgrades = new UpgradeSelection(0, -1, -1) { AccuracyCoefficient = accuracyCoefficient };
+        return CreateConfigured(content, new Setup(unitId, "Park", armyChoice, upgrades));
+    }
+
+    internal static MatchEngine CreateWithPvpBonuses(BattleCombatContent content, string unitId,
+        UpgradeSelection upgrades, int idleTimeoutSeconds = IdleSeconds)
+    {
+        return CreateConfigured(content, new Setup(unitId, "Park", null, upgrades)
+        {
+            HasPvpBonuses = true,
+            IdleTimeoutSeconds = idleTimeoutSeconds
         });
     }
 
@@ -46,7 +67,9 @@ internal static class OrdinaryArmyTestHost
             map.SourceHash, content.Revision, MatchManifest.RifleCombatMode, AdmissionSeconds,
             MatchDurationSeconds, setup.IdleTimeoutSeconds, players)
         {
-            SceneMasterPlayerId = OwnerId
+            SceneMasterPlayerId = OwnerId,
+            PvpBonusMode = setup.HasPvpBonuses ? MatchManifest.OrdinaryPvpBonusMode : null,
+            PvpGoldBonusesAtAdmission = setup.HasPvpBonuses ? 0 : null
         };
         var host = new MatchEngine(manifest, map, content,
             armyChoice: setup.ArmyChoice ?? (_ => 0), combatRandom: () => 1f);
@@ -95,17 +118,22 @@ internal static class OrdinaryArmyTestHost
             EquippedArmyUnitIds = [source.UnitId], ArmyNormalUpgradeIndexes = [upgrades.Normal],
             ArmySpecialUpgradeIndexes = [upgrades.Special], ArmyEliteUpgradeIndexes = [upgrades.Elite],
             ArmyHealthFactors = [new ArmyHealthFactors(1f, 1f)], ArmyDamageScales = [upgrades.DamageScale],
-            ArmySpeedCoefficients = [1f], ArmyAccuracyCoefficients = [1f],
+            ArmySpeedCoefficients = [1f], ArmyAccuracyCoefficients = [upgrades.AccuracyCoefficient],
             ArmyShotSpeedCoefficients = [upgrades.ShotSpeedCoefficient]
         };
     }
 
     internal sealed record UpgradeSelection(int Normal, int Special, int Elite, float DamageScale = 1f,
-        float ShotSpeedCoefficient = 1f);
+        float ShotSpeedCoefficient = 1f)
+    {
+        internal float AccuracyCoefficient { get; init; } = 1f;
+    }
 
     private sealed record Setup(string UnitId, string Scene, Func<int, int>? ArmyChoice, UpgradeSelection Upgrades)
     {
         internal int IdleTimeoutSeconds { get; init; } = IdleSeconds;
+
+        internal bool HasPvpBonuses { get; init; }
     }
 
     private static void Require(bool condition, string message)

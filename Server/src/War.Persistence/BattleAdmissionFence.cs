@@ -29,7 +29,7 @@ public static class BattleAdmissionFence
         ArgumentNullException.ThrowIfNull(session);
         if (!session.IsInTransaction || playerIds == null || playerIds.Count is < 1 or > MaximumParticipants ||
             playerIds.Distinct(StringComparer.Ordinal).Count() != playerIds.Count ||
-            playerIds.Any(id => !Guid.TryParseExact(id, "N", out Guid parsed) || parsed.ToString("N") != id))
+            playerIds.Any(id => !War.Shared.CanonicalGuid.IsCanonical(id)))
         {
             throw new InvalidDataException("Battle admission fencing requires a transaction and canonical participants.");
         }

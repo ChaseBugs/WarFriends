@@ -1,0 +1,58 @@
+[
+  {
+    "Scenario": "real-and-cosmetic-expiry-and-replay",
+    "Observations": 21,
+    "Sha256": "e54bc8f9a2ebce6579d3128f0a48ba8728692e7789587e2641b1950d4b9ba052",
+    "FinalPhase": "Running",
+    "FinalTick": 73,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "shared-ids-with-two-owners",
+    "Observations": 26,
+    "Sha256": "048c932166c765d92517da1c3827d0b6f8f9beabde68bd657f678abe4658e321",
+    "FinalPhase": "Running",
+    "FinalTick": 77,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "lethal-first-real-clears-later-flights",
+    "Observations": 11,
+    "Sha256": "cd04947d580f26b4dcccd1d6107f03d3e648951b91130187ed3319f2290dfb3c",
+    "FinalPhase": "Ended",
+    "FinalTick": 64,
+    "TerminalReason": "player-killed"
+  },
+  {
+    "Scenario": "slow-miss-check-and-tail",
+    "Observations": 20,
+    "Sha256": "3573e3769319e4a274e0f83bdace3edee234c30dffd4693374c755dd2e9965cf",
+    "FinalPhase": "Running",
+    "FinalTick": 73,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "invalid-step-aborts-and-clears",
+    "Observations": 12,
+    "Sha256": "0f864e1217629a8840d0287dd1fe1c7466be2626ed818a8c1ae194d41e083353",
+    "FinalPhase": "Aborted",
+    "FinalTick": 65,
+    "TerminalReason": "invalid-projectile-authority"
+  },
+  {
+    "Scenario": "projectile-pause-and-single-step-resume",
+    "Observations": 252,
+    "Sha256": "0a97a0d573a39e0c01d54907ff03005cf2f1ab30d1c9c53705d78cf75f12478b",
+    "FinalPhase": "Running",
+    "FinalTick": 300,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "terminal-clears-real-and-cosmetic",
+    "Observations": 8,
+    "Sha256": "a749f83bd201a3b06cbcacaf5bf2a203a16254d56a36d9a0101a94fa46c5590f",
+    "FinalPhase": "Ended",
+    "FinalTick": 60,
+    "TerminalReason": "forfeit"
+  }
+]

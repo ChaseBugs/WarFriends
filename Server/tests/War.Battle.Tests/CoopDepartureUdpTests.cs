@@ -129,7 +129,8 @@ internal static class CoopDepartureUdpTests
         internal Host(CoopObstacleVolleyRuntimeTests.Sources sources)
         {
             _manifest = sources.Manifest;
-            string signingKey = Convert.ToBase64String(new byte[SigningKeyByteCount]);
+            string signingKey = Convert.ToBase64String(
+                Enumerable.Repeat((byte)1, SigningKeyByteCount).ToArray());
             _tokens = new MatchTokens(signingKey);
             _runtime = new CoopMatchRuntime(_manifest, sources.Missions, sources.Spawns,
                 sources.Routes, sources.Combat, chooseBehaviour: _ => 0, playerWeaponContent: sources.Content);

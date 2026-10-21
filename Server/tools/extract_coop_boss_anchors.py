@@ -80,15 +80,20 @@ def extract_map(source):
             "playerPositions": positions}
 
 
+def build_document(mission_bytes):
+    missions = json.loads(mission_bytes)
+    sources = missions["bossMaps"]
+    if len(sources) != 5 or len({row["scene"] for row in sources}) != 5:
+        raise ValueError("boss anchors require five distinct source maps")
+    maps = [extract_map(source) for source in missions["bossMaps"]]
+    return {"version": 1, "missionSourceSha256": missions["sourceSha256"], "maps": maps}
+
+
 def main():
     if sys.argv[1:] not in ([], ["--check"]):
         raise SystemExit("usage: extract_coop_boss_anchors.py [--check]")
-    missions = json.loads(MISSIONS.read_bytes())
-    maps = [extract_map(source) for source in missions["bossMaps"]]
-    artifact = {"version": 1,
-                "missionSourceSha256": missions["sourceSha256"],
-                "maps": maps}
-    encoded = (json.dumps(artifact, indent=2) + "\n").encode()
+    artifact = build_document(MISSIONS.read_bytes())
+    encoded = (json.dumps(artifact, indent=2, allow_nan=False) + "\n").encode()
     if sys.argv[1:] == ["--check"]:
         if OUTPUT.read_bytes() != encoded:
             raise ValueError("boss anchors differ from recovered scenes")

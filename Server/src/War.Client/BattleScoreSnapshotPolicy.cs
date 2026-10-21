@@ -22,9 +22,7 @@ namespace War.Client
             var playerIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (BattlePlayerState player in snapshot.Players)
             {
-                Guid parsedId;
-                if (!Guid.TryParseExact(player.PlayerId, "N", out parsedId) ||
-                    player.PlayerId != parsedId.ToString("N") || !playerIds.Add(player.PlayerId) ||
+                if (!War.Shared.CanonicalGuid.IsCanonical(player.PlayerId) || !playerIds.Add(player.PlayerId) ||
                     player.Score < 0 || player.KillStreakProgress < 0 ||
                     float.IsNaN(player.KillStreakProgress) || float.IsInfinity(player.KillStreakProgress) ||
                     !SkillShotCounterPolicy.Valid(player.SkillShotCounts) ||

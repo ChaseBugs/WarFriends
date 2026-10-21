@@ -1,5 +1,9 @@
 # Recovered 1.4.0 communication contracts
 
+For the owner's local Ice_Moba Unity/server reference and the offline Photon/provider
+migration sequence, see [integration reference](ICE_MOBA_INTEGRATION_REFERENCE.md).
+Its transport patterns are references; recovered WarFriends contracts remain authoritative.
+
 Inspected 2026-09-19 against `Clients/ExportedProject`, not the older 1.6.0/4.9.5 client. The machine-readable [inventory](client-communication-inventory.json) records source paths, line numbers, signatures, and source SHA-256 digests. Regenerate with `python Server/tools/inventory_client.py`.
 
 ## HTTP account/progression channel
@@ -45,7 +49,7 @@ The recovered enum contains **175 named actions**. [LEGACY_ACTIONS.md](LEGACY_AC
 `BeanstalkUrlCreator` needs repointing; the paths match what the shipped client requests.
 
 Shapes established from the client's parsers and locked in by `scripts/LegacySmoke.ps1`
-(**159 assertions**, run against live MongoDB):
+(**338 base HTTP assertions**, plus the targeted account/squad suites below, against live MongoDB):
 
 - Top-level response keys are **bare JSON**, because `ServerResponseHandler` reads them with
   `Convert.ToInt32`/`ToString` straight off a `Dictionary<string, object>`. Wrapping `Result` or
@@ -57,7 +61,8 @@ Shapes established from the client's parsers and locked in by `scripts/LegacySmo
   `PlayerData` keyed by `typeof(T).Name`, with a JSON document escaped inside an `S` string.
   A **missing key is not an error**: `Load` falls through to `LoadEmpty()`, an
   `Activator.CreateInstance` default. Omission is therefore the correct encoding of "new account",
-  and no starter blob is synthesised.
+  for subsystems without source-backed initial state. New accounts include the three reviewed
+  InventoryData/LevelManagerData/DecalManagerData blobs; the remaining absent blobs still use LoadEmpty.
 - Mandatory keys, indexed without a presence check: `CreateAccount` needs `Player`, `Token`,
   `Password`, `PlayerData`, `Time`; `LoginToCustomAccount` needs `Player`, `AccountType`, `Token`,
   `Password` (and **not** `PlayerData` — the client follows up with `GetPlayerData`);
@@ -97,11 +102,15 @@ and `War.Persistence/LegacyBufferStore.cs` implement both paths.
   `ProcessBuffer` reads on a request's success branch is `!= null`-guarded; the rollback fields
   (`LevelName`, `Weapon`, `InventoryData`, `data`, …) are read only on that action's specific
   failure code, and must carry the authoritative state for the client to revert to.
-- **Idempotency is claim-then-apply**, keyed by player + buffer id + request index per
-  `Server/AGENTS.md`. `LegacyBufferStore.TryClaim` pushes a null-result placeholder conditional on
-  the index being absent; `Complete` fills in the result afterward. A crash between the two leaves
-  the index claimed-but-unresolved, and replay reports a failure rather than risk re-granting —
-  see the remarks on `LegacyBufferProcessor` for why that direction of error is preferred.
+- **Idempotency is transactional**, keyed by player + buffer id + request index, with the exact
+  action and payload digest bound to the entry. Wallets, changed subsystem blobs, revision and the
+  complete success/rollback JSON commit together in the required Mongo replica set. Concurrent
+  writes retry from a fresh transaction snapshot; retries reuse the captured time and random seed.
+  Replay preserves the stored outcome; current rollback fields and time-relative delivery countdowns
+  are separate Client projections. Historical
+  unbound/incomplete entries remain refused. Receipts do not expire because the Client retains
+  pending buffers across restarts without a trusted maximum age. See
+  [buffered economy publication](BUFFERED_ECONOMY_PUBLICATION.md) for migration and resource bounds.
 - **Implemented actions**: six that need no catalog data — `WeaponWasShown` (104),
   `ArmyUnitWasShown` (105), `VisualWasShown` (191), `EquipWeapon` (116), `UpdateEquippedUnits`
   (1003), `SaveLastSeenSquadChatTimeStamp` (193, a squad-chat read-receipt timestamp — see
@@ -125,12 +134,20 @@ and `War.Persistence/LegacyBufferStore.cs` implement both paths.
   POCOs, explicit `JsonPropertyName`s included (`equippedID`'s casing is not a typo):
   `LevelManagerData`, `InventoryData`, `DecalManagerData`, `CardManagerData`. `PlayerAnalyticsData`
   is deliberately **not** modeled the same way — it has ~30 fields and only one or two are ever
-  touched by any implemented action, so `WorkingState.Analytics` (`LegacyBuffer.cs`) patches just
+  touched by any implemented action, so `LegacyBufferedState.Analytics` (`Buffering/Execution`) patches just
   the specific field a given action needs as raw JSON, the same targeted approach
-  `LegacyEndpoints.SetAnalyticsFlag` uses for direct actions — round-tripping through a partial C#
+  `LegacyAnalyticsEndpoint` uses for direct actions — round-tripping through a partial C#
   model would silently drop every field this pass doesn't know about. The remaining subsystem blobs
   stay opaque strings, unread and unwritten by buffer processing, until an implemented action needs
   to mutate one.
+
+Account registration/session publication now commits credentials, session, metadata and reviewed
+initial state in one insert. Required Locale/UtcOffset and optional opaque DeviceToken are validated
+again before password work; action 13 requires its complete token/Locale tuple. Session rotation
+returns the committed revision and refuses malformed historical sessions without repair. Explicitly
+configured missing/malformed/empty catalogs fail startup. The recovered Game Center create path
+retains a validated maintenance boundary. See [ACCOUNT_PUBLICATION.md](ACCOUNT_PUBLICATION.md)
+for the four pure/seven Mongo scenarios and 28 additional authenticated/registration HTTP assertions.
 
 ### Implemented: the Google2u economy catalog
 
@@ -147,7 +164,7 @@ sheet instances covering weapons, units, cards, visuals, VIP, missions, assignme
 squad-wars rewards.
 
 `War.Backend/Legacy/LegacyCatalog.cs` loads this file (`Legacy:ContentPath` config, same file
-`Battle__ContentPath` already points at) and indexes every sheet. Missing/unset path is not an
+`Battle__ContentPath` already points at) and indexes every sheet. An unset path is not an
 error — the catalog is simply empty and every catalog-dependent action keeps refusing exactly as
 before. First consumers, each verified against the real exported numbers via `scripts/LegacySmoke.ps1`:
 
@@ -169,10 +186,10 @@ before. First consumers, each verified against the real exported numbers via `sc
   client-asserted `discount` is refused rather than guessed at — no delivery-completion action or
   sale-validation system exists yet. Re-buying an already-owned item succeeds as a no-op (the shop
   UI never offers a buy action for something already owned, so there's no evidenced failure code
-  to reuse for that case). Wallet debits are folded into the same buffer-processing document write
-  as the `LevelManagerData` blob update, but — like the existing buffer-receipt claim/complete pair
-  — are not yet atomic against a *second, concurrently-processed* buffer for the same player; that
-  needs the Mongo replica set `README.md` already lists as a prerequisite for economy settlement.
+  to reuse for that case). Wallet debits and changed blobs now share one account update inside the
+  same transaction as the complete request receipt. A second concurrent buffer recalculates against
+  the committed wallet instead of spending an earlier snapshot. This boundary does not make the
+  separately implemented card-deposit, withdrawal or squad-membership writers transactional.
 
 ### Implemented: weapon and unit upgrade deliveries
 
@@ -411,8 +428,8 @@ implementation rather than leaving the whole feature area untouched.
   Constants.rowIds.WarBucksCreateSquadPrice` (verified 50,000 Warbucks). Reproduced via a new
   `LegacyPlayerDocument.SquadCreationsCount` field, incremented on every successful creation and
   echoed back as the optional `squadCreationsCnt` the client syncs its own local counter from. The
-  squad document is inserted (with its creator as `SquadRank.Leader`) *before* the price is charged,
-  so a name collision (`SquadnameTaken`) never needs a refund path.
+  name claim, creator membership, price debit and counter now commit in one transaction, so a
+  refused name claim or failed account write cannot leave a charge or orphaned squad behind.
 - **None of these fourteen actions have a dedicated failure-branch case in `ServerResponseHandler`
   at all** — like `PromoteUnit` earlier in this document, a bare `Result` is the entire failure
   contract for every one of them; only the success paths need real response fields
@@ -422,30 +439,26 @@ implementation rather than leaving the whole feature area untouched.
   in `SquadMembers`, and each promoted/demoted/kicked target, is the exact same `Player`-shaped
   projection as `GetPlayerInfo`'s `PlayerInfo` field, since they all feed
   `DatabasePlayer.CreateFromDatabase`.
-- **Rank/settings actions are gated on the caller's own stored `SquadRank`, never a client
-  assertion.** `PromotePlayer`/`DemotePlayer`/`PromotePlayerToFounder`/`KickPlayer`/`UpdateSquad`/
-  `UpdateSquadEmblem` all require the caller to already hold `SquadRank.Leader` or `Coleader` in
-  their own squad (`NotLeaderOfSquad` otherwise), resolved server-side from the caller's session,
-  not from any field the request carries. `PromotePlayer`/`DemotePlayer` step the target exactly one
-  `SquadRank` at a time, clamped at `Coleader`/`Member` — already at the limit is an idempotent
-  success, since no evidenced code exists for "can't go further" (same reasoning as other
-  already-maxed cases elsewhere in this file). The client's own asserted `OldSquadRank` is never
-  read as authoritative. `PromotePlayerToFounder` transfers sole leadership — `OnPromotePlayerToFounder`
-  unconditionally drops the *caller's own* local rank to Veteran regardless of whether the guarded
-  `PromotedPlayer` field is present, so the server does the same authoritatively for both players in
-  one call. `UpdateSquad`'s request field is `RequiredMedals`, not `SkillRequirement` like
-  `CreateSquad` uses for the same concept — confirmed real from the request builder, not normalized
-  away as a typo.
+- **Rank/settings authority uses the current account and roster together.** Source enum values are
+  Member=0, Veteran=1, Leader=2, Coleader=3, while `MiscTools.CompareSquadRanks` orders Member <
+  Veteran < Coleader < Leader. Promotion is explicitly 0 -> 1 -> 3; demotion is 3 -> 1 -> 0.
+  `OldSquadRank` must agree with the current target and never authorizes a mutation by itself.
+  `MemberRecord` permits Veterans to act on lower members and Coleaders to demote/kick peers;
+  only the Leader transfers leadership or changes settings/emblem. Founder transfer makes the
+  caller Veteran and the target Leader together, matching the callback. The source caps Coleaders
+  at three. Update still uses canonical `RequiredMedals`, distinct from creation's `SkillRequirement`.
+- **Non-Leader joins can move between squads directly.** `SquadRecord.JoinClick` dispatches
+  JoinSquad without first sending LeaveSquad. The previous roster, destination roster and account
+  pointer now change together. Private approvals use the same transfer path; a Leader must transfer
+  leadership first. `SquadScreen.LeaveSquadClick` also explicitly requests deletion on final leave.
 - **`GetSquads`/`FindSuggestedSquads` share one handler but search differently.** `GetSquads` filters
   public squads by the client's `SquadNameStart` prefix (a real Mongo regex query);
   `FindSuggestedSquads` sends a `Skill` value instead, but no skill-matching formula was traced from
   the recovered client, so it degrades to "any public squad" — an honest simplification, not a
   fabricated heuristic.
-- **Found and fixed a real bug while testing this batch**: `CreateSquad`'s insufficient-funds path
-  originally removed only the failed creator's *membership* from the newly-inserted squad, leaving
-  the squad *document* itself behind as a real, empty, publicly-searchable orphan —
-  `GetSquads`/`FindSuggestedSquads` would then legitimately return it as a genuine search result.
-  Fixed by deleting the whole document on that refusal instead of just the one membership entry.
+- **Creation failure cannot publish an orphan or charge.** The earlier standalone orphan-cleanup
+  fix has been superseded by one snapshot/majority transaction for the squad and creator account.
+  Injected failures after squad/account writes prove rollback, including cross-squad publication.
 - **The invite/request-to-join path turned out not to need the message/inbox system after all.**
   An earlier pass here assumed `InvitePlayerToSquad`/`JoinSquadRequest`/`AcceptSquadJoinRequest`/
   `DeclineSquadJoinRequest` were blocked on the same message system the owner's "skip Social"
@@ -471,25 +484,16 @@ implementation rather than leaving the whole feature area untouched.
   trust — the same reason Ranked PvP/Player Leagues and War Arena stay out of scope. A squad this
   slice creates is a real, joinable group with no war-derived history yet, which zero correctly
   represents; a battle-derived field is never a placeholder.
-- **Deliberate limits, each a documented gap, not a silent assumption**: no verified maximum squad
-  size exists (`GetSquadRankSize` depends on an untraced catalog sheet), so member-count gating is
-  not enforced at all; leadership does not auto-transfer when a Leader/Coleader leaves a non-empty
-  squad (no evidenced succession rule, `PromotePlayerToFounder` is the only supported transfer, and
-  only while the caller is still present to call it); a squad left with zero members is not
-  actively deleted (no evidenced cleanup rule); the real, evidenced one-time 50-Gold first-join
-  reward (`GoldRewardFirstTimeSquad`) needs a "claimed once" flag inside the still-unmodeled
-  `PlayerAnalyticsData` blob and is deferred rather than risk re-granting it on every join.
-- **A real testing limitation, not hidden**: `CreateSquad`'s 50,000-Warbucks price is far beyond
-  this smoke-test account's starting balance (15,000 with the catalog loaded), so its success path —
-  and everything downstream that needs a squad to already exist, including every rank/settings
-  action's success path — is not reachable in `LegacySmoke.ps1` as currently seeded. The assertions
-  branch dynamically on the live balance where relevant (matching the posture already established
-  for `UpgradeEliteSlot`/`ConvertPartsToScraps`), and every reachable outcome is verified for real:
-  the failure paths (`WrongPlayerData` on an overlong name, `NotEnoughWarBucksForCreateSquad`,
-  `SquadNoLongerExists`, `NoSquadFound`, `SquadLeaveError`, `NotLeaderOfSquad` on all six rank/
-  settings actions plus `InvitePlayerToSquad`/`AcceptSquadJoinRequest`/`DeclineSquadJoinRequest`)
-  and both searches' genuinely-empty-result success path (no squad ever exists yet in this run's
-  isolated database, so an empty `Items` array is the real, not assumed, outcome).
+- **Deliberate limits remain explicit.** General member capacity (`GetSquadRankSize`) still needs
+  a validated source policy; the one-time 50-Gold first-join reward needs a durable claim receipt.
+  The server does not invent either. Leadership transfer and last-member deletion are now backed
+  by recovered UI evidence, rather than leaving empty squads or guessing a successor.
+- **Success paths now have real HTTP proof.** LegacySmoke retains its normal insufficient-funds
+  account and additionally seeds trusted disposable accounts for source-priced creation. The same
+  running Backend passes 45 authenticated squad HTTP assertions, including all mutation callbacks,
+  transfers, invalid mirrors and final deletion. Five forced Mongo races and thirteen injected
+  publication failures check atomicity separately. No public test-funding route was added. See
+  [SQUAD_PUBLICATION.md](SQUAD_PUBLICATION.md) for exact source and unkeyed retry limits.
 
 **`DepositCards` (174) and `WithdrawCard` (175) close out the vertical.** The squad card pool is
 not a separate structure at all: `DatabasePlayer.CreateFromDatabase` parses a `DepositedCards` map
@@ -506,15 +510,14 @@ because none is needed.
   simpler shape.
 - **`AddedCards`/`RemovedCards` are double-encoded.** `CardpoolDialog.GetCardsInJson` serializes a
   `Dictionary<string, string>` whose *values* are themselves `JsonConvert.SerializeObject`d
-  `CardManager.CardData` (`{"amount":N}`) — a JSON string inside a JSON string. Parsed tolerantly,
-  skipping any single malformed entry rather than failing the whole request.
+  `CardManager.CardData` (`{"amount":N}`) — a JSON string inside a JSON string. Parsed strictly as a whole intent; a malformed or duplicate entry refuses the request before mutation.
 - **Ownership is verified both directions, never trusted from the client.** Depositing requires the
   player to actually own at least as many of the card as they claim to be moving into the pool;
   un-depositing requires the pool to actually hold at least that many. Both are computed from the
   server's own stored `CardManagerData`/`DepositedCards`, never the client's assertion.
 - **`WithdrawCard`'s cooldown is real, verified, and server-owned.** `Google2u.Constants`
-  `CardWithdrawTimer` (240 seconds) — the client never computes this locally at all; `OnWithdrawCard`
-  reads `mResponse["NextWithdraw"]` as an unguarded top-level index and simply stores whatever the
+  `CardWithdrawTimer` (240 minutes, or 14,400 seconds). `CardpoolDialog` explicitly multiplies it
+  by 60 in its optimistic fallback; `OnWithdrawCard` reads `mResponse["NextWithdraw"]` as an unguarded top-level index and simply stores whatever the
   server last returned. Reproduced by storing the cooldown deadline in the withdrawing player's own
   `CardManagerData.NextWithdraw` (a field `CardManagerData` already modeled for `BuyCardPack`).
 - **Buddy-card deposits use a distinct wire shape and are out of scope.** `DatabasePlayer`'s parser
@@ -527,6 +530,10 @@ because none is needed.
   hardcoded card id, since the pack's contents are genuinely random — reading the result back
   through `GetPlayerInfo` (170) rather than `GetPlayerData`, since `GetPlayerData`'s response has no
   `Player` object at all (only `PlayerData`) and `DepositedCards` lives on the `Player` shape.
+
+Card pool publication now commits ownership, deposits, cooldown, donor reputation and receipt in
+one Mongo transaction. See [CARD_POOL_PUBLICATION.md](CARD_POOL_PUBLICATION.md) for concurrency
+proofs, optional `OperationId`, and the recovered Client's unkeyed deposit retry limitation.
 
 ### Implemented: card crafting
 
@@ -581,7 +588,7 @@ chat-transport feature being implemented by honoring this one. This matches the 
 already accepted for `ChatShownFirstTime` (163), a "Chat"-named action implemented despite the label
 for the same reason. It is buffered: the client's setter only ever advances the stored value, never
 regresses it, reproduced by patching just that one field of the otherwise-unmodeled
-`PlayerAnalyticsData` blob (`WorkingState.Analytics`/`AnalyticsChanged` in `LegacyBuffer.cs`) rather
+`PlayerAnalyticsData` blob (`LegacyBufferedState.Analytics`/`AnalyticsChanged` in `Buffering/Execution`) rather
 than modeling the blob's ~30 fields for the sake of one integer. 7 assertions, including one
 confirming an earlier "shown once" flag already written into the same blob survives this later,
 narrower patch untouched.
@@ -622,7 +629,8 @@ straight from `CreateServerRequest`, not `RequestBuffer`.
   `DogTagRefillTime`/`DogTagCap` constants it built its own local UI from, which the server reads
   for logging only and never trusts. Both actions are entirely server-computed from the player's
   own stored `DogTagSeconds`/`DogTagLastUpdate`, re-deriving `DogTagManager`'s own local
-  regeneration formula: `serverSeconds = clamp(DogTagSeconds + (now - DogTagLastUpdate), 0, DogTagMax)`.
+  regeneration formula. C14 corrects the earlier floor: base seconds retain debt and cap at DogTagMax;
+  only the displayed/price pool adds active VIP bonus and clamps at zero.
 - **`RefillDogtags`'s price is a hardcoded client formula, not a catalog row**:
   `DogTagManager.dogtagRefillPrice => 35 - 2 * currentDogtags`. `DogtagDialog.RefillButtonClick`
   never lets a genuine client send this request while already full (it shows a confirmation dialog
@@ -635,8 +643,9 @@ straight from `CreateServerRequest`, not `RequestBuffer`.
   (`GameControllerOnline.PayDogtag`, `GameControllerDeathMatch`) spends one already-held dog tag as
   an early-quit penalty — "pay **with** one dog tag", not "pay [gold] for one dog tag". `OnPayOneDogTag`
   reads no `Gold` field at all, only `LastUpdate`/`Seconds` (both unguarded top-level indices, always
-  emitted). It always succeeds — there is no evidenced failure code — and floors the result at zero
-  seconds rather than letting it go negative.
+  emitted on success). The original method preserves negative base seconds; the earlier server
+  floor was incorrect. C14 now rejects corrupt authority, retains debt and publishes against the
+  current revision/session instead of replacing an authenticated-but-stale snapshot.
 - **Found and fixed a real pre-existing bug while wiring these**: `LegacyStarterState.DogTagMax` was
   being assigned the bare `Google2u.Constants` `DogTagCap` value (5) directly. `DogTagManager.max`
   is actually `DogTagCap * DogTagRefillTime` — a tag *count* times a per-tag regen *period*, in
@@ -715,10 +724,9 @@ flags — `ChatShownFirstTime` (163), `CustomizationShown` (168), `WarpathShownF
   that blob for a client-side reader that itself reads nothing back.
 - **`OnVIPExpired` only re-syncs `DogTagSeconds`/`DogTagLastUpdate`, and only if both keys are
   `ContainsKey`-present** — because losing VIP shrinks the player's dog-tag cap by its VIP bonus
-  (`DogTagManager.mVipSeconds`). No account on this server has ever held VIP — `BuyVip` needs real
-  receipt verification this server does not implement, per `Server_guide.md` §11.6 — so there is no
-  bonus capacity to revoke; a bare `Result` (omitting both keys) is the correct "nothing changed"
-  answer, not a shortcut around a harder case.
+  (`DogTagManager.mVipSeconds`). The current implementation now returns the validated rebased base
+  tuple without persisting bonus capacity or deleting debt. The separate BuyVip receipt boundary
+  remains closed. See [dog-tag publication](DOG_TAG_PUBLICATION.md) for VIP/debt rules and storage proof.
 - **`SpecialOfferShowed` (1007) and `WarArenaShown` (212) were both originally grouped by ID
   proximity into payment-blocked/Battle-dependent buckets — re-checked, not implemented on trust.**
   `OfferManager.ShowedSavedOnServer()` (the `SpecialOfferShowed` success handler) and

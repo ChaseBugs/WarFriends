@@ -24,8 +24,18 @@ internal static class RiflePlaybackTests
         string a=new string('a',32),b=new string('b',32),rifle="Google2u.AssaultRifle_AK47";
         var world=new ShotCollisionWorld(null,[new(a,shooter.Collision),new(b,victim.Collision)]);
         Vector3 target=victim.Collision.Parts[1].Center;
-        var projectile=bindings.Prepare(stats,rifle,0,1,a,shooter.Muzzle(rifle).Position,target,10,1,
-            (origin,direction,range)=>world.Raycast(a,origin,direction,range));
+        var projectile=bindings.Prepare(
+            stats, new WeaponStageSelection(rifle, 0),
+            new BulletLaunch
+            {
+                ProjectileId = 1,
+                OwnerId = a,
+                MuzzlePosition = shooter.Muzzle(rifle).Position,
+                TargetPosition = target,
+                SimulationTick = 10,
+                CriticalRoll = 1,
+                TraceCollision = (origin,direction,range)=>world.Raycast(a,origin,direction,range)
+            });
         BulletImpact? impact=null;
         for (ulong tick=11;tick<=130 && !projectile.Flight.Finished;tick++) impact=projectile.Flight.Advance(tick)??impact;
         Check(impact?.Hit.PlayerId==b,"source rifle projectile hits blended victim pose");

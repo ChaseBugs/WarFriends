@@ -1,0 +1,3441 @@
+{
+  "schemaVersion": 1,
+  "description": "Behavior-preserving root-source moves on 2026-10-21. Hashes record pre-move bytes, not a permanent content freeze.",
+  "moves": [
+    {
+      "from": "Server/src/War.Backend/BattleAllocationSource.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Allocations/BattleAllocationSource.cs",
+      "originalSha256": "69a15fffbb7b252f9e9b347af7af667211d1adaaa9094d1790bfab29c69e6f25"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleArmyCombatProjection.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Loadouts/BattleArmyCombatProjection.cs",
+      "originalSha256": "f8999b5b80a351c14c24146bdd5cfec44105161cf2e77362294d804350d51cb0"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleArmyManifestProjection.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Loadouts/BattleArmyManifestProjection.cs",
+      "originalSha256": "c4fc46196580789ac7962a8107f04b1a0f18cf7da503cd8b23a93b7a026e87ed"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleArmyPerkCatalog.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Loadouts/BattleArmyPerkCatalog.cs",
+      "originalSha256": "43df24a00bfc875a50e4354858c369bc022baedf181f9fd61942a6d30a95dcc5"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleCancellationPreparation.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Cancellation/BattleCancellationPreparation.cs",
+      "originalSha256": "c1a6ab4841bad379bab79faaeebb3e56101684edcaf97a4359597a6ef08a7363"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleCancellationRecoveryService.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Cancellation/BattleCancellationRecoveryService.cs",
+      "originalSha256": "47e5ea86e27e8fa3302ffcf6360da8c52d1af23f20fce2e4bd541468a3730738"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleClientWeaponIndices.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Loadouts/BattleClientWeaponIndices.cs",
+      "originalSha256": "d5b53146510a47332edca44d40bb32103a6579ef2b81991a828bc39cc1b1d431"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleManifestFactory.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Manifests/BattleManifestFactory.cs",
+      "originalSha256": "9407674368384544b83c00523c90bc8e900d02aa4fd0db93fe4195869aebea01"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleManifestFactory.Rematch.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Manifests/BattleManifestFactory.Rematch.cs",
+      "originalSha256": "255a8dbfc43377d23674bc1c1a25083e704edb63f2c5d0e1f6f4df4337d86cad"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleMatchProvisioner.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Provisioning/BattleMatchProvisioner.cs",
+      "originalSha256": "d9a52cea9149a31492bf1e2608e0e5d6a93e505d62326d8d409ca67c6e4ad6c5"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleMixedManifestCatalog.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Catalogs/BattleMixedManifestCatalog.cs",
+      "originalSha256": "63c77eb83d580cde52e529092fafac70d2d26a88afea878054b4138f8bd8bedb"
+    },
+    {
+      "from": "Server/src/War.Backend/BattlePairedCancellation.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Cancellation/BattlePairedCancellation.cs",
+      "originalSha256": "40a0fa1381c9e257bcfeb114ca2ae1416e3a82e05c7699856743be49d35d06fa"
+    },
+    {
+      "from": "Server/src/War.Backend/BattlePlayerPresentationSource.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Provisioning/BattlePlayerPresentationSource.cs",
+      "originalSha256": "4211917c18bdb0657854c1b6a4a463464474cbe6f40918500c9cfe4ec0bbec07"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleRematchAllocator.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Rematch/BattleRematchAllocator.cs",
+      "originalSha256": "728dfc9ee2c3476b0405a0e9c5e8d67ec148911d0689ba662e8de502e169d562"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleRematchCancellation.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Rematch/BattleRematchCancellation.cs",
+      "originalSha256": "2a97fb45d34ddfec06bc2d1d90278982ed415d2754f58e3df8442af62546380d"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleRematchEndpoints.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Rematch/BattleRematchEndpoints.cs",
+      "originalSha256": "218a81320ea6693a824abc9083cadc7ee6f34ed2371a40bb9f7bba93755a7196"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleResultArchivalService.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Results/BattleResultArchivalService.cs",
+      "originalSha256": "c584fa9c031938cca3224ba5a9f032db250f663d635634a13f60c8cff001dc8a"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleRifleManifestCatalog.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Catalogs/BattleRifleManifestCatalog.cs",
+      "originalSha256": "986cb8dc4aa087e4b1154c36e6a3966f677f4edb1ea3e11b92aa41bc39717c06"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleShotgunManifestCatalog.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Catalogs/BattleShotgunManifestCatalog.cs",
+      "originalSha256": "cd620c769b2bf3e7f2b1484572b5d3b429ab2121a2a39241af69d84da1ffe656"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleTerminalAcceptance.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Results/BattleTerminalAcceptance.cs",
+      "originalSha256": "e2a7010ce7da84f742b9a775dce9a8cd82ee1e26e03d6e661884ada203851c8f"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleUnitProjection.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Loadouts/BattleUnitProjection.cs",
+      "originalSha256": "546a5b64e2ce7829e72a8789be0d165235da977f9cc8451ca0d29b6f19677a0f"
+    },
+    {
+      "from": "Server/src/War.Backend/BattleWeaponOwnership.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Loadouts/BattleWeaponOwnership.cs",
+      "originalSha256": "9a06525005b0dd82de26949e720208ff7adf6642343df7d13091931c8a5b8693"
+    },
+    {
+      "from": "Server/src/War.Backend/HttpProtocol.cs",
+      "to": "Server/src/War.Backend/Transport/Http/HttpProtocol.cs",
+      "originalSha256": "55d2c9d3ae22af8be70ce7b770809f4534c7848697bd3f5f6e1e7d2103315b8c"
+    },
+    {
+      "from": "Server/src/War.Backend/IBattleArmyManifestCatalog.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Catalogs/IBattleArmyManifestCatalog.cs",
+      "originalSha256": "4fe29f9ea5f127dad3a6c91d8e1b893874be5094c448f1af3040bde729ff004e"
+    },
+    {
+      "from": "Server/src/War.Backend/IBattleWeaponManifestCatalog.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Catalogs/IBattleWeaponManifestCatalog.cs",
+      "originalSha256": "c9753432ec8bba24d3bc29f1ec39e9076e1cfe26cb6a6214f07cbbec2fa22e1e"
+    },
+    {
+      "from": "Server/src/War.Backend/PreparedBattleManifest.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Manifests/PreparedBattleManifest.cs",
+      "originalSha256": "062b260d7be21eae6205146bfd217a1e31fdb13a3b7f561e8552e136e2c44718"
+    },
+    {
+      "from": "Server/src/War.Backend/UnitOwnershipContext.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Loadouts/UnitOwnershipContext.cs",
+      "originalSha256": "ce67d6187c2da6a5e37a2f459e3e253ff83e375ba6628b23e6df6b9a1f96346b"
+    },
+    {
+      "from": "Server/src/War.Backend/WeaponOwnershipContext.cs",
+      "to": "Server/src/War.Backend/Features/Battle/Loadouts/WeaponOwnershipContext.cs",
+      "originalSha256": "10fd089143b8eb2fd92733a805ba51ca9c061f621d6ebd4465f0e65beab76968"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ActiveMatchJournal.cs",
+      "to": "Server/src/War.BattleServer/Persistence/ActiveMatchJournal.cs",
+      "originalSha256": "9db7499c3684492411f1c7bb43d43936bf023ecd021ed0c30da6352e9c1d2f32"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AirBattleEntity.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AirBattleEntity.cs",
+      "originalSha256": "8398218157db2a4f70b0d9e3f5cf0f82b860722bb9bf3863be97f6b1cf615841"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AirEntityHealthState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AirEntityHealthState.cs",
+      "originalSha256": "21f38d48381325fa62d125d6a42b2042546d4c9a11e5ea64e097b26046cb7014"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AirEntityRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AirEntityRegistry.cs",
+      "originalSha256": "87275332800a3bd74b95ba7f00c4e328bb9fee9a143c72df541e7f76baff7479"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AirShotTargetCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AirShotTargetCatalog.cs",
+      "originalSha256": "d55a4cfb88dc9fbe58a529c97937ca724d51f6e1d842b9a7e69571a500a433fa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AirWaypointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AirWaypointCatalog.cs",
+      "originalSha256": "2f8cc12e2a6897a11240d0e58980288747e64910dcf8d49dc85dc82b11ddfc3d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AmmoThiefTransferPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/AmmoThiefTransferPolicy.cs",
+      "originalSha256": "09b8970ca01e3e54174cd61d93a2f5ddcdb24d216c00b6185cc96a1ed9216577"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmorPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/ArmorPolicy.cs",
+      "originalSha256": "0ab3ede0810e12d93ae9e3e294cfec816068f527e5ee7ecf942f491992f709db"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyAirAttackState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyAirAttackState.cs",
+      "originalSha256": "4316e631329f67d745ac2fac154133e8c820d235f71397086a28875d1dbd81bd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyAirImpactResolver.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyAirImpactResolver.cs",
+      "originalSha256": "f31351969083359e66f5d8f787cd8cc289602ab4f2dc9374219cb38358191bcc"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyAirMotionState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyAirMotionState.cs",
+      "originalSha256": "3e1cce78e0b512879426154ff073327d2e086620264a9d30a13f34e7bfe890e3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyDeploymentCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyDeploymentCatalog.cs",
+      "originalSha256": "4dd6bec5d67ca97f17851769823ebf2f2a6565abab4017d0da3f8db2181ba621"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyDeploymentCatalog.Grenadier.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyDeploymentCatalog.Grenadier.cs",
+      "originalSha256": "3b164150d4cd5ece1d0a7f2abc511fa24146f2cc50968d3f0ba235e1a93c8a05"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyDeploymentCatalog.LevelProgress.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyDeploymentCatalog.LevelProgress.cs",
+      "originalSha256": "cb394980cfd2caf0f0a96356612fecdf599023a39665d36fd01e491fae51d85c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyDeploymentCatalog.Mortar.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyDeploymentCatalog.Mortar.cs",
+      "originalSha256": "1a01866f0621d48cb2a1190f0a171e9b7b6bdb8eb8fa381b809464e12e70767c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyDeploymentCatalog.Rocket.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyDeploymentCatalog.Rocket.cs",
+      "originalSha256": "a90d465a7b88f4a1ecc02a3be64c5a633ce785a39fc347fea4145a8ceaff47db"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyDeploymentRealtimeRoutine.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyDeploymentRealtimeRoutine.cs",
+      "originalSha256": "46aafed9596257feb4c319c4539e03e888ca1204cf7a1d2f091b710d57e954e9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyDeploymentState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyDeploymentState.cs",
+      "originalSha256": "403890bd1df087f7ed002bdea5abdb8108f01f95271f6cf5c842506c01b5eb6a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyDeploymentState.Realtime.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyDeploymentState.Realtime.cs",
+      "originalSha256": "db8f6b77d216d6882ca36c783406eebc6d24f9959f5cb4d317d3a2ea80664c44"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyDeploymentStatsLedger.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyDeploymentStatsLedger.cs",
+      "originalSha256": "81fd3a4ff7f87c9f7435ef0d6ed8e99dbb4dff0b14b981f54e551911bd6e7ce2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyDeploymentWave.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyDeploymentWave.cs",
+      "originalSha256": "c82809d2b2639a409b7de8dd4eea2fba05802897b303d9de96e47679c78c79b8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyFlameBurst.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyFlameBurst.cs",
+      "originalSha256": "bfcd046443db5b9b175d1969ee0f8959675cb0fe57bce7165aa5987db416a102"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyInfantryPosePolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyInfantryPosePolicy.cs",
+      "originalSha256": "e01872e1d143fe9c99ab23220dc5fc6d8bc65267a6c80a1f9c90d09faefbcb1d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyMinigunnerMovementState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyMinigunnerMovementState.cs",
+      "originalSha256": "01cdee067f726803e9f9d4e92ee84a30b4f4a3f914c5c6a8e64e96884dc3fa83"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyMinigunnerPointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyMinigunnerPointCatalog.cs",
+      "originalSha256": "9ca1e2ea7b09bac7ae16716393c730feba17023b0b087cfd7bbae44593ce75e4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyMortarRuntime.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyMortarRuntime.cs",
+      "originalSha256": "abed980c03ca2894d5e1ced5512e5c7592545c5fec4e975fa862bfe0e586639c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyMortarSelection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyMortarSelection.cs",
+      "originalSha256": "36a229d207b0ff2713069e0ee78cd8769281cb30406e4a970686d773de9e70ef"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyNavMeshConnectivity.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyNavMeshConnectivity.cs",
+      "originalSha256": "5854da626cd557916027e81bfdc8074cefe4ef6ec883782b0065ee497895fb35"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyNavMeshMotionState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyNavMeshMotionState.cs",
+      "originalSha256": "38f829dd175571db981296f9d16ee0e536eda5ff6ff9f85e0a29f8703971944e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyNavMeshPathFixtureCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyNavMeshPathFixtureCatalog.cs",
+      "originalSha256": "4efb69b4adc28dadea99c82780e5677eada0c2d28305325a18fc4d3a43ca4af2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyNavMeshSourceCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyNavMeshSourceCatalog.cs",
+      "originalSha256": "f695243eb5fe6e9a9fa0a8bcc48f81903bd29a0053e12ddb806996a19008769c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyNavMeshTriangulationCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyNavMeshTriangulationCatalog.cs",
+      "originalSha256": "5691eac583c95e88ceafee58fbd87cf3e16572e28e4f8bc31cab77de2a56e79b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyOptionIdentityCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyOptionIdentityCatalog.cs",
+      "originalSha256": "d1c7dae98d9919a9fb885d2464d77fd17cc8e9978dbbed60008aede198420ebf"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyPoisonEffect.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyPoisonEffect.cs",
+      "originalSha256": "c64ee12e9e54b24993fb3b64fabd92870a925fb7b59952a7d8164c580c20b850"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyProjectileFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyProjectileFlight.cs",
+      "originalSha256": "a9a670c568f195e37a96e878e8ef00419a2e9f553f2d81beb43a1b25e8b42600"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyRusherArrivalState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyRusherArrivalState.cs",
+      "originalSha256": "766f342864a5bd0415c470c317b2655452b3064994f70a5245c0125d87b470c1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyRusherAttackState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyRusherAttackState.cs",
+      "originalSha256": "84a1c6ba619a11e92c3bc87a60ac3f147c056dbbc9e64cf74904eabc9ec99531"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyRusherAvoidance.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyRusherAvoidance.cs",
+      "originalSha256": "65afb1da9f99171dde8fc0931bcdcb5612af4308b4422bd5df289048e47311a7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyRusherDetourPlanner.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyRusherDetourPlanner.cs",
+      "originalSha256": "0732f82031a80f6b91a069a28d08a9e71e2031e17a846743e890f0e2be294197"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyRusherImpactResolver.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyRusherImpactResolver.cs",
+      "originalSha256": "893e0f3ca8769f93e2a4c2ec34a27c3dd05dbd008e927cd6d392ac7985d81470"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyRusherLateralSteering.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyRusherLateralSteering.cs",
+      "originalSha256": "baac3b60d3461224b4900f9a8037239b40d05f8f310b87ebae0dbb2918a941f5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyRusherPointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyRusherPointCatalog.cs",
+      "originalSha256": "4ba36a78c4ca2a0d49d3c4779bc7dfd9d60156021d0ffcd670f197a96639d868"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyRusherRetargetClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyRusherRetargetClock.cs",
+      "originalSha256": "c89691056ba5563e54c6ab9b6e4b4a7cb8594b995b36290f426b79745c1f3de5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyRusherRetargetSelector.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyRusherRetargetSelector.cs",
+      "originalSha256": "e83ddfa9f9c3bc146864f91b4b3eaa7896a23895ec34bcaff2cba889423a156d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmySpawnCallbacks.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmySpawnCallbacks.cs",
+      "originalSha256": "e38559a6c8c085971dea88dc468d082cad6a839b6ee9e7174ebeceff628da953"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmySpawnPointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmySpawnPointCatalog.cs",
+      "originalSha256": "b0b69a5c6d9d7736e1f7965c7cf4ee0c9236d2d9464f09e0932e6e90942357e4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmySpawnPointSelector.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmySpawnPointSelector.cs",
+      "originalSha256": "7ab9a2996a2ff22361acff701deaf0b200c39126a93915c10dda9620bfda06f0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmySpawnReservationLedger.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmySpawnReservationLedger.cs",
+      "originalSha256": "75956abecd712f632ea6bf29fcf4f45a8aa5361860ba384de0548f4b0307fb1c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyVehicleRouteMotion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyVehicleRouteMotion.cs",
+      "originalSha256": "8eb182c338c9094cc10583dc18132d2380c886999edfba44695ecdf1939c84cd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyWarperDestinationPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyWarperDestinationPolicy.cs",
+      "originalSha256": "9655746bf2a86c1081541bdc7e24dbd20d11f03913d56816ffeca61daa3c0aba"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyWarperRelocationState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyWarperRelocationState.cs",
+      "originalSha256": "2183fec5849ee0d6cf9d375b1b2108c76e5e0918a96b138f09534a5a7afe1605"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ArmyWeaponBindingCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/ArmyWeaponBindingCatalog.cs",
+      "originalSha256": "a82712d58d753c73b52093cd63d52efd673cb819fdc8e034bed55c6d6b50d951"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaulterCornerEntry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/AssaulterCornerEntry.cs",
+      "originalSha256": "4f9eed9a4eb1b199d97073e71490a825282164333af0fbfe707fcd614cd25f68"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaulterShotBatchPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/AssaulterShotBatchPolicy.cs",
+      "originalSha256": "5044e5c6b065cb2860c12588e97947e6833c300bccc4960652d1c0833746dd5e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaulterTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/AssaulterTargetPolicy.cs",
+      "originalSha256": "e568cc8f27fee010ec6d4976d672a3316a7cae81e2c93380a627c8b1d6229f4c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaulterVolleyState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/AssaulterVolleyState.cs",
+      "originalSha256": "94f56803c225411b4d6e41bb9935d7e6f5c61768a4c913ef26d430df0c0b18d1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaulterWeaponAimState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/AssaulterWeaponAimState.cs",
+      "originalSha256": "f0b2c80a95785821f16cc3ebe27539168643e4293882205741c44bd471b43302"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaulterWeaponFireClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/AssaulterWeaponFireClock.cs",
+      "originalSha256": "f5e006ec8d804009d3d085d989b11b0142fbfe41be4364fc5a56a6670bf7ba8c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaultHelicopterAimPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AssaultHelicopters/AssaultHelicopterAimPolicy.cs",
+      "originalSha256": "d791e865cd9a99bcc3347354b67428ee02d7ff8d33b778ebb58960723ef706ca"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaultHelicopterBoxColliderCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AssaultHelicopters/AssaultHelicopterBoxColliderCatalog.cs",
+      "originalSha256": "2bbe9dd920938d12320348d220e608ddb2da2e367f0d63898da73cf9971606c7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaultHelicopterMeshColliderCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AssaultHelicopters/AssaultHelicopterMeshColliderCatalog.cs",
+      "originalSha256": "9bb44490e76c2bca2fbe511e9e99e2a01c062e4cee8147c24a9a21aa7a0b0f08"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaultHelicopterShotTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AssaultHelicopters/AssaultHelicopterShotTargetPolicy.cs",
+      "originalSha256": "d45c27d3573bffe409d819342b2c23d237c996faa936292775f14e829e4fb1c2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaultHelicopterTargetState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AssaultHelicopters/AssaultHelicopterTargetState.cs",
+      "originalSha256": "22c7186756058c38b90372f1a3ab495627bf6440f10a7210899cab4076ea225f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaultHelicopterVolleyPlanner.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AssaultHelicopters/AssaultHelicopterVolleyPlanner.cs",
+      "originalSha256": "433d8426d017b50c2012335d089a812ae27cd0778ca106de832685de3a86c092"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaultHelicopterVolleyState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AssaultHelicopters/AssaultHelicopterVolleyState.cs",
+      "originalSha256": "b6bada5e63b8164a10a2516887e0877dd0c49367d52cf30d5addf2a7fb9a7e24"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaultHelicopterWaypointState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AssaultHelicopters/AssaultHelicopterWaypointState.cs",
+      "originalSha256": "fc809157b49519dd915724bf2311703e122bbd76c8b7bd38fd9cd3c39c5e44d4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssaultHelicopterWeaponCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/AssaultHelicopters/AssaultHelicopterWeaponCatalog.cs",
+      "originalSha256": "1d90408f99d26b8cba41391430008a6054edf7421477dac1a64a4daa108925bd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/AssemblyInfo.cs",
+      "to": "Server/src/War.BattleServer/Properties/AssemblyInfo.cs",
+      "originalSha256": "698826dfc13857ff2bdd7064335d9b6ddf645937f6679a4cf0b1fb63cc04551f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BackendAllocationClient.cs",
+      "to": "Server/src/War.BattleServer/Backend/BackendAllocationClient.cs",
+      "originalSha256": "713900893fa1a029a973aa32372d77389238d4fc0f69128aaa113e3ef3c7e7f9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BackendResultForwarder.cs",
+      "to": "Server/src/War.BattleServer/Backend/BackendResultForwarder.cs",
+      "originalSha256": "f40e02ffb2c0146e62a7f45910b9aa0f4e97148279337a325c0fd61258344c8b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BarrelChainPlanner.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Barrels/BarrelChainPlanner.cs",
+      "originalSha256": "e57b271e1cc8e39bc3acd3d0bc07a74a48df10f01e7d11e0a59769920cca1854"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BarrelExplosion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Barrels/BarrelExplosion.cs",
+      "originalSha256": "dd946b9e295505192451754bd13c9cd4ef18e0adaeecfc47c8d64ae9da84ad5c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BarrelLifecycle.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Barrels/BarrelLifecycle.cs",
+      "originalSha256": "3da173f6741dd34bb1750a329eaba2fa498a674c9e4d9685abf67db9cff6bd51"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BarrelMatchSimulation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Barrels/BarrelMatchSimulation.cs",
+      "originalSha256": "922b896c802440c81e84b3a0b4ff906629dfb345d11b071f9c6de7a97a20319b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BarrelOverlapOrderCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Barrels/BarrelOverlapOrderCatalog.cs",
+      "originalSha256": "12a5d4c83dfab84c0821c790d1c1c80ec76b8c4f2276882896d3c3c380aa499d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BarrelPlayerChainResolver.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Barrels/BarrelPlayerChainResolver.cs",
+      "originalSha256": "2584c5c90e1b338f7314f19d93e39dce8c7477dae01c9d87f030ee4f2841895a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BarrelSceneCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Barrels/BarrelSceneCatalog.cs",
+      "originalSha256": "898404c96510e8f671dd2909290fe3c5e365836781c7739af08e40c87b66dbcf"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleArmyStatsProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleArmyStatsProjection.cs",
+      "originalSha256": "ca6375b85dd22697c5f08bba0d463df8fde3897d6f3c587a6b12b10c38fe6837"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleBuddySelectionState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleBuddySelectionState.cs",
+      "originalSha256": "6d0df50da521f51a451d456c29beffd516c266926f8aa6e73df2eb6a1d5e337d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleBulletHitEvidenceProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleBulletHitEvidenceProjection.cs",
+      "originalSha256": "0e778baf2c1c172408de973658e9fbcbf18a25ec7f3dc016b4e6cdfa704b98d6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleCardSelectionState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleCardSelectionState.cs",
+      "originalSha256": "994755d9d56006132aeb305409ffc9d194c4013c83b30af419b3a82356accd79"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleCardStatsProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleCardStatsProjection.cs",
+      "originalSha256": "1db57b9199d0d06640db9f0c7eed679ac00c68a15cc77375f9656cc2b63e7c4d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleCombatContent.cs",
+      "to": "Server/src/War.BattleServer/Content/BattleCombatContent.cs",
+      "originalSha256": "90dd34b061d4d393eb3bfb44370b16be7dad2e7a771c89e5c750e49d44253952"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleControlKeyPolicy.cs",
+      "to": "Server/src/War.BattleServer/Hosting/BattleControlKeyPolicy.cs",
+      "originalSha256": "ac942b532a5008635fa1949e170517dc51faebab16209b9939d773ebf415e192"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleCooldownClock.cs",
+      "to": "Server/src/War.BattleServer/Matches/BattleCooldownClock.cs",
+      "originalSha256": "3d29c1106ccf58eea19acaf41f71eb0e2388fc44e60f263f846587c2256ec65e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleCrateStatsProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleCrateStatsProjection.cs",
+      "originalSha256": "a334ab6e43c577ac5e2cb2039a1c863f22d6cde0400e80f2bfda05c69966eecf"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleCreditLedger.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleCreditLedger.cs",
+      "originalSha256": "b94483f9e90d0b8bf8415764371acffc87f6c1bf26665463148359b423f1afaf"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleDirectArmyKillEvidenceProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleDirectArmyKillEvidenceProjection.cs",
+      "originalSha256": "3dafc749e6347975fa3858f81466bc7e9b27a7c8f636f4b978083a1caead9d00"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleDirectKillStatsProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleDirectKillStatsProjection.cs",
+      "originalSha256": "2ade49b82340b7770f856c9f7bd79ddb7f6f60182c493862d58def6d01a61428"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleEventFactory.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleEventFactory.cs",
+      "originalSha256": "300a86cd32a09755d4b454182e53936360188ed853d160c3acbc50939273eb8f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleInteractableRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleInteractableRegistry.cs",
+      "originalSha256": "e7f9ed60aa97b6db6e900738602591cc6396191fb08b1ebb7734b263866f5bd8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleKeyConfig.cs",
+      "to": "Server/src/War.BattleServer/Hosting/BattleKeyConfig.cs",
+      "originalSha256": "db3372bd3c6c76e30679f31c5df572f10e1490d788c083d3341a39e8c4dc8387"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleLoadingCommand.cs",
+      "to": "Server/src/War.BattleServer/Matches/BattleLoadingCommand.cs",
+      "originalSha256": "2ab34f92908ba8c4a3c745df892bdc1c5ca13e42bc62e1aeefaeb46f864488b3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleLoadingPhase.cs",
+      "to": "Server/src/War.BattleServer/Matches/BattleLoadingPhase.cs",
+      "originalSha256": "bfcd06f2512536c69b450b6b51f161adb091c0e292645261cbd015cf272dd552"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleLoadingState.cs",
+      "to": "Server/src/War.BattleServer/Matches/BattleLoadingState.cs",
+      "originalSha256": "e6374d78ba580aeb323d70c97dbb22733806570c9873776d040c0f1ede0ed203"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleLoadoutPolicy.cs",
+      "to": "Server/src/War.BattleServer/Matches/BattleLoadoutPolicy.cs",
+      "originalSha256": "217ca392c39887df34654655928ff570c819d4b1de6bf1ee0c4f984d29ae85e0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleModeCapability.cs",
+      "to": "Server/src/War.BattleServer/Matches/BattleModeCapability.cs",
+      "originalSha256": "fe2446cc1e9c4c9df73a0e4e3ffebff5ef10f997b95cb259ab2efe5a0323d747"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleObjectiveState.cs",
+      "to": "Server/src/War.BattleServer/Matches/BattleObjectiveState.cs",
+      "originalSha256": "e68f7df13fd836f9e31577fdd9ec3cca888491ea3a5cae3dcf3201a407e363b9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleOutcomeStatsProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleOutcomeStatsProjection.cs",
+      "originalSha256": "495fee94f6df6d405086b8e3fa9250e4d3aeb3141ef43eed3a0e2937a13ea1ca"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattlePerformanceLedger.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattlePerformanceLedger.cs",
+      "originalSha256": "51cc5a13dc1904d7b4b037445b841e588dec99842ab4b941abfb5fd4a5c7c80d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleRealtime.cs",
+      "to": "Server/src/War.BattleServer/Matches/BattleRealtime.cs",
+      "originalSha256": "156d9ae42062643cfba01b3aac5984a3b42977fc27136d0197e8d20985736e16"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleResultAcceptance.cs",
+      "to": "Server/src/War.BattleServer/Persistence/BattleResultAcceptance.cs",
+      "originalSha256": "21d0549f0374c33f6a3a6a6b7c40bdcd8ec00068c9d373a30e322a19d1f2c253"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleResultHandoff.cs",
+      "to": "Server/src/War.BattleServer/Persistence/BattleResultHandoff.cs",
+      "originalSha256": "dd0da26e138b472d81b0fcefe70df30f987990092250f86975a3c02a73356ded"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleRibbonLedger.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleRibbonLedger.cs",
+      "originalSha256": "402655de354ac9497edf37511b9302d793f9af731539d1b7392c668770caa2fd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleRoomHandshake.cs",
+      "to": "Server/src/War.BattleServer/Matches/BattleRoomHandshake.cs",
+      "originalSha256": "c801c6401bf50630f2639552fa7a48cfd4b8d1e19bfb911187e4b23620b5fc94"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleRuntimeConfig.cs",
+      "to": "Server/src/War.BattleServer/Hosting/BattleRuntimeConfig.cs",
+      "originalSha256": "0cbaf3bc00189998f14ba9786958c6273d1ebc7bdb751d6254c5ec55a34b84ab"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleSabotageKillStatsProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleSabotageKillStatsProjection.cs",
+      "originalSha256": "eebd46da540b1c9b8af52a4742084fc65f6cf5b735e94767955381eba601c351"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleScorestreakStatsProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleScorestreakStatsProjection.cs",
+      "originalSha256": "e87f6c24c853eae86fc35fa5c6c813a2ea06f380b46939767e3b0ebb0f404356"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleShotEvidenceProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleShotEvidenceProjection.cs",
+      "originalSha256": "ec6284bbe7f1ac85871b27137d08d673a9fc1c846865a75d1aeabf45aef27a13"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleSkillShotEvidencePolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleSkillShotEvidencePolicy.cs",
+      "originalSha256": "2f2bd3499e69121a2bcb885254f5b71354702846f78ff2f13a1cc345e3d77b75"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleSkillShotStatsProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleSkillShotStatsProjection.cs",
+      "originalSha256": "7324b6c32854846b1fc3c3053092d4722937f2f05b924a61c18d3f9a892d4186"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleStatisticsLedger.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleStatisticsLedger.cs",
+      "originalSha256": "91eefcb213b045f969e48c921540015c45450b064e0153a443faa4f4cfc5d45e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleStatisticsValidator.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/BattleStatisticsValidator.cs",
+      "originalSha256": "a5976b9d5c227c2321e2e6e53bc92cdd3530d712752e6ec679f26e711b926b9d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleTerminalPolicy.cs",
+      "to": "Server/src/War.BattleServer/Persistence/BattleTerminalPolicy.cs",
+      "originalSha256": "c7743ba08a5cb7505f8c485ef40aad6ec79ad1366f65a509fa484fd25851e2cb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BattleWorkerSettings.cs",
+      "to": "Server/src/War.BattleServer/Hosting/BattleWorkerSettings.cs",
+      "originalSha256": "da01ec9cf49c51be73baeb76fa67ae8c6e81fba115de7e3c8187c32b9096af60"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BazookaCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Bazookas/BazookaCatalog.cs",
+      "originalSha256": "0ac9e12edf572601bc649c475becdf238ab895246ba139c16b1ebf071cfdbd66"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BazookaExplosion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Bazookas/BazookaExplosion.cs",
+      "originalSha256": "62fa47d6788091060581f6466383024b9fc2b49f1ab39f49f3adc6b72072c82f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BazookaHoldState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Bazookas/BazookaHoldState.cs",
+      "originalSha256": "aef315444c932084e051d7832f6781bde2767becec35ef2001ebcd924af3e246"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BazookaMissileFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Bazookas/BazookaMissileFlight.cs",
+      "originalSha256": "e9a5bbd11f0eef0ed17b01ba5fdd06d71581fafea26cb54b1fa4d08a5667461a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BuggyCannonAttackState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/BuggyCannonAttackState.cs",
+      "originalSha256": "3736a9e9303777e4e81a36d9b5f5eaa5bbc9461ba66e1f62e2acb360dc42d29f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BuggyExplosion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/BuggyExplosion.cs",
+      "originalSha256": "295a7582db09b880e6a5aaaeb40a160304ff28e06aa9998a60f1746e6715854f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BuggyMissileFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/BuggyMissileFlight.cs",
+      "originalSha256": "bb27efc4879e730a3b5f4b42149b2197b5ac962f5faaa505576a3babfd5d2ec0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/BulletFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/BulletFlight.cs",
+      "originalSha256": "3ded4ba384d9f134f0288812c6ff6048999fd13e48b91558c6001e49cc5af009"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardEnemyPointOccupancy.Assaulter.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardEnemyPointOccupancy.Assaulter.cs",
+      "originalSha256": "f15025a18f939b2e8c007812d5e208c1d24c0baca371e6b1c430eb3e24b5ba44"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardEnemyPointOccupancy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardEnemyPointOccupancy.cs",
+      "originalSha256": "fc14a4777bea1dd561aa1f2856c4f3247980217bbb796359e8f471a9472ff21d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardGrenadeOriginCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardGrenadeOriginCatalog.cs",
+      "originalSha256": "91d80b383441c14db163de2ef962bd7813b8517b177ed8b3e6ba381b510cdd09"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardGrenadesBurstPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardGrenadesBurstPolicy.cs",
+      "originalSha256": "64d1bcd4de66912a5ad5b19925d1de5cc1ecbc8c73c92783608f4974b925373b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardGrenadierExplosionDamage.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardGrenadierExplosionDamage.cs",
+      "originalSha256": "81dce274e806246ce5e6880be2115bf73e7b9bad247b41f98df5bcc06ea94ad9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardGrenadierFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardGrenadierFlight.cs",
+      "originalSha256": "2d80cd1ee3d0bebec92792995ade90606d77e16df91ecfe2917c71ff865aebd3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardParachuteCompoundContact.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardParachuteCompoundContact.cs",
+      "originalSha256": "18071c9a2d51106c00a70c72b71992ac14eb9c89d26b06199f58f0ac560d212e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardParachuteFlightState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardParachuteFlightState.cs",
+      "originalSha256": "bbddaea468cd1d89bc8a402a6f75bd8fa7bec12e013cc934475e7cf090e6db70"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardParachutePreContactMotion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardParachutePreContactMotion.cs",
+      "originalSha256": "ccad6260c19eb1887fd0d7a0dea6eaf147c61d06d7829f716ed13369924bc756"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardParatrooperAirTarget.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardParatrooperAirTarget.cs",
+      "originalSha256": "27eff39347aaea073b6c98e0aabc91a93b3eb5a059c00c41d39f54f698b72982"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardRocketExplosion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardRocketExplosion.cs",
+      "originalSha256": "cb6f127951e25cb8d59061441c53a634b72339e98a0cc0fea917258350c4aaf7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardRocketMissileFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardRocketMissileFlight.cs",
+      "originalSha256": "ac8fa545bdd11d3bb7af4b5d39101d075d63009574c151c00882d501c64e1fac"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardRocketMuzzlePose.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardRocketMuzzlePose.cs",
+      "originalSha256": "adb7e8b18e6220928a62795b935c3cfa9c4b7241f8fabfe6e56c4767eb92e6d7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardSniperMuzzlePose.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardSniperMuzzlePose.cs",
+      "originalSha256": "b91869f993a44f85ca7c1707132298c60832b4a436f55246ff03f6c57af81fb7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardSoldierWalkState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardSoldierWalkState.cs",
+      "originalSha256": "bf0717a7472713679826e08091f315b831022ef378487269c7a21c8e7ed6aca1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardSpawnUnitSchedule.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardSpawnUnitSchedule.cs",
+      "originalSha256": "34720e7938f22569fef9469d6d358b66a7c800c2deeceda6ff9c611fc6f0dcb5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardSpawnUnitSourceCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardSpawnUnitSourceCatalog.cs",
+      "originalSha256": "a80dcda4d3b8c850f04073414a7827682313d945851222b4f46fdcb825aab30a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardUnitCombatLifecycle.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardUnitCombatLifecycle.cs",
+      "originalSha256": "a53d53f36a76bf9e2628218e0ed28bb000944befdc9d834edbe9c15faddf848f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardUnitEntityProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardUnitEntityProjection.cs",
+      "originalSha256": "cd8a4df2a8fe3255782f01dc5140bcf018920d58bc46f63407917dbf9b56c352"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardUnitEntityRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardUnitEntityRegistry.cs",
+      "originalSha256": "1659dbf3e3b7120f8050e9d352b3b52818f9e5dadf0fa9d7e696e9621c110d77"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardUnitInitialPointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardUnitInitialPointCatalog.cs",
+      "originalSha256": "8393b28def271f674c12f80087656309c82aa02e662f23145bf37371f6b71a3a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardUnitSpawnCoordinator.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardUnitSpawnCoordinator.cs",
+      "originalSha256": "438fb80f12c344de9a248042bacfb0900aa604f89c0a5015e97f922292ce23f2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CardUnitSpawnState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/CardUnitSpawnState.cs",
+      "originalSha256": "ad76f800589d4d03d8ce1954a3150aec523546f413df8e5c8a68fe7736e0a9e6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ClientBattleEvent.cs",
+      "to": "Server/src/War.BattleServer/Transport/Reliability/ClientBattleEvent.cs",
+      "originalSha256": "410c58987f47c0ed89356027319477683a886b7a6ef9b5d6075776e835c54663"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ClientBattleEventWindow.cs",
+      "to": "Server/src/War.BattleServer/Transport/Reliability/ClientBattleEventWindow.cs",
+      "originalSha256": "8a0a4a0005e7c215f94c524b2662d60cf96d078e881e163f614fb8352398dafa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CompleteBattleEvidence.cs",
+      "to": "Server/src/War.BattleServer/Persistence/CompleteBattleEvidence.cs",
+      "originalSha256": "12e5d60ad6e1591a9881ab112878bc0ad034ac78f4e68d3bc2393e0330084970"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ContactFrictionAnchors.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Physics/ContactFrictionAnchors.cs",
+      "originalSha256": "3b598d3ce3932f7aabf629219532bc620eb9fb2f7564fef8ea3920e2fcd2ea9b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ContactFrictionBasis.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Physics/ContactFrictionBasis.cs",
+      "originalSha256": "2f11b40f76b7ae56b3890ef1f90933b6bc37aef16d63d2d8e16390600882441e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ContactFrictionCache.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Physics/ContactFrictionCache.cs",
+      "originalSha256": "e04682efb794ae3e2aadcf6013ee4af87f681c004a6043cdc41550785fb36c32"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ContactFrictionConstraint.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Physics/ContactFrictionConstraint.cs",
+      "originalSha256": "68e54182c54ba3706488ebb054f3d84f2a523c073e57399d111b674f84288d21"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ContactFrictionPatches.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Physics/ContactFrictionPatches.cs",
+      "originalSha256": "500fef9b2d051577e54a45638b2d865f9a9a09f4dca4282267de8ceb6c3bd9dd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ContactNormalConstraint.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Physics/ContactNormalConstraint.cs",
+      "originalSha256": "6902e3e6b34632889ac43923541720aa8e0a9ad66aea06ec46225277aa8e96cc"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopAirPathReservations.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopAirPathReservations.cs",
+      "originalSha256": "9d69e22c609b054caae2ab700a75bf960a1379ec4e649161331877416636b8f2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopAirWaypointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopAirWaypointCatalog.cs",
+      "originalSha256": "b567aed3d3b4d21f692c5b15d2d07102cbeee52a26493dab0838aec25f7bd6df"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopAiSpawnSelector.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopAiSpawnSelector.cs",
+      "originalSha256": "e9e70c95a9c56b38b2fd5178e682c9357f36a44f20ed89af8f07d7130c344949"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopAssaulterImpactPlans.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopAssaulterImpactPlans.cs",
+      "originalSha256": "0bbbb084d482cc1a038a1c9bb08c33b4946ff0bb4eafcca029faecf7f09ee085"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopAssaulterMovingAim.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopAssaulterMovingAim.cs",
+      "originalSha256": "3910fc7afdc55ecefb91f6bdab24640f826b524113430342292c66543249dca1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopAssaulterQueueCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopAssaulterQueueCatalog.cs",
+      "originalSha256": "fea1dd9b5066ef584c2ff339e4f98f2180cd53b2ab2242c88906275f10b4025a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopAssaulterShotRotation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopAssaulterShotRotation.cs",
+      "originalSha256": "393bad34932f75291fd315f2425a55820f9cb0bcd5a47a7753466b16ca7b3013"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopAssaulterWeaponCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopAssaulterWeaponCatalog.cs",
+      "originalSha256": "39eadee7080df6281518b12ab17e5753411179a3ce9231c38f2bea9d86513368"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossAiSpawnSelector.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossAiSpawnSelector.cs",
+      "originalSha256": "519452062646cf113cb7d837657fb1fa2aa86167f9d2936a131b681a1891b868"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossAnchorCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossAnchorCatalog.cs",
+      "originalSha256": "3e965cd899e54f94ef5d35f39dee571b11dfa7310428ba43af5213f2be08b2dc"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossArsenal.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossArsenal.cs",
+      "originalSha256": "387e9e62f1a81d854fb3c9323bdd03d4047a10bfd53d00d3f8269bb14fa84417"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossAttackCadence.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossAttackCadence.cs",
+      "originalSha256": "aae499aa0c132726c816e1f559b54263ad018c99727bf8c560c1a529205c31c6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossAttackTimingCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossAttackTimingCatalog.cs",
+      "originalSha256": "2d8482f5020939072fff92148c5d0772955ff1c17d5e5294940f2ca5c64d4bd0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossCombatState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossCombatState.cs",
+      "originalSha256": "b91a578d5f685cf5c10b887f7efd89d1b9dba460880eef325999b220e8aa81d9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossLoadoutCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossLoadoutCatalog.cs",
+      "originalSha256": "0b91f7e271df2ee5335e2b2dd6224ce83651d5f6f547815f010921e18e3de128"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossPathCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossPathCatalog.cs",
+      "originalSha256": "43cb8f530198b3c16c3a8b4c8cd54242668c7ff7e90588fae0d2ac159e28150f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossPlayerPreference.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossPlayerPreference.cs",
+      "originalSha256": "ac6d45ad7317f24e5c8a46c48badf69a810f87c089103cf04e5bb609276322f8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossPriorityOrder.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossPriorityOrder.cs",
+      "originalSha256": "1f68b4d60687fa8c5892f09c14fc0cb48953f838d9618fcd83bfcfd51550b4f3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBossWeaponChoice.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBossWeaponChoice.cs",
+      "originalSha256": "b1cb741ddaff98fbb33eff3da2d1a52049408fe5c18ed34695df0d250c9fa813"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBotHealthCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBotHealthCatalog.cs",
+      "originalSha256": "13c4bcac1ee3d7ce5656d4fc4717bae6a086e59785b41b5d454473beace2637c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopBotRuleCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopBotRuleCatalog.cs",
+      "originalSha256": "24146a81e4b2ed3158078f2c8d77493773a95beb907ff892c865ecdfa8c9b3c7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopCardRowCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopCardRowCatalog.cs",
+      "originalSha256": "3cf5a66b4767869f57da28b833d0afb875a611a580eecb02a700cef702c947e5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopCommandCapabilities.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopCommandCapabilities.cs",
+      "originalSha256": "9d2eb1b9d5dc24048670199a0991bf6fa83cb8b05a1e7a6c6557e32669f18db2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopCornerFiringMuzzle.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopCornerFiringMuzzle.cs",
+      "originalSha256": "de6a8a51d9b5164933830ea6ae163dcf4c27c293e11a1f2f82bf8603f500943b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopCornerPreparationPlan.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopCornerPreparationPlan.cs",
+      "originalSha256": "8c05084df6bba6611b23269f53901503592b8469134f0cc25009241a64764c8c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopCornerQueuePoseCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopCornerQueuePoseCatalog.cs",
+      "originalSha256": "7cade14e95605a30392f93109fd6a71566d8d9a23ec932923b7d62ca1192c468"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopCornerReturnAnimationCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopCornerReturnAnimationCatalog.cs",
+      "originalSha256": "47e0c910243943fc29cbea2f32db58de0024e24f7f82491574ec1b16c6be17f7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopCornerShotPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopCornerShotPolicy.cs",
+      "originalSha256": "7616c12b4fb1c50687692d634d85ca59a4c6942c3b1330fd4d62f7e2cb38c703"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopEnemyCombatCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopEnemyCombatCatalog.cs",
+      "originalSha256": "93f49503d778d0976b50750e46688542672e4b7dffc773344fabc133bee19a60"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopEnemyDestinationState.CrewRetarget.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopEnemyDestinationState.CrewRetarget.cs",
+      "originalSha256": "a0be4ee16ab82d5f0b690834025f9b502c27952d04803afb56c7e3a478f6a3c5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopEnemyDestinationState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopEnemyDestinationState.cs",
+      "originalSha256": "4e979731d3050aab7020c71492791320dd0b824a4bfeeb60b6e3eb828eddb65f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopEnemyDestinationState.Helicopter.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopEnemyDestinationState.Helicopter.cs",
+      "originalSha256": "fdb52a700f952f3c4e2f43f5217660a07a3fec6699a8e652224737649ed78276"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopEnemyMuzzleCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopEnemyMuzzleCatalog.cs",
+      "originalSha256": "cf99bdd1917c0310b8afe046ad8aeceb66b7b7da8a4ac314dcccb2c189d648e9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopEnemyPointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopEnemyPointCatalog.cs",
+      "originalSha256": "db05f9fbd944a35fc91fd2c8a014d8aa31ad4eb086eba9869aa7e7e17c4cf6af"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopEnemyPointSelection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopEnemyPointSelection.cs",
+      "originalSha256": "abd9f68626e9654bb49bab0f8c167c0f8312346c6e0918889a31c0648a489105"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopEntityIdAllocator.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopEntityIdAllocator.cs",
+      "originalSha256": "f939310803a7941148cbd7de527b64fff049e94cc8c2c722675dd3507aea90b8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopHelicopterExitTarget.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopHelicopterExitTarget.cs",
+      "originalSha256": "8d4fee5d4a1cd8732b26efe94b25da0131614d20240ebdf2bebecab528325c3e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopHelicopterFallbackRetry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopHelicopterFallbackRetry.cs",
+      "originalSha256": "053cbf98e6a316814421d7a80fd62e4c20d1250fc174cc510dfdea0e85037574"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopInfantryFacingEstimate.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopInfantryFacingEstimate.cs",
+      "originalSha256": "4e36cee7f97400a75cbbd716a31b74c89c05753050689e66d18fc4450265d62e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopInfantryPathFixtureCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopInfantryPathFixtureCatalog.cs",
+      "originalSha256": "4b6ca697b92190c6756564a65fb05c65ca7754cf5f424a65d6c6e73e82089be8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopInfantryPathState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopInfantryPathState.cs",
+      "originalSha256": "f138a2816b89120b091cb53617514d896e766e1b3e4b2e6d9c4e1ab3ddb530db"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.Commands.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.Commands.cs",
+      "originalSha256": "64f9c4bc7a1d2622d7958abbec6a8b3d5f3c527922fed13f52328101e19f6a44"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.CornerMuzzles.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.CornerMuzzles.cs",
+      "originalSha256": "154fb4523ed140029589491286ae51f6fc2a66d7c02f1880589a4573c090690e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.CornerPreparation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.CornerPreparation.cs",
+      "originalSha256": "efe610e25eb787d7017d7f405df41721e4767a54af27f07fcf0000e42a23d5b5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.cs",
+      "originalSha256": "783d696b5a971a532c08d792bb1f4abdc3cd8fd90b140b028a794c13b275defc"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.DiagnosticRounds.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.DiagnosticRounds.cs",
+      "originalSha256": "7fe603c3ae9395ccdc19def4e0ad9409c292efd2c191ddb2c244d928a487521c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.InfantryFacing.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.InfantryFacing.cs",
+      "originalSha256": "4e29d9f134f3ad6afee2b2cf6afe1ecba502d46585983e8843fd0bc635666003"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.ObstacleCrawl.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.ObstacleCrawl.cs",
+      "originalSha256": "aaaf3bce048af61032836b11021befe33ef2356ef41ef6ec3738d2093ccce5b1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.ObstaclePointChanges.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.ObstaclePointChanges.cs",
+      "originalSha256": "849bf4626cd047ac8e0b1d5dffe48a19eab54444fbfebd123f27720666d31ee0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.ObstaclePreparation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.ObstaclePreparation.cs",
+      "originalSha256": "2a380becbed7b9ec60aafc2a486c42b7841e66eb3f8c7e5019a1c00c1d2d533b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.ObstacleTurns.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.ObstacleTurns.cs",
+      "originalSha256": "a149cf11a4d955a968ab3a1e027acc03b165a57fcf3f098d6a47054821c98543"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.ObstacleVisuals.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.ObstacleVisuals.cs",
+      "originalSha256": "59ce419f04e9c3fae296fc1b374dbd84a8a913ee0c1ba5b815f372223c7bab7a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.ObstacleVolleys.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.ObstacleVolleys.cs",
+      "originalSha256": "6816d2b5f89295f01e1f3bb8bd1bdbd7c8ed7665c7c500ea1e1f0c03fd419ab3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewActors.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewActors.cs",
+      "originalSha256": "f989b57551bfa446c85a2941e47c338654ba05b33e4c56c9c5e8634e177db4c7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewArrival.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewArrival.cs",
+      "originalSha256": "a5747a8eed3d2fb79941ddb4747b26c2012c5c5c8efe137e8cc8070b48fb408c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewBirths.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewBirths.cs",
+      "originalSha256": "cabd6abc23830d55bff58b3e0efdbbc6e6ae182280f846df8ae3eaeb59f7a2cd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewDescents.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewDescents.cs",
+      "originalSha256": "039c44e2dce8b91ee355f51278c3bd4205c86b61716c72b9baff1a1c41a48e71"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewDrops.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewDrops.cs",
+      "originalSha256": "8e7a181b887caeff89e303a973deb590e26dc557af4085ed3bb9402223a69880"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewExit.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewExit.cs",
+      "originalSha256": "8a07199b1b28d2f433190dfab5eea19cbf231273118b26c96323eaecdf5a95a9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewIdentities.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewIdentities.cs",
+      "originalSha256": "a6e523a874d35ad564622afe579c9f9dac110f3cf10357cc4d6208c3b452c3d3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewMotor.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewMotor.cs",
+      "originalSha256": "4f74c7ad1af366964c365d6b151dc4403d5ea68bf7b20a742414cbec7f089657"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewMuzzle.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewMuzzle.cs",
+      "originalSha256": "7fb0e45113d510f24d560459c30cd8103176034175be0394a39d682787413342"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewNavigation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewNavigation.cs",
+      "originalSha256": "616fa3961f4bf6c32ab952839aabb2b7eec46b1f87c45900deda61d60d9156e5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewObstacle.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewObstacle.cs",
+      "originalSha256": "506cfc4039e8a0ee3b593cb3732c2101412d5773fc070ff74a2149b99c841d77"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewPointChange.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewPointChange.cs",
+      "originalSha256": "3e123acd0e89990afcc61ac85ff18f7985c537753d0a1e7e4f2d0d92af12624b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewPointEntry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewPointEntry.cs",
+      "originalSha256": "442731d30d8823a46da94bd0d825dd067c987969c6a65e4630d5711a59e57674"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewPreparation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewPreparation.cs",
+      "originalSha256": "b9cf1005dcb5a5e16f9c74f0a67b21e038a94edf5ce58166c531f0f210cfd10b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewRounds.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewRounds.cs",
+      "originalSha256": "5944b605fe09cf2be5623ef0fbcde8ac67ebc3326c4323de760a1966d5ce47ca"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewShotAim.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewShotAim.cs",
+      "originalSha256": "2094c39dbce7ff88f5b0ad64641c19da8432d843bb5e5d5f4edad4abfa5f9c54"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewShotCallbacks.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewShotCallbacks.cs",
+      "originalSha256": "2b2d64f6ae956893032be2a028e0eec6c928c276c610ec693e7c25d3a49ad8de"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewTargets.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewTargets.cs",
+      "originalSha256": "c9ee427bae9f2dc56c2216d561bfce7079d61a725208c56d3009eb617d4d866b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportCrewTurns.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportCrewTurns.cs",
+      "originalSha256": "e9529b10aa871ba57b05448f3a984a700d6c4b577d35b1b9fa0362def0b4726e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportGunnerIdentity.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportGunnerIdentity.cs",
+      "originalSha256": "76749ee99a0cdbdf53c13d7d9cf244b1c78c930f608f633708b45b36e18a4746"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportGunnerTargets.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportGunnerTargets.cs",
+      "originalSha256": "8203ab5c60e120b94e10a5985a53c85a6bb81cc3fea6e9fcfab13ab42cf4eab0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportLanding.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportLanding.cs",
+      "originalSha256": "493bfb22b4410b0d180485bda370e56ac153a15612d71942d38086d7355f17fc"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.TransportRopes.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.TransportRopes.cs",
+      "originalSha256": "789ea8ad959eda37c8cc5b729a6edae6c1d4930fdf5c1adee59c3462944d22f3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMatchRuntime.Visuals.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/Runtime/CoopMatchRuntime.Visuals.cs",
+      "originalSha256": "27089c908b2a8fd672c99a4a43d5d54840e96930a9620b1b71355f92d4c19d48"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMeshGeometryCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopMeshGeometryCatalog.cs",
+      "originalSha256": "b488087cc2a59793f26dc18da56ccb6add1af424778c2b4bd99bed92656a61a0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMissionEngine.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopMissionEngine.cs",
+      "originalSha256": "c367fc8125e5a654ec3620c52c6e8bf5e05f9664f9077264ed8fcae6342f4dde"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMissionEngine.DeathCascade.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopMissionEngine.DeathCascade.cs",
+      "originalSha256": "d7af9e7677fe2c46231f4260ae96318d2096b37ed8644dc6a158944e929664fb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMissionModifiers.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopMissionModifiers.cs",
+      "originalSha256": "c219acfc88d0f0f0dc87e9eb1287721451971d0f00485e6a33bac4cb586a2763"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMissionScorePolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopMissionScorePolicy.cs",
+      "originalSha256": "c91ceb6af12b29246ee4c0c86a75475d89cdc6c07628e5545ceafdbab49dbbaa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopMissionState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopMissionState.cs",
+      "originalSha256": "d8b12f3dbfcad0414d00bd409020244ca48c8d175cb7bb9dbef5f63ce7c83441"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopNativeSceneRaycaster.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopNativeSceneRaycaster.cs",
+      "originalSha256": "d7116c55d21cd82d063ed6af62ba9462971cf0aae6fc326a008313b7adfe8591"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopNavMeshConnectivity.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopNavMeshConnectivity.cs",
+      "originalSha256": "0a2422d38b5593e468dc7eecb15b3c5a3288acc63cae0ee68975f56ad876241e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopNavMeshPathCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopNavMeshPathCatalog.cs",
+      "originalSha256": "ab9103a492a4fb0d56be95c3e3d85ead76bfc2943cf2afeb0b8b60a5dad95f1b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopNavMeshSourceCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopNavMeshSourceCatalog.cs",
+      "originalSha256": "ec526baf9cc5aa31f6d2a169af2672ac6a4c6e5998e82ac59d07703a7b199ab9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopNavMeshTriangulationCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopNavMeshTriangulationCatalog.cs",
+      "originalSha256": "ecb05cc52eb8cca4483dd0259bc8c61667a5e27165a4ba5b1cc559c6fb8727c6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopObservedObstaclePoseCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopObservedObstaclePoseCatalog.cs",
+      "originalSha256": "e47ed5a9fa197af3f7c13a00397fad6e6c97d3a35a29f97a39f3f3c77eb7f22f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopObservedObstaclePoseCatalog.Parsing.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopObservedObstaclePoseCatalog.Parsing.cs",
+      "originalSha256": "3d012ff00df6d78828889c4b448fdf1be7d382a1add9be8178290c29b9d826ed"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopObservedObstaclePoseCatalog.Protobuf.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopObservedObstaclePoseCatalog.Protobuf.cs",
+      "originalSha256": "e2dd05ab779c04026b7b93911161a256b044a13bc20e7fc52ca45d910ffd614f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopObstacleCrawlReturnClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopObstacleCrawlReturnClock.cs",
+      "originalSha256": "5151a05535889a3623fe96a4f341dda4567be4f305c686375fd1f5f57caf8815"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopObstacleNeutralLookProof.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopObstacleNeutralLookProof.cs",
+      "originalSha256": "522bce5198b3856f8f186459f47242c0fcc45956b76580d9b90ab712aec303e0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopObstaclePoseCatalog.Animation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopObstaclePoseCatalog.Animation.cs",
+      "originalSha256": "c4dfe9b8a419b79b07660f31be91dbd2ba1178f6670e35ffa30e76f36d0df563"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopObstaclePoseCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopObstaclePoseCatalog.cs",
+      "originalSha256": "ad40de45e9eb68b26b5d3214737f29c4a666393eadfb1b98ded286831df66282"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopObstaclePoseCatalog.Gameplay.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopObstaclePoseCatalog.Gameplay.cs",
+      "originalSha256": "f3dcd2541d19915037952e35aba159dc802c4c3b2c7e29079d9bfd98cf61d984"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopObstaclePreparationStart.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopObstaclePreparationStart.cs",
+      "originalSha256": "d463af8d87abd84469c093756a93d84dee080011f734791d7f2931ee06131336"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopObstacleVolleyClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopObstacleVolleyClock.cs",
+      "originalSha256": "60eb5a1e57f9f23b8da57a2571c12480624c3465d611f6d884fb6b0adf08d7be"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopPlayerShotCollisionWorld.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopPlayerShotCollisionWorld.cs",
+      "originalSha256": "0c20e1b77e1590626bcc1762872d08795d889b7d4cfd29ec741dd43cba86fc0f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopPlayerWeaponCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopPlayerWeaponCatalog.cs",
+      "originalSha256": "2df8d088402d9792b2179426b44dcb3990d39dcec4f73510a855b5e8047072a5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopPlayerWeaponState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopPlayerWeaponState.cs",
+      "originalSha256": "b430e9dc51a7465022310f46c61effef362edd0b6bcf2c9973041e753e469999"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopPrefabColliderCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopPrefabColliderCatalog.cs",
+      "originalSha256": "bec676c5f3618e592b07081d4090a34041f9151d051f592a2045e48816e5670b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopRusherPointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopRusherPointCatalog.cs",
+      "originalSha256": "073a0b8419306371d7563e082fae2763aa20e1d57cc573bc05fcf0ffce2c3195"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopSceneColliderCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopSceneColliderCatalog.cs",
+      "originalSha256": "786d49c93dc3f3d1bb13b1caae4c3869872616607830dc5a435b3f4e75a6ebc2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopSceneRoles.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopSceneRoles.cs",
+      "originalSha256": "f13f6e905b38052b853b08d4981506d40338f24b1360a63c2eb9c5fac84b4738"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopShieldMatchSimulation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopShieldMatchSimulation.cs",
+      "originalSha256": "7854fb048dbfc68b68ee66076055e38a46c422d5738c190babd344af389ac7f8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopShieldRankResolver.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopShieldRankResolver.cs",
+      "originalSha256": "6114ee6fdd426ba39eb94929d1ac1a0315db0a66a7c860c1794abb1819921930"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopShieldStateCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopShieldStateCatalog.cs",
+      "originalSha256": "28140e640c8129fb08267b362776b8e12b82d66fffd4672c8bdc00172ec4b88b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopShotCallbackClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopShotCallbackClock.cs",
+      "originalSha256": "b21de28e4d8e8c25b35b678719b73414444864cdbf43e16ba638440d26455d82"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopShotCollisionWorld.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopShotCollisionWorld.cs",
+      "originalSha256": "bff44d0da40f66a5745ba1e76da1c6be9c372bb22e18e6ff5966959a25376123"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopShotRootComposition.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopShotRootComposition.cs",
+      "originalSha256": "2d55bdfeae718a357ba3f0c2a2a286b788dcdbd31d326d24802c3873b00f4ca7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopShotRootTween.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopShotRootTween.cs",
+      "originalSha256": "664a63802122d9f78aa166419ee6a7b737d8e72de9c774d6bd49d9d71020a487"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopSkillShotScoreCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopSkillShotScoreCatalog.cs",
+      "originalSha256": "acdd44426d7f9cd6c5c19f2ff0c03a463cdefdb33f2fe84548096b1fe9ec9a8d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopSpawnPointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopSpawnPointCatalog.cs",
+      "originalSha256": "dd4220027dc086e504df42926fdc09999662eb42133e9dc59ccf3ca8d64914d4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopTerminalScoreValidator.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopTerminalScoreValidator.cs",
+      "originalSha256": "ee71fb0f70bf76a8926cd26b1538812e526ad57cc88cc896c9bdd4672ff0734a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoopTransportRopeWorld.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/CoopTransportRopeWorld.cs",
+      "originalSha256": "021f255d2deb3323bb2716a48f83df1679f660c47bd74768a8aef0f3e317ed01"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CornerShotPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/CornerShotPolicy.cs",
+      "originalSha256": "c42621b6e6709bdd904dc4f6021c9639e1627604911fe4566717273ab69cb211"
+    },
+    {
+      "from": "Server/src/War.BattleServer/CoverOccupancyRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/CoverOccupancyRegistry.cs",
+      "originalSha256": "8cb578b68fd3b03078850fabe6ebf081ad19f7aa8b1751d6e3adc1f4c3661a1b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DecoyMatchRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/DecoyMatchRegistry.cs",
+      "originalSha256": "376088e7ea48d7085a253512592167e5b112ebb5830d0f1bafca9f7dd7b9ec37"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DecoySourceCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/DecoySourceCatalog.cs",
+      "originalSha256": "95d2b9604174c90509254615dcd7f17533436edb66b187a985ec5c079018d7e4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DeployableCardPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/DeployableCardPolicy.cs",
+      "originalSha256": "9a53ffada476ca7e7b53456ab881036502101ef50c7e0622fccd90a9a961c1ee"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DeployableImpactResolver.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/DeployableImpactResolver.cs",
+      "originalSha256": "6b0f8cf2db552a1d3a057cb33c7dadf122bfc21d898a8bc8a070d3a5a2cf7cde"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DeployableRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/DeployableRegistry.cs",
+      "originalSha256": "95b5097ed8ab25f7d3501b55aabd864e635e2708149839ceff4be5048e5e8a2a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneAttackClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneAttackClock.cs",
+      "originalSha256": "322c922d8bc3df7f40f5cdc88007e61e47471794001fd818e3d210de0e0f4cd7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneAttackState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneAttackState.cs",
+      "originalSha256": "6f755cc24e263c50cbdb879c2a43214951c5ad2e5e426980de427e738491d0ca"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneBatchState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneBatchState.cs",
+      "originalSha256": "831643e38601618b492eccf996a8fa5d8bd8c577f5134debaf76d64867022ce7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneColliderCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneColliderCatalog.cs",
+      "originalSha256": "d787dbaea6054cdcf0bf973ea21422c082cea3e806b363b0c99edfe465a6e8f0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneContactSolver.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneContactSolver.cs",
+      "originalSha256": "01a00f86a205e272e72194eccf9cb1a0c29e3e65d2f07e97bca4e853b53bb054"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneDeathBlast.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneDeathBlast.cs",
+      "originalSha256": "460d622556f5a6aa5cff96079ca8d78e7c21b1dd5c20b99e8b3cdcd30ad8a7a4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneDeathState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneDeathState.cs",
+      "originalSha256": "6d9d1ec085da62872c5d07caa2edfbb51c8adb58ba27802e8eefee89010b4b71"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneFakeProjectileFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneFakeProjectileFlight.cs",
+      "originalSha256": "6d10722a2efb2123e02bd0ed141c0aa02e28c51f07c3e5a4bba00a8a4a0d7e18"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneFreeFall.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneFreeFall.cs",
+      "originalSha256": "5984e8efff863cba117d56fbab385202e934637de3690ba09a8411791f1d91a6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneFrictionAnchor.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneFrictionAnchor.cs",
+      "originalSha256": "3974bd97406a649f278211a08cb0014171164b37923d1789344b225f0be05ce7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneImpulseResponse.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneImpulseResponse.cs",
+      "originalSha256": "2b33879bce0e14e8a2e26a4f7e5ecdc77dde8b8958de60ef2a20644ee564aa79"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneMapContactCandidate.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneMapContactCandidate.cs",
+      "originalSha256": "ac5552041c10d0af91668da309773ac4129929bfdd0a2d43bda109831f4df6ee"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneMassProperties.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneMassProperties.cs",
+      "originalSha256": "a6cf2e4b98cbaf44d7d6d2e026deb022ec19ee7a63f346cab09bf90d2aeca391"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneNormalContact.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneNormalContact.cs",
+      "originalSha256": "da74114746358e8dad1d04b72fcc01622c93ac74a153705703419cf32f5328d5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneNormalSolver.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneNormalSolver.cs",
+      "originalSha256": "41d628eb405fdf6b454308fc2c29b307d03b34edea4fee53acc8f21ff8a3fb82"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneOrientationState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneOrientationState.cs",
+      "originalSha256": "bc18f05a1b8512a14c38b0362495d61c8a1ffe0dc6768e7db81286bfa53c7d52"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneProjectileCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneProjectileCatalog.cs",
+      "originalSha256": "b5cfbef9b4592009577fa379358b8306032f59e4ece74a64f780824c54e5f569"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneRigidMotion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneRigidMotion.cs",
+      "originalSha256": "cbce7b866de08b2d272719bd610dc722457c39dd012827d2802b14705c563ee3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneShotTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneShotTargetPolicy.cs",
+      "originalSha256": "00164dce206c254fc83742ee1a38fd6ec922d1d670876e38806d09cd5b2f6137"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneSingleContactSolver.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneSingleContactSolver.cs",
+      "originalSha256": "cdd891e7ad93fecf57d848b91a45ae4315da894624f48cb574e2983913c20990"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneSpecialState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneSpecialState.cs",
+      "originalSha256": "38849e19b698ec68ea4488455024d9abeea6d67cd822a78c69bf05317e365b90"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneSteeringStep.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneSteeringStep.cs",
+      "originalSha256": "5da9dcbdf175e54ded99024293522987f1e80ecdfe45e6d1eceb7d0c988f979e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneTargetPolicy.cs",
+      "originalSha256": "a1acfccd3b1d9ec88b7ffb8caa27beb51b20edf264773ae3878bef6b970b8587"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneTargetRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneTargetRegistry.cs",
+      "originalSha256": "dea732ece899499941870cf1f62f12b95e3b27f869bce1d1f469387952d434c5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneWaypointState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneWaypointState.cs",
+      "originalSha256": "e9312b0b549a9e3e17cd1b86c0a563d1082e966787fb81a9c2b3e4a215010d87"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneWeaponCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneWeaponCatalog.cs",
+      "originalSha256": "39a7bfb47c701a8d2f06d2653baa77404e62fb183031c59cc40d77478defac68"
+    },
+    {
+      "from": "Server/src/War.BattleServer/DroneWeaponState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Drones/DroneWeaponState.cs",
+      "originalSha256": "c38a9b7c4095135f914da72f4bb7fe79c1a5f81d670266269ff99e71ea8975b2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/EnemyPointArrivalPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/EnemyPointArrivalPolicy.cs",
+      "originalSha256": "42bf7c1f6ff00503ef6db3a700ad6cf075ac0f124e56df20a875100705a329c6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/EnemyPoseCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/EnemyPoseCatalog.cs",
+      "originalSha256": "a6a9cb4d33fd46a60ca508aa1d568f040576657c392bb6daf3fe537c0f2f7b50"
+    },
+    {
+      "from": "Server/src/War.BattleServer/EnemyShotTargetCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/EnemyShotTargetCatalog.cs",
+      "originalSha256": "4b897dabcf2554ad1216356f801f9aad7ee484aa98be2fe5f2ec65e6b38473eb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/EntitySnapshotPolicy.cs",
+      "to": "Server/src/War.BattleServer/Transport/Snapshots/EntitySnapshotPolicy.cs",
+      "originalSha256": "242e9fc8d70b1e371d4a3826b90c8f81a8ab1e60f820273a3f3c3632d36ed4e7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ExplosionAuthorityPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/ExplosionAuthorityPolicy.cs",
+      "originalSha256": "05e269dc0028a2cab0115c6be7311b59551b48c97efd727d3e7c638fc5eae8c4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ExplosionSourceCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/ExplosionSourceCatalog.cs",
+      "originalSha256": "b8f9c92a75a869107b700fc1a088197ee05e74a79a9459a3d826cefcec8b752f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ExternalPlayerCombatView.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/ExternalPlayerCombatView.cs",
+      "originalSha256": "5511a06b705e5cd0a0c0050deaa582822a2a18c9155a173d6f3c299816e595ae"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeCatalog.cs",
+      "originalSha256": "72fd2d8deadd99ba4f69190cd49c7e433ff2d94f866d6c7b61bc5dfb6a5bad82"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeCombatPoseProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeCombatPoseProjection.cs",
+      "originalSha256": "f4243c7fc45f9b1d0ad0ada0e781700ac63819c40d9ebfb699ce5aed0a23fc2d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeExplosion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeExplosion.cs",
+      "originalSha256": "fad8525ee26059758a0037d501f887e1e7b699f6a644a2b9e4dbb7a6ecc96f8d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeFlight.cs",
+      "originalSha256": "ff705d7a6d15a24f425b84ca12bb376c388b0d219969f44410eebd1d93666a2f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeGesturePlanner.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeGesturePlanner.cs",
+      "originalSha256": "b291d68dcec62961aec86948a3998f1358200520876dad1def8e706cd30db06f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeMatchSimulation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeMatchSimulation.cs",
+      "originalSha256": "6474e9da12acbf2f480868e0bcd31c77356c2382b73d17a729d50fc99ba43c33"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeMatchSimulation.Selection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeMatchSimulation.Selection.cs",
+      "originalSha256": "6c0c6a42579a14195ff47f1dd440efca096c3014e882469ed93e792d1ac25fc5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadePoseCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadePoseCatalog.cs",
+      "originalSha256": "1b8195d70ad982f1f184bae7b0f5de39b2c41cf87b1d512afcb27537ecdec979"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeRigCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeRigCatalog.cs",
+      "originalSha256": "91c9129d746d4506b976e181db9ef6f9db608188d6b9e4d445a9aeda246fee19"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeShotTargetCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeShotTargetCatalog.cs",
+      "originalSha256": "3a3d5a073834f692108df6e4c25fea75c3f9a04be91ddbab18ef36487ac345a1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeThrowPlanner.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeThrowPlanner.cs",
+      "originalSha256": "8177d76dadc7cd1709e58b0a1773368f7a28ae1bffa250e8a9b95f519b6af166"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadeWeaponSelection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Grenades/GrenadeWeaponSelection.cs",
+      "originalSha256": "9d0073c7223a121ebbcff7f44dd8b182a9af61b704e82a1235dd4579b79caba2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadierAcquisitionMuzzle.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GrenadierAcquisitionMuzzle.cs",
+      "originalSha256": "00ee49a3c82cf3879e2a115a7ede41a4e8863e31e892012d81d51197d05ebb96"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadierContactTracker.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GrenadierContactTracker.cs",
+      "originalSha256": "a8dbc5c88bd3ec9c334fc6b2643179808ae3cabc4831bf8e5d218028469e6b68"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadierCornerMuzzleCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GrenadierCornerMuzzleCatalog.cs",
+      "originalSha256": "e5dcbd2410eb70f82cd2e598cb1c1f99b9704fa287d02c9fb28073a39d8d8ffd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadierFuseClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GrenadierFuseClock.cs",
+      "originalSha256": "ffe53b9790ecff40733ecfe56706d921ce888d24bd4f61b3f89fa1128f48b9c5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadierPrimaryWeapon.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GrenadierPrimaryWeapon.cs",
+      "originalSha256": "e98839fb6cb03c0ef38a507ea297e0336c62b36a3214f24c79255755581d2659"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GrenadierWeaponState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GrenadierWeaponState.cs",
+      "originalSha256": "a0273ee93570f7e03341b577a2ba6295632f5942a8f81403c9f75f74421e9a87"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GroundVehicleAimPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/GroundVehicleAimPolicy.cs",
+      "originalSha256": "5e86ad09eddfb504f9268445d59e4df267a94927ac6c14ab6e0f639eadaee59c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GroundVehicleWeaponCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/GroundVehicleWeaponCatalog.cs",
+      "originalSha256": "3be07afd0fb954d4084d125b1ad93f6543cdb817ac78a4ea4d8005aecfd7ed90"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GunslingerFiringClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GunslingerFiringClock.cs",
+      "originalSha256": "749ff57f3c79f1ff575e5c702ddae5f6b8b15f24c0faf3147e3dd543cb1baed0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GunslingerPoint.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GunslingerPoint.cs",
+      "originalSha256": "be5787334fe4f4e098b8deacc4873d610cf6a8343d8f94d441c98aa3c8629816"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GunslingerPointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GunslingerPointCatalog.cs",
+      "originalSha256": "2170b336873d97308b35991bd18e3e78261adb59d5f6015745c9bc12695b9abb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GunslingerPointSelection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GunslingerPointSelection.cs",
+      "originalSha256": "e785841bae2708dbff2893799ce4dbb6cc440ac944246bc6dc116df6bb832e39"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GunslingerShotAttempt.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GunslingerShotAttempt.cs",
+      "originalSha256": "2f65bb06653d8a21642f0c87625f50ac72fb206e060c132a759d3b830fcdb4a2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GunslingerShotBatchPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GunslingerShotBatchPolicy.cs",
+      "originalSha256": "dca800461ec12e79a7db6fad46c14485cc99b939987fcf848a81895f9ac2c350"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GunslingerTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GunslingerTargetPolicy.cs",
+      "originalSha256": "e38b3216c9ead055d3c4bb6af09e10306cef6dbd9f41e1167aa53feff22e5dc5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/GunslingerWeaponAimState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/GunslingerWeaponAimState.cs",
+      "originalSha256": "0c01aca86e42f1a2e11cc304fc20bbbd3f9075fe56114bfe076ec9f42cb87394"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HealingPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/HealingPolicy.cs",
+      "originalSha256": "a5019c4eabbe40a17b1d7a01c37284d6b04f9623df8dc6546cf20d3bc7c405fe"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HeavyTurretAimState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/HeavyTurretAimState.cs",
+      "originalSha256": "542c975c11549ffe43ff28a4386743a697a64155f47bddc7757e191650d09811"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HeavyTurretAttackState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/HeavyTurretAttackState.cs",
+      "originalSha256": "70a8ea7c908d12236ae357fc0a8ff587316036ca6305eeb13438a60991bde7d6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HeavyTurretMatchRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/HeavyTurretMatchRegistry.cs",
+      "originalSha256": "b6ad4343d4a41ae94a5e5e7cdea73c087d55fdbaf34ad2b087a3bd3d3ec6c02d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HeavyTurretSourceCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/HeavyTurretSourceCatalog.cs",
+      "originalSha256": "76d0b87f7af2309b2161a07611080faef3b110d7f5f90945be4f804a4c966d4a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterBodyColliderCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterBodyColliderCatalog.cs",
+      "originalSha256": "133fb144d893758783a3f39bcfceb58658f49d55774d7bb89e96d4ef48ea1779"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterCrewDescentState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterCrewDescentState.cs",
+      "originalSha256": "66b02470f274255e80c16ee4fc32aa0ba6f2c033d7b8db076c31fe9e062df1c3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterCrewEntryDispatch.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterCrewEntryDispatch.cs",
+      "originalSha256": "0311548dc22c69c5d27eb57ddb9646b1c2f5122809ec71a7f83f8b8af1781169"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterCrewEntryState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterCrewEntryState.cs",
+      "originalSha256": "7ca96dd1f63379549c45c23e4f96023e8981c3fe55aa6b293feb334ec8aa5e88"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterCrewPointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterCrewPointCatalog.cs",
+      "originalSha256": "4b94d7be82e9f1468ac61be5a7e6e2976ad409ce627c060e240f41a4a07c3acd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterCrewPoolFrame.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterCrewPoolFrame.cs",
+      "originalSha256": "da19a3479d609f24b8a8ed23b8653514b3a9bcd4b4e93a21750c272f52434547"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterCrewRetryClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterCrewRetryClock.cs",
+      "originalSha256": "af5047857324b490f45f4ce45f07327cdd9fd3d3700c24a40f27290bc756d148"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterCrewSchedule.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterCrewSchedule.cs",
+      "originalSha256": "6a44b7f161220b107698f59aead84569d8f3351dcbc163d7858c21ae717dbc35"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterCrewState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterCrewState.cs",
+      "originalSha256": "842e4581a90b00380e274c6d8c8ac892c9797eb854718dbd7703e24a0a6ebee6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterDescentProgress.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterDescentProgress.cs",
+      "originalSha256": "bb2491ea6256ff605df2742dc81f3911653a498a2c5cc04d51217f8668f4b580"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterDescentState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterDescentState.cs",
+      "originalSha256": "a8be6ab22905722d8dc557de2ff03f6893b2620d02ac1a5b29fa9a319dbb9dcf"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterEntryRotationTween.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterEntryRotationTween.cs",
+      "originalSha256": "2f79736b1556ff0a2bfe89639f60f06809761bb4c4157914758e77f0115ab725"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterFakeProjectileFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterFakeProjectileFlight.cs",
+      "originalSha256": "294c315e041cbc17c50c51ec810083205c82299154c8b59cc8490a8d66de094f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterGunnerExplosionCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterGunnerExplosionCatalog.cs",
+      "originalSha256": "c86f4a718f10f298fdf57a2784abd33946a5f3201edb673184c704e2e84e3dd4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterGunnerState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterGunnerState.cs",
+      "originalSha256": "5c8a91b2c78911301a2bbdb8084bd5d415388512cfba75b7de826640bd9b6d41"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterOrientationState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterOrientationState.cs",
+      "originalSha256": "06e5dd3e1aa45e8560d2d2df3f1b5f5d2e6b2cbf26c394cd84d73db429030842"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterPalmBlendCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterPalmBlendCatalog.cs",
+      "originalSha256": "66429a60739586dbf68dcacb99d5ba73eb12846d60934f05fd337a9e981598de"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterPalmFramePlacement.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterPalmFramePlacement.cs",
+      "originalSha256": "1a864fc77152de3af8f83075b655991c4a5140e24c5d10d0fede4c565012b591"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterPhysicsFrameClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterPhysicsFrameClock.cs",
+      "originalSha256": "c71f31442794e202be1dd442d0d858579a8057935ebfe55eb4418adfa4391a62"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterPhysicsLease.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterPhysicsLease.cs",
+      "originalSha256": "f48d11ab9e179cac5931fc3cd8dd2a3dfd3faeae502aefa2d860f8f265b75092"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterPhysicsTiming.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterPhysicsTiming.cs",
+      "originalSha256": "f0c87d857f9976977fbf1b7d04247d8312be519a2353adb3ab3285808c8dbedb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeActivationState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeActivationState.cs",
+      "originalSha256": "19e4e6db9244d4be209be04a53596a3f43c3a3821c369fb074d679c0e13bb69f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeAlignment.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeAlignment.cs",
+      "originalSha256": "d7565d018787e329c5f086192f9ef7a561024e8b1f3933d974bb8b235abb01b7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeConstraintFrames.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeConstraintFrames.cs",
+      "originalSha256": "93a302a442b21779a020f9beb4c0a0ba2fc72d1d72f57741fcb11336001028ff"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeConstraintRow.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeConstraintRow.cs",
+      "originalSha256": "bac79b21dcf16f4e9dc61ce016e7d97632c11a764a1e2133a65813432b732475"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeDefinition.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeDefinition.cs",
+      "originalSha256": "e0d02d5b5a11f44512e81e7597ef9b9d4f1f6b32616ad3030326a42f4403a4cb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeExtension.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeExtension.cs",
+      "originalSha256": "c3c95d772a4d7deb52c48475ad4f892b8e8ae843884e3bbe8d775b1e0b175583"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeInitialization.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeInitialization.cs",
+      "originalSha256": "f6ca4a8f8ed3887ab12708db0033d69d26208e2e39f7fa54bd91eeead5669c66"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeJointRows.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeJointRows.cs",
+      "originalSha256": "13523456c1e57c36bd09cc4cb77cb808f91eb49fd6c640377981c9d34430156c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeLanding.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeLanding.cs",
+      "originalSha256": "75b9ac2752e57282681d801bf9ed99917a2033c46e3f66ea42d91b3916308abc"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeSimulation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeSimulation.cs",
+      "originalSha256": "5d030527568577c5367b3dc9b636df7686f4ac7d6eca776f464c866e5698a0e8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterRopeSolverBody.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterRopeSolverBody.cs",
+      "originalSha256": "05fc7a624f4ca045ba9d4ebfdd92bab43afa479819cfc7e9baed47439c16d75e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterSlideFade.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterSlideFade.cs",
+      "originalSha256": "19b039224146e2a19c99ead4db8634f116ac67f315a2c26bf664164b38ff7169"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterSlideMixerState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterSlideMixerState.cs",
+      "originalSha256": "282e2e5624d76bcbe0b4e4c67840d89a095d39359d43a33970db60269d8955b6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterSlidePalmCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterSlidePalmCatalog.cs",
+      "originalSha256": "313e4c3fef41760dc1f2a52cd439909505fcbb914e88ebd6118d7fdebdb50985"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterTurretAcquisitionState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterTurretAcquisitionState.cs",
+      "originalSha256": "595f667896568715031d8b22fdf48aa4866009d8048472b8746d7e099ac612c6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterTurretAimPose.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterTurretAimPose.cs",
+      "originalSha256": "abda24e9eb6e0ed17abaad3bb2c42ff1f7501e7d9a09ca216795b0237ef2f5c2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterTurretShotTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterTurretShotTargetPolicy.cs",
+      "originalSha256": "6ab9c3f67bcf29f236d211f941500178540b4de4135a2a6e8fe4789db73b0b08"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterTurretSightRay.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterTurretSightRay.cs",
+      "originalSha256": "106b790ee185eb65568fa4dd8cf45a9ff47efcd9fef73763c2a5761bd6bb2dee"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterTurretTargetCone.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterTurretTargetCone.cs",
+      "originalSha256": "6cefdc6757e1795098fe5098e9fcfe76c725c78169e52f354d1b2aa8048ffa86"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterTurretTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterTurretTargetPolicy.cs",
+      "originalSha256": "a58b513c042d6d9de7b20118e4d9f21bd32a7924eb5b00c1b3481863894e47ae"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterTurretTweenState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterTurretTweenState.cs",
+      "originalSha256": "cf61604dce39c036305de58224418500795826fca56c302cf9dad727998eeee5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterTurretWeaponState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterTurretWeaponState.cs",
+      "originalSha256": "09de961f267fb8333184ac6932346e1c0f1b7cf923efbb8f8c2112c74bccb42e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/HelicopterWaypointState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Air/Helicopters/HelicopterWaypointState.cs",
+      "originalSha256": "96e5a1f946b528be8bb4052695fd2d6451c7b1e8b5b21e19cf018ec67b96d6a0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/IMatchRuntime.cs",
+      "to": "Server/src/War.BattleServer/Matches/IMatchRuntime.cs",
+      "originalSha256": "772faee26a3d198c1c92a0b43d0c92060d3f8a936d655bbb0533eafd61d1ba51"
+    },
+    {
+      "from": "Server/src/War.BattleServer/InputAcknowledgementWindow.cs",
+      "to": "Server/src/War.BattleServer/Transport/Reliability/InputAcknowledgementWindow.cs",
+      "originalSha256": "3bc0d97c5581af970237aaa1729df114bc0c503d520fa700c1fb1cccd6d7c7c0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/LandMineExplosion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/LandMineExplosion.cs",
+      "originalSha256": "c0b06e456ee5c77e41a0e7db352df2c98fdd3884429b20ec382229819cff8370"
+    },
+    {
+      "from": "Server/src/War.BattleServer/LandMineMatchRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/LandMineMatchRegistry.cs",
+      "originalSha256": "e59be6f00a127502d47640731f570a2c55ed093d09d75528a9df9719a5d04bfd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/LandMineSourceCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/LandMineSourceCatalog.cs",
+      "originalSha256": "1b363d7c19e6f307417e28efac0390145145e3c3884991cfe643bb996c9ee5d5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/LmgCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Lmgs/LmgCatalog.cs",
+      "originalSha256": "aa029a36edaf98960b0a34e5e259dc9cc7759aa78380ba462b26581a36ebc1e9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MapEntityIdentityPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/MapEntityIdentityPolicy.cs",
+      "originalSha256": "f0a3b50c11ddefa9496601f5b1971f1141f869dcc536d097857c7e7ab616bc5d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MassShieldDestroyerTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/MassShieldDestroyerTargetPolicy.cs",
+      "originalSha256": "48457dfe70bd13712dec1679cccfeb9c47e143eac594b59bf51e0d4c498a983d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEndpoint.cs",
+      "to": "Server/src/War.BattleServer/Transport/Udp/MatchEndpoint.cs",
+      "originalSha256": "fce77a1614da512548c281a26cd65b747eb8a5cf59c8a86da76ae8fb129230ae"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.Army.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.Army.cs",
+      "originalSha256": "14909ede57541cb3bb969e2cab044804ee6e09d94167f5129f35e7b784dac550"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ArmyCombatView.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ArmyCombatView.cs",
+      "originalSha256": "d11f50072e804debbe71c772331ec6418382a87e0e5b54f9fd1bb4b10419f357"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ArmyDeploymentCallbacks.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ArmyDeploymentCallbacks.cs",
+      "originalSha256": "853be3b330a01fd247d0a79a61a25abf725d72279bdcbda46a40a7c5df54a6d9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ArmyHealthCards.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ArmyHealthCards.cs",
+      "originalSha256": "093e8d7e827bfaa330968ce2129ae599c2d218b6f33691570adc02af56978eee"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ArmyObservedMotion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ArmyObservedMotion.cs",
+      "originalSha256": "3720d014176cfd610f62989ab5eb33fde80cbba082a1ede4c5dcf9d4a4249bb5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ArmyRealtimeDeployment.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ArmyRealtimeDeployment.cs",
+      "originalSha256": "3f1cb0bd3fa0d88ff348c8c196f6bb722a7ab48354421e03c7ecb14bbd8524fa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ArmyShotTiming.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ArmyShotTiming.cs",
+      "originalSha256": "95ec99cf68b8c607d3e5f4db420c424ec749384b1ba93aec44a78b690bcb0fcf"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ArmySpawnCallbacks.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ArmySpawnCallbacks.cs",
+      "originalSha256": "42edf6cd24f7274424712743655a1b0aa48c4bcc5ad543dd8dc8be076b474688"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterAim.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterAim.cs",
+      "originalSha256": "b1215ddb442da01dc6ec5a63d080446241d35b6064443da62eebe2c714b0f042"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterCorners.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterCorners.cs",
+      "originalSha256": "851c1f789167261c7f8593fa4dc97130ecebcd8788a4f542cf04e5f537913988"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterImpacts.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterImpacts.cs",
+      "originalSha256": "d8e35ab16edf141036306f032a8f0fd2e47deac034f4deecc59483da814092af"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterNavigation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterNavigation.cs",
+      "originalSha256": "36cdbf4e1109827315029bec028b6d51d4abdd344d8e21aa8eceb21a889de8ac"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterOpponents.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterOpponents.cs",
+      "originalSha256": "2197cf8d7dd2e22a684da2d40ac73d7b222a6d2b351140a1343c1245a2e8dbf0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterPointChanges.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterPointChanges.cs",
+      "originalSha256": "b4e8eb1be6808a6e8ce78be05db4acaead0d1172a62835733a166f7f553f5038"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterPreparation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterPreparation.cs",
+      "originalSha256": "40495be9b0caa5e911e6a417c82f3c9ba51b6e51542e7d66726417fc0e970edb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterProjectiles.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterProjectiles.cs",
+      "originalSha256": "49e5572653946054ecdc19d92bc4c2b7a6a18c1cb93db1378731cf47dc3dba3b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterShotTargets.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterShotTargets.cs",
+      "originalSha256": "e15a98b9824ccf6133046ff4686c705b14a5a66b61ddfdf4cf30ce1ae52a473a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterVolleys.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterVolleys.cs",
+      "originalSha256": "e306e895117f7a5366d8e2a78f7d66b80670819f87fc281e229e1940d72d8d08"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaulterVolleyVisuals.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaulterVolleyVisuals.cs",
+      "originalSha256": "7f1166177c46cc1a5f45eaf4962fc196c261d5ae60ea87ccddf632c252a5703f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.AssaultHelicopterProjectiles.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.AssaultHelicopterProjectiles.cs",
+      "originalSha256": "cf2d601b7e941b34da5534795f4633dc0214d8a69b968285425675f2ea424c6e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.Backstab.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.Backstab.cs",
+      "originalSha256": "27bf63b8b3f417d915a626bc325bb3c1435ef358aaaffe8a9eccb34e3a997dc7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.Barrels.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.Barrels.cs",
+      "originalSha256": "f22aec1bd42e5b26a66a5d87c424bcafcce408567f73bbaaee3964e3670d4be9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.BigMedkit.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.BigMedkit.cs",
+      "originalSha256": "a51d783b3d331ec01e86add6b945d246610734c28926881609820f9ac327d314"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.BulletSponge.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.BulletSponge.cs",
+      "originalSha256": "7e55df113f05bce32321938c76d64cb925de52b39c41a522d50e4d34e2ba0cf6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.CardGrenadierDamage.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.CardGrenadierDamage.cs",
+      "originalSha256": "764ffe0c8a0e62be09f850dfb8698181efb29ffd52bf9ae7bb986591ac7575d1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.CardUnits.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.CardUnits.cs",
+      "originalSha256": "822135b29f162c97b77e95a6806df20e3ceae6debb391bbc570055be104432b4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.cs",
+      "originalSha256": "9dd6e7e78e9f2d7aa2e1f463dc4eb189616e944d619413277baede8d6985d6c4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.Decoys.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.Decoys.cs",
+      "originalSha256": "ea3d93e2d099018bbf4643092514a8d3d4048100b9142bce21a5e440b3ca67b4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.Disarmed.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.Disarmed.cs",
+      "originalSha256": "d845277843f92a4b2365a77dfc56ee2357bee050eae3cc75190cd6531a6542e7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.DroneAttacks.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.DroneAttacks.cs",
+      "originalSha256": "e7e3300064016e749b1083b547e539d6babfe9f0493702aa7a0ec54b7243bb1f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.EmptyMag.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.EmptyMag.cs",
+      "originalSha256": "f821a0bccefa50af33247ef3e9fcbc362fe2250e606646ebbff8f07068717a33"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.Events.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.Events.cs",
+      "originalSha256": "c9bbcdef4d6723fc79ba1ca25ee202a18435b1d980a196fd3dfada90c6744fd4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GrenadierMovingAim.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GrenadierMovingAim.cs",
+      "originalSha256": "a469836edae7ce1b312656db1151d877b482b1f93a2a60f7c0588f4e7fb6c6f2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GrenadierPrimary.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GrenadierPrimary.cs",
+      "originalSha256": "1b3f57734672f5b7777126de139951b759317cdf73d869bd5d61441bbd0d1525"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GunslingerAim.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GunslingerAim.cs",
+      "originalSha256": "aa3bf48f31fc28fe6f2e0cfd5fb35c517e1d29059b7dbb16071470fe3b8939ed"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GunslingerCallbackTargets.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GunslingerCallbackTargets.cs",
+      "originalSha256": "a2f76e69e912f0e082f495fb1940cb434b4053e61403d3bc1d679c5b7bc689b5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GunslingerHolsters.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GunslingerHolsters.cs",
+      "originalSha256": "ec00a78ef4da2f6a745dafdf1931f98e658901a94e9c37f423087f8fd8e4389d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GunslingerNavigation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GunslingerNavigation.cs",
+      "originalSha256": "05e592b9b2e769c02f105aef02d6ed22f460d067a46434955d246dfaa4a9eff6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GunslingerPointChanges.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GunslingerPointChanges.cs",
+      "originalSha256": "c3e9b1efe3f36e431e39dcd8c0019ff50849139f85c764d6d08b43deeb5a7b9b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GunslingerProjectiles.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GunslingerProjectiles.cs",
+      "originalSha256": "2039e699c48a1c60d39e9b4d8f2800891b4616d5cc2dd7930ccc5c0fcec7604c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GunslingerShooting.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GunslingerShooting.cs",
+      "originalSha256": "008d44c75cfd99800ae71398275d93890fe5eeb9e5dadddc8c9c3b7f969759d2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GunslingerShotVisuals.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GunslingerShotVisuals.cs",
+      "originalSha256": "eb3d254cbc97172d4bde1a09c0b215a1fc536ec4113fd55d0853d9c9a482c8f0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.GunslingerTargets.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.GunslingerTargets.cs",
+      "originalSha256": "261246da064c041146adbc78d9870ef90046218fa566dfebfd6e38c1deec004f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.HeavyTurrets.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.HeavyTurrets.cs",
+      "originalSha256": "ef2599ce07ee5c5a221e52c8e8855a2ee8d1d619ebac511b2bc640a8843a68f7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.HelicopterTurrets.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.HelicopterTurrets.cs",
+      "originalSha256": "c319af02b369ac1274519450cb0fa5e951abc0bb89a274efab5d926e3df64d31"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.Immortal.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.Immortal.cs",
+      "originalSha256": "e162461034b0af5cc33967c986609a9541e9a6aa90c1366bcb1e970eb9cea5a2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.InfantryWeapons.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.InfantryWeapons.cs",
+      "originalSha256": "184a55b87ddffcd9905a641390736a8c768738c9fef5c684843b234807873bee"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.KevlarUp.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.KevlarUp.cs",
+      "originalSha256": "a49bf982b9cb3a164767bcfbfbb683de9eff32163fa069112fd01cc74fa2accf"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.LandMines.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.LandMines.cs",
+      "originalSha256": "65c53b2c616156c58e61896e9d334fc5de2b82d393a8f08706ee5faa27ef7f74"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MaxHealth.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MaxHealth.cs",
+      "originalSha256": "3e0fb9f8ff949fb5df6ea470d2cafdc48870cb0ca833f2731ffe5c7546cc54d2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MixedCombat.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MixedCombat.cs",
+      "originalSha256": "4ae67a0dabe13fd0464b02fca556fd1416b532d4ede5188e168de68a7b4196b5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MortarControllerTime.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MortarControllerTime.cs",
+      "originalSha256": "ecf28c7afb559ac57d8f611562fcb07325586d47be3a6ba2264850767963f0ea"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MortarFacing.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MortarFacing.cs",
+      "originalSha256": "26b291f4d16c9e514dfbe837776ceb94d9f9f3b87c50317abaa5190f9c2c3e10"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MortarIndicators.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MortarIndicators.cs",
+      "originalSha256": "81c248fe6b25a50e1f7c3250f4a0dd72a2d98d24a395a1e0b0fdc40e400ac92b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MortarIndicatorSlots.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MortarIndicatorSlots.cs",
+      "originalSha256": "21a89cfc03cf45f86bf7c29b3408ac5bffebf9adaf23a30c0a9e2e517ad7dd68"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MortarNavigation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MortarNavigation.cs",
+      "originalSha256": "0b3ce730d5366b81f9084a2e5216aa8215f4e2db14f55212f24a0338f3c6cf61"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MortarRelocation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MortarRelocation.cs",
+      "originalSha256": "e4b0671037ae21eab84393a075e8a6d2490a7eb85bd4222eeb2d1aafd355390a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MortarShooting.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MortarShooting.cs",
+      "originalSha256": "5f8b886664780ce81a120cbcd4384ad18f75e0700c1993930d1f2fb3a295569f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MortarTargeting.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MortarTargeting.cs",
+      "originalSha256": "42952d461f85f44b9062fbc238f91965ece337b27b189bd715084e5586e161e5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MortarWeaponAttachment.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MortarWeaponAttachment.cs",
+      "originalSha256": "9faacb63d0dc2e03d9d85e627cf3af7fc5d4d91e89561fe6c329dda58a2638b5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.MortarWeaponPool.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.MortarWeaponPool.cs",
+      "originalSha256": "ad6f52e6cc568965ca77ee11fdd0964643aeac40ee4af0940fecb97379d966f8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.OrdinaryGrenadier.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.OrdinaryGrenadier.cs",
+      "originalSha256": "174d3fe968bbab0b5d3d2ed4d27b201f6df6c4d610f5f231079f29125f90f61c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.OrdinaryMortar.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.OrdinaryMortar.cs",
+      "originalSha256": "4fbbdf21c3ab8492dcf5e52337faeebb97ed81995e0b494843b70adde3d16702"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.OrdinaryRocket.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.OrdinaryRocket.cs",
+      "originalSha256": "76db8f1acbfc87634b59314b089a03193d20f771f68e944824e9805a87efd004"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.PvpArmyKillScoring.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.PvpArmyKillScoring.cs",
+      "originalSha256": "6c644a47c1923fefa12b1a4e0be1640b8821f4808d7055006f5665f31204996c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.PvpBonuses.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.PvpBonuses.cs",
+      "originalSha256": "866c33434bb62f5a7d10cd806cf4542d90da96938eeec7070f80cdac2bc9c421"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.PvpBonusGrenadeAir.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.PvpBonusGrenadeAir.cs",
+      "originalSha256": "e1e2c0cbd21d929ac28a3baa4d66ec243ae4eaf44e3e883b637936006d366670"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.PvpBonusGrenadeMap.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.PvpBonusGrenadeMap.cs",
+      "originalSha256": "a955749421fbd4c2de1760140ddd61f03902352b8054b408bfd657a41edad0cf"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.PvpBonusGrenadeVehicles.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.PvpBonusGrenadeVehicles.cs",
+      "originalSha256": "2fbd376479b3c6134d2b0e571727bdf3ffbfb32fca139b678812e0e9d3ee78c9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.QueuedBonusCards.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.QueuedBonusCards.cs",
+      "originalSha256": "c7a21e15a39aedd29b8fea85ed80f612af6ea25d64178255b1151c2a659b30a1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.RandomKevlar.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.RandomKevlar.cs",
+      "originalSha256": "99e9629c979a1d2733f23a3e08b412fccb46e8ce80a9cf74378582285741a7eb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ReconnectPause.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ReconnectPause.cs",
+      "originalSha256": "0b56b95c6188c8c70788805bf5fc4fb6c5d031cbe809f4f32c7ba99d8b4d805e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.Sabotage.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.Sabotage.cs",
+      "originalSha256": "0f4922745421803f84046aed5465cc70ca66c729cb365807f08b4f5b31c59989"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ScoreCards.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ScoreCards.cs",
+      "originalSha256": "2e3ca97782bb1f911f034c1ddae6a08dda10be416bfb2a24f71a712868a16694"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ShieldReflection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ShieldReflection.cs",
+      "originalSha256": "0eb450019aa770e7e356267522d043e6fad5db645aeb439a0c4fa4d69c46b124"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.ShieldSpawner.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.ShieldSpawner.cs",
+      "originalSha256": "20051ee34ec8c7eef67964b67fefdc94924f31af1fcfa5a67ad78e578b6f7a88"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.SicknessGrenadier.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.SicknessGrenadier.cs",
+      "originalSha256": "c0aa26ef97ff36fedfbd3b5bcdde4da519c9c2aaf2e712be102268a29a6230a7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.SicknessPrimaryWeapons.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.SicknessPrimaryWeapons.cs",
+      "originalSha256": "bc980ad1be1f208862137b75f0a74c4aa3a714708559c77526073236560c8780"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.SicknessRocket.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.SicknessRocket.cs",
+      "originalSha256": "860af3128f4913de8b0c85496da6d4be8334a7b661404cff13127f3c2f4a3362"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.SicknessVitality.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.SicknessVitality.cs",
+      "originalSha256": "5460add3c3d28093d5769bea62018662e70e7ae0600d7ad7e668147760b58509"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchEngine.SlowMove.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Match/MatchEngine.SlowMove.cs",
+      "originalSha256": "30f38c3e0c8511b70b0637bedb87459b40ee86901f83315a0c215eccdfc72466"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchManifest.cs",
+      "to": "Server/src/War.BattleServer/Matches/MatchManifest.cs",
+      "originalSha256": "c50447a6addfeea73f89b5ddbccfc3a8a12c4c5e652f9f2197ff537351dc1a14"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchPresentationProjection.cs",
+      "to": "Server/src/War.BattleServer/Transport/Snapshots/MatchPresentationProjection.cs",
+      "originalSha256": "27128392cff285da1a19de2489bdf6357c8e713acb6c95981eca0ac05555fb39"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchReplyTransfer.cs",
+      "to": "Server/src/War.BattleServer/Transport/Reliability/MatchReplyTransfer.cs",
+      "originalSha256": "eb9614eb1753688dc2c7775d1279e3e62a8a25f7b290f7a1167a21b54a2dbec9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchRouter.cs",
+      "to": "Server/src/War.BattleServer/Matches/MatchRouter.cs",
+      "originalSha256": "c9f4e2f45ea968055e55d0be0dec9007dff3c40425a4837da81e88f0e54edfe1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MatchTokens.cs",
+      "to": "Server/src/War.BattleServer/Transport/Admission/MatchTokens.cs",
+      "originalSha256": "fee0362c387858df1c0e1147bff3ec68de2266d88696f3a7e7cc1c1bf54289f3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MedkitSourcePolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/MedkitSourcePolicy.cs",
+      "originalSha256": "09328c79f62bf6577e4161d17728e4807c058f1e5fa648b5cffae64285ecc304"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MineYourStepFalloff.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/MineYourStepFalloff.cs",
+      "originalSha256": "1d6ec143ab7f25d8227503b0daa5aa8cfe7b14802f01ebcf16bbf09ac653a44a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MineYourStepSourcePolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/MineYourStepSourcePolicy.cs",
+      "originalSha256": "a90acd02e43b1646823214b11c7270bed10c985b6511d78b49a0f3f4d056b8a7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MinigunCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Miniguns/MinigunCatalog.cs",
+      "originalSha256": "8a66e951721a30c95e5500d0db423244a8c8095fbc45ca5ed0dda372c269976b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MinigunFireState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Miniguns/MinigunFireState.cs",
+      "originalSha256": "0f6b9219e385373a6e5ecb50ad6522d471a525f7d5dfd900181eb0cba0c4d3a9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MissionAutomaticSpawnState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/MissionAutomaticSpawnState.cs",
+      "originalSha256": "05b863b215a3f47ada7a24cbb56aa700a316677f4c315d06476cb56e67daae96"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MissionAutomaticSpawnState.TransportCrew.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/MissionAutomaticSpawnState.TransportCrew.cs",
+      "originalSha256": "b6a956cd71fb3b139874c6f272fa5626549cb4602c1952958b810d5b0e40827d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MissionCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/MissionCatalog.cs",
+      "originalSha256": "1a2b62977f32814d69ec549604af40eb257d5f348591347420897441c06072fa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MissionObjectiveState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/MissionObjectiveState.cs",
+      "originalSha256": "1ef860c01039f7b23eabe7776f808e361a72529e540ffd53de96c15e2b95d5ed"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MissionScoreCalculator.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/MissionScoreCalculator.cs",
+      "originalSha256": "18e8d2c269eb92e34b3005b42aee111c90a8450c4a0dc15e45fc2d359b30b4b2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarConstructionClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarConstructionClock.cs",
+      "originalSha256": "56790f74ba682a535b89eb9120d0c9e76f2a9092794415d770f6d9bbf625e4ec"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarConstructionState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarConstructionState.cs",
+      "originalSha256": "4205f18c0b112e98590779264fd24c4802ba8737f71bacb4a095299b189f0ef7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarControllerClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarControllerClock.cs",
+      "originalSha256": "43ae1711a0a048ff307fee4428d20ae0056dbb22a44b52e3640b670b4de69020"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarCorpseReturnClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarCorpseReturnClock.cs",
+      "originalSha256": "39f1fec239f327b9600c57965b464461b073a7e66dca90230a789dd20f0e72dd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarDetachedWeaponPose.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarDetachedWeaponPose.cs",
+      "originalSha256": "7bb15f3f6cd3563206c213c384943511f4fc110f3a22cfc67225e7b1dbd944c2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarFacingTween.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarFacingTween.cs",
+      "originalSha256": "eaf8dfb892b2cdd58c268c18c951c6b44cdd05cc380b81bb7d144f25b5b61c39"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarIndicatorObservation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarIndicatorObservation.cs",
+      "originalSha256": "734f3b9ccb3a34cf0078731aaeb1c1aa461419b3962fc0442d5deb4f87960044"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarIndicatorRuntime.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarIndicatorRuntime.cs",
+      "originalSha256": "a78aab4e08313ebd9815d7e2c2f6c2c9f6747e8bd54487f8bf366356b2a1ffda"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarMissileLaunch.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarMissileLaunch.cs",
+      "originalSha256": "95204177d88d016cd98f00fa1deb157209acc105c94dcfdf40e1ed28d12eae44"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarPoint.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarPoint.cs",
+      "originalSha256": "9ef4309905adef71370d2b14fc47f4311ab570ecfe3e264951c9779d9a37c7eb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarPointCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarPointCatalog.cs",
+      "originalSha256": "7d3b66d8e6efd09ce1968038ce2bd9ce693fccc70923f184244377e4477bde85"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarPointCatalog.Native.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarPointCatalog.Native.cs",
+      "originalSha256": "9ce2dc686c5c11441f26e6681555da72c49a6434d205d307459329f5d8c2ecc5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarPreparedPoseSource.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarPreparedPoseSource.cs",
+      "originalSha256": "205ea560a08128636bcd2a2e7fd11693a345f96bf350d9294f9ac7f1e7db1dbd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarShotAttempt.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarShotAttempt.cs",
+      "originalSha256": "dc6d76accec0413c131ac632d4e13898654336a668eca9ef67f1f7fefae9124c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarWeaponPool.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarWeaponPool.cs",
+      "originalSha256": "456995937399caa6083e27fcd97c2231fb7f25e270c4c5dad9e6544538f7b393"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarWeaponPoolSource.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarWeaponPoolSource.cs",
+      "originalSha256": "3c8c89d7489832d39ca41b36568de6534544af81c3305be6d77599d5a614f7e2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/MortarWeaponSource.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/Mortars/MortarWeaponSource.cs",
+      "originalSha256": "02fb7f3e11a49dd3bcf2bf3073fa93a8177339347c7f92c062ffad73256f8521"
+    },
+    {
+      "from": "Server/src/War.BattleServer/NativeHelicopterPhysicsWorld.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Physics/NativeHelicopterPhysicsWorld.cs",
+      "originalSha256": "199bc777cfefbd3f7920924476e8ec4ad892a937b7da97b5cf4693a477b05c6b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/NativeHelicopterRope.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Physics/NativeHelicopterRope.cs",
+      "originalSha256": "540bc5ecaf80763a7a7d70387ff67115e59ed4b629b6f99a7c12418785a9015f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/NativeRopeHandle.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Physics/NativeRopeHandle.cs",
+      "originalSha256": "96a71a8853192393aa709586ee26771b29e77652ab45d00ca7b8167552998da0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/NavigationAgentRecoveryState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/NavigationAgentRecoveryState.cs",
+      "originalSha256": "a8bc16c75324a73fc5adfd818221a907a9737af8c9cd109c566e76e02ff0548e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/NavigationDetailCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/NavigationDetailCatalog.cs",
+      "originalSha256": "0582d5340cba514ed19b33ec425972a8c47fe13000627d0e5766e911c88efeaa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/NavigationDetailSampler.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/NavigationDetailSampler.cs",
+      "originalSha256": "9fea1bad810f9e36fa987ba60d2409aa794db134affabf39e03b623e9bade339"
+    },
+    {
+      "from": "Server/src/War.BattleServer/NetworkWorker.cs",
+      "to": "Server/src/War.BattleServer/Hosting/NetworkWorker.cs",
+      "originalSha256": "88c5c9569e65614dbd68289b34e2d617e53aa24cc9fe2fc2f923b72673b284e2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/NguiRealtimeClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/NguiRealtimeClock.cs",
+      "originalSha256": "f7ecf17872fe52cf0a2b3d77f5acd7093226ae006614b76ca42e4fee2ed013d6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/OfflineCampaignPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/OfflineCampaignPolicy.cs",
+      "originalSha256": "61b6b7a939e457c835e5da4a5fdc7e106bdc67512e8372bdf8fd3eab7f7e9cc0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/OrdinaryCardIdentityCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/OrdinaryCardIdentityCatalog.cs",
+      "originalSha256": "aae9030c4a5ff81978d5601b8e134c33c0d7b3958638032a7b4dcdb0b7aacfec"
+    },
+    {
+      "from": "Server/src/War.BattleServer/OrdinaryCardInventory.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/OrdinaryCardInventory.cs",
+      "originalSha256": "ba97fdda0b24d2ba44a5de31f2467e4fd026075176e3d05c60253a0334d9b4b4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PacketMtuPolicy.cs",
+      "to": "Server/src/War.BattleServer/Transport/Udp/PacketMtuPolicy.cs",
+      "originalSha256": "e74fb2a5a65b4bf2fc9f1702c5762de8dec622c917413fa5b95110ec5631b4f4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PistolCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Pistols/PistolCatalog.cs",
+      "originalSha256": "a1cde289fe3f648b4f9eb9f7dacf898e2dbcee36365d7c0f986df37af00a8276"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerAimPose.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerAimPose.cs",
+      "originalSha256": "9891d49d98b81acc58f5134bc64c63bb2a6e4f13e14bf39cbd6e7efa18904199"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerAimState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerAimState.cs",
+      "originalSha256": "07fd5d877260031c44cb247d91260373a3b38c1df244f3f627e5095399bb3fc3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerAnimationState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerAnimationState.cs",
+      "originalSha256": "602292bb4f5420ff2d34a9102a266ea686ceccc9148e885c36955363a38705e2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerCollisionModel.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerCollisionModel.cs",
+      "originalSha256": "705e9a963507fa90f6c0fe5e97d7bce6e297fcda7aea9e654ff56c083923c0d6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerDamage.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerDamage.cs",
+      "originalSha256": "ac307ee8b23a72c496621ca128afe2b4cede904a5b1da68652f84b690b6c73a0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerHitbox.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerHitbox.cs",
+      "originalSha256": "5e64307459fe48afa797384567ff2f77c22ef56f6e5d07b661a0944ce8a6edbf"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerHitboxRigPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerHitboxRigPolicy.cs",
+      "originalSha256": "7fe1a5d4600f7697b87b15db8e5bfa7ee1bbb7ddbb1d3fae397f4ae350cb3a16"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerKevlar.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerKevlar.cs",
+      "originalSha256": "69dea26736b7576889d940036f9e4f72b0e4e2c6de5ccd97aca54bc971b6ae1e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerMovementPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerMovementPolicy.cs",
+      "originalSha256": "9914a4cae54f34f729c58eaa8e239874fd489d554ba6bab68a7e8de6ad59cb4a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerPoseCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerPoseCatalog.cs",
+      "originalSha256": "991de12fb72de29c4ebca09f108f757fd7b42a34dc65525f4414bcfb5261e860"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerPoseCatalog.Rig.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerPoseCatalog.Rig.cs",
+      "originalSha256": "d6e318b6d2426f4ba2359b6816206de265b5422b589b8ebeb94230a6742aefc2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PlayerShotTargetCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/PlayerShotTargetCatalog.cs",
+      "originalSha256": "856fd9406c33a539463126964c8a6ee1fea1425141a906c4ed0da813e1c8b506"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PreparedProjectile.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/PreparedProjectile.cs",
+      "originalSha256": "82f935c2f4d46c8513d889ef4197ef102d188f5c22b6d263097bd75db6a5f9c6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PreparedVolley.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/PreparedVolley.cs",
+      "originalSha256": "797556e3232840bbc279295278f1690953edd5445487321912efbd806b493cff"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ProjectileAuthorityPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Projectiles/ProjectileAuthorityPolicy.cs",
+      "originalSha256": "4a4809d11882000adba6e1d85a3afa9d69a1a7d2fe60cacbb8926a79893afc58"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpArmyKillSkillShotPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpArmyKillSkillShotPolicy.cs",
+      "originalSha256": "aa7dd9648e1b2762cdf9e9935afeaf10ba0ef99e0b17aeb61fafb5a3e3e7c16a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusAmmoPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusAmmoPolicy.cs",
+      "originalSha256": "367f49a05773a3faab0205246ec001e2cdb0509b28f2dbe17142c53a804bc9b1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusBoobyTrapPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusBoobyTrapPolicy.cs",
+      "originalSha256": "13b439e2cbbf614c30905f0def05f484954b3d7c44f8108844306cc1b809382b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusBoxRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusBoxRegistry.cs",
+      "originalSha256": "237b21a26959efce1fd7f18e271581a66bde47d1b40833e344aefea0d97ddf71"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusCatalog.cs",
+      "originalSha256": "4d699322cc22a17a4136646f0a2f4e124395fdf98f81b21a268fb570d03b3422"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusCurrencyManifestValidator.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusCurrencyManifestValidator.cs",
+      "originalSha256": "b866388d20a4b985d600a32a79753bc276818b3cb583fd46179688d1d0e6b4f1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusDelayQueue.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusDelayQueue.cs",
+      "originalSha256": "4099216c1578f6076e9181357fa677290c4cbf13e335e99f5ba2ce53dcd4039d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusFallMotion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusFallMotion.cs",
+      "originalSha256": "41affb1d89b628cda5775103b32260583eed421fb1536066f37581b3c642de8e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusGrenadeBurstClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusGrenadeBurstClock.cs",
+      "originalSha256": "0ecf77708a88cc3f00cf8de05a3534d35958601e8e25ee5b0d85440e8cf837bb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusGrenadeBurstPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusGrenadeBurstPolicy.cs",
+      "originalSha256": "9a15ef47153563e49e6b4e6864587a8fe5899ec51a04517c329e5d468045d2d1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusGrenadeCollision.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusGrenadeCollision.cs",
+      "originalSha256": "71b533e4d1ff932a78bc47f2eb34ee03c5280ba033e3d7a0040e709d9886930e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusGrenadeExplosion.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusGrenadeExplosion.cs",
+      "originalSha256": "6e7e4df5502032daea117fb690d48f5bdbc21cb73d10e286fd22893b7e930847"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusLandingProbe.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusLandingProbe.cs",
+      "originalSha256": "5d3528d6ba46689d10321c177fa540a9a0159a7bfb5d9691c4d02506618eda66"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusProgressCoordinator.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusProgressCoordinator.cs",
+      "originalSha256": "71510ffcd640ca1f6decb5d9a9cb0f913766653d28076d3cf5ced3144c24933c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusSelectionState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusSelectionState.cs",
+      "originalSha256": "ffd84580d281487e2dcea557deee8231cbc5ea1d1ef01b4d2cd964ac2cdd3e16"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusShotHitbox.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusShotHitbox.cs",
+      "originalSha256": "e90449aefeccf99f93691e5ab3d6843c18e947d103a4aa5695f7a959a146b5f8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusSpawnAreaCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusSpawnAreaCatalog.cs",
+      "originalSha256": "66c93ed10f899f6f388fabe584e01f22427495bde716ccbf5b5b42271703cd79"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpBonusSpawnPlanner.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpBonusSpawnPlanner.cs",
+      "originalSha256": "132982f8dff09b78b0fcc55024717da281785282ea899df979ea68437eb9fdd1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpFlameHitThrottle.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpFlameHitThrottle.cs",
+      "originalSha256": "e9504be47f41df6ec0d495205ebcabb3b2be1f7f1cad7b50dc7c9d7d4f2371ed"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpKillComboState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpKillComboState.cs",
+      "originalSha256": "225299cc00b05b7fcd19a596da2ee884df3c0c61ded9c556f30be06f532095d2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpPlayerHitSkillShotPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpPlayerHitSkillShotPolicy.cs",
+      "originalSha256": "a6a2705c3abf9073565d81f780048ad3e59b084ead92b86e7dac893f999e7255"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpScoreMultiplierState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpScoreMultiplierState.cs",
+      "originalSha256": "506bcdb162f37b51f516e68f712b3890a6b10acfbda194035bbf9ef7f8880996"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpScoreStreakPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpScoreStreakPolicy.cs",
+      "originalSha256": "6845908aca4470ae9fbb6a21befe96367231beffdcd5b84f2d4f0d300ea9daea"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpScoreStreakProgress.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpScoreStreakProgress.cs",
+      "originalSha256": "04fed546e2b65338a056caef2ab193ced1faf8e482f4e363479a5625a31cdccd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpSkillShotScoreCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpSkillShotScoreCatalog.cs",
+      "originalSha256": "57953050c5a15c8ab303a0c261a76c9049f6f117377a08b565746861ba15b9b4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/PvpSkillShotScoreState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Pvp/PvpSkillShotScoreState.cs",
+      "originalSha256": "d58b957d68fe4a1960237d53e84ed4cd19cd75fa7319fb99e7dd14217e169273"
+    },
+    {
+      "from": "Server/src/War.BattleServer/QueuedBonusCardSourceCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/QueuedBonusCardSourceCatalog.cs",
+      "originalSha256": "0abc12e4f781c080dea193175de5fbc4989b1984ae06ad6e4ab5746f700133f3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/QueuedCrossFade.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/QueuedCrossFade.cs",
+      "originalSha256": "f6a76b8f64a4c3fb8ec27492b1d8a2a990fe7d002b9b8ecd0cc00f3e219ecbf1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ReconnectCursor.cs",
+      "to": "Server/src/War.BattleServer/Transport/Admission/ReconnectCursor.cs",
+      "originalSha256": "f0b97239cb8d3da2c1a793a6831c8bb961d2abf262009e761f4a12f70ef32ea4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ReconnectGrantState.cs",
+      "to": "Server/src/War.BattleServer/Transport/Admission/ReconnectGrantState.cs",
+      "originalSha256": "7e0b01f7ec829fd865c0e73dc81f0bfc4afe04b51de99ddb5dc9e12209c4673d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ReconnectRecoveryCoordinator.cs",
+      "to": "Server/src/War.BattleServer/Transport/Admission/ReconnectRecoveryCoordinator.cs",
+      "originalSha256": "70035307e95252b99fb2b25014ab509b64e7f7ac944d8153c97da292c71e1ac7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ReconnectSnapshotPolicy.cs",
+      "to": "Server/src/War.BattleServer/Transport/Admission/ReconnectSnapshotPolicy.cs",
+      "originalSha256": "cd0bc48eb49277e52d035a9d50fd7c33151fab251d5ceefc694fbcc8f41c282a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RecoveredBattleMap.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/RecoveredBattleMap.cs",
+      "originalSha256": "cb130256b7e9f770a14bc2b5135bc88ed73080816557291843a4d98498163f85"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RecoveredBattleMap.SphereContacts.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/RecoveredBattleMap.SphereContacts.cs",
+      "originalSha256": "3fde60a5b6000beb71e0f8e79125a69b16b86e54a5f93d73ea8735f8b168445e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ReliableEventCursorStore.cs",
+      "to": "Server/src/War.BattleServer/Transport/Reliability/ReliableEventCursorStore.cs",
+      "originalSha256": "995adfd6301e147fbfe26ab12a643cd80952d5207036b23638bb957043292bb9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ReliableEventPayloadStore.cs",
+      "to": "Server/src/War.BattleServer/Transport/Reliability/ReliableEventPayloadStore.cs",
+      "originalSha256": "12bebc2208872a9aaaa80690a7002fe5bb2c8b36098d3f8a70e38b582ef1e277"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ReliableEventRetentionPolicy.cs",
+      "to": "Server/src/War.BattleServer/Transport/Reliability/ReliableEventRetentionPolicy.cs",
+      "originalSha256": "8ca5f6902c2ae8a923cb6304a7274110412d0c1fe72d5693276485209ec78e95"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ReliableEventWindow.cs",
+      "to": "Server/src/War.BattleServer/Transport/Reliability/ReliableEventWindow.cs",
+      "originalSha256": "f7462294770753a9174e4948c91e6a0f22109b6c4192b2355eb985f277060e57"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RematchRequestState.cs",
+      "to": "Server/src/War.BattleServer/Matches/RematchRequestState.cs",
+      "originalSha256": "f46d84316ce740e2f1dbd1c170363a11571aa6e9eb2038661078e3016a1b7dbd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RifleBindingCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Rifles/RifleBindingCatalog.cs",
+      "originalSha256": "c6d4133933f8fb1559e8ed15f4027fa489a962769411b037097cc5fa2c3e5e83"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RifleCoverTimeline.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Rifles/RifleCoverTimeline.cs",
+      "originalSha256": "cc26741116ced9cd29c39729ae8da03e23857d8c87b1a3cbd4d8858c3fabe4fa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RifleFirstShot.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Rifles/RifleFirstShot.cs",
+      "originalSha256": "73a517805ebc4bc09b70e47b27094308f694b89757d744bc18a735b7d689d30c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RifleMatchSimulation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Rifles/RifleMatchSimulation.cs",
+      "originalSha256": "767ca285c1374c015376a160df27653456a5d8ac2a6e330da01db49a7614fb4b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RifleMatchSimulation.ExternalView.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Rifles/RifleMatchSimulation.ExternalView.cs",
+      "originalSha256": "04ba210c2db0be4b9fe2ca1e70b55409bc1f203eaff3447250bfb26048c7dec3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RifleMuzzlePose.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Rifles/RifleMuzzlePose.cs",
+      "originalSha256": "44d146b99fea5a9a98373d8d1041a421b36079fa1d8be66cdcd1e8d64e036311"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RiflePoseProjection.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Rifles/RiflePoseProjection.cs",
+      "originalSha256": "8152c1cff662b7b96e354c6e835ac128bbcaa62509d43bcf34b891fb0437ada8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RifleStatCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Rifles/RifleStatCatalog.cs",
+      "originalSha256": "8c48cf00cecc77ccda99bee4851e63851c6840bed8807cb80ad9ba123e18c7e9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/RigLocalPose.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Players/RigLocalPose.cs",
+      "originalSha256": "fa9b63d711e1a948716cd36e5584db141423e5056396d96137a7549656bb8748"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SabotageTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Coop/SabotageTargetPolicy.cs",
+      "originalSha256": "9b778951625342b14f20bf2727bd2fbf408f80dd1a9f465644991b0206b4772e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SenderEndpointRegistry.cs",
+      "to": "Server/src/War.BattleServer/Transport/Udp/SenderEndpointRegistry.cs",
+      "originalSha256": "8625b9a4be07ef248c52cf6e59f6682b0c7a1d10a2c63713faac40b95338d84c"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SenderRateWindow.cs",
+      "to": "Server/src/War.BattleServer/Transport/Udp/SenderRateWindow.cs",
+      "originalSha256": "edbf2f4b091d519cca8e8146791b9e0b3ec7df1c14827bac622ea111636bc059"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SessionKeyRing.cs",
+      "to": "Server/src/War.BattleServer/Transport/Admission/SessionKeyRing.cs",
+      "originalSha256": "21163a802308aa1dd6dc9ac3fe13a4b62d9ca1321914b8566cad4b15d28ca6dd"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SessionKeyRotationPolicy.cs",
+      "to": "Server/src/War.BattleServer/Transport/Admission/SessionKeyRotationPolicy.cs",
+      "originalSha256": "44cbe288360fa4627d51fc65054af82189c309e9f639366e3722adedf88f29fa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ShieldDestroyerTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Shields/ShieldDestroyerTargetPolicy.cs",
+      "originalSha256": "8759559b1314a5167cc30c4b8fde0bbdfac0ab6771901a3d677391dc817f5093"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ShieldLifecycle.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Shields/ShieldLifecycle.cs",
+      "originalSha256": "2f8ebae15283f1d5deddbcf2d9f51a7461a2d4b24c209dcc95f89105c95489aa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ShieldMatchSimulation.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Shields/ShieldMatchSimulation.cs",
+      "originalSha256": "0cf82c0306bace114d50f6114648fa802a7f9e946d16e5ffa8fee8d40a2c13a7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ShieldSourceCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/Shields/ShieldSourceCatalog.cs",
+      "originalSha256": "4e38750b559b03e21cf81c2ce0f0711621c8237ff18e4624a8892fc9e9288fb6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ShotCollisionWorld.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/ShotCollisionWorld.cs",
+      "originalSha256": "7722241e4134a0fc05e87e1e88bb9192d5ca0d821f16b15775a592ec5b77678e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ShotgunCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Shotguns/ShotgunCatalog.cs",
+      "originalSha256": "3387e5612a0498f9585d1a779833ed32f47bc8c4ed98ff5102dc92410b38c695"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ShotgunFakePelletFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Shotguns/ShotgunFakePelletFlight.cs",
+      "originalSha256": "54101860b22a14ad170634d16a59b2c40f427c6db61c8077bf4601b680f79b78"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ShotgunShotPlanner.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Shotguns/ShotgunShotPlanner.cs",
+      "originalSha256": "747fefb540e68699a7f5b04e7e472a6b4f3fec59099f09ee9d962f0bb89b56d1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/ShotgunVolleyFactory.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Shotguns/ShotgunVolleyFactory.cs",
+      "originalSha256": "b173a4b3682c3396e502e2fe8df3ff4232bbd6e260dd35fb122ad4c5e9a85512"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SicknessCombatState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/SicknessCombatState.cs",
+      "originalSha256": "3a63866173d55c6288a55e558ec11e83ff1143af9ece7585a2dae2f1f605cee0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SicknessSpawnTarget.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/SicknessSpawnTarget.cs",
+      "originalSha256": "c9d4ab750598d01f6b09645c0dc69a5c46788a21148f00476f2c90428ba51185"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SicknessSpawnWindow.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/SicknessSpawnWindow.cs",
+      "originalSha256": "8e8afd2789fdcb35c6bcc6eebd2a43b9e9ba9dcc5e8f19611e39d07e78ffcd1b"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SmgBurstScheduler.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Smgs/SmgBurstScheduler.cs",
+      "originalSha256": "7c9c8a848e07902420bd6d9cf7a234d73c054aa5d85b88008b2aa09667427742"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SmgCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Smgs/SmgCatalog.cs",
+      "originalSha256": "d1dcaa2585f6b45a3ce2329a614ffda0491a5c46c5b0845097f5233a96d2bdf1"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SnapshotBaseline.cs",
+      "to": "Server/src/War.BattleServer/Transport/Snapshots/SnapshotBaseline.cs",
+      "originalSha256": "2628b79eaeb63baca790c458197ad0028dced016c525152780c92c306a68d9a7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SnapshotChunkAssembler.cs",
+      "to": "Server/src/War.BattleServer/Transport/Snapshots/SnapshotChunkAssembler.cs",
+      "originalSha256": "c3bfb76b292dbad707dfe8261f1e90e8ee225a7a18a544af44d0111fa2caa4cb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SnapshotChunker.cs",
+      "to": "Server/src/War.BattleServer/Transport/Snapshots/SnapshotChunker.cs",
+      "originalSha256": "5662d9f21ecce3d86c6258bfba628cec7e48101c9beab21a7449d32342615236"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SnapshotInterestFilter.cs",
+      "to": "Server/src/War.BattleServer/Transport/Snapshots/SnapshotInterestFilter.cs",
+      "originalSha256": "59a3196a950e69e2a2e50808d16ce6b6f095ac132694f7ec9759a69faf1bc104"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SnapshotInterpolationBuffer.cs",
+      "to": "Server/src/War.BattleServer/Transport/Snapshots/SnapshotInterpolationBuffer.cs",
+      "originalSha256": "662b3f4ff2722c7181d1acaacfafb80b315dcba2c08f0204eaaf181022abadea"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SnapshotTickPolicy.cs",
+      "to": "Server/src/War.BattleServer/Transport/Snapshots/SnapshotTickPolicy.cs",
+      "originalSha256": "891f3cdfe59131c8816ce02a9abaf0db62f7b62da400db5eb3d873597918af05"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SniperAimState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Snipers/SniperAimState.cs",
+      "originalSha256": "81e7b51bc8286df9c469bd0cf6b8af18b4b751c74239e9885f4d54443226a150"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SniperCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/Snipers/SniperCatalog.cs",
+      "originalSha256": "9ccb0df3df1a8302f8aff2c01db7ca430ca1bb54f1b8d3b5841f2a057073d92e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SoldierAnimationRootReset.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/SoldierAnimationRootReset.cs",
+      "originalSha256": "472cc5e1cefaab1ed0fe70a606d9a16889294bb3b356b0d7ebb9e6c071f9966f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SoldierAnimationVisibilityState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/SoldierAnimationVisibilityState.cs",
+      "originalSha256": "f1235223e58e2aef9be7df19abcdc4dee7301bcfedf72282e54aa2e3b17e79f3"
+    },
+    {
+      "from": "Server/src/War.BattleServer/SoldierResetIdleMixer.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Army/SoldierResetIdleMixer.cs",
+      "originalSha256": "988e4b11379a304d7374a1a1c903f1ac8bdd0bbdf6f2af0f2bfd437c40111f39"
+    },
+    {
+      "from": "Server/src/War.BattleServer/StableEntityIdentityPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/StableEntityIdentityPolicy.cs",
+      "originalSha256": "1c25d9cd2c57b04cddbc1fabb0955086e06404b6c9fe7db3ca6ec7d2c9edff0f"
+    },
+    {
+      "from": "Server/src/War.BattleServer/StableEntityRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/StableEntityRegistry.cs",
+      "originalSha256": "a6d71ab3b93a49d8f6036a254fc4115e9f812551101249cf8efd17776928d436"
+    },
+    {
+      "from": "Server/src/War.BattleServer/StartupManifestFiles.cs",
+      "to": "Server/src/War.BattleServer/Hosting/StartupManifestFiles.cs",
+      "originalSha256": "bf55905b53466c257e90a6b32e9d4c392e4b8eb6928b60e6d05eaa0d9d146fbb"
+    },
+    {
+      "from": "Server/src/War.BattleServer/StatusEffectState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/StatusEffectState.cs",
+      "originalSha256": "3831f1e2f97b341c9f2f8dc6bea5ce412acf99a4d4d9a59e4d85aaa50d37dc31"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TankMissileFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/TankMissileFlight.cs",
+      "originalSha256": "aca46aff99dacc987d4e009250cad2aaf539e2538aed9d7fe3f2c8c9193b90ed"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TerminalOutbox.cs",
+      "to": "Server/src/War.BattleServer/Persistence/TerminalOutbox.cs",
+      "originalSha256": "cf77a2abb97efc84a87b6305fe88416198a320f9bc7cd9909d2b0af1df780ba5"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TimedMineMatchRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/TimedMineMatchRegistry.cs",
+      "originalSha256": "9533ff89a38367dfb4590927c72da3f52036e46c8fd04558fbff1611002a4148"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TransportCrewActorState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/Transport/TransportCrewActorState.cs",
+      "originalSha256": "ade53935c35a4b2b18bd4dbaefce0c4236c49145a7d60829257d0c5ddb364ff7"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TransportCrewObstacleClock.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/Transport/TransportCrewObstacleClock.cs",
+      "originalSha256": "e086bef989d7160fb387fccb7d2a8b465581faa589a4c70b339be78579ef1bb4"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TransportCrewObstacleClock.ShotCallbacks.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/Transport/TransportCrewObstacleClock.ShotCallbacks.cs",
+      "originalSha256": "1ce7caa990280e1b9c02e9f0e38fead614d4fbfc6e3f45b96ba8a15093af277a"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TransportCrewPointChange.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/Transport/TransportCrewPointChange.cs",
+      "originalSha256": "b363fcf36d26273deb032d291b3a9ddde79cbef02e2fdfbfa5ba3a5cf98fcf38"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TransportCrewPointEntry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/Transport/TransportCrewPointEntry.cs",
+      "originalSha256": "7b1f0aba10f2b3793be7b957b150719d76fcef0a994d5c8977a9f2582109e226"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TransportCrewRifleVolley.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/Transport/TransportCrewRifleVolley.cs",
+      "originalSha256": "664bc5af7daa14c2a1feb4f3494951bc9620bd0e4e6e8be56e54a094f9940530"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TransportCrewShotTurn.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/Transport/TransportCrewShotTurn.cs",
+      "originalSha256": "ee483b5846371db658a9f7045182a8c504d166d6bdbb1fe127861321f19f2665"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TransporterRepairDroneState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/Transport/TransporterRepairDroneState.cs",
+      "originalSha256": "2508d236e7fd42a2a1692c8404a6c56f66595dcaf45cca72a560cf00216f8b69"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TransporterVolleyPlanner.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/Transport/TransporterVolleyPlanner.cs",
+      "originalSha256": "d26d594a3ffb945fcfaf457413a004f290a4896706b07dae9a9b289a302cc197"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TransportSecurityPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/Transport/TransportSecurityPolicy.cs",
+      "originalSha256": "78f734fe28371a4804f7c513ab9d58cddcb88fc3b79d077f1ec62fe38c53c64d"
+    },
+    {
+      "from": "Server/src/War.BattleServer/TriangleMeshGeometry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/World/TriangleMeshGeometry.cs",
+      "originalSha256": "52c174c09c53bc56477a60523fb69efa3b838a2081338231baa319e1b04a6421"
+    },
+    {
+      "from": "Server/src/War.BattleServer/VehicleAttackState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/VehicleAttackState.cs",
+      "originalSha256": "8283f92fd9215f26ac74b0c9635d305696ceab80418693b2d61022d93c7adff8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/VehicleEntityRegistry.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/VehicleEntityRegistry.cs",
+      "originalSha256": "a5ee792cb08264b1191b08e2c050ed87f85b9b35501078040ea1e4546bb2cafa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/VehicleHealthState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/VehicleHealthState.cs",
+      "originalSha256": "a5e95536cb922661e760fb3421ca4c24fb10e5f8e9cdfb2e1811d26e40d8e4ff"
+    },
+    {
+      "from": "Server/src/War.BattleServer/VehicleImpactResolver.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/VehicleImpactResolver.cs",
+      "originalSha256": "e382f4cf3038df9dd0fd643fe16e04a0e28a2a04014c44c901aa04c9f2ff7491"
+    },
+    {
+      "from": "Server/src/War.BattleServer/VehicleMotionPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/VehicleMotionPolicy.cs",
+      "originalSha256": "3f74db5017ff8d2aa45ddcdc9dcc8f1fdbb8165e4262ece533a5b7705390a173"
+    },
+    {
+      "from": "Server/src/War.BattleServer/VehiclePartState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/VehiclePartState.cs",
+      "originalSha256": "54e2d3261f16ea074a6b014f774c4eb33327c1093b4cbe170faabfaf847fb2e0"
+    },
+    {
+      "from": "Server/src/War.BattleServer/VehiclePassengerPoseCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/VehiclePassengerPoseCatalog.cs",
+      "originalSha256": "a78769e8dd7fa0b156a2ee289922dbdbd926cf36be96e865b30aa0ff39b8f163"
+    },
+    {
+      "from": "Server/src/War.BattleServer/VehiclePassengerState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/VehiclePassengerState.cs",
+      "originalSha256": "236c1e2100d759589c511e28698cdbfd4a2387f321016715cc9016791e9f4c60"
+    },
+    {
+      "from": "Server/src/War.BattleServer/VehicleProjectileFlight.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/VehicleProjectileFlight.cs",
+      "originalSha256": "5898d18b5656b5895ba879ec8e76538442591cde03ca4b00ebdbca6425e52c72"
+    },
+    {
+      "from": "Server/src/War.BattleServer/VehicleTargetPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Vehicles/VehicleTargetPolicy.cs",
+      "originalSha256": "3a36b0685ffc55160bfe8c960276e041135ecc22e17f01bf7170fef1a9cf00c9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarArenaPolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Arena/WarArenaPolicy.cs",
+      "originalSha256": "46b1d89de081a5c717c8c6f869a82f089332e217dee68601fdada7326a40a0f9"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarArenaRanking.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Arena/WarArenaRanking.cs",
+      "originalSha256": "4b0162652df421cd81dc88c839092798a381bd1e187ae55ccba34dfb9332bdb8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarArenaRewardState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Arena/WarArenaRewardState.cs",
+      "originalSha256": "8257f38355ba2745c4ecfeae40e01c9a6596192bcbb30e19a552b9efa87db088"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarArenaSnapshot.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Arena/WarArenaSnapshot.cs",
+      "originalSha256": "e0b29b20c39822c5877d94df95c67e684278fe384248a438ef536fd2b3810b86"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarArenaSnapshotStore.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Progression/Arena/WarArenaSnapshotStore.cs",
+      "originalSha256": "b2cc6b74fea454f9a2429e7879a491dacf770272dfb889b3a6430126117af14e"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarCardEffectCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/WarCardEffectCatalog.cs",
+      "originalSha256": "7368c8051547d79ca1a277892c8aaac6a74c47d03e09873f7eb3e17cc079f9b6"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarCardEffectLease.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/WarCardEffectLease.cs",
+      "originalSha256": "b5a152a990510c5f055149a19fcfc433889d81f5c5b6f50d5fa0b8d7c45957a2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarCardEffectRequest.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/WarCardEffectRequest.cs",
+      "originalSha256": "1fdae209713b5d58e20567b54d3f39c4e205240f18b7777621bb2d67156f8fe8"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarCardEffectRuntime.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/WarCardEffectRuntime.cs",
+      "originalSha256": "38da7e03691f9bd80b07a9769ab6d3f42c887907a1c2bf5f0fba44e7bd4e2db2"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarCardEffectStack.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/WarCardEffectStack.cs",
+      "originalSha256": "4d3da819f763cd231ea8d63843353bc1cfc321f34ae7a70c342f049e4c0ac467"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarCardReservationState.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/WarCardReservationState.cs",
+      "originalSha256": "de4ac66a53e1ad10840b50babdc528cb3b035bf6f936a51f93f0b94a3713e008"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WarCardSourceIdentityCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Cards/WarCardSourceIdentityCatalog.cs",
+      "originalSha256": "affe3e128105be9d413e568a389f6a8d05f1c7b2ce66fa5f83e1d7dddfbee6aa"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WeaponBindingGraphCatalog.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/WeaponBindingGraphCatalog.cs",
+      "originalSha256": "2ae53aba0b6d9ff302b2d2492c6de3f1dc0ae2d4941664a82075b3493d3534cc"
+    },
+    {
+      "from": "Server/src/War.BattleServer/WeaponFireModePolicy.cs",
+      "to": "Server/src/War.BattleServer/Simulation/Weapons/WeaponFireModePolicy.cs",
+      "originalSha256": "b7e8d330619fb0fb28ee282db1119b38d7cdf19dded50c9809608f5a9fe9d23d"
+    }
+  ]
+}

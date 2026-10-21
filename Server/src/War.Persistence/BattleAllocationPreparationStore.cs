@@ -43,7 +43,7 @@ public sealed class BattleAllocationPreparationStore
         string playerId = request.PlayerId;
         long expectedRevision = request.ExpectedRevision;
         Func<LegacyPlayerDocument, BattleAllocationProjection> project = request.Project;
-        if (!Guid.TryParseExact(playerId, "N", out Guid identity) || identity.ToString("N") != playerId ||
+        if (!War.Shared.CanonicalGuid.IsCanonical(playerId) ||
             expectedRevision < 1 || expectedRevision == long.MaxValue || project == null)
         {
             throw new InvalidDataException("Invalid initial battle preparation authority.");

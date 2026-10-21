@@ -1605,7 +1605,7 @@ internal static class CombatContentTests
         }
 
         var router = new MatchRouter([], coop.ServerId,
-            Convert.ToBase64String(new byte[32]));
+            Convert.ToBase64String(Enumerable.Repeat((byte)1, 32).ToArray()));
         if (router.Register(coop).Code != "mode-unavailable" || router.Count != 0)
             throw new Exception("Co-op allocations must stay closed until runtime routing exists.");
 
@@ -2181,7 +2181,7 @@ internal static class CombatContentTests
         try
         {
             _ = new MatchEndpoint(coop,
-                Convert.ToBase64String(new byte[32]));
+                Convert.ToBase64String(Enumerable.Repeat((byte)1, 32).ToArray()));
             throw new Exception(
                 "Public endpoint admitted the generic co-op prototype.");
         }
@@ -2189,7 +2189,7 @@ internal static class CombatContentTests
         if (!runtime.Admit(firstPlayer) || !runtime.Admit(secondPlayer))
             throw new Exception("Co-op runtime rejected its signed allied roster.");
         var endpoint = new MatchEndpoint(coop,
-            Convert.ToBase64String(new byte[32]), runtime, 0);
+            Convert.ToBase64String(Enumerable.Repeat((byte)1, 32).ToArray()), runtime, 0);
         if (endpoint.ManifestHash != coop.Digest())
             throw new Exception("Co-op transport bound a different allocation.");
 
@@ -5743,7 +5743,7 @@ internal static class CombatContentTests
             MathF.Abs(cardEnemy.CardProgress - 6f / 25f) > .000001f)
             throw new Exception("A source card event must preserve its card upgrade progress.");
 
-        string signingKey = Convert.ToBase64String(new byte[32]);
+        string signingKey = Convert.ToBase64String(Enumerable.Repeat((byte)1, 32).ToArray());
         var udpRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes,
             enemyCombat, playerWeaponContent: content);
         var udpEndpoint = new MatchEndpoint(coop, signingKey, udpRuntime, 0);
@@ -5909,7 +5909,7 @@ internal static class CombatContentTests
         CoopNavMeshPathCatalog routes, CoopEnemyCombatCatalog enemyCombat,
         string firstPlayer, string secondPlayer)
     {
-        string signingKey = Convert.ToBase64String(new byte[32]);
+        string signingKey = Convert.ToBase64String(Enumerable.Repeat((byte)1, 32).ToArray());
         var runtime = new CoopMatchRuntime(manifest, missions, spawnPoints,
             routes, enemyCombat);
         var endpoint = new MatchEndpoint(manifest, signingKey, runtime, 0);
@@ -9971,7 +9971,7 @@ internal static class CombatContentTests
             finally {if(File.Exists(decoyTemp))File.Delete(decoyTemp);}
             string landMineArtifact=Path.Combine(directory,"recovered-landmine-source.json");
             string landMineRevision=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(landMineArtifact)));
-            var landMines=LandMineSourceCatalog.Load(landMineArtifact,landMineRevision,content.Maps);
+            var landMines=LandMineSourceCatalog.Load(landMineArtifact,landMineRevision,content.Maps,content.Stats.SceneRevision);
             var parkLandMines=landMines.ForMap(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"));
             var selectedLandMines=landMines.Select(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer").Source,1,_=>0);
             Check(landMines.SpawnLimit==3&&landMines.NavMeshSampleRadius==10&&landMines.NavMeshAreaMask==1&&
@@ -10092,12 +10092,12 @@ internal static class CombatContentTests
                 changed["maps"]![0]!["slots"]![0]!["sourcePosition"]![0]=99999;
                 File.WriteAllText(landMineTemp,changed.ToJsonString());
                 Reject(()=>LandMineSourceCatalog.Load(landMineTemp,
-                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(landMineTemp))),content.Maps));
+                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(landMineTemp))),content.Maps,content.Stats.SceneRevision));
             }
             finally {if(File.Exists(landMineTemp))File.Delete(landMineTemp);}
             string heavyTurretArtifact=Path.Combine(directory,"recovered-heavy-turret-source.json");
             string heavyTurretRevision=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretArtifact)));
-            var heavyTurrets=HeavyTurretSourceCatalog.Load(heavyTurretArtifact,heavyTurretRevision,content.Maps);
+            var heavyTurrets=HeavyTurretSourceCatalog.Load(heavyTurretArtifact,heavyTurretRevision,content.Maps,content.Stats.SceneRevision);
             var parkTurretCovers=heavyTurrets.ForMap(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"));
             var heavyMid=heavyTurrets.Compose(22);var firstTurretCover=parkTurretCovers[0];
             using(var turretOracle=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-heavy-turret-aim-samples.json"))))
@@ -10269,12 +10269,12 @@ internal static class CombatContentTests
                 changed["prefab"]!["turret"]!["maxShotRotation"]=359;
                 File.WriteAllText(heavyTurretTemp,changed.ToJsonString());
                 Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
-                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps,content.Stats.SceneRevision));
                 changed=JsonNode.Parse(File.ReadAllText(heavyTurretArtifact))!;
                 changed["prefab"]!["colliders"]![0]!["flameWeight"]=.5f;
                 File.WriteAllText(heavyTurretTemp,changed.ToJsonString());
                 Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
-                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps,content.Stats.SceneRevision));
                 foreach(bool changeGroup in new[]{true,false})
                 {
                     var damagedTarget=JsonNode.Parse(File.ReadAllText(heavyTurretArtifact))!;
@@ -10282,7 +10282,7 @@ internal static class CombatContentTests
                     else damagedTarget["prefab"]!["shotTarget"]!["position"]![1]=0;
                     File.WriteAllText(heavyTurretTemp,damagedTarget.ToJsonString());
                     Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
-                        Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+                        Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps,content.Stats.SceneRevision));
                 }
                 foreach(var field in new[]{"secondaryTargets","primTarget","primaryTargetOnly","needToSeePrimaryTarget","needToSeeSecondaryTarget","keepAimed"})
                 {
@@ -10290,13 +10290,13 @@ internal static class CombatContentTests
                     missing["prefab"]!["turret"]!.AsObject().Remove(field);
                     File.WriteAllText(heavyTurretTemp,missing.ToJsonString());
                     Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
-                        Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+                        Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps,content.Stats.SceneRevision));
                 }
                 var reordered=JsonNode.Parse(File.ReadAllText(heavyTurretArtifact))!;
                 reordered["prefab"]!["turret"]!["secondaryTargets"]=new JsonArray(2,0,1);
                 File.WriteAllText(heavyTurretTemp,reordered.ToJsonString());
                 Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
-                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps,content.Stats.SceneRevision));
             }
             finally {if(File.Exists(heavyTurretTemp))File.Delete(heavyTurretTemp);}
             var mines=DeployableCardPolicy.SelectLandmineTargets("LandMine",0,
@@ -10395,9 +10395,12 @@ internal static class CombatContentTests
                   !covers.TryClaim(1,"22222222222222222222222222222222")&&
                   covers.ReleasePlayer("11111111111111111111111111111111")==1&&covers.Count==0,
                   "cover occupancy is exclusive, idempotent for its owner, and releases on player exit");
-            Check(covers.TryClaim(2,"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")&&
+            Check(!covers.TryClaim(2,"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")&&covers.Count==0,
+                  "cover ownership rejects uppercase player aliases without claiming a slot");
+            Check(covers.TryClaim(2,"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")&&
+                  !covers.Release(2,"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")&&covers.Count==1&&
                   covers.Release(2,"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")&&covers.Count==0,
-                  "cover ownership canonicalizes player GUID casing across reconnect boundaries");
+                  "only the exact canonical player can release its cover across reconnect boundaries");
             var coverSnapshot=new CoverOccupancyRegistry();
             coverSnapshot.TryClaim(3,"33333333333333333333333333333333");
             Check(coverSnapshot.Snapshot().Single().CoverIndex==3&&
@@ -15833,21 +15836,21 @@ internal static class CombatContentTests
         }
         Check(exposedRootAim.HasValue,
             "an exposed immortal Drone root ray retains same-collider destroyable provenance");
-        // Seed one controlled host flight into the private queue so this checks
+        // Seed one controlled host flight through the private owner so this checks
         // the actual impact path without depending on a moving target or aim RNG.
         const ulong immortalProbeId=900001;
         var immortalFlight=new BulletFlight(immortalProbeId,decoyOpponent,
             new BulletFlightDefinition(10000,0,true),bulletOrigin,exposedRootAim!.Value,212,
             (from,direction,range)=>immortalWorld.Raycast(decoyOpponent,from,direction,range,
                 content.Bindings.BulletMask(2)));
-        var projectileField=typeof(MatchEngine).GetField("projectiles",
+        var projectileField=typeof(MatchEngine).GetField("_playerBullets",
             System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)
-            ??throw new Exception("Host projectile queue field changed.");
-        var projectileQueue=(Dictionary<ulong,PreparedProjectile>?)projectileField.GetValue(deployedDroneMatch)
-            ??throw new Exception("Host projectile queue unavailable.");
+            ??throw new Exception("Host player-bullet owner field changed.");
+        var projectileOwner=(PvpPlayerBulletSystem?)projectileField.GetValue(deployedDroneMatch)
+            ??throw new Exception("Host player-bullet owner unavailable.");
         uint immortalHitsBefore=deployedDroneMatch.Snapshot().Players
             .Single(p=>p.PlayerId==decoyOpponent).ConfirmedEnemyHits;
-        projectileQueue.Add(immortalProbeId,new PreparedProjectile(immortalFlight,
+        projectileOwner.AddReal(immortalProbeId,new PreparedProjectile(immortalFlight,
             new ResolvedPlayerDamage(10,CombatDamageType.Shot),
             deployedDroneManifest.Players[1].Weapon.SourceId));
         deployedDroneMatch.Advance(213);

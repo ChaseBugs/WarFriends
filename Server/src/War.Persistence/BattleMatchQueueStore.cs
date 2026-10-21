@@ -126,7 +126,7 @@ public sealed partial class BattleMatchQueueStore
     }
     public async Task<BattlePairingResult?> Existing(string playerId,CancellationToken ct)
     {
-        if(!Guid.TryParseExact(playerId,"N",out _) || playerId!=playerId.ToLowerInvariant())
+        if(!War.Shared.CanonicalGuid.IsCanonical(playerId))
             throw new InvalidDataException("Invalid matchmaking player identity.");
         var pair=await PairFor(playerId,ct);
         return pair==null?null:Result("paired",pair);
@@ -141,7 +141,7 @@ public sealed partial class BattleMatchQueueStore
     public async Task<bool> Release(string matchId,IReadOnlyList<string> playerIds,CancellationToken ct)
     {
         if(!System.Text.RegularExpressions.Regex.IsMatch(matchId??"",@"\Am[0-9a-f]{32}\z") ||
-            playerIds is not {Count:2} || playerIds.Any(x=>!Guid.TryParseExact(x,"N",out _) || x!=x.ToLowerInvariant()) ||
+            playerIds is not {Count:2} || playerIds.Any(x=>!War.Shared.CanonicalGuid.IsCanonical(x)) ||
             playerIds[0]==playerIds[1])
             throw new InvalidDataException("Invalid allocator release identity.");
         var row=await pairs.Find(x=>x.MatchId==matchId).FirstOrDefaultAsync(ct);
@@ -264,6 +264,6 @@ public sealed partial class BattleMatchQueueStore
             now<DateTimeOffset.UnixEpoch || now.ToUnixTimeSeconds()>253402300679)
             throw new InvalidDataException("Invalid matchmaking admission.");
     }
-    private static bool ValidId(string? value)=>Guid.TryParseExact(value,"N",out _) && value==value.ToLowerInvariant();
+    private static bool ValidId(string? value)=>War.Shared.CanonicalGuid.IsCanonical(value);
     private static bool ValidKey(string? value)=>System.Text.RegularExpressions.Regex.IsMatch(value??"",@"\A[a-zA-Z0-9_.:-]{1,128}\z");
 }

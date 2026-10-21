@@ -30,9 +30,7 @@ namespace War.Shared
             var projectiles = new HashSet<ulong>();
             foreach (BattleMortarWarningState row in rows)
             {
-                Guid owner;
-                if (row == null || !Guid.TryParseExact(row.OwnerPlayerId, "N", out owner) ||
-                    row.OwnerPlayerId != owner.ToString("N") || row.OwnerFraction < 1 || row.OwnerFraction > 2 ||
+                if (row == null || !War.Shared.CanonicalGuid.IsCanonical(row.OwnerPlayerId) || row.OwnerFraction < 1 || row.OwnerFraction > 2 ||
                     row.ObserverFraction != observerFraction || row.OwnerFraction == row.ObserverFraction ||
                     row.WeaponSlot <= previousSlot || row.WeaponSlot >= SourceCapacity ||
                     row.EntityKey >> 32 != (ulong)row.OwnerFraction || (uint)row.EntityKey == 0 ||

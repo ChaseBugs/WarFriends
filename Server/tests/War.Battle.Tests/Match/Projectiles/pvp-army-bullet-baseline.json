@@ -1,0 +1,74 @@
+[
+  {
+    "Scenario": "source-army-ID_UNIT-ASSAULT-False",
+    "Observations": 561,
+    "Sha256": "d340d085e829229f3de5b6a5696ca97f8f865887b11e49a1c95deddcb56eb95c",
+    "FinalPhase": "Running",
+    "FinalTick": 617,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "source-army-ID_UNIT-ASSAULT-True",
+    "Observations": 620,
+    "Sha256": "a3749868d8a4415f1a39c82485a70ba9969c833b96e3c990bbd26acd3877b7a8",
+    "FinalPhase": "Running",
+    "FinalTick": 676,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "source-army-ID_UNIT-GUNSLINGER-False",
+    "Observations": 668,
+    "Sha256": "f884164aca2e4787ba6a4e32cd3f6231dfaea12cb56d5164ae291a4dc9245296",
+    "FinalPhase": "Running",
+    "FinalTick": 724,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "source-army-ID_UNIT-GUNSLINGER-True",
+    "Observations": 668,
+    "Sha256": "19e3c0510792ecc772bf4b126aa608d1d274644072b4645cac19de84954bd846",
+    "FinalPhase": "Running",
+    "FinalTick": 724,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "source-army-ID_UNIT-SHOTGUNNER-False",
+    "Observations": 788,
+    "Sha256": "b09742699629f4682e2567e678db0073af4ce1f0d805610c7cb4f29cd6a79ba3",
+    "FinalPhase": "Running",
+    "FinalTick": 844,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "source-army-ID_UNIT-COMMANDO-False",
+    "Observations": 788,
+    "Sha256": "1feab02239a06283079a7e90d0cb9f4044366008ee5e7e93f76837bfdaffdb6d",
+    "FinalPhase": "Running",
+    "FinalTick": 844,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "launched-army-bullet-survives-soldier",
+    "Observations": 561,
+    "Sha256": "ae1df4d67bc104cbf8fd5e39d6a66d5a274d34331d9289161050d5ed9925bb22",
+    "FinalPhase": "Running",
+    "FinalTick": 617,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "terminal-clears-real-and-cosmetic-army-bullets",
+    "Observations": 388,
+    "Sha256": "c3f25f1f57c7e9a76283ade212562c4ec16235b2cab88e85b1332913a7d7a7e7",
+    "FinalPhase": "Ended",
+    "FinalTick": 444,
+    "TerminalReason": "forfeit"
+  },
+  {
+    "Scenario": "card-grenadier-primary-army-bullet",
+    "Observations": 583,
+    "Sha256": "68a867852c8765fccddfa85b5d1d53b296eb89b0e26319d76d5d862a07630e6b",
+    "FinalPhase": "Running",
+    "FinalTick": 640,
+    "TerminalReason": ""
+  }
+]

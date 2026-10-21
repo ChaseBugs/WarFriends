@@ -11,6 +11,17 @@ using War.Protocol;
 
 internal static class LiveRusherUdpTests
 {
+    internal static Task<int> RunShotgunnerOnly(string directory)
+    {
+        var content = BattleCombatContent.Load(Path.Combine(directory, "combat-content-manifest.json"));
+        var map = content.Maps.Single(value => value.Source.EndsWith(
+            "Park_Multiplayer.unity", StringComparison.Ordinal));
+        var left = map.Covers.First(cover => cover.Main && cover.Fraction == 1);
+        var right = map.Covers.First(cover => cover.Main && cover.Fraction == 2);
+        var weapon = content.Stats.CreateManifest("Google2u.AssaultRifle_AK47", 0);
+        return RunShotgunner(directory, content, map, left, right, weapon);
+    }
+
     internal static Task<int> RunNormalSniperOnly(string directory)
     {
         var content = BattleCombatContent.Load(Path.Combine(directory,
@@ -363,6 +374,9 @@ internal static class LiveRusherUdpTests
                   "the host deploys the recovered Shotgunner family");
 
             bool ownerSawBurst=false,opponentSawBurst=false,scanReplayed=false;
+            var scanSamples = new HashSet<string>();
+            var ownerBursts = new HashSet<string>(StringComparer.Ordinal);
+            var opponentBursts = new HashSet<string>(StringComparer.Ordinal);
             var watch=System.Diagnostics.Stopwatch.StartNew();
             while(watch.Elapsed<TimeSpan.FromSeconds(35) &&
                   (!ownerSawBurst||!opponentSawBurst||!scanReplayed))
@@ -373,16 +387,20 @@ internal static class LiveRusherUdpTests
                 await Task.WhenAll(ownerPoll,remotePoll);
                 var local=ownerPoll.Result;
                 var remote=remotePoll.Result;
+                var ownerRows = local.Snapshot.Projectiles.Where(row => row.OwnerPlayerId == owner &&
+                    row.ArmyUnitId == "ID_UNIT-SHOTGUNNER").ToArray();
+                if (ownerRows.Length == 5)
+                {
+                    ownerBursts.Add(string.Join(",", ownerRows.Select(row => row.ProjectileId)));
+                }
+                ownerSawBurst = ownerBursts.Overlaps(opponentBursts);
                 var rows=remote.Snapshot.Projectiles
                     .Where(row=>row.OwnerPlayerId==owner&&
                         row.ArmyUnitId=="ID_UNIT-SHOTGUNNER").ToArray();
                 if(rows.Length!=5)continue;
                 opponentSawBurst=true;
-                ownerSawBurst|=local.Snapshot.Projectiles
-                    .Where(row=>row.OwnerPlayerId==owner&&
-                        row.ArmyUnitId=="ID_UNIT-SHOTGUNNER")
-                    .Select(row=>row.ProjectileId)
-                    .SequenceEqual(rows.Select(row=>row.ProjectileId));
+                opponentBursts.Add(string.Join(",", rows.Select(row => row.ProjectileId)));
+                ownerSawBurst = ownerBursts.Overlaps(opponentBursts);
                 Check(rows.Count(row=>row.Kind=="army-bullet")==1&&
                       rows.Count(row=>row.Kind=="army-fake-bullet")==4&&
                       rows.All(row=>!row.ArmyPoison&&row.ArmySourceCardId.Length==0&&
@@ -390,11 +408,16 @@ internal static class LiveRusherUdpTests
                               row.VelocityY*row.VelocityY+
                               row.VelocityZ*row.VelocityZ)-10f)<.001f),
                       "remote SDK receives one real and four harmless source-speed pellets");
-                scanReplayed |= await ShotgunnerProjectileScanTest.VerifyAsync(b, remote.Snapshot, owner, timeout.Token);
+                var scan = await ShotgunnerProjectileScanTest.VerifyAsync(b, remote.Snapshot, owner, timeout.Token);
+                scanReplayed |= scan.ReplayedBurst;
+                scanSamples.Add($"{remote.Snapshot.ServerTick}->{scan.SnapshotTick}:" +
+                    $"active={scan.ActiveCount}, pellets={scan.PelletCount}");
             }
             Check(ownerSawBurst&&opponentSawBurst&&scanReplayed,
-                  $"both UDP peers observe the host burst and a frozen complete scan replays its five pellets: " +
-                  $"owner={ownerSawBurst}, opponent={opponentSawBurst}, scan={scanReplayed}");
+                  $"both UDP peers observe the same five pellets and a complete frozen scan replays its captured rows: " +
+                  $"owner={ownerSawBurst}, opponent={opponentSawBurst}, scan={scanReplayed}; " +
+                  string.Join("; ", scanSamples.Take(6)));
+            Console.WriteLine("Shotgunner frozen scan observations: " + string.Join("; ", scanSamples.Take(6)));
         }
         finally
         {

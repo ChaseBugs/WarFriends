@@ -1,0 +1,4732 @@
+using System.Globalization;
+using System.Numerics;
+using War.Protocol;
+
+namespace War.BattleServer;
+
+public sealed partial class MatchEngine
+{
+    internal sealed record ArmyInfantryPoseSnapshot(string Clip,ulong StartTick,Vector3 Facing,
+        IReadOnlyList<PlayerHitbox> Parts);
+    internal sealed record ArmyRusherTarget(ulong EntityKey,string PlayerId,int TargetFileId,
+        int RusherPointFileId,Vector3 Position);
+    internal sealed record ArmyRusherShotIntent(ulong EntityKey,string OwnerPlayerId,string TargetPlayerId,int TargetFileId,
+        Vector3 TargetPosition,bool IsReal,int BatchIndex,int BatchSize,
+        Vector3? MuzzleOverride = null);
+    private sealed class ArmyVitality(float maximum,float kevlarMaximum=0)
+    {
+        public float Maximum=maximum;
+        public float Current=maximum;
+        public float KevlarMaximum=kevlarMaximum;
+        public float Kevlar=kevlarMaximum;
+    }
+    private sealed class ArmyInfantryAnimation(string clip,ulong startTick,Vector3 facing)
+    {
+        internal string Clip=clip;
+        internal ulong StartTick=startTick;
+        internal Vector3 Facing=facing;
+        internal void Update(string clip,Vector3? facing,ulong tick)
+        {
+            if(Clip!=clip){Clip=clip;StartTick=tick;}
+            if(facing is { } value&&value.LengthSquared()>1e-10f)Facing=Vector3.Normalize(value);
+        }
+    }
+    private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
+    private readonly Dictionary<ulong,ArmyVitality> armyAssaultGlass=[];
+    private HelicopterBodyColliderCatalog? helicopterBodyColliders;
+    private AssaultHelicopterBoxColliderCatalog? assaultHelicopterBoxCollider;
+    private AssaultHelicopterMeshColliderCatalog? assaultHelicopterMeshColliders;
+    private AirShotTargetCatalog? airShotTargets;
+    private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
+    private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
+    private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
+    private readonly Dictionary<ulong,AssaultHelicopterWaypointState> armyAssaultHelicopterPaths=[];
+    private readonly Dictionary<ulong,ArmyVehicleShotStats> armyAssaultHelicopterShots=[];
+    private readonly Dictionary<ulong,AssaultHelicopterTargetState> armyAssaultHelicopterTargets=[];
+    private readonly Dictionary<ulong,AssaultHelicopterVolleyState> armyAssaultHelicopterVolleys=[];
+    private readonly Dictionary<ulong,IReadOnlyList<AssaultHelicopterVolleyState.RoundIntent>>
+        armyAssaultHelicopterRoundIntents=[];
+    private AssaultHelicopterWeaponCatalog? assaultHelicopterWeapons;
+    internal Quaternion? AssaultHelicopterRotation(ulong entityId)
+        => armyAssaultHelicopterPaths.TryGetValue(entityId, out var path) ? path.Rotation : null;
+    internal ArmyVehicleShotStats? AssaultHelicopterShot(ulong entityId)
+        => armyAssaultHelicopterShots.GetValueOrDefault(entityId);
+    internal ulong? AssaultHelicopterTargetDecoy(ulong entityId)
+        => armyAssaultHelicopterTargets.GetValueOrDefault(entityId)?.TargetDecoyId;
+    internal string? AssaultHelicopterTargetPlayer(ulong entityId)
+        => armyAssaultHelicopterTargets.GetValueOrDefault(entityId)?.TargetPlayerId;
+    internal AssaultHelicopterVolleyState.PreparedVolley? AssaultHelicopterVolley(ulong entityId)
+        => armyAssaultHelicopterVolleys.GetValueOrDefault(entityId)?.Latest;
+    internal IReadOnlyList<AssaultHelicopterVolleyState.RoundIntent> AssaultHelicopterRoundIntents(
+        ulong entityId) => armyAssaultHelicopterRoundIntents.GetValueOrDefault(entityId) ?? [];
+    private readonly Dictionary<ulong,HelicopterOrientationState> armyHelicopterOrientations=[];
+    private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
+    private readonly Dictionary<ulong,HelicopterCrewState> armyHelicopterCrewMembers=[];
+    private readonly Dictionary<ulong,HelicopterCrewSchedule> armyHelicopterSchedules=[];
+    internal bool HasHelicopterPath(ulong key)=>armyHelicopterPaths.ContainsKey(key);
+    internal ArmyHelicopterCrewStats? HelicopterCrewDefinition(ulong key)=>armyHelicopterCrew.GetValueOrDefault(key);
+    internal IReadOnlyList<HelicopterCrewMemberSnapshot> HelicopterCrewMembers(ulong key)
+        =>armyHelicopterCrewMembers.TryGetValue(key,out var crew)?crew.Snapshot():Array.Empty<HelicopterCrewMemberSnapshot>();
+    internal IReadOnlyList<HelicopterCrewDescentSnapshot> HelicopterCrewDescents(ulong key)
+        =>armyHelicopterCrewMembers.TryGetValue(key,out var crew)?crew.DescentSnapshot(tick):
+            Array.Empty<HelicopterCrewDescentSnapshot>();
+    internal IReadOnlyList<HelicopterCrewPose> HelicopterAttachedCrewPoses(ulong key)
+    {
+        if(!armyHelicopterCrewMembers.TryGetValue(key,out var crew)||
+           !activeArmyEntities.TryGetValue(key,out var row)||row.HelicopterRotation==null||
+           helicopterCrewPoints==null)return Array.Empty<HelicopterCrewPose>();
+        var q=row.HelicopterRotation;
+        var members=crew.Snapshot();
+        var poses=helicopterCrewPoints.PlaceAttached(new(row.X,row.Y,row.Z),
+            new(q.X,q.Y,q.Z,q.W),members.Count);
+        return Array.AsReadOnly(poses.Where(p=>members[p.Slot].DropStartTick==0).ToArray());
+    }
+    internal IReadOnlyList<int> HelicopterCrewDueSlots(ulong key,ulong atTick)
+        =>armyHelicopterSchedules.TryGetValue(key,out var schedule)?schedule.DueSlots(atTick):Array.Empty<int>();
+    private readonly Dictionary<ulong,ArmyVehicleShotStats> armyDroneShots=[];
+    private readonly Dictionary<ulong,ArmyVehicleShotStats> armyHelicopterShots=[];
+    private readonly Dictionary<ulong,HelicopterGunnerState> armyHelicopterGunners=[];
+    private readonly Dictionary<ulong,HelicopterTurretTweenState> armyHelicopterTurrets=[];
+    private readonly Dictionary<ulong,HelicopterTurretAcquisitionState> armyHelicopterAcquisitions=[];
+    internal string? HelicopterSelectedTarget(ulong key)
+        =>armyHelicopterAcquisitions.GetValueOrDefault(key)?.TargetId;
+    internal ArmyVehicleShotStats? DroneShotDefinition(ulong key)=>armyDroneShots.GetValueOrDefault(key);
+    internal ArmyVehicleShotStats? HelicopterShotDefinition(ulong key)=>armyHelicopterShots.GetValueOrDefault(key);
+    internal HelicopterGunnerSnapshot? HelicopterGunner(ulong key)
+        =>armyHelicopterGunners.TryGetValue(key,out var gunner)?gunner.Snapshot():null;
+    internal HelicopterTurretRestPose? HelicopterTurretPose(ulong key)
+    {
+        if(!armyHelicopterGunners.ContainsKey(key)||
+           !activeArmyEntities.TryGetValue(key,out var row)||row.HelicopterRotation==null||
+           helicopterCrewPoints==null)return null;
+        var q=row.HelicopterRotation;
+        return helicopterCrewPoints.PlaceTurret(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W));
+    }
+    internal HelicopterSightRay? HelicopterRestSightRay(ulong key,Vector3 target,bool afterAim)
+    {
+        var pose=HelicopterTurretPose(key);
+        if(pose==null)return null;
+        return afterAim?HelicopterTurretSightRay.ForAimedShot(pose.SightRestPosition,target):
+            HelicopterTurretSightRay.ForSelection(pose.SightRestPosition,target);
+    }
+    internal HelicopterTurretAimPose? HelicopterTurretAimFromRest(ulong key,Vector3 target)
+    {
+        if(phase!=BattlePhase.Running||!armyHelicopterGunners.TryGetValue(key,out var gunner)||
+           !gunner.Snapshot().TurretEnabled||!activeArmyEntities.TryGetValue(key,out var row)||
+           row.UnitId!="ID_UNIT-HELICOPTER"||row.HelicopterRotation==null)return null;
+        var q=row.HelicopterRotation;
+        return HelicopterTurretAim.FromRest(new(row.X,row.Y,row.Z),
+            new(q.X,q.Y,q.Z,q.W),target);
+    }
+    internal HelicopterTurretAimPose? HelicopterTurretCurrentAimPose(ulong key)
+    {
+        if(!armyHelicopterTurrets.TryGetValue(key,out var turret)||
+           !activeArmyEntities.TryGetValue(key,out var row)||row.HelicopterRotation==null)return null;
+        var q=row.HelicopterRotation;
+        return turret.Current(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W));
+    }
+    internal int? BeginHelicopterTurretAim(ulong key,Vector3 target)
+    {
+        if(phase!=BattlePhase.Running||!armyHelicopterGunners.TryGetValue(key,out var gunner)||
+           !gunner.Snapshot().TurretEnabled||!armyHelicopterTurrets.TryGetValue(key,out var turret)||
+           !activeArmyEntities.TryGetValue(key,out var row)||row.HelicopterRotation==null)return null;
+        var q=row.HelicopterRotation;
+        return turret.Plan(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W),target);
+    }
+    internal HelicopterSightRay? HelicopterCurrentSightRay(ulong key,Vector3 target,bool afterAim)
+    {
+        var pose=HelicopterTurretCurrentAimPose(key);
+        if(pose==null)return null;
+        return afterAim?HelicopterTurretSightRay.ForAimedShot(pose.SightPosition,target):
+            HelicopterTurretSightRay.ForSelection(pose.SightPosition,target);
+    }
+    internal bool HelicopterVisibilityRay(HelicopterSightRay ray)
+        =>rifleCombat!=null?rifleCombat.HelicopterCanSee(ray):
+            (grenadeCombat??throw new InvalidDataException("Helicopter visibility needs host collision poses."))
+                .HelicopterCanSee(ray);
+    internal bool HelicopterTargetVisibleInCone(ulong key,Vector3 shotTarget)
+    {
+        if(!HelicopterTargetInTurretCone(key,shotTarget))return false;
+        var ray=HelicopterCurrentSightRay(key,shotTarget,false);
+        return ray!=null&&HelicopterVisibilityRay(ray.Value);
+    }
+    internal DroneTargetCandidate? SelectHelicopterTurretTarget(ulong key)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(key,out var row)||
+           row.UnitId!="ID_UNIT-HELICOPTER"||!armyHelicopterGunners.TryGetValue(key,out var gunner)||
+           !gunner.Snapshot().TurretEnabled)return null;
+        return HelicopterTurretTargetPolicy.Select(row.OwnerFraction,DroneTargetSnapshot(),target=>
+        {
+            var shot=ResolveDroneShotTarget(target).Targets.FirstOrDefault(x=>
+                (x.Type&0xFFFFFB)==x.Type);
+            return shot!=null&&HelicopterTargetVisibleInCone(key,shot.Position);
+        },armyChoice);
+    }
+    internal bool HelicopterTargetInTurretCone(ulong key,Vector3 target)
+    {
+        if(phase!=BattlePhase.Running||!armyHelicopterGunners.TryGetValue(key,out var gunner)||
+           !gunner.Snapshot().TurretEnabled||!activeArmyEntities.TryGetValue(key,out var row)||
+           row.UnitId!="ID_UNIT-HELICOPTER"||row.HelicopterRotation==null)return false;
+        var q=row.HelicopterRotation;
+        return HelicopterTurretTargetCone.Contains(new(row.X,row.Y,row.Z),
+            new(q.X,q.Y,q.Z,q.W),target);
+    }
+    internal bool DamageHelicopterGunner(ulong key,float amount)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(key,out var row)||
+           row.UnitId!="ID_UNIT-HELICOPTER"||!armyHelicopterGunners.TryGetValue(key,out var gunner))return false;
+        if(!gunner.Damage(amount,tick))return false;
+        stateRevision++;
+        if(!gunner.Snapshot().TurretEnabled&&armyHelicopterAcquisitions.TryGetValue(key,out var acquisition))
+        {
+            acquisition.Disable();
+            if(armyHelicopterWeapons.TryGetValue(key,out var weapon))weapon.Reset();
+        }
+        return true;
+    }
+
+    internal void ApplyCardRocketHelicopterGunnerExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (phase != BattlePhase.Running ||
+            groundVehicleWeapons == null || helicopterCrewPoints == null ||
+            helicopterGunnerExplosions == null)
+            throw new InvalidDataException(
+                "Card Rocket has no helicopter gunner blast authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Rocket gunner attacker disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Rocket gunner attacker fraction changed.");
+
+        foreach (var helicopter in activeArmyEntities.Values
+                     .Where(row => row.UnitId == "ID_UNIT-HELICOPTER")
+                     .OrderBy(row => row.EntityKey).ToArray())
+        {
+            if (!armyHelicopterGunners.TryGetValue(helicopter.EntityKey,
+                    out var gunner))
+                continue;
+            var state = gunner.Snapshot();
+            if (!state.TurretEnabled)
+                continue;
+            if (helicopter.OwnerFraction == attackerFraction)
+                continue;
+            if (state.SpawnTick > tick ||
+                helicopter.HelicopterRotation == null)
+                throw new InvalidDataException(
+                    "Card Rocket gunner lost its current pose.");
+            var rotation = helicopter.HelicopterRotation;
+            var seat = helicopterCrewPoints.PlaceTurret(
+                new Vector3(helicopter.X, helicopter.Y, helicopter.Z),
+                new Quaternion(rotation.X, rotation.Y, rotation.Z,
+                    rotation.W));
+            ulong animationTick = tick - state.SpawnTick;
+            var parts = groundVehicleWeapons.PassengerPoses
+                .PlaceHelicopterGunner(seat, animationTick);
+            var positions = helicopterGunnerExplosions
+                .PlaceTransformPositions(seat, animationTick);
+            if (parts.Count != 3 || positions.Length != 3)
+                throw new InvalidDataException(
+                    "Card Rocket gunner has incomplete hitboxes.");
+            var nearest = parts.Select((part, index) => new
+                {
+                    Part = part,
+                    Index = index,
+                    Distance = part.BoundsDistanceToPoint(impact.Position)
+                })
+                .Where(row => row.Part.OverlapsSphere(impact.Position, 1.2f))
+                .OrderBy(row => row.Distance)
+                .ThenBy(row => row.Index)
+                .FirstOrDefault();
+            if (nearest == null)
+                continue;
+
+            float damage = launch.Missile.ExplosionDamage;
+            if (nearest.Distance >= .8f)
+            {
+                float rootDistance = Vector3.Distance(
+                    positions[nearest.Index], impact.Position);
+                float fraction = Math.Clamp(1f -
+                    (rootDistance - .8f) / .4f, 0f, 1f);
+                damage = launch.Missile.DirectDamage +
+                    (launch.Missile.ExplosionDamage -
+                     launch.Missile.DirectDamage) * fraction * fraction;
+            }
+            if (!float.IsFinite(damage) || damage is <= 0 or > 10_000_000)
+                throw new InvalidDataException(
+                    "Card Rocket gunner damage exceeded host bounds.");
+            DamageHelicopterGunner(helicopter.EntityKey, damage);
+        }
+    }
+
+    internal void ApplyHelicopterGunnerExplosion(string shooterId,Vector3 origin,float deadRadius,
+        float hurtRadius,float minimumDamage,float explosionDamage,bool halfDamage,
+        bool friendKill=true)
+    {
+        if(phase!=BattlePhase.Running||!PlayerHitbox.Finite(origin)||!float.IsFinite(deadRadius)||
+           !float.IsFinite(hurtRadius)||deadRadius<0||hurtRadius<=deadRadius||hurtRadius>100||
+           !float.IsFinite(minimumDamage)||!float.IsFinite(explosionDamage)||minimumDamage<0||
+           explosionDamage<minimumDamage||explosionDamage>10_000_000)
+            throw new InvalidDataException("Invalid trusted gunner explosion.");
+        if(!activeArmyEntities.Values.Any(row=>row.UnitId=="ID_UNIT-HELICOPTER"))return;
+        if(groundVehicleWeapons==null||helicopterCrewPoints==null||helicopterGunnerExplosions==null||
+           explosionPolicy==null)throw new InvalidDataException("Missing gunner explosion source.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Unknown explosion shooter.");
+        foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-HELICOPTER")
+            .OrderBy(r=>r.EntityKey))
+        {
+            if(!armyHelicopterGunners.TryGetValue(row.EntityKey,out var gunner))continue;
+            if(!friendKill && shooter.Definition.Fraction==row.OwnerFraction)continue;
+            var state=gunner.Snapshot();
+            if(!state.TurretEnabled)continue;
+            if(state.SpawnTick>tick||row.HelicopterRotation==null)
+                throw new InvalidDataException("Helicopter gunner lost explosion pose authority.");
+            var q=row.HelicopterRotation;
+            var seat=helicopterCrewPoints.PlaceTurret(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W));
+            ulong animationTick=tick-state.SpawnTick;
+            var parts=groundVehicleWeapons.PassengerPoses.PlaceHelicopterGunner(seat,animationTick);
+            var transforms=helicopterGunnerExplosions.PlaceTransformPositions(seat,animationTick);
+            if(parts.Count!=3||transforms.Length!=3)
+                throw new InvalidDataException("Incomplete gunner explosion parts.");
+            var selected=parts.Select((part,index)=>(part,index,distance:part.BoundsDistanceToPoint(origin)))
+                .Where(x=>x.part.OverlapsSphere(origin,hurtRadius))
+                .OrderBy(x=>x.distance).ThenBy(x=>x.index).FirstOrDefault();
+            if(selected.part==null)continue;
+            float raw;
+            if(selected.distance<deadRadius)raw=explosionDamage;
+            else
+            {
+                float fraction=Math.Clamp(1-(Vector3.Distance(transforms[selected.index],origin)-deadRadius)/
+                    (hurtRadius-deadRadius),0,1);
+                raw=minimumDamage+(explosionDamage-minimumDamage)*fraction*fraction;
+            }
+            float friendly=shooter.Definition.Fraction==row.OwnerFraction?explosionPolicy.Friendly:1;
+            // MissileExplode uses the selected part to find the gunner owner.
+            // Its bullet head/body weight does not multiply explosion damage.
+            float amount=raw*friendly*(halfDamage?.5f:1);
+            if(DamageHelicopterGunner(row.EntityKey,amount)&&friendly==1)
+                shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        }
+    }
+
+    private void InitializeDronePath(ulong key,ArmyDeploymentFamily family,ArmySpawnPoint spawn)
+    {
+        if(family.BehaviorType!="DroneBehaviour")return;
+        // Legacy diagnostic manifests without trusted speed do not establish flight authority.
+        if(!armySpeed.TryGetValue(key,out float speed))return;
+        var route=airWaypoints!.ForSpawn(map!,spawn.ComponentFileId);
+        armyDronePaths.Add(key,new DroneWaypointState(route.Waypoints,route.JoinIndex,
+            spawn.Position,route.Radius,speed,true,true,NextArmyFloat));
+    }
+    private void InitializeAssaultHelicopterPath(ulong entityId, ArmyDeploymentFamily family,
+        ArmySpawnPoint spawn)
+    {
+        if (family.BehaviorType != "AssaultHelicopterBehaviour") return;
+        if (!armySpeed.TryGetValue(entityId, out float sourceSpeed)) return;
+
+        var route = airWaypoints!.ForSpawn(map!, spawn.ComponentFileId);
+        armyAssaultHelicopterPaths.Add(entityId,
+            new AssaultHelicopterWaypointState(route, spawn.Position, sourceSpeed, NextArmyFloat));
+        activeArmyEntities[entityId].AssaultRotation = new BattleJointRotation { W = 1 };
+        armyAssaultHelicopterTargets.Add(entityId,
+            new AssaultHelicopterTargetState((float)((double)tick / MatchManifest.TickRate)));
+        armyAssaultHelicopterVolleys.Add(entityId, new AssaultHelicopterVolleyState());
+    }
+
+    private void AdvanceAssaultHelicopterPaths()
+    {
+        float time = (float)((double)tick / MatchManifest.TickRate);
+        foreach (var (entityId, path) in armyAssaultHelicopterPaths.OrderBy(entry => entry.Key))
+        {
+            if (!activeArmyEntities.TryGetValue(entityId, out var unit) ||
+                unit.UnitId != "ID_UNIT-ASSAULTHELI")
+                throw new InvalidDataException("Assault Helicopter path lost its host entity.");
+
+            if (!armyAssaultHelicopterShots.TryGetValue(entityId, out var shot) ||
+                !armyAssaultHelicopterTargets.TryGetValue(entityId, out var targetState) ||
+                !armyAssaultHelicopterVolleys.TryGetValue(entityId, out var volleyState))
+                throw new InvalidDataException("Assault Helicopter target authority disappeared.");
+            var owner = Find(unit.OwnerPlayerId) ??
+                throw new InvalidDataException("Assault Helicopter owner disappeared.");
+            var opponent = players.Single(player => player != owner);
+            var opposingDecoys = decoys.Snapshot()
+                .Where(decoy => decoy.OwnerFraction != owner.Definition.Fraction).ToArray();
+            volleyState.PrepareDueSecondGuns(time, shot, NextArmyFloat,
+                pending => RefreshAssaultHelicopterAim(unit, path, pending));
+            if (path.UsingWaypoints)
+                targetState.Advance(time, shot, opposingDecoys,
+                    opponent.Definition.PlayerId, armyChoice, NextArmyFloat,
+                    () => PrepareAssaultHelicopterAim(unit, path, opponent,
+                        targetState, volleyState, shot, time));
+            Vector3? lookTarget = targetState.LookTarget(opposingDecoys,
+                opponent.Definition.PlayerId, opponent.Position);
+            path.Advance(time, 1f / MatchManifest.TickRate, lookTarget);
+            unit.X = path.Position.X;
+            unit.Y = path.Position.Y;
+            unit.Z = path.Position.Z;
+            unit.PositionTick = tick;
+            var rotation = path.Rotation;
+            unit.AssaultRotation = new BattleJointRotation
+            {
+                X = rotation.X, Y = rotation.Y, Z = rotation.Z, W = rotation.W
+            };
+            armyAssaultHelicopterRoundIntents[entityId] = volleyState.DueRoundIntents(
+                time, path.Position, path.Rotation,
+                assaultHelicopterWeapons ??
+                    throw new InvalidDataException("Assault Helicopter gun source disappeared."),
+                NextArmyFloat);
+            LaunchAssaultHelicopterRounds(unit,
+                armyAssaultHelicopterRoundIntents[entityId], shot);
+        }
+    }
+
+    private void PrepareAssaultHelicopterAim(BattleArmyEntityState unit,
+        AssaultHelicopterWaypointState path, Player opponent,
+        AssaultHelicopterTargetState targetState,
+        AssaultHelicopterVolleyState volleyState, ArmyVehicleShotStats shot,
+        float time)
+    {
+        string targetId = targetState.TargetDecoyId is ulong decoyId
+            ? DroneDecoyId(decoyId)
+            : "player:" + (targetState.TargetPlayerId ??
+                throw new InvalidDataException("Assault Helicopter selected no target."));
+        var candidate = DroneTargetSnapshot().SingleOrDefault(target =>
+            target.Id == targetId && target.Fraction != unit.OwnerFraction &&
+            target.Alive);
+        if (candidate == null)
+            throw new InvalidDataException("Assault Helicopter target disappeared before aim.");
+
+        var details = ResolveDroneShotTarget(candidate);
+        var choice = AssaultHelicopterShotTargetPolicy.Select(path.Position,
+            details, details.IsPlayer && opponent.IsMoving,
+            shot.ShieldHitProbability, NextArmyFloat);
+        Vector3 capturedVelocity = details.IsPlayer
+            ? HeavyTurretPlayerVelocity(opponent) : Vector3.Zero;
+        Vector3 firstMuzzle = (assaultHelicopterWeapons ??
+            throw new InvalidDataException("Assault Helicopter gun source disappeared."))
+            .Muzzle(0, path.Position, path.Rotation);
+        Vector3 firstAim = AssaultHelicopterAimPolicy.First(firstMuzzle,
+            choice.First.Position, capturedVelocity, shot.ShotSpeed);
+        volleyState.PrepareFirstGun(time, tick, shot, targetId, choice,
+            capturedVelocity, firstAim,
+            armyChoice, NextArmyFloat);
+    }
+
+    private (Vector3 Target, Vector3 FirstGunMuzzle)? RefreshAssaultHelicopterAim(
+        BattleArmyEntityState unit, AssaultHelicopterWaypointState path,
+        AssaultHelicopterVolleyState.PreparedVolley pending)
+    {
+        var candidate = DroneTargetSnapshot().SingleOrDefault(target =>
+            target.Id == pending.TargetId && target.Fraction != unit.OwnerFraction &&
+            target.Alive);
+        if (candidate == null) return null;
+
+        var details = ResolveDroneShotTarget(candidate);
+        var secondTarget = details.Targets.SingleOrDefault(target =>
+            target.TransformFileId == pending.TargetChoice.Second.TransformFileId);
+        if (secondTarget == null) return null;
+        Vector3 firstMuzzle = (assaultHelicopterWeapons ??
+            throw new InvalidDataException("Assault Helicopter gun source disappeared."))
+            .Muzzle(0, path.Position, path.Rotation);
+        return (secondTarget.Position, firstMuzzle);
+    }
+
+    private void AdvanceDronePaths()
+    {
+        foreach(var (key,path) in armyDronePaths.OrderBy(x=>x.Key))
+        {
+            path.Advance((float)((double)tick/MatchManifest.TickRate),1f/MatchManifest.TickRate,
+                lookTarget:DroneLookTarget(key));
+            var row=activeArmyEntities[key];row.X=path.Position.X;row.Y=path.Position.Y;row.Z=path.Position.Z;
+            row.PositionTick=tick;
+            var q=path.Rotation;
+            row.DroneRotation=new BattleJointRotation{X=q.X,Y=q.Y,Z=q.Z,W=q.W};
+            if (row.SourceCardId.Length > 0)
+                cardUnitCombat?.UpdatePose(row);
+        }
+    }
+    private readonly Dictionary<ulong,float> armyDamage=[];
+    private readonly Dictionary<ulong,float> armySpecial=[];
+    private readonly Dictionary<ulong,float> sniperCriticalProbabilities=[];
+    private readonly Dictionary<ulong,float> armySpeed=[];
+    private readonly Dictionary<ulong,ArmyBaseShotStats> armyShots=[];
+    private readonly Dictionary<ulong,ArmyVehicleShotStats> armyVehicleShots=[];
+    private readonly Dictionary<ulong,ArmyRusherArrivalState> rusherMotionCandidates=[];
+    private readonly Dictionary<ulong,ArmyWarperRelocationState> warperRelocations=[];
+    private readonly Dictionary<ulong,ulong> warperRestartTicks=[];
+    private readonly Dictionary<ulong,ArmyRusherLateralSteering> rusherSteering=[];
+    private readonly Dictionary<ulong,ArmyRusherRetargetClock> rusherRetargetClocks=[];
+    private readonly Dictionary<ulong,int> rusherDetours=[];
+    private readonly Dictionary<ulong,ArmyRusherAttackState> rusherAttacks=[];
+    private readonly Dictionary<ulong,ArmyRusherAttackState> minigunnerAttacks=[];
+    private readonly Dictionary<ulong,ArmyMinigunnerMovementState> minigunnerMovements=[];
+    private readonly Dictionary<ulong,ArmyRusherLateralSteering> minigunnerSteering=[];
+    private readonly Dictionary<ulong,ulong> minigunnerPointChangeTicks=[];
+    private readonly Dictionary<int,ulong> occupiedMinigunnerPoints=[];
+    private readonly Dictionary<ulong,int> minigunnerPointByEntity=[];
+    private readonly Dictionary<ulong,float> walkingShotgunnerSpecials=[];
+    private readonly Dictionary<ulong,ArmyRusherTarget> rusherAttackTargets=[];
+    private readonly Dictionary<ulong,ArmyRusherTarget> minigunnerAttackTargets=[];
+    private readonly Dictionary<ulong,int> rusherShotCounts=[];
+    private readonly List<ArmyRusherShotIntent> rusherShotIntents=[];
+    private readonly PvpArmyFlameSystem _armyFlames = new();
+    private readonly PvpArmyPoisonSystem _armyPoisons = new();
+    internal IReadOnlyList<(ulong ProjectileId, int PulseIndex, float NextPulseSeconds)>
+        ArmyFlameProgress(ulong entityKey) => _armyFlames.CreateProgress(entityKey);
+    internal IReadOnlyList<(ulong ProjectileId, int Remaining)>
+        ArmyPoisonProgress(ulong entityKey) => _armyPoisons.CreateProgress(entityKey);
+    internal (string OwnerPlayerId, int OwnerFraction, float Damage)? ArmyProjectileLaunch(
+        ulong projectileId)
+    {
+        PvpArmyBulletPayload? launch = _armyBullets.FindPayload(projectileId);
+        if (launch == null) return null;
+        return (launch.OwnerPlayerId, launch.OwnerFraction, launch.Damage);
+    }
+    internal float? ArmyProjectileSpeed(ulong projectileId) => _armyBullets.FindSpeed(projectileId);
+    internal ulong? ArmyProjectileSourceEntity(ulong projectileId) =>
+        _armyBullets.FindPayload(projectileId)?.EntityKey;
+    private readonly Dictionary<int,ulong> occupiedRusherSlots=[];
+    private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
+    private readonly Dictionary<ulong,ArmyVehicleRouteMotion> vehicleRouteMotions=[];
+    private readonly Dictionary<ulong,Vector3> groundVehicleFacing=[];
+    private readonly Dictionary<ulong,ArmyInfantryAnimation> infantryAnimations=[];
+
+    private void InitializeInfantryAnimation(ulong entityKey)
+    {
+        if(enemyPoses==null||armyCatalog==null||!activeArmyEntities.TryGetValue(entityKey,out var army))return;
+        var family=armyCatalog.Families.Single(x=>x.UnitId==army.UnitId);
+        if(!family.IsSoldier)return;
+        var opponent=players.Single(x=>x.Definition.PlayerId!=army.OwnerPlayerId);
+        var facing=opponent.Position-new Vector3(army.X,army.Y,army.Z);facing.Y=0;
+        if(facing.LengthSquared()<1e-10f)facing=Vector3.UnitZ;
+        infantryAnimations.Add(entityKey,new(ArmyInfantryPosePolicy.For(army.UnitId).Idle,tick,Vector3.Normalize(facing)));
+    }
+
+    private void UpdateInfantryAnimations()
+    {
+        foreach(var (key,animation) in infantryAnimations.OrderBy(x=>x.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army))
+                throw new InvalidDataException("Infantry animation lost its host entity.");
+            var clips=ArmyInfantryPosePolicy.For(army.UnitId);string clip=clips.Idle;Vector3? facing=null;
+            ulong? assaulterClipStartTick = null;
+            if (_assaulterVolleys.ContainsKey(key) && AssaulterVolleyFrame(key) is { } assaulterFrame)
+            {
+                var sampledClip = assaulterFrame.Clips.Single();
+                clip = sampledClip.ClipName;
+                assaulterClipStartTick = tick - (ulong)MathF.Round(sampledClip.TimeSeconds * MatchManifest.TickRate);
+            }
+            else if (GunslingerShotPose(key) is { } gunslingerPose)
+            {
+                clip = gunslingerPose.Clip;
+                assaulterClipStartTick = tick - (ulong)MathF.Round(gunslingerPose.Seconds * MatchManifest.TickRate);
+            }
+            else if (_mortarWalks.TryGetValue(key, out var mortarWalk))
+            {
+                clip = clips.Walk;
+                facing = mortarWalk.Motion.Facing;
+            }
+            else if (MortarConstructionPose(key) is { } mortarPose)
+            {
+                clip = mortarPose.Clip;
+                assaulterClipStartTick = mortarPose.StartTick;
+                facing = (_mortarFacings.GetValueOrDefault(key) ??
+                    throw new InvalidDataException("Mortar construction pose lost its rotation.")).FacingAt(tick);
+            }
+            else if (_gunslingerWalks.TryGetValue(key, out var gunslingerWalk))
+            {
+                clip = clips.Walk;
+                facing = gunslingerWalk.Motion.Facing;
+            }
+            else if (_assaulterWalks.TryGetValue(key, out var assaulterWalk))
+            {
+                clip = clips.Walk;
+                facing = assaulterWalk.Motion.Facing;
+            }
+            else if(army.SourceCardId=="ELITEPARA")
+            {
+                (clip,facing)=CardParatrooperInfantryPose(key,clips);
+            }
+            else if(army.UnitId=="ID_UNIT-SNIPER")
+            {
+                (clip,facing)=CardSniperInfantryPose(key,army,clips);
+            }
+            else if(army.SourceCardId=="ELITESWAT")
+            {
+                if(swatWalks.TryGetValue(key,out var walk))
+                {clip=clips.Walk;facing=walk.Facing;}
+                else
+                {
+                    var attack=swatAttacks.GetValueOrDefault(key);
+                    if(attack?.Phase==ArmyRusherAttackPhase.Windup)
+                        clip="shield_unhide";
+                    else if(swatLastShotTicks.TryGetValue(key,out ulong shotTick)&&
+                            tick>=shotTick&&tick-shotTick<8)
+                        clip=clips.Fire;
+                    else if(swatShieldHideTicks.TryGetValue(key,out ulong hideTick)&&
+                            tick>=hideTick&&tick-hideTick<18)
+                        clip="shield_hide";
+                    facing=AttackFacing(key,army,swatShotTargets);
+                }
+            }
+            else if(IsRocketSoldier(army) &&
+                    rocketWalks.TryGetValue(key,out var rocketWalk))
+            {
+                clip=clips.Walk;
+                facing=rocketWalk.Facing;
+            }
+            else if(IsGrenadier(army) &&
+                    grenadierWalks.TryGetValue(key,out var grenadierWalk))
+            {
+                clip=clips.Walk;
+                facing=grenadierWalk.Facing;
+            }
+            else if(warperRelocations.TryGetValue(key,out var warp))
+            {
+                clip=warp.Phase==ArmyWarperRelocationPhase.Pause?"warp_idle":
+                    warp.Transparent?"warp_movement":clips.Walk;
+                facing=Planar(warp.PlanarDirection);
+            }
+            else if(minigunnerMovements.TryGetValue(key,out var minigunner))
+            {clip=clips.Walk;facing=Planar(minigunner.PlanarDirection);}
+            else if(rusherMotionCandidates.TryGetValue(key,out var motion))
+            {
+                bool shooting=rusherAttacks.TryGetValue(key,out var attack)&&
+                    attack.Phase is ArmyRusherAttackPhase.Windup or ArmyRusherAttackPhase.Firing;
+                // Shotgunner's recovered walking special layers shootAdditive over its walk clip;
+                // retain the source base locomotion until blend sampling is available.
+                clip=motion.Phase==ArmyRusherTravelPhase.Walking?clips.Walk:shooting?clips.Fire:clips.Idle;
+                facing=motion.Phase==ArmyRusherTravelPhase.Walking?Planar(motion.PlanarDirection):
+                    AttackFacing(key,army,rusherAttackTargets);
+            }
+            else if(minigunnerAttacks.TryGetValue(key,out var attack))
+            {
+                clip=attack.Phase is ArmyRusherAttackPhase.Windup or ArmyRusherAttackPhase.Firing?clips.Fire:clips.Idle;
+                facing=AttackFacing(key,army,minigunnerAttackTargets);
+            }
+            animation.Update(clip,facing,tick);
+            if (assaulterClipStartTick.HasValue)
+            {
+                animation.StartTick = assaulterClipStartTick.Value;
+            }
+        }
+    }
+
+    private (string Clip,Vector3? Facing) CardParatrooperInfantryPose(
+        ulong entityKey,ArmyInfantryClips clips)
+    {
+        if(parachuteFlights.TryGetValue(entityKey,out var flight))
+        {
+            // EnemyController.SwitchStateToParachute calls Idle. The separate
+            // canopy object owns the flight, while the hanging soldier keeps
+            // its idle base clip (air shots use an additive upper-body layer).
+            return (clips.Idle,Vector3.Transform(Vector3.UnitZ,flight.Rotation));
+        }
+
+        CardSoldierWalkState? walk=paratrooperWalks.GetValueOrDefault(entityKey) ??
+            paratrooperFallbackWalks.GetValueOrDefault(entityKey);
+        if(walk!=null)
+            return (walk.Arrived?clips.Idle:clips.Walk,walk.Facing);
+
+        CardUnitInitialPoint? corner=cardEnemyPoints?.Find(entityKey);
+        if(corner?.CornerRightSide is not bool rightSide)
+            return (clips.Idle,null);
+
+        string side=rightSide?"right":"left";
+        // EnemyController turns to the Corner's opposite direction before
+        // exposing. CardParatrooperCornerMuzzle uses that same rotation.
+        Vector3? facing=corner.CornerDirection is Vector3 direction?
+            -direction:null;
+        ArmyRusherAttackState? attack=paratrooperAttacks.GetValueOrDefault(entityKey);
+        if(attack?.Phase==ArmyRusherAttackPhase.Windup &&
+            paratrooperExposeTicks.TryGetValue(entityKey,out ulong exposeTick))
+        {
+            string stage=tick-exposeTick<15?"look":"fire";
+            return ($"player_{stage}_{side}3",facing);
+        }
+        if(paratrooperLastShotTicks.TryGetValue(entityKey,out ulong shotTick) &&
+            tick>=shotTick)
+        {
+            ulong elapsed=tick-shotTick;
+            if(elapsed<15)
+                return ($"player_fire_{side}3",facing);
+            if(elapsed<30)
+                return ($"player_{side}_coverBack3",facing);
+        }
+        return (clips.Idle,facing);
+    }
+
+    private (string Clip,Vector3? Facing) CardSniperInfantryPose(
+        ulong entityKey,BattleArmyEntityState soldier,ArmyInfantryClips clips)
+    {
+        if(sniperWalks.TryGetValue(entityKey,out var walk))
+            return (clips.Walk,walk.Facing);
+
+        CardUnitInitialPoint? corner=cardEnemyPoints?.Find(entityKey);
+        if(corner?.CornerRightSide is not bool rightSide)
+            return (clips.Idle,null); // Snow can lack a free Corner.
+
+        string side=rightSide?"right":"left";
+        // The Sniper's animated muzzle faces away from its latched target.
+        // While hidden, EnemyController keeps the opposite Corner direction.
+        Vector3? facing=sniperShotTargets.TryGetValue(entityKey,out var target)?
+            new Vector3(soldier.X-target.Position.X,0,
+                soldier.Z-target.Position.Z):
+            corner.CornerDirection is Vector3 direction?-direction:null;
+        ArmyRusherAttackState? attack=sniperAttacks.GetValueOrDefault(entityKey);
+        if(attack?.Phase==ArmyRusherAttackPhase.Windup &&
+            sniperExposeTicks.TryGetValue(entityKey,out ulong exposeTick))
+        {
+            // ShotFromCover plays the look clip first, then queues fire.
+            string stage=tick-exposeTick<15?"look":"fire";
+            return ($"player_{stage}_{side}_sniper",facing);
+        }
+        if(sniperLastShotTicks.TryGetValue(entityKey,out ulong shotTick) &&
+            tick>=shotTick)
+        {
+            ulong elapsed=tick-shotTick;
+            if(elapsed<15)
+                return ($"player_fire_{side}_sniper",facing);
+            if(elapsed<27)
+                return ($"player_{side}_coverBack_sniper",facing);
+        }
+        return (clips.Idle,facing);
+    }
+
+    private static Vector3? Planar(Vector2 direction)=>direction.LengthSquared()>1e-10f?
+        new Vector3(direction.X,0,direction.Y):null;
+
+    private static Vector3? AttackFacing(ulong key,BattleArmyEntityState army,
+        IReadOnlyDictionary<ulong,ArmyRusherTarget> targets)
+    {
+        if(!targets.TryGetValue(key,out var target))return null;
+        var facing=target.Position-new Vector3(army.X,army.Y,army.Z);facing.Y=0;
+        return facing.LengthSquared()>1e-10f?facing:null;
+    }
+
+    private Vector3 InfantryVelocity(ulong entityKey)
+    {
+        Vector2 direction;float speed;
+        if(warperRelocations.TryGetValue(entityKey,out var warp))
+        {direction=warp.PlanarDirection;speed=warp.PlanarSpeed;}
+        else if(minigunnerMovements.TryGetValue(entityKey,out var minigunner))
+        {direction=minigunner.PlanarDirection;speed=minigunner.PlanarSpeed;}
+        else if(rusherMotionCandidates.TryGetValue(entityKey,out var rusher))
+        {direction=rusher.PlanarDirection;speed=rusher.PlanarSpeed;}
+        else return Vector3.Zero;
+        if(!float.IsFinite(speed)||speed<0||speed>20||!float.IsFinite(direction.X)||!float.IsFinite(direction.Y))
+            throw new InvalidDataException("Infantry velocity lost host authority.");
+        return new(direction.X*speed,0,direction.Y*speed);
+    }
+
+    internal IReadOnlyList<DroneShotTarget>? InfantryShotTargets(ulong entityKey)
+    {
+        if(enemyShotTargets==null||!infantryAnimations.TryGetValue(entityKey,out var animation)||
+           !activeArmyEntities.TryGetValue(entityKey,out var army))return null;
+        if(animation.StartTick>tick)throw new InvalidDataException("Infantry aim animation starts after match time.");
+        float yaw=MathF.Atan2(animation.Facing.X,animation.Facing.Z);
+        return enemyShotTargets.Place(animation.Clip,new(army.X,army.Y,army.Z),
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw),(tick-animation.StartTick)/(float)MatchManifest.TickRate);
+    }
+    private void InitializeHelicopterPath(ulong key,ArmyDeploymentFamily family,ArmySpawnPoint spawn)
+    {
+        if(family.BehaviorType!="HelicopterBehaviour")return;
+        // A legacy diagnostic manifest without trusted upgrade speed cannot move.
+        if(!armySpeed.TryGetValue(key,out float speed))return;
+        var route=airWaypoints!.ForSpawn(map!,spawn.ComponentFileId);
+        armyHelicopterPaths.Add(key,new HelicopterWaypointState(route,spawn.Position,speed));
+        armyHelicopterOrientations.Add(key,new HelicopterOrientationState());
+    }
+    private void AdvanceHelicopterPaths()
+    {
+        float time=(float)((double)tick/MatchManifest.TickRate);
+        foreach(var (key,path) in armyHelicopterPaths.OrderBy(x=>x.Key))
+        {
+            if(!armyHelicopterGunners.TryGetValue(key,out var gunner))
+                throw new InvalidDataException("Helicopter path lost its turret gunner state.");
+            if(gunner.Advance(tick))stateRevision++;
+            bool arrived=path.Advance(time); // Crew drop/rope require their own source authority.
+            if(!activeArmyEntities.TryGetValue(key,out var row)||row.UnitId!="ID_UNIT-HELICOPTER")
+                throw new InvalidDataException("Helicopter path lost its host entity.");
+            if(arrived)
+            {
+                if(row.HelicopterStopTick!=0||!armyHelicopterCrew.TryGetValue(key,out var crew)||
+                   !armyHelicopterSchedules.TryAdd(key,new HelicopterCrewSchedule(tick,crew.Seats)))
+                    throw new InvalidDataException("Helicopter stop lost source crew authority.");
+                row.HelicopterStopTick=tick;
+            }
+            row.X=path.Position.X;row.Y=path.Position.Y;row.Z=path.Position.Z;
+            row.PositionTick=tick;
+            if(!armyHelicopterOrientations.TryGetValue(key,out var orientation))
+                throw new InvalidDataException("Helicopter path lost orientation state.");
+            orientation.Advance(path.Position,path.Velocity,path.Steering,path.TargetPosition,
+                path.Breaking,1f/MatchManifest.TickRate);
+            var q=orientation.Rotation;
+            row.HelicopterRotation=new BattleJointRotation{X=q.X,Y=q.Y,Z=q.Z,W=q.W};
+            if(!armyHelicopterTurrets.TryGetValue(key,out var turret))
+                throw new InvalidDataException("Helicopter path lost its turret joints.");
+            turret.AdvanceTick(path.Position,q);
+            if(!armyHelicopterAcquisitions.TryGetValue(key,out var acquisition))
+                throw new InvalidDataException("Helicopter path lost turret acquisition state.");
+            if(!gunner.Snapshot().TurretEnabled)
+                acquisition.Disable();
+            else
+            {
+                if(acquisition.Disabled)acquisition.Reset(tick);
+                if(acquisition.Due(tick))
+                {
+                    var selected=SelectHelicopterTurretTarget(key);
+                    acquisition.Acquired(tick,selected?.Id);
+                    if(selected!=null&&BeginHelicopterTurretAim(key,selected.Position)==null)
+                        throw new InvalidDataException("Helicopter selected a target without live aim authority.");
+                }
+                AdvanceHelicopterTurret(key,time);
+            }
+            if(armyHelicopterSchedules.TryGetValue(key,out var schedule))
+            {
+                if(!armyHelicopterCrewMembers.TryGetValue(key,out var crew))
+                    throw new InvalidDataException("Helicopter descent lost attached crew state.");
+                crew.Advance(schedule,tick);
+                uint mask=schedule.DueMask(tick);
+                if(mask!=row.HelicopterCrewDropMask)
+                {row.HelicopterCrewDropMask=mask;armyEntityRevision++;stateRevision++;}
+            }
+        }
+    }
+    internal ArmyInfantryPoseSnapshot? InfantryPose(ulong entityKey)
+    {
+        if(enemyPoses==null||!infantryAnimations.TryGetValue(entityKey,out var animation)||
+           !activeArmyEntities.TryGetValue(entityKey,out var army))return null;
+        if(animation.StartTick>tick)throw new InvalidDataException("Infantry animation starts after match time.");
+        float yaw=MathF.Atan2(animation.Facing.X,animation.Facing.Z);
+        var parts=enemyPoses.Place(animation.Clip,new(army.X,army.Y,army.Z),
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw),
+            (tick-animation.StartTick)/(float)MatchManifest.TickRate,"army/");
+        return new(animation.Clip,animation.StartTick,animation.Facing,parts);
+    }
+
+    internal int ApplyTransporterRepairDroneInfantryExplosion(string ownerId,Vector3 center,
+        float maximumHealth)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||enemyPoses==null||
+           explosionPolicy==null||!PlayerHitbox.Finite(center)||!float.IsFinite(maximumHealth)||
+           maximumHealth<=0||maximumHealth>10_000_000)
+            throw new InvalidDataException("Invalid repair-drone infantry explosion authority.");
+        var owner=Find(ownerId)??throw new InvalidDataException("Repair-drone explosion owner disappeared.");
+        var binding=groundVehicleWeapons.RepairDronePrefab;
+        float full=maximumHealth*binding.ExplosionDamageRatio;
+        float minimum=maximumHealth*binding.SplashDamageRatio;
+        int hits=0;
+        foreach(ulong targetId in infantryAnimations.Keys.Order().ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(targetId,out var target))
+                throw new InvalidDataException("Repair-drone explosion infantry disappeared.");
+            var pose=InfantryPose(targetId)??throw new InvalidDataException("Repair-drone explosion lost infantry pose.");
+            if(!pose.Parts.Any(x=>x.OverlapsSphere(center,binding.HurtRadius)))continue;
+            float distance=Vector3.Distance(new(target.X,target.Y,target.Z),center);
+            float amount;
+            if(distance<binding.DeadRadius)amount=full;
+            else
+            {
+                float fraction=Math.Clamp(1-(distance-binding.DeadRadius)/
+                    (binding.HurtRadius-binding.DeadRadius),0,1);
+                amount=minimum+(full-minimum)*fraction*fraction;
+            }
+            // MiniDrone passes itself as ExplosionInfo.owner with no weapon.
+            // DestroyableObject.DoDamage halves same-faction explosion damage.
+            if(target.OwnerFraction==owner.Definition.Fraction)
+                amount*=explosionPolicy.Friendly;
+            if(ApplyArmyHostDamage(targetId,amount))hits++;
+        }
+        return hits;
+    }
+
+    internal IReadOnlyList<DynamicShotTarget> GroundVehicleShotTargets(string shooterId)
+        =>GroundVehicleShotTargets(shooterId,false);
+    private IReadOnlyList<DynamicShotTarget> HelicopterVisibilityTargets()
+        =>GroundVehicleShotTargets(players[0].Definition.PlayerId,true);
+    private IReadOnlyList<DynamicShotTarget> GroundVehicleShotTargets(string shooterId,
+        bool includeFriendly)
+    {
+        if(phase!=BattlePhase.Running)return [];
+        var shooter=Find(shooterId)??throw new InvalidDataException("Dynamic collision shooter disappeared.");
+        var result=new List<DynamicShotTarget>(DecoyShotTargets(shooter,includeFriendly));
+        result.AddRange(HeavyTurretShotTargets(shooter,includeFriendly));
+        foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-DRONE"&&
+            (includeFriendly||r.OwnerFraction!=shooter.Definition.Fraction)))
+        {
+            var q=row.DroneRotation??throw new InvalidDataException("Drone collision lost its host rotation.");
+            foreach(var collider in (droneColliders??throw new InvalidDataException("Drone collider catalog missing."))
+                .Place(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W)))
+                result.Add(new(row.EntityKey,collider.ComponentFileId,
+                    collider.RootOwned?(row.OwnerFraction==1?27:26):collider.SerializedLayer,
+                    collider.Hitbox,DroneRoot:collider.RootOwned));
+        }
+        foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-HELICOPTER"&&
+            (includeFriendly||r.OwnerFraction!=shooter.Definition.Fraction)))
+        {
+            var q=row.HelicopterRotation??throw new InvalidDataException(
+                "Helicopter collision lost its host rotation.");
+            var root=new Vector3(row.X,row.Y,row.Z);
+            var rotation=new Quaternion(q.X,q.Y,q.Z,q.W);
+            foreach(var collider in (helicopterBodyColliders??throw new InvalidDataException(
+                "Helicopter collider catalog missing.")).Place(root,rotation))
+                result.Add(new(row.EntityKey,collider.ColliderFileId,
+                    row.OwnerFraction==1?27:row.OwnerFraction==2?26:
+                        throw new InvalidDataException("Helicopter body has unsupported faction."),collider.Hitbox,
+                    HelicopterBody:true));
+            if(armyHelicopterGunners.TryGetValue(row.EntityKey,out var gunner))
+            {
+                var state=gunner.Snapshot();
+                if(state.TurretEnabled)
+                {
+                    if(state.SpawnTick>tick)throw new InvalidDataException("Helicopter gunner spawn is in the future.");
+                    int layer=row.OwnerFraction==1?23:row.OwnerFraction==2?22:
+                        throw new InvalidDataException("Helicopter gunner has unsupported faction.");
+                    var seat=(helicopterCrewPoints??throw new InvalidDataException(
+                        "Helicopter gunner seat source missing.")).PlaceTurret(root,rotation);
+                    foreach(var hitbox in (groundVehicleWeapons??throw new InvalidDataException(
+                        "Helicopter gunner pose source missing.")).PassengerPoses
+                        .PlaceHelicopterGunner(seat,tick-state.SpawnTick))
+                        result.Add(new(row.EntityKey,0,layer,hitbox,HelicopterGunner:true));
+                }
+            }
+        }
+        foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-ASSAULTHELI"&&
+            (includeFriendly||r.OwnerFraction!=shooter.Definition.Fraction)))
+        {
+            var path=armyAssaultHelicopterPaths.GetValueOrDefault(row.EntityKey)??
+                throw new InvalidDataException("Assault Helicopter collision lost its host path.");
+            var box=(assaultHelicopterBoxCollider??throw new InvalidDataException(
+                "Assault Helicopter body box source missing.")).Place(
+                new(row.X,row.Y,row.Z),path.Rotation);
+            int layer=row.OwnerFraction==1?27:row.OwnerFraction==2?26:
+                throw new InvalidDataException("Assault Helicopter body has unsupported faction.");
+            result.Add(new(row.EntityKey,AssaultHelicopterBoxColliderCatalog.ColliderFileId,
+                layer,box,HelicopterBody:true));
+            foreach(var mesh in (assaultHelicopterMeshColliders??throw new InvalidDataException(
+                "Assault Helicopter body mesh source missing.")).Place(
+                    new(row.X,row.Y,row.Z),path.Rotation))
+                result.Add(new(row.EntityKey,mesh.ColliderFileId,layer,mesh.Hitbox,
+                    HelicopterBody:true));
+            if(armyAssaultGlass.TryGetValue(row.EntityKey,out var glass)&&glass.Current>0)
+            {
+                var front=assaultHelicopterMeshColliders.PlaceFrontGlass(
+                    new(row.X,row.Y,row.Z),path.Rotation);
+                result.Add(new(row.EntityKey,front.ColliderFileId,8,front.Hitbox,
+                    AssaultGlass:true));
+            }
+        }
+        if(vehicles!=null&&groundVehicleWeapons!=null)
+        foreach(var vehicle in vehicles.Snapshot())
+        {
+            if(!includeFriendly&&vehicle.OwnerPlayerId==shooterId)continue;
+            var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Vehicle collision owner disappeared.");
+            if(!includeFriendly&&owner.Definition.Fraction==shooter.Definition.Fraction)continue;
+            if(!groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Vehicle collision facing disappeared.");
+            result.AddRange(groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,vehicle.Position,facing,
+                owner.Definition.Fraction));
+            if(!vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
+                throw new InvalidDataException("Vehicle collision passengers disappeared.");
+            int passengerLayer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
+                throw new InvalidDataException("Vehicle passenger has unsupported faction.");
+            foreach(var passenger in passengers.Values.OrderBy(x=>x.Binding.PointComponentFileId))
+            {
+                if(!passenger.Active)continue;
+                if(passenger.AnimationStartTick>tick)
+                    throw new InvalidDataException("Vehicle passenger animation starts after the match tick.");
+                ulong animationTick=tick-passenger.AnimationStartTick;
+                foreach(var hitbox in groundVehicleWeapons.PassengerPoses.Place(vehicle.UnitId,passenger.Binding,
+                    vehicle.Position,facing,animationTick))
+                    result.Add(new(vehicle.EntityId,0,passengerLayer,hitbox,passenger.Binding.Role));
+            }
+            if(transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))
+                foreach(var drone in drones.OrderBy(x=>x.PathIndex))
+                    if(drone.Active)result.Add(groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,
+                        drone.PathIndex,passengerLayer,drone.Snapshot()));
+        }
+        foreach(var (entityId,army) in activeArmyEntities.OrderBy(x=>x.Key))
+        {
+            if((!includeFriendly&&(army.OwnerPlayerId==shooterId||
+                army.OwnerFraction==shooter.Definition.Fraction))||
+               !infantryAnimations.ContainsKey(entityId))continue;
+            int layer=army.OwnerFraction==1?23:army.OwnerFraction==2?22:
+                throw new InvalidDataException("Army infantry has unsupported faction.");
+            var pose=InfantryPose(entityId)??throw new InvalidDataException("Army infantry lost its collision pose.");
+            result.AddRange(pose.Parts.Select(hitbox=>new DynamicShotTarget(entityId,0,layer,hitbox,
+                ArmyInfantry:true)));
+        }
+        return result;
+    }
+
+    internal IReadOnlyList<DynamicShotTarget> PlayerShotTargets(string shooterId)
+    {
+        var result = new List<DynamicShotTarget>(GroundVehicleShotTargets(shooterId));
+        Player shooter = Find(shooterId) ??
+            throw new InvalidDataException("Player shot owner disappeared.");
+        foreach (var (projectileId, flight) in grenadierFlights.OrderBy(row => row.Key))
+        {
+            if (!flight.ShotColliderEnabled)
+                continue;
+            if (!grenadierLaunches.TryGetValue(projectileId, out var launch))
+                throw new InvalidDataException("Card grenade lost its shot ownership.");
+            var owner = Find(launch.OwnerPlayerId) ??
+                throw new InvalidDataException("Card grenade owner left the match.");
+            if (owner.Definition.Fraction == shooter.Definition.Fraction)
+                continue;
+            int layer = owner.Definition.Fraction == 1 ? 27 :
+                owner.Definition.Fraction == 2 ? 26 :
+                throw new InvalidDataException("Card grenade has no source bullet layer.");
+            // GrenadeAmmoEnemy has a root sphere collider with a .02 Y center.
+            // The recovered projectile has no host spin pose, so this uses
+            // its exact radius around the host-owned flight position.
+            var hitbox = new PlayerHitbox(
+                "Assets/GameObject/GrenadeAmmoEnemy.prefab#13561526",
+                PlayerHitboxKind.Sphere, 1f,
+                flight.Position + new Vector3(0f, .02f, 0f),
+                Vector3.Zero, Quaternion.Identity, .06f,
+                Vector3.Zero, 0f);
+            result.Add(new DynamicShotTarget(projectileId, 0, layer,
+                hitbox, GrenadierGrenade: true));
+        }
+        return result;
+    }
+
+    internal void ApplyArmyProjectileImpact(string shooterId,ulong entityId,float rawDamage,float partWeight)
+    {
+        if(!activeArmyEntities.TryGetValue(entityId,out var army)||!infantryAnimations.ContainsKey(entityId))return;
+        var shooter=Find(shooterId)??throw new InvalidDataException("Infantry impact shooter disappeared.");
+        if(shooter.Definition.Fraction==army.OwnerFraction||!float.IsFinite(rawDamage)||rawDamage<=0||
+           rawDamage>10_000_000||partWeight is not (1f or 1.5f))
+            throw new InvalidDataException("Invalid army infantry projectile impact.");
+        if(ApplyArmyHostDamage(entityId,rawDamage*partWeight))
+            shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+    }
+
+    internal void ApplyPlayerGrenadeInfantryExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade infantry blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        var targets=GroundVehicleShotTargets(shooterId,true).Where(x=>x.ArmyInfantry)
+            .GroupBy(x=>x.EntityId).OrderBy(x=>x.Key).ToArray();
+        foreach(var group in targets)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               !infantryAnimations.ContainsKey(group.Key))
+                throw new InvalidDataException("Grenade infantry target lost host authority.");
+            var effect=GrenadeExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(x=>x.Hitbox).ToArray(),stage);
+            if(effect==null)continue;
+            bool friendly=army.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Grenade infantry damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,amount);
+            if(Terminal)return;
+            if(activeArmyEntities.ContainsKey(group.Key)||friendly)continue;
+            if(directArmyKills.Count>=256)
+            {End("source-kill-backpressure","",false);return;}
+            directArmyKills.Add((group.Key,army.UnitId,army.OwnerPlayerId,
+                shooter.Definition.PlayerId,"player-grenade",tick));
+        }
+    }
+
+    internal void ApplyPlayerGrenadeGroundVehicleExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||groundVehicleWeapons==null||
+           explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade vehicle blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        if(vehicles==null)return;
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(x=>x.EntityId).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Grenade vehicle lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Grenade vehicle owner disappeared.");
+            var bodies=groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,
+                vehicle.Position,facing,owner.Definition.Fraction);
+            var effect=GrenadeExplosion.ResolveArmy(origin,vehicle.Position,
+                bodies.Select(x=>x.Hitbox).ToArray(),stage);
+            if(effect==null)continue;
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Grenade vehicle damage exceeded host bounds.");
+            float before=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Grenade vehicle lacks shared vitality.");
+            ApplyArmyHostDamage(vehicle.EntityId,amount);
+            if(Terminal)return;
+            if(!activeArmyEntities.ContainsKey(vehicle.EntityId))
+            {
+                if(friendly)continue;
+                if(directArmyKills.Count>=256)
+                {End("source-kill-backpressure","",false);return;}
+                directArmyKills.Add((vehicle.EntityId,vehicle.UnitId,vehicle.OwnerPlayerId,
+                    shooter.Definition.PlayerId,"player-grenade",tick));
+                continue;
+            }
+            float after=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Grenade vehicle vitality disappeared after nonlethal blast.");
+            float applied=before-after;
+            if(applied>0&&(!vehicles.TryDamage(vehicle.EntityId,applied,out float registryApplied,
+                out bool destroyed)||destroyed||Math.Abs(applied-registryApplied)>.001f))
+                throw new InvalidDataException("Grenade vehicle vitality diverged from registry.");
+        }
+    }
+
+    internal void ApplyPlayerGrenadePassengerExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||groundVehicleWeapons==null||
+           explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade passenger blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        if(vehicles==null)return;
+
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(vehicle=>vehicle.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing)||
+               !vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
+                throw new InvalidDataException("Grenade passenger lost shared host authority.");
+
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Grenade passenger owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+
+            foreach(var passenger in passengers.Values.OrderBy(value=>value.Binding.PointComponentFileId))
+            {
+                if(!passenger.Active)continue;
+                if(passenger.AnimationStartTick>tick)
+                    throw new InvalidDataException("Grenade passenger animation starts after the match tick.");
+
+                ulong animationTick=tick-passenger.AnimationStartTick;
+                var hitboxes=groundVehicleWeapons.PassengerPoses.Place(vehicle.UnitId,
+                    passenger.Binding,vehicle.Position,facing,animationTick);
+                var passengerPosition=PassengerWorldPosition(vehicle.EntityId,passenger.Binding);
+                var effect=GrenadeExplosion.ResolveArmy(origin,passengerPosition,hitboxes,stage);
+                if(effect==null)continue;
+
+                // Explosion.MissileExplode selects the closest collider for each
+                // ownerDestroyableObject, then damages that owner once. The part's
+                // bullet weight is not an explosion damage multiplier.
+                float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                    throw new InvalidDataException("Grenade passenger damage exceeded host bounds.");
+                ApplyVehiclePassengerHostDamage(vehicle.EntityId,passenger.Binding.Role,amount);
+            }
+        }
+    }
+
+    internal void ApplyPlayerGrenadeRepairDroneExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||groundVehicleWeapons==null||
+           explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade repair-drone blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        if(vehicles==null)return;
+
+        foreach(var vehicle in vehicles.Snapshot().Where(value=>value.UnitId=="ID_UNIT-TRANSPORTER")
+            .OrderBy(value=>value.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))
+                throw new InvalidDataException("Grenade repair drone lost shared host authority.");
+
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Grenade repair-drone owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            int layer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
+                throw new InvalidDataException("Grenade repair drone has unsupported faction.");
+
+            foreach(var drone in drones.OrderBy(value=>value.PathIndex))
+            {
+                if(!drone.Active)continue;
+                var snapshot=drone.Snapshot();
+                var collider=groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,
+                    drone.PathIndex,layer,snapshot);
+                var effect=GrenadeExplosion.ResolveArmy(origin,snapshot.Position,
+                    [collider.Hitbox],stage);
+                if(effect==null)continue;
+
+                float damage=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+                    throw new InvalidDataException("Grenade repair-drone damage exceeded host bounds.");
+                if(!ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,drone.PathIndex,damage))
+                    throw new InvalidDataException("Grenade repair-drone health disappeared.");
+                if(!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",
+                        vehicle.EntityId,drone.Position,0,
+                        "vehicle-repair-drone-down:"+drone.PathIndex);
+            }
+        }
+    }
+
+    internal void ApplyPlayerBazookaRepairDroneExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||
+           explosionPolicy==null||stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka repair-drone blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        if(vehicles==null)return;
+        var transporters=vehicles.Snapshot().Where(value=>value.UnitId=="ID_UNIT-TRANSPORTER")
+            .OrderBy(value=>value.EntityId).ToArray();
+        if(transporters.Length==0)return;
+        if(groundVehicleWeapons==null)
+            throw new InvalidDataException("Bazooka repair-drone blast lacks ground-vehicle source authority.");
+        foreach(var vehicle in transporters)
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))
+                throw new InvalidDataException("Bazooka repair drone lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Bazooka repair-drone owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            int layer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
+                throw new InvalidDataException("Bazooka repair drone has unsupported faction.");
+            foreach(var drone in drones.OrderBy(value=>value.PathIndex))
+            {
+                if(!drone.Active)continue;
+                var snapshot=drone.Snapshot();
+                var collider=groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,
+                    drone.PathIndex,layer,snapshot);
+                var effect=BazookaExplosion.ResolveArmy(origin,snapshot.Position,
+                    [collider.Hitbox],stage,binding,halfDamage);
+                if(effect==null)continue;
+                float damage=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+                    throw new InvalidDataException("Bazooka repair-drone damage exceeded host bounds.");
+                if(!ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,drone.PathIndex,damage))
+                    throw new InvalidDataException("Bazooka repair-drone health disappeared.");
+                if(!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",
+                        vehicle.EntityId,drone.Position,0,
+                        "vehicle-repair-drone-down:"+drone.PathIndex);
+            }
+        }
+    }
+
+    internal void ApplyPlayerBazookaPassengerExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||
+           explosionPolicy==null||stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka passenger blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        if(vehicles==null)return;
+        var targets=vehicles.Snapshot().OrderBy(value=>value.EntityId).ToArray();
+        if(targets.Length==0)return;
+        if(groundVehicleWeapons==null)
+            throw new InvalidDataException("Bazooka passenger blast lacks ground-vehicle source authority.");
+        foreach(var vehicle in targets)
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing)||
+               !vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
+                throw new InvalidDataException("Bazooka passenger lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Bazooka passenger owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            foreach(var passenger in passengers.Values.OrderBy(value=>value.Binding.PointComponentFileId))
+            {
+                if(!passenger.Active)continue;
+                if(passenger.AnimationStartTick>tick)
+                    throw new InvalidDataException("Bazooka passenger animation starts after match time.");
+                var hitboxes=groundVehicleWeapons.PassengerPoses.Place(vehicle.UnitId,
+                    passenger.Binding,vehicle.Position,facing,tick-passenger.AnimationStartTick);
+                var position=PassengerWorldPosition(vehicle.EntityId,passenger.Binding);
+                var effect=BazookaExplosion.ResolveArmy(origin,position,hitboxes,
+                    stage,binding,halfDamage);
+                if(effect==null)continue;
+                float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                    throw new InvalidDataException("Bazooka passenger damage exceeded host bounds.");
+                ApplyVehiclePassengerHostDamage(vehicle.EntityId,passenger.Binding.Role,amount);
+            }
+        }
+    }
+
+    internal void ApplyPlayerBazookaGroundVehicleExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||explosionPolicy==null||
+           stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka vehicle blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        if(vehicles==null)return;
+        var targets=vehicles.Snapshot().OrderBy(value=>value.EntityId).ToArray();
+        if(targets.Length==0)return;
+        if(groundVehicleWeapons==null)
+            throw new InvalidDataException("Bazooka vehicle blast lacks ground-vehicle source authority.");
+        foreach(var vehicle in targets)
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Bazooka vehicle lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Bazooka vehicle owner disappeared.");
+            var bodies=groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,
+                vehicle.Position,facing,owner.Definition.Fraction);
+            var effect=BazookaExplosion.ResolveArmy(origin,vehicle.Position,
+                bodies.Select(value=>value.Hitbox).ToArray(),stage,binding,halfDamage);
+            if(effect==null)continue;
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Bazooka vehicle damage exceeded host bounds.");
+            float before=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Bazooka vehicle lacks shared vitality.");
+            ApplyArmyHostDamage(vehicle.EntityId,amount);
+            if(Terminal)return;
+            if(!activeArmyEntities.ContainsKey(vehicle.EntityId))continue;
+            float after=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Bazooka vehicle vitality disappeared after nonlethal blast.");
+            float applied=before-after;
+            if(applied>0&&(!vehicles.TryDamage(vehicle.EntityId,applied,out float registryApplied,
+                out bool destroyed)||destroyed||Math.Abs(applied-registryApplied)>.001f))
+                throw new InvalidDataException("Bazooka vehicle vitality diverged from registry.");
+        }
+    }
+
+    internal void ApplyPlayerBazookaInfantryExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||explosionPolicy==null||
+           stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka infantry blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        var targets=GroundVehicleShotTargets(shooterId,true).Where(value=>value.ArmyInfantry)
+            .GroupBy(value=>value.EntityId).OrderBy(group=>group.Key).ToArray();
+        foreach(var group in targets)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               !infantryAnimations.ContainsKey(group.Key))
+                throw new InvalidDataException("Bazooka infantry target lost host authority.");
+            var effect=BazookaExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(value=>value.Hitbox).ToArray(),stage,binding,halfDamage);
+            if(effect==null)continue;
+            bool friendly=army.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Bazooka infantry damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,amount);
+            if(Terminal)return;
+        }
+    }
+
+    internal void ApplyPlayerBazookaAirBodyExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||explosionPolicy==null||
+           stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka air-body blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        var groups=GroundVehicleShotTargets(shooterId,true)
+            .Where(value=>value.DroneRoot||value.HelicopterBody)
+            .GroupBy(value=>value.EntityId).OrderBy(group=>group.Key).ToArray();
+        if(groups.Length>0&&(droneColliders==null||helicopterBodyColliders==null))
+            throw new InvalidDataException("Bazooka air-body blast lacks collider source authority.");
+        foreach(var group in groups)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               army.UnitId is not ("ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER" or "ID_UNIT-ASSAULTHELI")||
+               group.Any(value=>army.UnitId=="ID_UNIT-DRONE"?!value.DroneRoot:value.DroneRoot))
+                throw new InvalidDataException("Bazooka air body lost source entity authority.");
+            var effect=BazookaExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(value=>value.Hitbox).ToArray(),stage,binding,halfDamage);
+            if(effect==null)continue;
+            bool friendly=army.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Bazooka air-body damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,amount);
+            if(Terminal)return;
+        }
+    }
+
+    internal int ApplyPlayerBazookaAssaultGlassExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||explosionPolicy==null||
+           stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka glass blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        var aircraftTargets=activeArmyEntities.Values
+            .Where(row=>row.UnitId=="ID_UNIT-ASSAULTHELI")
+            .OrderBy(row=>row.EntityKey).ToArray();
+        if(aircraftTargets.Length==0)return 0;
+        if(assaultHelicopterMeshColliders==null)
+            throw new InvalidDataException("Bazooka glass lacks its source mesh catalog.");
+        int hits=0;
+        foreach(var aircraft in aircraftTargets)
+        {
+            if(!armyAssaultHelicopterPaths.TryGetValue(aircraft.EntityKey,out var path)||
+               !armyAssaultGlass.TryGetValue(aircraft.EntityKey,out var glass))
+                throw new InvalidDataException("Bazooka glass lost its aircraft authority.");
+            if(glass.Current<=0)continue;
+
+            var front=assaultHelicopterMeshColliders.PlaceFrontGlass(
+                new(aircraft.X,aircraft.Y,aircraft.Z),path.Rotation);
+            var effect=BazookaExplosion.ResolveArmy(origin,front.Hitbox.Center,
+                new[]{front.Hitbox},stage,binding,halfDamage);
+            if(effect==null)continue;
+
+            bool friendly=aircraft.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Bazooka glass damage exceeded host bounds.");
+            if(!ApplyAssaultGlassDamage(aircraft.EntityKey,amount))continue;
+            hits++;
+            if(!friendly)shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        }
+        return hits;
+    }
+
+    internal void ApplyCardRocketRepairDroneExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (phase != BattlePhase.Running || groundVehicleWeapons == null)
+            throw new InvalidDataException(
+                "Card Rocket has no repair-drone blast authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Rocket repair-drone attacker disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Rocket repair-drone attacker fraction changed.");
+        if (vehicles == null)
+            return;
+
+        foreach (var vehicle in vehicles.Snapshot()
+                     .Where(value => value.UnitId == "ID_UNIT-TRANSPORTER")
+                     .OrderBy(value => value.EntityId).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(vehicle.EntityId,
+                    out var army) ||
+                army.UnitId != vehicle.UnitId ||
+                army.OwnerPlayerId != vehicle.OwnerPlayerId ||
+                !transporterRepairDrones.TryGetValue(vehicle.EntityId,
+                    out var drones))
+                throw new InvalidDataException(
+                    "Card Rocket repair drone lost shared host authority.");
+            var owner = Find(vehicle.OwnerPlayerId) ??
+                throw new InvalidDataException(
+                    "Card Rocket repair-drone owner disappeared.");
+            if (owner.Definition.Fraction == attackerFraction)
+                continue;
+            int layer = owner.Definition.Fraction switch
+            {
+                1 => 23,
+                2 => 22,
+                _ => throw new InvalidDataException(
+                    "Card Rocket repair drone has unsupported faction.")
+            };
+
+            foreach (var drone in drones.OrderBy(value => value.PathIndex))
+            {
+                if (!drone.Active)
+                    continue;
+                var snapshot = drone.Snapshot();
+                var collider = groundVehicleWeapons.PlaceRepairDrone(
+                    vehicle.EntityId, drone.PathIndex, layer, snapshot);
+                var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                    snapshot.Position, [collider.Hitbox], launch.Missile);
+                if (hit == null)
+                    continue;
+                if (!float.IsFinite(hit.RawDamage) ||
+                    hit.RawDamage is <= 0 or > 10_000_000 ||
+                    !ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,
+                        drone.PathIndex, hit.RawDamage))
+                    throw new InvalidDataException(
+                        "Card Rocket repair-drone damage escaped host bounds.");
+                if (!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,
+                        vehicle.OwnerPlayerId, "", vehicle.EntityId,
+                        drone.Position, 0,
+                        "vehicle-repair-drone-down:" + drone.PathIndex);
+            }
+        }
+    }
+
+    internal void ApplyGroundVehicleMissileRepairDroneExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Ground-vehicle missile lacks trusted repair-drone blast authority.");
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        if(vehicles==null)return;
+        foreach(var vehicle in vehicles.Snapshot().Where(value=>value.UnitId=="ID_UNIT-TRANSPORTER")
+            .OrderBy(value=>value.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))
+                throw new InvalidDataException("Vehicle missile repair drone lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Vehicle missile repair-drone owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            int layer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
+                throw new InvalidDataException("Vehicle missile repair drone has unsupported faction.");
+            foreach(var drone in drones.OrderBy(value=>value.PathIndex))
+            {
+                if(!drone.Active)continue;
+                var snapshot=drone.Snapshot();
+                var collider=groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,
+                    drone.PathIndex,layer,snapshot);
+                var effect=BuggyExplosion.ResolveArmy(origin,snapshot.Position,
+                    [collider.Hitbox],damage,binding);
+                if(effect==null)continue;
+                float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                    throw new InvalidDataException("Vehicle missile repair-drone damage exceeded host bounds.");
+                if(!ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,drone.PathIndex,amount))
+                    throw new InvalidDataException("Vehicle missile repair-drone health disappeared.");
+                if(!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",
+                        vehicle.EntityId,drone.Position,0,
+                        "vehicle-repair-drone-down:"+drone.PathIndex);
+            }
+        }
+    }
+
+    private GroundVehicleWeapon GroundVehicleMissileSourceWeapon(string unitId,
+        GroundVehicleMissileBinding binding)
+    {
+        var sourceWeapon=groundVehicleWeapons!.For(unitId).Roles.SelectMany(role=>role.Weapons)
+            .SingleOrDefault(weapon=>ReferenceEquals(weapon.Missile,binding));
+        return sourceWeapon??
+            throw new InvalidDataException("Ground-vehicle missile binding is not a source weapon.");
+    }
+
+    internal void ApplyGroundVehicleMissileInfantryExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Ground-vehicle missile lacks trusted infantry blast authority.");
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        var targets=GroundVehicleShotTargets(shooterId,true).Where(target=>target.ArmyInfantry)
+            .GroupBy(target=>target.EntityId).OrderBy(group=>group.Key).ToArray();
+        foreach(var group in targets)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               !infantryAnimations.ContainsKey(group.Key))
+                throw new InvalidDataException("Vehicle missile infantry target lost host authority.");
+            bool friendly=army.OwnerFraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            var effect=BuggyExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(target=>target.Hitbox).ToArray(),damage,binding);
+            if(effect==null)continue;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Vehicle missile infantry damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,amount);
+            if(Terminal)return;
+        }
+    }
+
+    internal void ApplyGroundVehicleMissileAirBodyExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Ground-vehicle missile lacks trusted air-body blast authority.");
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        var groups=GroundVehicleShotTargets(shooterId,true)
+            .Where(target=>target.DroneRoot||target.HelicopterBody)
+            .GroupBy(target=>target.EntityId).OrderBy(group=>group.Key).ToArray();
+        foreach(var group in groups)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               army.UnitId is not ("ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER" or "ID_UNIT-ASSAULTHELI")||
+               group.Any(target=>army.UnitId=="ID_UNIT-DRONE"?!target.DroneRoot:!target.HelicopterBody))
+                throw new InvalidDataException("Vehicle missile air body lost source entity authority.");
+            bool friendly=army.OwnerFraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            var effect=BuggyExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(target=>target.Hitbox).ToArray(),damage,binding);
+            if(effect==null)continue;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Vehicle missile air-body damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,amount);
+            if(Terminal)return;
+        }
+    }
+
+    internal void ApplyCardRocketAssaultGlassExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (phase != BattlePhase.Running)
+            throw new InvalidDataException(
+                "Card Rocket has no front-glass blast authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Rocket glass attacker disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Rocket glass attacker fraction changed.");
+        var aircraft = activeArmyEntities.Values
+            .Where(row => row.UnitId == "ID_UNIT-ASSAULTHELI")
+            .OrderBy(row => row.EntityKey).ToArray();
+        if (aircraft.Length == 0)
+            return;
+        if (assaultHelicopterMeshColliders == null)
+            throw new InvalidDataException(
+                "Card Rocket glass collider source is missing.");
+
+        foreach (var helicopter in aircraft)
+        {
+            if (!armyAssaultHelicopterPaths.TryGetValue(
+                    helicopter.EntityKey, out var path) ||
+                !armyAssaultGlass.TryGetValue(helicopter.EntityKey,
+                    out var glass))
+                throw new InvalidDataException(
+                    "Card Rocket glass lost aircraft authority.");
+            if (glass.Current <= 0 ||
+                helicopter.OwnerFraction == attackerFraction)
+                continue;
+            var front = assaultHelicopterMeshColliders.PlaceFrontGlass(
+                new Vector3(helicopter.X, helicopter.Y, helicopter.Z),
+                path.Rotation);
+            var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                front.Hitbox.Center, [front.Hitbox], launch.Missile);
+            if (hit == null)
+                continue;
+            if (!float.IsFinite(hit.RawDamage) ||
+                hit.RawDamage is <= 0 or > 10_000_000)
+                throw new InvalidDataException(
+                    "Card Rocket glass damage exceeded host bounds.");
+            ApplyAssaultGlassDamage(helicopter.EntityKey, hit.RawDamage);
+        }
+    }
+
+    internal int ApplyGroundVehicleMissileAssaultGlassExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000||binding==null||
+           unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Vehicle missile glass blast lacks trusted source authority.");
+
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        var aircraftTargets=activeArmyEntities.Values
+            .Where(row=>row.UnitId=="ID_UNIT-ASSAULTHELI")
+            .OrderBy(row=>row.EntityKey).ToArray();
+        if(aircraftTargets.Length==0)return 0;
+        if(assaultHelicopterMeshColliders==null)
+            throw new InvalidDataException("Vehicle missile glass lacks its source mesh catalog.");
+        int hits=0;
+        foreach(var aircraft in aircraftTargets)
+        {
+            if(!armyAssaultHelicopterPaths.TryGetValue(aircraft.EntityKey,out var path)||
+               !armyAssaultGlass.TryGetValue(aircraft.EntityKey,out var glass))
+                throw new InvalidDataException("Vehicle missile glass lost its aircraft authority.");
+            if(glass.Current<=0)continue;
+
+            bool friendly=aircraft.OwnerFraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            var front=assaultHelicopterMeshColliders.PlaceFrontGlass(
+                new(aircraft.X,aircraft.Y,aircraft.Z),path.Rotation);
+            var effect=BuggyExplosion.ResolveArmy(origin,front.Hitbox.Center,
+                new[]{front.Hitbox},damage,binding);
+            if(effect==null)continue;
+
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Vehicle missile glass damage exceeded host bounds.");
+            if(!ApplyAssaultGlassDamage(aircraft.EntityKey,amount))continue;
+            hits++;
+            if(!friendly)shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        }
+        return hits;
+    }
+
+    internal void ApplyCardRocketGroundVehicleExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (phase != BattlePhase.Running ||
+            groundVehicleWeapons == null)
+            throw new InvalidDataException(
+                "Card Rocket has no vehicle blast authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Rocket vehicle attacker disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Rocket vehicle attacker fraction changed.");
+        if (vehicles == null)
+            return;
+
+        foreach (var vehicle in vehicles.Snapshot()
+                     .OrderBy(value => value.EntityId).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(vehicle.EntityId,
+                    out var army) ||
+                army.UnitId != vehicle.UnitId ||
+                army.OwnerPlayerId != vehicle.OwnerPlayerId ||
+                !groundVehicleFacing.TryGetValue(vehicle.EntityId,
+                    out var facing))
+                throw new InvalidDataException(
+                    "Card Rocket vehicle lost shared host authority.");
+            var owner = Find(vehicle.OwnerPlayerId) ??
+                throw new InvalidDataException(
+                    "Card Rocket vehicle owner disappeared.");
+            // The recovered BazookaEnemy weapon has friendKill = false.
+            if (owner.Definition.Fraction == attackerFraction)
+                continue;
+
+            var body = groundVehicleWeapons.PlaceBody(vehicle.UnitId,
+                vehicle.EntityId, vehicle.Position, facing,
+                owner.Definition.Fraction);
+            var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                vehicle.Position, body.Select(part => part.Hitbox).ToArray(),
+                launch.Missile);
+            if (hit == null)
+                continue;
+            if (!float.IsFinite(hit.RawDamage) ||
+                hit.RawDamage is <= 0 or > 10_000_000)
+                throw new InvalidDataException(
+                    "Card Rocket vehicle damage exceeded host bounds.");
+            float before = ArmyHealth(vehicle.EntityId) ??
+                throw new InvalidDataException(
+                    "Card Rocket vehicle lacks shared vitality.");
+            ApplyArmyHostDamage(vehicle.EntityId, hit.RawDamage);
+            if (Terminal)
+                return;
+            if (!activeArmyEntities.ContainsKey(vehicle.EntityId))
+                continue;
+            float after = ArmyHealth(vehicle.EntityId) ??
+                throw new InvalidDataException(
+                    "Card Rocket vehicle vitality disappeared.");
+            float applied = before - after;
+            if (applied > 0 &&
+                (!vehicles.TryDamage(vehicle.EntityId, applied,
+                    out float registryApplied, out bool destroyed) ||
+                 destroyed || Math.Abs(applied - registryApplied) > .001f))
+                throw new InvalidDataException(
+                    "Card Rocket vehicle registry health diverged.");
+        }
+    }
+
+    internal void ApplyGroundVehicleMissileVehicleExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Ground-vehicle missile lacks trusted vehicle blast authority.");
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        if(vehicles==null)return;
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(value=>value.EntityId).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Vehicle missile target lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Vehicle missile target owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            var bodies=groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,
+                vehicle.Position,facing,owner.Definition.Fraction);
+            var effect=BuggyExplosion.ResolveArmy(origin,vehicle.Position,
+                bodies.Select(part=>part.Hitbox).ToArray(),damage,binding);
+            if(effect==null)continue;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Vehicle missile target damage exceeded host bounds.");
+            float before=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Vehicle missile target lacks shared vitality.");
+            ApplyArmyHostDamage(vehicle.EntityId,amount);
+            if(Terminal)return;
+            if(!activeArmyEntities.ContainsKey(vehicle.EntityId))continue;
+            float after=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Vehicle missile target vitality disappeared.");
+            float applied=before-after;
+            if(applied>0&&(!vehicles.TryDamage(vehicle.EntityId,applied,out float registryApplied,
+                out bool destroyed)||destroyed||Math.Abs(applied-registryApplied)>.001f))
+                throw new InvalidDataException("Vehicle missile target vitality diverged from registry.");
+        }
+    }
+
+    internal void ApplyCardRocketPassengerExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (phase != BattlePhase.Running || groundVehicleWeapons == null)
+            throw new InvalidDataException(
+                "Card Rocket has no passenger blast authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Rocket passenger attacker disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Rocket passenger attacker fraction changed.");
+        if (vehicles == null)
+            return;
+
+        foreach (var vehicle in vehicles.Snapshot()
+                     .OrderBy(value => value.EntityId).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(vehicle.EntityId,
+                    out var army) ||
+                army.UnitId != vehicle.UnitId ||
+                army.OwnerPlayerId != vehicle.OwnerPlayerId ||
+                !groundVehicleFacing.TryGetValue(vehicle.EntityId,
+                    out var facing) ||
+                !vehiclePassengers.TryGetValue(vehicle.EntityId,
+                    out var passengers))
+                throw new InvalidDataException(
+                    "Card Rocket passenger lost shared host authority.");
+            var owner = Find(vehicle.OwnerPlayerId) ??
+                throw new InvalidDataException(
+                    "Card Rocket passenger owner disappeared.");
+            if (owner.Definition.Fraction == attackerFraction)
+                continue;
+
+            foreach (var passenger in passengers.Values
+                         .OrderBy(value => value.Binding.PointComponentFileId))
+            {
+                if (!passenger.Active)
+                    continue;
+                if (passenger.AnimationStartTick > tick)
+                    throw new InvalidDataException(
+                        "Card Rocket passenger animation starts after match time.");
+                ulong animationTick = tick - passenger.AnimationStartTick;
+                var hitboxes = groundVehicleWeapons.PassengerPoses.Place(
+                    vehicle.UnitId, passenger.Binding, vehicle.Position,
+                    facing, animationTick);
+                var position = PassengerWorldPosition(vehicle.EntityId,
+                    passenger.Binding);
+                var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                    position, hitboxes, launch.Missile);
+                if (hit == null)
+                    continue;
+                if (!float.IsFinite(hit.RawDamage) ||
+                    hit.RawDamage is <= 0 or > 10_000_000)
+                    throw new InvalidDataException(
+                        "Card Rocket passenger damage exceeded host bounds.");
+                ApplyVehiclePassengerHostDamage(vehicle.EntityId,
+                    passenger.Binding.Role, hit.RawDamage);
+            }
+        }
+    }
+
+    internal void ApplyGroundVehicleMissilePassengerExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Ground-vehicle missile lacks trusted passenger blast authority.");
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        if(vehicles==null)return;
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(value=>value.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing)||
+               !vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
+                throw new InvalidDataException("Vehicle missile passenger lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Vehicle missile passenger owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            foreach(var passenger in passengers.Values.OrderBy(value=>value.Binding.PointComponentFileId))
+            {
+                if(!passenger.Active)continue;
+                if(passenger.AnimationStartTick>tick)
+                    throw new InvalidDataException("Vehicle missile passenger animation starts after match time.");
+                ulong animationTick=tick-passenger.AnimationStartTick;
+                var hitboxes=groundVehicleWeapons.PassengerPoses.Place(vehicle.UnitId,
+                    passenger.Binding,vehicle.Position,facing,animationTick);
+                var passengerPosition=PassengerWorldPosition(vehicle.EntityId,passenger.Binding);
+                var effect=BuggyExplosion.ResolveArmy(origin,passengerPosition,hitboxes,
+                    damage,binding);
+                if(effect==null)continue;
+                float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                    throw new InvalidDataException("Vehicle missile passenger damage exceeded host bounds.");
+                ApplyVehiclePassengerHostDamage(vehicle.EntityId,passenger.Binding.Role,amount);
+            }
+        }
+    }
+
+    internal void ApplyPlayerGrenadeAirBodyExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||explosionPolicy==null||
+           droneColliders==null||helicopterBodyColliders==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade air-body blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        var groups=GroundVehicleShotTargets(shooterId,true)
+            .Where(x=>x.DroneRoot||x.HelicopterBody)
+            .GroupBy(x=>x.EntityId).OrderBy(x=>x.Key).ToArray();
+        foreach(var group in groups)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               army.UnitId is not ("ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER" or "ID_UNIT-ASSAULTHELI")||
+               group.Any(x=>army.UnitId=="ID_UNIT-DRONE"?!x.DroneRoot:x.DroneRoot))
+                throw new InvalidDataException("Grenade air body lost source entity authority.");
+            var effect=GrenadeExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(x=>x.Hitbox).ToArray(),stage);
+            if(effect==null)continue;
+            bool friendly=army.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Grenade air-body damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,amount);
+            if(Terminal)return;
+            if(activeArmyEntities.ContainsKey(group.Key)||friendly)continue;
+            if(directArmyKills.Count>=256)
+            {End("source-kill-backpressure","",false);return;}
+            directArmyKills.Add((group.Key,army.UnitId,army.OwnerPlayerId,
+                shooter.Definition.PlayerId,"player-grenade",tick));
+        }
+    }
+
+    internal int ApplyPlayerGrenadeAssaultGlassExplosion(string shooterId,Vector3 origin,
+        GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||
+           explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade glass blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        var aircraftTargets=activeArmyEntities.Values
+            .Where(row=>row.UnitId=="ID_UNIT-ASSAULTHELI")
+            .OrderBy(row=>row.EntityKey).ToArray();
+        if(aircraftTargets.Length==0)return 0;
+        if(assaultHelicopterMeshColliders==null)
+            throw new InvalidDataException("Grenade glass lacks its source mesh catalog.");
+        int hits=0;
+        foreach(var aircraft in aircraftTargets)
+        {
+            if(!armyAssaultHelicopterPaths.TryGetValue(aircraft.EntityKey,out var path)||
+               !armyAssaultGlass.TryGetValue(aircraft.EntityKey,out var glass))
+                throw new InvalidDataException("Grenade glass lost its aircraft authority.");
+            if(glass.Current<=0)continue;
+
+            var front=assaultHelicopterMeshColliders.PlaceFrontGlass(
+                new(aircraft.X,aircraft.Y,aircraft.Z),path.Rotation);
+            // Front glass has its own DestroyableObject damage owner. Resolve
+            // its splash independently from the aircraft's multipart body.
+            var effect=GrenadeExplosion.ResolveArmy(origin,front.Hitbox.Center,
+                new[]{front.Hitbox},stage);
+            if(effect==null)continue;
+
+            bool friendly=aircraft.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Grenade glass damage exceeded host bounds.");
+            if(!ApplyAssaultGlassDamage(aircraft.EntityKey,amount))continue;
+            hits++;
+            if(!friendly)shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        }
+        return hits;
+    }
+
+    internal void ApplyHelicopterGunnerProjectileImpact(string shooterId,ulong entityId,
+        float rawDamage,float partWeight)
+    {
+        if(!activeArmyEntities.TryGetValue(entityId,out var helicopter)||
+           helicopter.UnitId!="ID_UNIT-HELICOPTER"||
+           !armyHelicopterGunners.TryGetValue(entityId,out var gunner)||
+           !gunner.Snapshot().TurretEnabled)return;
+        var shooter=Find(shooterId)??throw new InvalidDataException("Helicopter gunner impact shooter disappeared.");
+        if(shooter.Definition.Fraction==helicopter.OwnerFraction||
+           !float.IsFinite(rawDamage)||rawDamage<=0||rawDamage>10_000_000||
+           partWeight is not (1f or 1.5f))
+            throw new InvalidDataException("Invalid Helicopter gunner projectile impact.");
+        if(DamageHelicopterGunner(entityId,rawDamage*partWeight))
+            shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+    }
+
+    internal void ApplyGroundVehiclePassengerProjectileImpact(string shooterId,ulong vehicleId,
+        string role,float rawDamage,float partWeight)
+    {
+        if(vehicles==null||!vehicles.TryGet(vehicleId,out var vehicle)||vehicle==null||
+           !activeArmyEntities.TryGetValue(vehicleId,out var army)||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+           !vehiclePassengers.TryGetValue(vehicleId,out var passengers)||!passengers.ContainsKey(role))return;
+        var shooter=Find(shooterId)??throw new InvalidDataException("Passenger impact shooter disappeared.");
+        var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Passenger impact owner disappeared.");
+        if(shooter.Definition.Fraction==owner.Definition.Fraction||!float.IsFinite(rawDamage)||rawDamage<=0||
+           rawDamage>10_000_000||partWeight is not (1f or 1.5f))
+            throw new InvalidDataException("Invalid vehicle passenger projectile impact.");
+        if(ApplyVehiclePassengerHostDamage(vehicleId,role,rawDamage*partWeight))
+            shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+    }
+
+    internal void ApplyArmyBodyProjectileImpact(string shooterId,ulong entityId,int partId,float rawDamage)
+    {
+        if(activeArmyEntities.TryGetValue(entityId,out var helicopter)&&
+           helicopter.UnitId=="ID_UNIT-HELICOPTER")
+        {
+            var helicopterShooter=Find(shooterId)??throw new InvalidDataException("Helicopter impact shooter disappeared.");
+            if(helicopterShooter.Definition.Fraction==helicopter.OwnerFraction||
+               helicopterBodyColliders==null||!helicopterBodyColliders.HasCollider(partId)||
+               !float.IsFinite(rawDamage)||rawDamage<=0||rawDamage>10_000_000)
+                throw new InvalidDataException("Invalid Helicopter body projectile impact.");
+            if(ApplyArmyHostDamage(entityId,rawDamage))
+                helicopterShooter.ConfirmedEnemyHits=checked(helicopterShooter.ConfirmedEnemyHits+1);
+            return;
+        }
+        if(activeArmyEntities.TryGetValue(entityId,out var assaultHelicopter)&&
+           assaultHelicopter.UnitId=="ID_UNIT-ASSAULTHELI")
+        {
+            var assaultShooter=Find(shooterId)??throw new InvalidDataException(
+                "Assault Helicopter impact shooter disappeared.");
+            if(assaultShooter.Definition.Fraction==assaultHelicopter.OwnerFraction||
+               assaultHelicopterBoxCollider==null||assaultHelicopterMeshColliders==null||
+               partId!=AssaultHelicopterBoxColliderCatalog.ColliderFileId&&
+                   !assaultHelicopterMeshColliders.HasCollider(partId)&&
+                   partId!=AssaultHelicopterMeshColliderCatalog.FrontGlassColliderFileId||
+               !float.IsFinite(rawDamage)||rawDamage<=0||rawDamage>10_000_000)
+                throw new InvalidDataException("Invalid Assault Helicopter body projectile impact.");
+            if(partId==AssaultHelicopterMeshColliderCatalog.FrontGlassColliderFileId)
+            {
+                if(ApplyAssaultGlassDamage(entityId,rawDamage))
+                    assaultShooter.ConfirmedEnemyHits=checked(assaultShooter.ConfirmedEnemyHits+1);
+                return;
+            }
+            if(ApplyArmyHostDamage(entityId,rawDamage))
+                assaultShooter.ConfirmedEnemyHits=checked(assaultShooter.ConfirmedEnemyHits+1);
+            return;
+        }
+        if(!activeArmyEntities.TryGetValue(entityId,out var row)||row.UnitId!="ID_UNIT-DRONE")
+        {ApplyGroundVehicleProjectileImpact(shooterId,entityId,partId,rawDamage);return;}
+        var shooter=Find(shooterId)??throw new InvalidDataException("Drone impact shooter disappeared.");
+        if(row.OwnerFraction==shooter.Definition.Fraction||!float.IsFinite(rawDamage)||rawDamage<=0||rawDamage>10_000_000||
+            partId is not (6544804 or 13511718))throw new InvalidDataException("Invalid Drone projectile impact.");
+        // Ammo.DoDamage calls GetComponent on the exact hit GameObject, never its parent.
+        // Child sphere has no DestroyableObject; root shotCoeficient is source value 1.
+        if(partId==13511718)return;
+        if(ApplyArmyHostDamage(entityId,rawDamage))
+            shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+    }
+    internal void ApplyGroundVehicleProjectileImpact(string shooterId,ulong vehicleId,int partId,float rawDamage)
+    {
+        if(vehicles==null||groundVehicleWeapons==null||!vehicles.TryGet(vehicleId,out var vehicle)||vehicle==null||
+           !activeArmyEntities.TryGetValue(vehicleId,out var army)||army.UnitId!=vehicle.UnitId||
+           army.OwnerPlayerId!=vehicle.OwnerPlayerId)return;
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle impact shooter disappeared.");
+        var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Vehicle impact owner disappeared.");
+        if(shooter.Definition.Fraction==owner.Definition.Fraction)
+            throw new InvalidDataException("Friendly vehicle entered an enemy projectile collision trace.");
+        var part=groundVehicleWeapons.For(vehicle.UnitId).BodyParts.SingleOrDefault(x=>x.PartComponentFileId==partId)
+            ??throw new InvalidDataException("Vehicle impact named an unknown source body part.");
+        float damage=rawDamage*part.Weight*groundVehicleWeapons.ArmoredVehicleShotCoefficient;
+        if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Vehicle projectile damage is outside host bounds.");
+        float before=ArmyHealth(vehicleId)??throw new InvalidDataException("Vehicle impact lacks shared health authority.");
+        if(!ApplyArmyHostDamage(vehicleId,damage))return;
+        shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        if(activeArmyEntities.ContainsKey(vehicleId))
+        {
+            float after=ArmyHealth(vehicleId)??throw new InvalidDataException("Vehicle health disappeared after nonlethal impact.");
+            float healthDamage=before-after;
+            if(healthDamage>0&&(!vehicles.TryDamage(vehicleId,healthDamage,out var applied,out var destroyed)||
+               destroyed||Math.Abs(applied-healthDamage)>.001f))
+                throw new InvalidDataException("Vehicle registry health diverged from shared army vitality.");
+        }
+    }
+
+    internal void ApplyTransporterRepairDroneProjectileImpact(string shooterId,ulong vehicleId,
+        int pathIndex,float rawDamage,float partWeight)
+    {
+        if(vehicles==null||!vehicles.TryGet(vehicleId,out var vehicle)||vehicle==null||
+           vehicle.UnitId!="ID_UNIT-TRANSPORTER"||
+           !transporterRepairDrones.TryGetValue(vehicleId,out var drones)||pathIndex<0||pathIndex>=drones.Count)return;
+        var shooter=Find(shooterId)??throw new InvalidDataException("Repair-drone impact shooter disappeared.");
+        var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Repair-drone owner disappeared.");
+        if(shooter.Definition.Fraction==owner.Definition.Fraction||!float.IsFinite(rawDamage)||rawDamage<=0||
+           rawDamage>10_000_000||partWeight!=1)
+            throw new InvalidDataException("Invalid repair-drone projectile impact.");
+        bool wasActive=drones[pathIndex].Active;
+        if(!ApplyTransporterRepairDroneHostDamage(vehicleId,pathIndex,rawDamage*partWeight))return;
+        shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        if(wasActive&&!drones[pathIndex].Active)
+            Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",vehicleId,
+                drones[pathIndex].Position,0,"vehicle-repair-drone-down:"+pathIndex);
+    }
+    private readonly Dictionary<ulong,float> groundVehicleShotSpeed=[];
+    private readonly Dictionary<ulong,ArmyVehicleShotStats> transporterShotStats=[];
+    private readonly Dictionary<ulong,BuggyCannonAttackState> buggyCannonAttacks=[];
+    private readonly Dictionary<ulong,VehicleAttackState> tankCannonAttacks=[];
+    private readonly Dictionary<ulong,float> tankCannonDamage=[];
+    private readonly Dictionary<ulong,IReadOnlyDictionary<string,VehiclePassengerState>> vehiclePassengers=[];
+    private readonly Dictionary<ulong,IReadOnlyList<TransporterRepairDroneState>> transporterRepairDrones=[];
+    private readonly Dictionary<ulong,(string Owner,string Target,Vector3 Position,ulong? DecoyId)> buggyCannonTargets=[];
+    private readonly Dictionary<ulong,(string Owner,string Target,Vector3 Position,ulong? DecoyId)> tankCannonTargets=[];
+    internal ulong? GroundVehicleCannonDecoyTarget(ulong entityKey)
+    {
+        if(tankCannonTargets.TryGetValue(entityKey,out var tank))return tank.DecoyId;
+        return buggyCannonTargets.TryGetValue(entityKey,out var buggy)?buggy.DecoyId:null;
+    }
+    private ulong buggyCurveCounter;
+
+    private string? ArmyAvailabilityError(Player player,ArmyDeploymentFamily family,
+        ArmyDeploymentOption option)
+    {
+        int available=armySelector!.AvailableSlots(map!,family,player.Definition.Fraction,
+            armyReservations!.Available);
+        if(available!=int.MaxValue)
+        {
+            int pending=player.Army!.PendingRouteDemand(ArmySpawnPointSelector.Collection(family.BehaviorType));
+            if(available-pending<option.Count)return "army-route-unavailable";
+        }
+        if(ArmyRusherPointCatalog.IsRusher(family.BehaviorType))
+        {
+            int pending=player.Army!.PendingRusherDemand;
+            int occupied=occupiedRusherSlots.Values.Count(key=>(int)(key>>32)==player.Definition.Fraction);
+            if(4-occupied-pending<option.Count ||
+               FreeRusherSlots(players.Single(other=>other!=player).Cover)-pending<option.Count)
+                return "army-rusher-unavailable";
+        }
+        return null;
+    }
+
+    private int FreeRusherSlots(int opponentCover)
+    {
+        if(opponentCover<0)return 0;
+        var slots=armyRusherPoints!.ForCover(map!,opponentCover);
+        return slots.Count(point=>!occupiedRusherSlots.ContainsKey(point.ComponentFileId));
+    }
+
+    private void ReserveRusherSlot(ulong entityKey,int opponentCover,Vector3 spawnPosition)
+    {
+        // EnemyController.rusherCounts spans every opposing defend position.
+        // At four occupied points, GetInitPoint selects a spare point instead.
+        int ownerFraction=(int)(entityKey>>32);
+        if(occupiedRusherSlots.Values.Count(key=>(int)(key>>32)==ownerFraction)>=4)return;
+        int slot=armyRusherPoints!.Choose(map!,opponentCover,spawnPosition,
+            occupiedRusherSlots.ContainsKey)?.ComponentFileId??0;
+        if(slot<=0 || !occupiedRusherSlots.TryAdd(slot,entityKey) ||
+           !rusherSlotByEntity.TryAdd(entityKey,slot))
+            throw new InvalidDataException("Source Rusher point is no longer free at spawn.");
+    }
+
+    private void InitializeArmyVitality(ParticipantManifest owner,string unitId,ulong entityKey)
+    {
+        int index=Array.IndexOf(owner.EquippedArmyUnitIds!,unitId);
+        if(index<0)throw new InvalidDataException("Spawned army unit is outside the trusted equipped set.");
+        if(owner.ArmyNormalUpgradeIndexes==null)return;
+        int? special=owner.ArmySpecialUpgradeIndexes is { } specials && specials[index]>=0 ? specials[index] : null;
+        int? elite=owner.ArmyEliteUpgradeIndexes is { } elites && elites[index]>=0 ? elites[index] : null;
+        var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
+        if(family.BehaviorType=="HelicopterBehaviour")
+        {
+            var crew=owner.ArmyHealthFactors is { } crewFactors?
+                armyCatalog.EffectiveHelicopterCrew(owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                    crewFactors[index]):
+                armyCatalog.ComposeHelicopterCrew(owner.ArmyNormalUpgradeIndexes[index],special,elite);
+            armyHelicopterCrew.Add(entityKey,crew);
+            armyHelicopterCrewMembers.Add(entityKey,new HelicopterCrewState(crew,
+                helicopterCrewPoints??throw new InvalidDataException("Helicopter crew points absent."),tick));
+        }
+        if(owner.ArmyHealthFactors is { } healthFactors)
+        {
+            float maximum=armyCatalog!.EffectiveHealth(unitId,owner.ArmyNormalUpgradeIndexes![index],
+                special,elite,healthFactors[index]);
+            float kevlar=0;
+            if(family.BehaviorType=="SoldierBehaviourParachuter"&&special.HasValue)
+            {
+                float ratio=armyCatalog.ComposeSpecial(unitId,owner.ArmyNormalUpgradeIndexes[index],special,elite);
+                if(!float.IsFinite(ratio)||ratio<=0||ratio>10)
+                    throw new InvalidDataException("Paratrooper kevlar ratio is outside its recovered combat domain.");
+                kevlar=maximum*ratio;
+                if(!float.IsFinite(kevlar)||kevlar<=0||kevlar>10_000_000)
+                    throw new InvalidDataException("Paratrooper kevlar is outside host vitality bounds.");
+            }
+            armyVitality.Add(entityKey,new ArmyVitality(maximum,kevlar));
+            if(family.BehaviorType=="AssaultHelicopterBehaviour")
+            {
+                float glassMaximum=armyCatalog.EffectiveAssaultHelicopterGlassHealth(
+                    owner.ArmyNormalUpgradeIndexes[index],special,elite,healthFactors[index]);
+                armyAssaultGlass.Add(entityKey,new ArmyVitality(glassMaximum));
+            }
+        }
+        if(owner.ArmyDamageScales is { } damageScales)
+            armyDamage.Add(entityKey,armyCatalog!.EffectiveDamage(unitId,
+                owner.ArmyNormalUpgradeIndexes![index],special,elite,damageScales[index]));
+        float specialValue=armyCatalog.ComposeSpecial(unitId,owner.ArmyNormalUpgradeIndexes![index],special,elite);
+        if(family.BehaviorType=="DroneBehaviour")
+            armyDroneSpecials.Add(entityKey,new DroneSpecialState(
+                (float)((double)tick/MatchManifest.TickRate),special.HasValue,specialValue,NextArmyFloat));
+        if(family.BehaviorType=="SoldierBehaviourCommando")
+        {
+            if(specialValue<0||specialValue>100)
+                throw new InvalidDataException("Commando poison ratio is outside its recovered combat domain.");
+            if(specialValue>0)armySpecial.Add(entityKey,specialValue);
+        }
+        if (family.BehaviorType == "SoldierBehaviourSniper")
+        {
+            // SoldierBehaviourSniper.ApplyWeaponsSetup copies the composed
+            // SPECIAL value into AmmoSetup.criticalProbability.
+            if (specialValue < 0f || specialValue > 1f)
+                throw new InvalidDataException("Sniper critical chance is outside its source domain.");
+            sniperCriticalProbabilities.Add(entityKey, specialValue);
+        }
+        if(family.BehaviorType=="SoldierBehaviourShotgunner"&&special.HasValue)
+        {
+            if(specialValue<=0||specialValue>10)
+                throw new InvalidDataException("Shotgunner walking-fire special is outside its recovered combat domain.");
+            walkingShotgunnerSpecials.Add(entityKey,specialValue);
+        }
+        if(owner.ArmySpeedCoefficients is { } speedCoefficients)
+            armySpeed.Add(entityKey,armyCatalog!.EffectiveSpeed(unitId,speedCoefficients[index],
+                owner.ArmyNormalUpgradeIndexes[index],special,elite));
+        // These additional families have recovered upgrade shot lanes even though the older
+        // serialized base-shot artifact only included the other shooter families.
+        if(family.BaseShot!=null || family.BehaviorType is "SoldierBehaviourAssaulter" or
+            "SoldierBehaviourGunslinger" or "SoldierBehaviourGrennader" or "SoldierBehaviourBazooka" or
+            "SoldierBehaviourMortar")
+            armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
+                owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                owner.ArmyAccuracyCoefficients?[index]??1f));
+        if (family.BehaviorType == "SoldierBehaviourGunslinger")
+        {
+            float bulletSpeed = armyCatalog.EffectiveInfantryBulletSpeed(unitId,
+                owner.ArmyShotSpeedCoefficients?[index] ?? 1f);
+            _gunslingerAimWeapons.Add(entityKey, new GunslingerWeaponAimState(bulletSpeed));
+        }
+        if(family.BehaviorType=="DroneBehaviour")
+        {
+            armyDroneShots.Add(entityKey,armyCatalog!.ComposeDroneShot(owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                owner.ArmyShotSpeedCoefficients?[index]??1));
+            droneAttacks.Add(entityKey,new DroneAttackState((float)((double)tick/MatchManifest.TickRate),
+                armyDroneShots[entityKey],droneWeapon??throw new InvalidDataException("Drone weapon source absent."),
+                droneProjectile??throw new InvalidDataException("Drone projectile source absent."),NextArmyFloat,DroneBatchRange));
+        }
+        if(family.BehaviorType=="HelicopterBehaviour")
+        {
+            armyHelicopterShots.Add(entityKey,armyCatalog!.ComposeHelicopterShot(
+                owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                owner.ArmyShotSpeedCoefficients?[index]??1f));
+            var crew=armyHelicopterCrew[entityKey];
+            armyHelicopterGunners.Add(entityKey,new HelicopterGunnerState(
+                helicopterCrewPoints!.TurretPointComponentFileId,crew.SoldierHealth,
+                armyCatalog.VehiclePassengerRespawnTicks(unitId),tick));
+            armyHelicopterTurrets.Add(entityKey,new HelicopterTurretTweenState());
+            armyHelicopterAcquisitions.Add(entityKey,new HelicopterTurretAcquisitionState(tick,
+                armyHelicopterShots[entityKey],NextArmyFloat));
+            armyHelicopterWeapons.Add(entityKey,new HelicopterTurretWeaponState(NextArmyFloat));
+        }
+        if(family.BehaviorType=="AssaultHelicopterBehaviour")
+            armyAssaultHelicopterShots.Add(entityKey,armyCatalog!.ComposeAssaultHelicopterShot(
+                owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                owner.ArmyShotSpeedCoefficients?[index]??1f));
+        if(family.VehicleShot!=null&&!family.IsAir&&!family.IsSoldier)
+            armyVehicleShots.Add(entityKey,armyCatalog.ComposeVehicleShot(unitId,
+                owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                owner.ArmyAccuracyCoefficients?[index]??1f,owner.ArmyShotSpeedCoefficients?[index]??1f));
+    }
+
+    internal float? ArmyHealth(ulong entityKey)
+        =>armyVitality.TryGetValue(entityKey,out var row) ? row.Current : null;
+
+    private string UseHealingStorm(Player owner, string requestId)
+    {
+        if (!HasSelectedCard(owner,"CardHealingStorm"))
+            return "healing-storm-not-selected";
+        if (!War.Shared.CanonicalGuid.IsCanonical(requestId))
+            return "invalid-healing-storm-request";
+        if (cardReservations == null || armyCatalog == null)
+            return "healing-storm-authority-unavailable";
+
+        var soldierIds = armyCatalog.Families.Where(family => family.IsSoldier)
+            .Select(family => family.UnitId).ToHashSet(StringComparer.Ordinal);
+        var allies = activeArmyEntities.Values
+            .Where(army => army.OwnerFraction == owner.Definition.Fraction &&
+                           soldierIds.Contains(army.UnitId))
+            .OrderBy(army => army.EntityKey).ToArray();
+
+        // CardHealingStorm iterates the pooled EnemyController soldiers. It
+        // skips dead and fully healed allies, and heals 50% of maximum health
+        // from its MainScene component. The packet cannot select recipients.
+        foreach (var ally in allies)
+        {
+            if (!armyVitality.TryGetValue(ally.EntityKey, out var vitality) ||
+                !float.IsFinite(vitality.Current) || !float.IsFinite(vitality.Maximum) ||
+                vitality.Maximum <= 0 || vitality.Current < 0 || vitality.Current > vitality.Maximum)
+                return "healing-storm-authority-unavailable";
+        }
+
+        int injuredCount = allies.Count(ally =>
+            armyVitality[ally.EntityKey].Current > 0 &&
+            armyVitality[ally.EntityKey].Current < armyVitality[ally.EntityKey].Maximum);
+        if (events.Count >= MaximumRetainedEvents ||
+            stateRevision > ulong.MaxValue - 1 - (ulong)injuredCount ||
+            armyEntityRevision > ulong.MaxValue - (ulong)injuredCount)
+            return "event-backpressure";
+
+        var effect = new WarCardEffectRequest("CardHealingStorm", Vector3.Zero, 0, 1);
+        if (!TryApplyCardEffect(requestId, owner.Definition.PlayerId, effect))
+            return "healing-storm-unavailable";
+
+        foreach (var ally in allies)
+        {
+            var vitality = armyVitality[ally.EntityKey];
+            if (vitality.Current <= 0 || vitality.Current >= vitality.Maximum) continue;
+            vitality.Current = Math.Min(vitality.Maximum,
+                vitality.Current + vitality.Maximum * 0.5f);
+            ally.Health = vitality.Current;
+            armyEntityRevision++;
+            stateRevision++;
+        }
+        return "healing-storm-applied";
+    }
+    internal float? AssaultGlassHealth(ulong entityKey)
+        =>armyAssaultGlass.TryGetValue(entityKey,out var row) ? row.Current : null;
+    internal float? AssaultGlassMaximum(ulong entityKey)
+        =>armyAssaultGlass.TryGetValue(entityKey,out var row) ? row.Maximum : null;
+
+    private bool ApplyAssaultGlassDamage(ulong entityKey,float damage)
+    {
+        if(phase!=BattlePhase.Running || !activeArmyEntities.TryGetValue(entityKey,out var aircraft)||
+           aircraft.UnitId!="ID_UNIT-ASSAULTHELI"||
+           !armyAssaultGlass.TryGetValue(entityKey,out var glass)||glass.Current<=0)return false;
+        if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Invalid Assault Helicopter glass impact damage.");
+        glass.Current=Math.Max(0,glass.Current-damage);
+        aircraft.AssaultGlassHealth=glass.Current;
+        armyEntityRevision++;
+        stateRevision++;
+        return true;
+    }
+    internal bool ArmyDroneImmortal(ulong entityKey)
+        =>armyDroneSpecials.TryGetValue(entityKey,out var row)&&row.IsImmortal;
+    internal float? ArmyKevlar(ulong entityKey)
+        =>armyVitality.TryGetValue(entityKey,out var row) ? row.Kevlar : null;
+    internal float? ArmyDamage(ulong entityKey)
+        =>armyDamage.TryGetValue(entityKey,out var value) ? value : null;
+    internal float? ArmySpeed(ulong entityKey)
+        =>armySpeed.TryGetValue(entityKey,out var value) ? value : null;
+
+    // Match-owned motion is published for covered routes. Avoidance and corner
+    // steering still need source comparison; motion alone grants no damage.
+    internal ArmyRusherArrivalState? RusherMotionCandidate(ulong entityKey)
+        =>rusherMotionCandidates.TryGetValue(entityKey,out var state) ? state : null;
+    internal ArmyWarperRelocationState? WarperRelocationCandidate(ulong entityKey)
+        =>warperRelocations.TryGetValue(entityKey,out var state)?state:null;
+    internal ulong? WarperRestartTick(ulong entityKey)
+        =>warperRestartTicks.TryGetValue(entityKey,out var due)?due:null;
+    internal ulong? RusherSlotOccupant(int pointFileId)
+        =>occupiedRusherSlots.TryGetValue(pointFileId,out var key) ? key : null;
+    internal int RusherDetourCount(ulong entityKey)
+        =>rusherDetours.TryGetValue(entityKey,out int count) ? count : 0;
+    internal IReadOnlyList<ArmyRusherShotIntent> RusherShotIntents
+        =>rusherShotIntents.AsReadOnly();
+    internal ArmyRusherTarget? RusherLatchedShotTarget(ulong entityKey)
+        =>rusherAttackTargets.TryGetValue(entityKey,out var target)?target:null;
+    internal ArmyMinigunnerMovementState? MinigunnerMovementCandidate(ulong entityKey)
+        =>minigunnerMovements.TryGetValue(entityKey,out var state)?state:null;
+    internal Vector2? MinigunnerSteeringOffset(ulong entityKey)
+        =>minigunnerSteering.TryGetValue(entityKey,out var state)?state.Offset:null;
+    internal int? MinigunnerPoint(ulong entityKey)
+        =>minigunnerPointByEntity.TryGetValue(entityKey,out int point)?point:null;
+    internal ulong? MinigunnerPointOccupant(int pointFileId)
+        =>occupiedMinigunnerPoints.TryGetValue(pointFileId,out ulong key)?key:null;
+    internal ArmyVehicleRouteMotion? VehicleRouteMotion(ulong entityKey)
+        =>vehicleRouteMotions.TryGetValue(entityKey,out var state)?state:null;
+    internal VehicleAttackState? GroundVehicleAttack(ulong entityKey)
+        =>vehicles?.TryGetAttack(entityKey,out var state)==true?state:null;
+    internal VehicleAttackState? TankCannonAttack(ulong entityKey)
+        =>tankCannonAttacks.TryGetValue(entityKey,out var state)?state:null;
+    internal float? TankCannonDamage(ulong entityKey)
+        =>tankCannonDamage.TryGetValue(entityKey,out var value)?value:null;
+    internal Vector3? GroundVehicleFacing(ulong entityKey)
+        =>groundVehicleFacing.TryGetValue(entityKey,out var facing)?facing:null;
+    internal ulong? GroundVehicleArmyTarget(ulong entityKey)
+        =>vehicleShotTargets.TryGetValue(entityKey,out var target)?target.ArmyEntityId:null;
+    internal ulong? GroundVehicleDecoyTarget(ulong entityKey)
+        =>vehicleShotTargets.TryGetValue(entityKey,out var target)?target.DecoyEntityId:null;
+    internal float? GroundVehicleSelectedShotSpeed(ulong entityKey)
+        =>groundVehicleShotSpeed.TryGetValue(entityKey,out var speed)?speed:null;
+    internal IReadOnlyList<VehiclePassengerSnapshot> VehiclePassengers(ulong entityKey)
+        =>vehiclePassengers.TryGetValue(entityKey,out var rows)?
+            rows.Values.OrderBy(x=>x.Binding.PointComponentFileId).Select(x=>x.Snapshot()).ToArray():[];
+    internal IReadOnlyList<TransporterRepairDroneSnapshot> TransporterRepairDrones(ulong entityKey)
+        =>transporterRepairDrones.TryGetValue(entityKey,out var rows)?rows.Select(x=>x.Snapshot()).ToArray():[];
+    internal bool ApplyTransporterRepairDroneHostDamage(ulong entityKey,int pathIndex,float damage)
+    {
+        if(phase!=BattlePhase.Running||!transporterRepairDrones.TryGetValue(entityKey,out var rows)||
+           pathIndex<0||pathIndex>=rows.Count)return false;
+        if(!rows[pathIndex].ApplyDamage(damage,tick,NextArmyFloat))return false;
+        stateRevision++;
+        return true;
+    }
+    internal bool ApplyVehiclePassengerHostDamage(ulong entityKey,string role,float damage)
+    {
+        if(phase!=BattlePhase.Running||!vehiclePassengers.TryGetValue(entityKey,out var rows)||
+           !rows.TryGetValue(role,out var passenger))return false;
+        bool wasActive=passenger.Active;
+        if(!passenger.ApplyDamage(damage,tick))return false;
+        stateRevision++;
+        if(wasActive&&!passenger.Active)
+        {
+            vehicleShotTargets.Remove(entityKey);buggyCannonTargets.Remove(entityKey);tankCannonTargets.Remove(entityKey);
+            var unit=activeArmyEntities[entityKey].UnitId;
+            if(role is "gunner" or "turret" or "co-driver")
+                _=vehicles?.ResetAttack(entityKey);
+            if(unit=="ID_UNIT-BUGGY"&&role=="co-driver"&&
+               buggyCannonAttacks.TryGetValue(entityKey,out var cannon))cannon.DisableAndReset();
+            if(unit=="ID_UNIT-TANK"&&role=="cannon"&&
+               tankCannonAttacks.TryGetValue(entityKey,out var tankCannon))tankCannon.DisableAndReset();
+            if(unit=="ID_UNIT-TRANSPORTER"&&role=="co-driver")
+                scheduledTransporterShots.RemoveAll(x=>x.VehicleId==entityKey);
+            Emit(MatchEventKind.VehiclePassengerDown,activeArmyEntities[entityKey].OwnerPlayerId,"",entityKey,
+                PassengerWorldPosition(entityKey,passenger.Binding),0,"vehicle-passenger-down:"+role);
+        }
+        return true;
+    }
+
+    private bool PassengerActive(ulong entityKey,string role)
+        =>vehiclePassengers.TryGetValue(entityKey,out var rows)&&rows.TryGetValue(role,out var row)&&row.Active;
+
+    private Vector3 PassengerWorldPosition(ulong entityKey,GroundVehiclePassengerBinding binding)
+    {
+        if(vehicles==null||!vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+           !groundVehicleFacing.TryGetValue(entityKey,out var facing))
+            throw new InvalidDataException("Vehicle passenger lost its host transform.");
+        facing.Y=0;if(facing.LengthSquared()<1e-10f)throw new InvalidDataException("Vehicle passenger has no facing.");
+        float yaw=MathF.Atan2(facing.X,facing.Z);
+        return vehicle.Position+Vector3.Transform(binding.Position,
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
+    }
+
+    private bool PrimaryVehicleCrewActive(ulong entityKey)
+    {
+        if(!activeArmyEntities.TryGetValue(entityKey,out var army)||!vehiclePassengers.ContainsKey(entityKey))
+            return true;
+        return army.UnitId switch
+        {
+            "ID_UNIT-HUMVEE"=>PassengerActive(entityKey,"gunner"),
+            "ID_UNIT-TANK"=>PassengerActive(entityKey,"turret"),
+            "ID_UNIT-BUGGY"=>PassengerActive(entityKey,"co-driver"),
+            "ID_UNIT-TRANSPORTER"=>PassengerActive(entityKey,"co-driver"),
+            _=>false
+        };
+    }
+
+    // Tank targets Player directly. Humvee asks for Decoy, then
+    // AttackerRusher, and reaches the all-opponents fallback only when neither exists.
+    private bool TryBeginAutomaticGroundVehicleAttack(ulong entityKey)
+    {
+        if(phase!=BattlePhase.Running||vehicles==null||!HasArmyCombatView||playerShotTargets==null||groundVehicleWeapons==null||
+           !activeArmyEntities.TryGetValue(entityKey,out var army)||
+           army.UnitId is not ("ID_UNIT-TANK" or "ID_UNIT-HUMVEE" or "ID_UNIT-TRANSPORTER")||
+           !(army.UnitId=="ID_UNIT-TANK"?PassengerActive(entityKey,"turret"):
+             army.UnitId=="ID_UNIT-HUMVEE"?PassengerActive(entityKey,"gunner"):
+               PassengerActive(entityKey,"co-driver"))||
+           !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+           !vehicles.TryGetAttack(entityKey,out var attack)||attack?.Phase!=ArmyAirAttackPhase.Ready||
+           !groundVehicleFacing.TryGetValue(entityKey,out var facing))return false;
+        var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Vehicle owner disappeared.");
+        var opponent=players.Single(p=>p!=owner);
+        if(!opponent.Admitted||opponent.Dead)return false;
+        var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary");
+        var opposingDecoys=decoys.Snapshot().Where(x=>x.OwnerFraction!=army.OwnerFraction)
+            .OrderBy(x=>x.EntityId).ToArray();
+        if(army.UnitId=="ID_UNIT-HUMVEE"&&opposingDecoys.Length>0)
+        {
+            int selectedIndex=armyChoice(opposingDecoys.Length);
+            if(selectedIndex<0||selectedIndex>=opposingDecoys.Length)
+                throw new InvalidDataException("Army random selector returned an invalid Decoy target.");
+            var selected=opposingDecoys[selectedIndex];
+            float yaw=MathF.Atan2(selected.Facing.X,selected.Facing.Z);
+            var decoyTarget=selected.Position+Vector3.Transform(decoySource!.Prefab.TargetLocalPosition,
+                Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
+            GroundVehicleAim decoyAim;
+            try{decoyAim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,decoyTarget,
+                turret.MaxShotRotation,turret.AimTime);}
+            catch(InvalidDataException){return false;}
+            var decoyMuzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,
+                vehicle.Position,decoyAim.Direction);
+            var decoyDelta=decoyTarget-decoyMuzzle;float decoyRange=decoyDelta.Length();
+            if(!float.IsFinite(decoyRange)||decoyRange<.001f)return false;
+            var visibleDecoy=TraceArmyVisibility(army.OwnerPlayerId,decoyMuzzle,
+                decoyDelta/decoyRange,decoyRange+.05f);
+            if(visibleDecoy is not {DynamicDecoy:true,DynamicEntityId:var hitId}||hitId!=selected.EntityId)
+                return false;
+            vehicleShotTargets[entityKey]=new(army.OwnerPlayerId,selected.OwnerPlayerId,decoyTarget,
+                DecoyEntityId:selected.EntityId);
+            groundVehicleShotSpeed[entityKey]=attack.ShotSpeed;
+            return vehicles.TryBeginAttack(entityKey,true,decoyAim.AimTicks);
+        }
+        var matchingUnits=activeArmyEntities.Where(candidate=>candidate.Value.OwnerFraction!=army.OwnerFraction&&
+            infantryAnimations.ContainsKey(candidate.Key)&&
+            armyCatalog!.Families.Single(f=>f.UnitId==candidate.Value.UnitId).UnitType==turret.PrimaryTarget)
+            .OrderBy(candidate=>candidate.Key).ToArray();
+        bool matchingUnit=matchingUnits.Length>0;
+        if(army.UnitId=="ID_UNIT-HUMVEE"&&matchingUnit)
+        {
+            var visibleUnits=new List<(ulong EntityId,Vector3 Target,GroundVehicleAim Aim)>();
+            foreach(var candidate in matchingUnits)
+            {
+                var candidatePose=InfantryPose(candidate.Key)??
+                    throw new InvalidDataException("Humvee target lost its animated pose.");
+                // enemy.prefab serializes Head as the first AllIn shot target.
+                var part=candidatePose.Parts.Single(x=>x.Weight==1.5f);
+                GroundVehicleAim candidateAim;
+                try {candidateAim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,part.Center,
+                    turret.MaxShotRotation,turret.AimTime);}
+                catch(InvalidDataException){continue;}
+                var candidateMuzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,
+                    vehicle.Position,candidateAim.Direction);
+                var candidateDelta=part.Center-candidateMuzzle;float candidateRange=candidateDelta.Length();
+                if(!float.IsFinite(candidateRange)||candidateRange<.001f)continue;
+                var hit=TraceArmyVisibility(army.OwnerPlayerId,candidateMuzzle,
+                    candidateDelta/candidateRange,candidateRange+.05f);
+                if(!turret.NeedToSeePrimaryTarget||hit is {DynamicArmyInfantry:true,DynamicEntityId:var hitId}&&
+                   hitId==candidate.Key)visibleUnits.Add((candidate.Key,part.Center,candidateAim));
+            }
+            if(visibleUnits.Count==0)return false;
+            int selectedIndex=armyChoice(visibleUnits.Count);
+            if(selectedIndex<0||selectedIndex>=visibleUnits.Count)
+                throw new InvalidDataException("Army random selector returned an invalid Humvee target.");
+            var selected=visibleUnits[selectedIndex];
+            vehicleShotTargets[entityKey]=new(army.OwnerPlayerId,opponent.Definition.PlayerId,
+                selected.Target,selected.EntityId);
+            groundVehicleShotSpeed[entityKey]=attack.ShotSpeed;
+            return vehicles.TryBeginAttack(entityKey,true,selected.Aim.AimTicks);
+        }
+        if(army.UnitId!="ID_UNIT-TRANSPORTER"&&
+           !GroundVehicleAimPolicy.CanFallbackToPlayer(turret,false,matchingUnit))return false;
+        Vector3 target = CurrentPlayerBodyPosition(
+            opponent.Definition.PlayerId, vehicle.Position);
+        GroundVehicleAim aim;
+        try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
+            turret.MaxShotRotation,turret.AimTime);}
+        catch(InvalidDataException){return false;}
+        var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,vehicle.Position,aim.Direction);
+        // TurretSeesEnemy checks static visibility to the first AllIn target.
+        // A bullet collision against the nearest body point is a different gate.
+        if (VisibleVehicleTurretTarget("player:" + opponent.Definition.PlayerId, muzzle) == null)
+        {
+            return false;
+        }
+        vehicleShotTargets[entityKey]=new(army.OwnerPlayerId,opponent.Definition.PlayerId,target);
+        groundVehicleShotSpeed[entityKey]=army.UnitId=="ID_UNIT-TRANSPORTER"?attack.ShotSpeed:
+            GroundVehicleAimPolicy.PlayerProjectileSpeed(turret,attack.ShotSpeed);
+        return vehicles.TryBeginAttack(entityKey,true,aim.AimTicks);
+    }
+
+    private bool ScheduleTransporterBatch(ulong entityKey,int batch,bool firstReal)
+    {
+        if(batch is <1 or >64||!activeArmyEntities.TryGetValue(entityKey,out var army)||
+           army.UnitId!="ID_UNIT-TRANSPORTER"||!vehicleShotTargets.TryGetValue(entityKey,out var target)||
+           !transporterShotStats.TryGetValue(entityKey,out var stats)||groundVehicleWeapons==null)
+            throw new InvalidDataException("Transporter batch lost source authority.");
+        var weapons=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary").Weapons;
+        if(weapons.Count!=2)throw new InvalidDataException("Transporter batch lacks two source weapons.");
+        if(PendingProjectileCount>MaximumProjectiles-batch)return true;
+        foreach(var shot in TransporterVolleyPlanner.Plan(batch,weapons[0].Cadence,weapons[1].Cadence,
+            stats.ProbabilityOfRealShot,firstReal,NextArmyFloat))
+            scheduledTransporterShots.Add(new(entityKey,target.Owner,target.Target,target.Position,shot.WeaponIndex,
+                checked(tick+(ulong)shot.TickOffset),shot.Real));
+        return true;
+    }
+
+    private void AdvanceTransporterShots()
+    {
+        if(scheduledTransporterShots.Count==0)return;
+        foreach(var shot in scheduledTransporterShots.Where(x=>x.LaunchTick<=tick)
+            .OrderBy(x=>x.LaunchTick).ThenBy(x=>x.WeaponIndex).ToArray())
+        {
+            scheduledTransporterShots.Remove(shot);
+            if(!activeArmyEntities.TryGetValue(shot.VehicleId,out var army)||vehicles==null||
+               !vehicles.TryGet(shot.VehicleId,out var vehicle)||vehicle==null||groundVehicleWeapons==null||
+               !HasArmyCombatView||!groundVehicleFacing.TryGetValue(shot.VehicleId,out _))continue;
+            var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary").Weapons[shot.WeaponIndex];
+            Vector3 origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",shot.WeaponIndex,
+                vehicle.Position,shot.TargetPosition-vehicle.Position);
+            if(projectileId==ulong.MaxValue)throw new InvalidDataException("Transporter projectile identity exhausted.");
+            ulong id=++projectileId;
+            if(EventCapacityForShot())
+            {
+                Emit(MatchEventKind.Shot,shot.Owner,shot.Target,id,origin,0,
+                    shot.Real?"transporter":"transporter-fake");stateRevision++;
+                if(shot.Real&&PendingProjectileCount<MaximumProjectiles)
+                {
+                    float speed=groundVehicleShotSpeed.TryGetValue(shot.VehicleId,out float selected)?selected:
+                        transporterShotStats[shot.VehicleId].ShotSpeed;
+                    vehicleProjectiles.Add(id,new VehicleProjectileFlight(id,shot.VehicleId,origin,
+                        shot.TargetPosition,speed,tick,(from,direction,range)=>
+                            TraceArmyVisibility(shot.Owner,from,direction,range)));
+                }
+            }
+        }
+    }
+
+    private void ApplyGroundVehiclePlayerHit(
+        ulong vehicleId, string ownerPlayerId, string victimPlayerId, float damage)
+    {
+        Player owner = Find(ownerPlayerId) ??
+            throw new InvalidDataException("Vehicle projectile owner disappeared.");
+        Player victim = Find(victimPlayerId) ??
+            throw new InvalidDataException("Vehicle projectile victim disappeared.");
+        PlayerDamageResult? result = ApplyResolvedPlayerDamage(
+            ownerPlayerId, victimPlayerId,
+            new ResolvedPlayerDamage(damage, CombatDamageType.Shot, HasWeapon: false),
+            damageRoll?.Invoke() ?? 1f, false);
+
+        if (result is { Applied: true } &&
+            owner.Definition.Fraction != victim.Definition.Fraction &&
+            activeArmyEntities.ContainsKey(vehicleId))
+        {
+            MarkArmyRevenge(vehicleId, victimPlayerId);
+        }
+    }
+
+    private Vector3 CurrentPlayerBodyPosition(string playerId,Vector3 origin)
+    {
+        if(!HasArmyCombatView||playerShotTargets==null)
+            throw new InvalidDataException("Vehicle target pose authority disappeared.");
+        var player=Find(playerId)??throw new InvalidDataException("Vehicle target player disappeared.");
+        if (player.IsMoving)
+        {
+            if (rifleCombat?.Pose(playerId).MovingTarget is { } moving)
+            {
+                return moving.Position;
+            }
+
+            if (grenadeCombat != null)
+            {
+                int movingId = playerShotTargets.Gameplay.Single(row => row.Type == 16).TransformFileId;
+                return GrenadePlayerShotTarget(playerId, movingId);
+            }
+        }
+
+        var body=playerShotTargets.Nearest(1,origin,
+            row => ArmyBodyShotTarget(playerId, row.TransformFileId));
+        return ArmyBodyShotTarget(playerId, body.TransformFileId);
+    }
+
+    private DroneTargetDetails? VisibleVehicleTurretTarget(string targetId, Vector3 sightOrigin)
+    {
+        var candidate = DroneTargetSnapshot().FirstOrDefault(row =>
+            row.Id == targetId && row.Alive && row.Visible);
+        if (candidate == null || !HasArmyCombatView)
+        {
+            return null;
+        }
+
+        var details = ResolveDroneShotTarget(candidate);
+        var firstTarget = details.Targets.FirstOrDefault(row =>
+            (row.Type & 0xFFFFFB) == row.Type);
+        if (firstTarget == null)
+        {
+            return null;
+        }
+
+        var sightRay = HelicopterTurretSightRay.ForAimedShot(
+            sightOrigin, firstTarget.Position);
+        return HelicopterVisibilityRay(sightRay) ? details : null;
+    }
+
+    private Vector3? SelectCannonPlayerTarget(
+        DroneTargetDetails details, Vector3 turretPosition)
+    {
+        // Tank and Buggy cannon prefabs both serialize playerShieldProbability as 1.
+        const float CannonShieldProbability = 1f;
+        var selected = HelicopterTurretShotTargetPolicy.Select(
+            turretPosition, details, CannonShieldProbability, NextArmyFloat);
+        return selected?.Position;
+    }
+
+    private (Vector3 Position,GroundVehicleAim Aim,ulong EntityId,string Owner)?
+        SelectCannonDecoy(int ownerFraction,Vector3 vehiclePosition,
+            Vector3 facing,GroundVehicleTurret turret,out bool decoyPresent)
+    {
+        var opposing=decoys.Snapshot().Where(decoy=>decoy.OwnerFraction!=ownerFraction)
+            .OrderBy(decoy=>decoy.EntityId).ToArray();
+        decoyPresent=opposing.Length>0;
+        if(!decoyPresent)return null;
+        int index=armyChoice(opposing.Length);
+        if(index<0||index>=opposing.Length)
+            throw new InvalidDataException("Army random selector returned an invalid cannon Decoy target.");
+        var selected=opposing[index];
+        float yaw=MathF.Atan2(selected.Facing.X,selected.Facing.Z);
+        Vector3 position=selected.Position+Vector3.Transform(
+            (decoySource??throw new InvalidDataException("Cannon Decoy target source disappeared."))
+                .Prefab.TargetLocalPosition,Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
+        try
+        {
+            var aim=GroundVehicleAimPolicy.Resolve(vehiclePosition,facing,position,
+                turret.MaxShotRotation,turret.AimTime);
+            return (position,aim,selected.EntityId,selected.OwnerPlayerId);
+        }
+        catch(InvalidDataException){return null;}
+    }
+
+    private void AdvanceTankCannon(ulong entityKey)
+    {
+        if(!tankCannonAttacks.TryGetValue(entityKey,out var attack)||vehicles==null||!HasArmyCombatView||
+           playerShotTargets==null||groundVehicleWeapons==null||!activeArmyEntities.TryGetValue(entityKey,out var army)||
+           !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+           !groundVehicleFacing.TryGetValue(entityKey,out var facing))return;
+        if(!PassengerActive(entityKey,"cannon"))return;
+        var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
+        if(attack.Phase==ArmyAirAttackPhase.Ready)
+        {
+            var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Tank owner disappeared.");
+            var opponent=players.Single(p=>p!=owner);if(!opponent.Admitted||opponent.Dead)return;
+            var decoy=SelectCannonDecoy(owner.Definition.Fraction,vehicle.Position,facing,turret,
+                out bool decoyPresent);
+            if(decoyPresent&&decoy==null)return;
+            Vector3 target=decoy?.Position??CurrentPlayerBodyPosition(opponent.Definition.PlayerId,vehicle.Position);
+            GroundVehicleAim aim;
+            if(decoy!=null)aim=decoy.Value.Aim;
+            else try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
+                turret.MaxShotRotation,turret.AimTime);}catch(InvalidDataException){return;}
+            var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,aim.Direction);
+            var delta=target-muzzle;float range=delta.Length();if(!float.IsFinite(range)||range<.001f)return;
+            if (decoy == null && turret.NeedToSeePrimaryTarget)
+            {
+                var visible = TraceArmyVisibility(army.OwnerPlayerId, muzzle, delta / range, range + .05f);
+                if (visible?.PlayerId != opponent.Definition.PlayerId &&
+                    visible?.DynamicOwner != opponent.Definition.PlayerId)
+                {
+                    return;
+                }
+            }
+            tankCannonTargets[entityKey]=(army.OwnerPlayerId,decoy?.Owner??opponent.Definition.PlayerId,
+                target,decoy?.EntityId);
+            attack.TryBegin(true,aim.AimTicks);
+        }
+        attack.AdvanceTick();
+        if(attack.ShotDue){LaunchTankMissile(entityKey,attack);attack.CommitShot();}
+    }
+
+    private void LaunchTankMissile(ulong entityKey,VehicleAttackState attack)
+    {
+        if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot()||vehicles==null||!HasArmyCombatView||
+           groundVehicleWeapons==null||!vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+           !activeArmyEntities.TryGetValue(entityKey,out var army)||!tankCannonTargets.TryGetValue(entityKey,out var target)||
+           !tankCannonDamage.TryGetValue(entityKey,out float damage))return;
+        var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon").Weapons.Single();
+        var binding=weapon.Missile??throw new InvalidDataException("Tank cannon lacks missile binding.");
+        Vector3 origin = groundVehicleWeapons.RestMuzzleOrigin(
+            army.UnitId, "cannon", 0, vehicle.Position, target.Position - vehicle.Position);
+        string targetId = target.DecoyId is ulong decoyId
+            ? "decoy:" + decoyId.ToString(CultureInfo.InvariantCulture)
+            : "player:" + target.Target;
+        var visibleTarget = VisibleVehicleTurretTarget(targetId, origin);
+        if (visibleTarget == null)
+        {
+            return;
+        }
+        Vector3? selectedPosition = target.DecoyId != null
+            ? target.Position
+            : SelectCannonPlayerTarget(visibleTarget, vehicle.Position);
+        if (selectedPosition == null)
+        {
+            return;
+        }
+        Vector3 position = selectedPosition.Value;
+        if(projectileId==ulong.MaxValue)throw new InvalidDataException("Tank projectile identity exhausted.");
+        ulong id=++projectileId;
+        var flight=new TankMissileFlight(id,entityKey,binding,origin,()=>position,tick,
+            (from,direction,range)=>TraceArmyVisibility(target.Owner,from,direction,range));
+        tankProjectiles.Add(id,new(flight,target.Owner,target.Target,damage,binding));
+        Emit(MatchEventKind.Shot,target.Owner,target.Target,id,origin,0,"tank-cannon");stateRevision++;
+    }
+
+    private void AdvanceTankProjectiles()
+    {
+        foreach(var pair in tankProjectiles.ToArray())
+        {
+            TankMissileImpact? impact;
+            try {impact=pair.Value.Flight.Advance(tick);}
+            catch(Exception e) when(e is InvalidDataException or InvalidOperationException)
+            {End("invalid-tank-projectile-authority","",false);return;}
+            if(pair.Value.Flight.Finished)tankProjectiles.Remove(pair.Key);
+            if(impact!=null)
+            {
+                Emit(MatchEventKind.Impact,pair.Value.Owner,impact.Collision?.PlayerId??"",
+                    impact.ProjectileId,impact.Position,0,"tank-cannon");stateRevision++;
+                try
+                {
+                    ApplyGroundVehicleMissileExplosion(new VehicleMissileBlast(
+                        impact.VehicleId, pair.Value.Owner, "ID_UNIT-TANK", pair.Value.Damage,
+                        pair.Value.Binding, impact.Position, impact.ProjectileId));
+                }
+                catch (InvalidDataException)
+                {
+                    End("invalid-combat-authority", "", false);
+                    return;
+                }
+                if(Terminal)return;
+            }
+        }
+    }
+
+    private void AdvanceBuggyCannon(ulong entityKey)
+    {
+        if(!buggyCannonAttacks.TryGetValue(entityKey,out var attack)||vehicles==null||!HasArmyCombatView||
+           playerShotTargets==null||groundVehicleWeapons==null||
+           !activeArmyEntities.TryGetValue(entityKey,out var army)||
+           !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+           !groundVehicleFacing.TryGetValue(entityKey,out var facing))return;
+        var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
+        if(!PassengerActive(entityKey,"co-driver"))return;
+        if(attack.Phase==ArmyAirAttackPhase.Ready)
+        {
+            var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Buggy owner disappeared.");
+            var opponent=players.Single(p=>p!=owner);if(!opponent.Admitted||opponent.Dead)return;
+            var decoy=SelectCannonDecoy(owner.Definition.Fraction,vehicle.Position,facing,turret,
+                out bool decoyPresent);
+            if(decoyPresent&&decoy==null)return;
+            Vector3 target=decoy?.Position??
+                CurrentPlayerBodyPosition(opponent.Definition.PlayerId,vehicle.Position);
+            GroundVehicleAim aim;
+            if(decoy!=null)aim=decoy.Value.Aim;
+            else try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
+                turret.MaxShotRotation,turret.AimTime);}catch(InvalidDataException){return;}
+            var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,aim.Direction);
+            var delta=target-muzzle;float range=delta.Length();if(!float.IsFinite(range)||range<.001f)return;
+            if (decoy == null && turret.NeedToSeePrimaryTarget)
+            {
+                var visible = TraceArmyVisibility(army.OwnerPlayerId, muzzle, delta / range, range + .05f);
+                if (visible?.PlayerId != opponent.Definition.PlayerId &&
+                    visible?.DynamicOwner != opponent.Definition.PlayerId)
+                {
+                    return;
+                }
+            }
+            buggyCannonTargets[entityKey]=(army.OwnerPlayerId,decoy?.Owner??opponent.Definition.PlayerId,
+                target,decoy?.EntityId);
+            attack.TryBegin(aim.AimTicks);
+        }
+        attack.AdvanceTick();
+        if(attack.PrimaryDue){LaunchBuggyMissile(entityKey,0,attack);attack.CommitPrimary();}
+        if(attack.SecondaryDue){LaunchBuggyMissile(entityKey,1,attack);attack.CommitSecondary();}
+    }
+
+    private void LaunchBuggyMissile(ulong entityKey,int weaponIndex,BuggyCannonAttackState attack)
+    {
+        if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot()||vehicles==null||
+           !HasArmyCombatView||groundVehicleWeapons==null||
+           !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+           !activeArmyEntities.TryGetValue(entityKey,out var army)||
+           !buggyCannonTargets.TryGetValue(entityKey,out var target))return;
+        var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon").Weapons[weaponIndex];
+        var binding=weapon.Missile??throw new InvalidDataException("Buggy cannon lacks missile binding.");
+        Vector3 origin = groundVehicleWeapons.RestMuzzleOrigin(
+            army.UnitId, "cannon", weaponIndex, vehicle.Position,
+            target.Position - vehicle.Position);
+        string targetId = target.DecoyId is ulong decoyId
+            ? "decoy:" + decoyId.ToString(CultureInfo.InvariantCulture)
+            : "player:" + target.Target;
+        var visibleTarget = VisibleVehicleTurretTarget(targetId, origin);
+        if (visibleTarget == null)
+        {
+            return;
+        }
+        Vector3? selectedPosition = target.DecoyId != null
+            ? target.Position
+            : SelectCannonPlayerTarget(visibleTarget, vehicle.Position);
+        if (selectedPosition == null)
+        {
+            return;
+        }
+        Vector3 position = selectedPosition.Value;
+        if(projectileId==ulong.MaxValue)throw new InvalidDataException("Buggy projectile identity exhausted.");
+        ulong id=++projectileId;int sign=buggyCurveCounter++%2==0?-1:1;
+        var flight=new BuggyMissileFlight(id,entityKey,binding,
+            armyVehicleShots[entityKey].ShotSpeed,origin,position,tick,NextArmyFloat(),NextArmyFloat(),sign,
+            (from,direction,range)=>TraceArmyVisibility(target.Owner,from,direction,range));
+        buggyProjectiles.Add(id,new(flight,target.Owner,target.Target,attack.DamagePerMissile,binding));
+        Emit(MatchEventKind.Shot,target.Owner,target.Target,id,origin,0,"buggy-cannon");stateRevision++;
+    }
+
+    private void AdvanceBuggyProjectiles()
+    {
+        foreach(var pair in buggyProjectiles.ToArray())
+        {
+            BuggyMissileImpact? impact;
+            try {impact=pair.Value.Flight.Advance(tick);}
+            catch(Exception e) when(e is InvalidDataException or InvalidOperationException)
+            {End("invalid-buggy-projectile-authority","",false);return;}
+            if(pair.Value.Flight.Finished)buggyProjectiles.Remove(pair.Key);
+            if(impact!=null)
+            {
+                Emit(MatchEventKind.Impact,pair.Value.Owner,impact.Collision?.PlayerId??"",
+                    impact.ProjectileId,impact.Position,0,"buggy-cannon");stateRevision++;
+                try {ApplyBuggyExplosion(pair.Value,impact);}
+                catch(InvalidDataException){End("invalid-combat-authority","",false);return;}
+                if(Terminal)return;
+            }
+        }
+    }
+
+    private void ApplyBuggyExplosion(BuggyProjectile projectile, BuggyMissileImpact impact)
+    {
+        ApplyGroundVehicleMissileExplosion(new VehicleMissileBlast(
+            impact.VehicleId, projectile.Owner, "ID_UNIT-BUGGY", projectile.Damage,
+            projectile.Binding, impact.Position, impact.ProjectileId));
+    }
+
+    private sealed record VehicleMissileBlast(
+        ulong SourceEntityKey,
+        string OwnerPlayerId,
+        string UnitId,
+        float Damage,
+        GroundVehicleMissileBinding Binding,
+        Vector3 Position,
+        ulong ProjectileId);
+
+    private void ApplyGroundVehicleMissileExplosion(VehicleMissileBlast blast)
+    {
+        string owner = blast.OwnerPlayerId;
+        string unitId = blast.UnitId;
+        float damage = blast.Damage;
+        GroundVehicleMissileBinding binding = blast.Binding;
+        Vector3 position = blast.Position;
+        ulong projectileId = blast.ProjectileId;
+        if(!HasArmyCombatView||damageRoll==null||armyCatalog==null)
+            throw new InvalidDataException("Missing vehicle explosion authority.");
+        if (activeArmyEntities.TryGetValue(blast.SourceEntityKey, out var sourceVehicle) &&
+            (sourceVehicle.OwnerPlayerId != owner || sourceVehicle.UnitId != unitId))
+        {
+            throw new InvalidDataException("Vehicle blast differs from its live source entity.");
+        }
+        var attacker=Find(owner)??throw new InvalidDataException("Vehicle owner disappeared.");
+        var policy=armyCatalog.PlayerDamagePolicy(unitId);
+        bool shieldBetween=false;
+        IReadOnlyList<MapDynamicCollider> overlaps=Array.Empty<MapDynamicCollider>();
+        if(map!=null)
+        {
+            Func<int,bool>? enabled=barrels==null?null:index=>barrels.ColliderEnabled(index);
+            Func<int,int,int>? layer=barrels==null?null:(index,source)=>barrels.RuntimeLayer(index,source);
+            overlaps=map.DynamicSphereOverlaps(position,binding.HurtRadius,
+                uint.MaxValue,enabled,layer);
+            shieldBetween=shields!=null&&overlaps.Any(x=>shields.IsLiveShield(x.DynamicOwner));
+        }
+        foreach(var collider in overlaps)
+        {
+            var hit=BuggyExplosion.ResolveDynamic(position,collider,damage,binding);
+            if(shields!=null&&shields.IsLiveShield(collider.DynamicOwner))
+            {
+                var shield=shields.ApplyUnitExplosion(collider.DynamicOwner,attacker.Definition.Fraction,
+                    hit.RawDamage,tick);
+                if(shield!=null)
+                {
+                    stateRevision++;
+                    EmitShield(shield.Destroyed?MatchEventKind.ShieldDestroyed:
+                        MatchEventKind.ShieldDamaged,owner,shield,projectileId);
+                }
+            }
+            else if(barrels?.Contains(collider.ColliderIndex)==true)
+            {
+                ApplyBarrelDamage(owner,projectileId,collider.ColliderIndex,hit.RawDamage,
+                    hit.Kind==CombatDamageType.Explosion?BarrelChainCause.Explosion:BarrelChainCause.Shiver);
+                if(Terminal)return;
+            }
+        }
+        ApplyGroundVehicleMissileInfantryExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissileAssaultGlassExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissileAirBodyExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissileRepairDroneExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissileDecoyExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissileHeavyTurretExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissilePassengerExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissileVehicleExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        foreach(var victim in players.Where(x=>!x.Dead).ToArray())
+        {
+            float roll=damageRoll();
+            var effect=BuggyExplosion.ResolvePlayer(position,
+                ArmyPlayerCollision(victim.Definition.PlayerId),victim.Position,
+                CombatFor(victim),victim.Health,damage,binding,policy,
+                shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,
+                attacker==victim,roll);
+            if(effect==null)continue;
+            var result = ApplyResolvedPlayerDamage(owner, victim.Definition.PlayerId,
+                new ResolvedPlayerDamage(effect.RawDamage,effect.Kind,HasWeapon:true,FriendKill:true,
+                    PlayerCoefficient:policy.PlayerDamageRatio,
+                    PlayerOvertimeCoefficient:policy.OvertimePlayerDamageRatio,Overtime:overtime),
+                roll,attacker!=victim&&attacker.Definition.Fraction!=victim.Definition.Fraction);
+            if (result is { Applied: true } &&
+                attacker.Definition.Fraction != victim.Definition.Fraction &&
+                activeArmyEntities.ContainsKey(blast.SourceEntityKey))
+            {
+                MarkArmyRevenge(blast.SourceEntityKey, victim.Definition.PlayerId);
+            }
+            if(Terminal)return;
+        }
+    }
+
+    private void InitializeGroundVehicle(ulong entityKey,ArmyDeploymentFamily family,
+        ArmySpawnPoint point)
+    {
+        if(family.IsAir||family.IsSoldier||point.VehicleRoute==null||vehicles==null||
+           !activeArmyEntities.TryGetValue(entityKey,out var army))return;
+        float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
+        var entity=new VehicleEntity(entityKey,army.UnitId,army.OwnerPlayerId,1)
+            {Position=new(army.X,army.Y,army.Z)};
+        var primary=groundVehicleWeapons?.For(army.UnitId).Roles.Single(r=>r.Role=="primary")??
+            throw new InvalidDataException("Ground vehicle lacks its pinned primary turret.");
+        if(!vehicles.TrySpawn(entity) || !armyVehicleShots.TryGetValue(entityKey,out var vehicleShot) ||
+           !vehicles.TryBindAttack(entityKey,vehicleShot,primary.Weapons[0].Cadence) ||
+           !vehicles.BeginInitialAttackCooldown(entityKey) ||
+           armyVitality.TryGetValue(entityKey,out var vitality)&&
+               !vehicles.TryBindHealth(entityKey,vitality.Maximum))
+            throw new InvalidDataException("Ground vehicle registry initialization failed.");
+        if(army.UnitId=="ID_UNIT-TRANSPORTER")transporterShotStats.Add(entityKey,vehicleShot);
+        vehicleRouteMotions.Add(entityKey,new ArmyVehicleRouteMotion(entity.Position,point.VehicleRoute,speed));
+        var first=point.VehicleRoute.Positions.FirstOrDefault(p=>
+            new Vector2(p.X-entity.Position.X,p.Z-entity.Position.Z).LengthSquared()>1e-8f);
+        var facing=new Vector3(first.X-entity.Position.X,0,first.Z-entity.Position.Z);
+        if(facing.LengthSquared()<1e-8f)
+            throw new InvalidDataException("Ground vehicle route has no initial facing.");
+        groundVehicleFacing.Add(entityKey,Vector3.Normalize(facing));
+        var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Vehicle owner disappeared.");
+        int slot=Array.IndexOf(owner.Definition.EquippedArmyUnitIds!,army.UnitId);
+        if(slot<0||owner.Definition.ArmyNormalUpgradeIndexes==null)
+            throw new InvalidDataException("Vehicle passenger lacks trusted upgrades.");
+        int specialValue=owner.Definition.ArmySpecialUpgradeIndexes?[slot]??-1;
+        int eliteValue=owner.Definition.ArmyEliteUpgradeIndexes?[slot]??-1;
+        int? special=specialValue>=0?specialValue:null;
+        int? elite=eliteValue>=0?eliteValue:null;
+        if(army.UnitId=="ID_UNIT-BUGGY")
+        {
+            var cannon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
+            var state=new BuggyCannonAttackState(armyCatalog!.ComposeBuggyCannon(
+                owner.Definition.ArmyNormalUpgradeIndexes[slot],special,elite),cannon.SecondaryDelay);
+            if(!state.BeginInitialCooldown())throw new InvalidDataException("Buggy cannon cooldown failed.");
+            buggyCannonAttacks.Add(entityKey,state);
+        }
+        else if(army.UnitId=="ID_UNIT-TANK")
+        {
+            var cannon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
+            var binding=cannon.Weapons.Single().Missile??
+                throw new InvalidDataException("Tank cannon lacks its source missile.");
+            float damageScale=owner.Definition.ArmyDamageScales?[slot]??1f;
+            var stats=armyCatalog!.ComposeVehicleCannon(army.UnitId,
+                owner.Definition.ArmyNormalUpgradeIndexes[slot],special,elite,damageScale,special.HasValue?.7f:1f);
+            var state=new VehicleAttackState(new(binding.Speed,1,1,1,stats.MinShootTime,stats.MaxShootTime,0),
+                cannon.Weapons.Single().Cadence,NextArmyFloat);
+            if(!state.BeginInitialCooldown())throw new InvalidDataException("Tank cannon cooldown failed.");
+            tankCannonAttacks.Add(entityKey,state);tankCannonDamage.Add(entityKey,stats.Damage);
+        }
+        var rig=groundVehicleWeapons.For(army.UnitId);
+        int normal=owner.Definition.ArmyNormalUpgradeIndexes?[slot]??
+            throw new InvalidDataException("Vehicle passenger lacks trusted upgrade authority.");
+        float scale=owner.Definition.ArmyHealthFactors is { } factors?factors[slot].UpgradeScale:1f;
+        float passengerHealth=armyCatalog!.VehiclePassengerMaximumHealth(army.UnitId,normal,scale);
+        int respawnTicks=armyCatalog.VehiclePassengerRespawnTicks(army.UnitId);
+        vehiclePassengers.Add(entityKey,rig.Passengers.ToDictionary(x=>x.Role,
+            x=>new VehiclePassengerState(x,passengerHealth,respawnTicks,tick),StringComparer.Ordinal));
+        if(army.UnitId=="ID_UNIT-TRANSPORTER"&&special.HasValue)
+        {
+            var repairFactors=owner.Definition.ArmyHealthFactors?[slot]??
+                throw new InvalidDataException("Transporter repair drones lack trusted health factors.");
+            var stats=armyCatalog.ComposeTransporterRepairDrone(normal,special.Value,elite,repairFactors);
+            transporterRepairDrones.Add(entityKey,rig.RepairDronePaths.Select((path,index)=>
+                new TransporterRepairDroneState(index,path,groundVehicleWeapons!.RepairDronePrefab,stats,
+                    entity.Position,groundVehicleFacing[entityKey],tick)).ToArray());
+        }
+    }
+
+    private void AdvanceGroundVehicleRoutes()
+    {
+        if(vehicles==null)throw new InvalidDataException("Ground vehicle route lacks its registry.");
+        foreach(var (key,motion) in vehicleRouteMotions.OrderBy(x=>x.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army)||
+               !vehicles.TryGet(key,out var vehicle)||vehicle==null||vehicle.OwnerPlayerId!=army.OwnerPlayerId)
+                throw new InvalidDataException("Ground vehicle route lost its host entity.");
+            if(army.UnitId=="ID_UNIT-BUGGY"&&!PassengerActive(key,"driver"))continue;
+            Vector3 before=motion.Position;motion.AdvanceTick();
+            groundVehicleVelocities[key]=(motion.Position-before)*MatchManifest.TickRate;
+            float speed=ArmySpeed(key)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
+            if(!vehicles.TryMove(key,motion.Position,speed))
+                throw new InvalidDataException("Ground vehicle route move failed.");
+            army.X=motion.Position.X;army.Y=motion.Position.Y;army.Z=motion.Position.Z;
+            army.PositionTick=tick;
+            if(before!=motion.Position)
+            {
+                var delta=motion.Position-before;delta.Y=0;
+                if(delta.LengthSquared()>1e-10f)groundVehicleFacing[key]=Vector3.Normalize(delta);
+                armyEntityRevision++;stateRevision++;
+            }
+            if(motion.Arrived)vehicleRouteMotions.Remove(key);
+        }
+    }
+
+    private void AdvanceTransporterRepairDrones()
+    {
+        if(vehicles==null)throw new InvalidDataException("Transporter repair drones lack vehicle authority.");
+        foreach(var (entityKey,drones) in transporterRepairDrones.OrderBy(x=>x.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(entityKey,out var army)||
+               !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+               !groundVehicleFacing.TryGetValue(entityKey,out var facing))
+                throw new InvalidDataException("Transporter repair drone lost its vehicle.");
+            foreach(var drone in drones)
+            {
+                bool active=drone.Active;
+                var advance=drone.Advance(vehicle.Position,facing,tick,NextArmyFloat,(center,size,rotation)=>
+                    map?.BoxOverlaps(center,size,rotation,uint.MaxValue,
+                        owner=>shields?.Contains(owner)!=true||shields.IsLiveShield(owner),
+                        barrels==null?null:index=>barrels.ColliderEnabled(index),
+                        barrels==null?null:(index,source)=>barrels.RuntimeLayer(index,source))==true);
+                float ratio=advance.HealRatio;
+                if(advance.Crashed)
+                {
+                    ApplyTransporterRepairDroneExplosion(army.OwnerPlayerId,entityKey,drone);
+                    stateRevision++;
+                    Emit(MatchEventKind.VehicleRepairDroneExploded,army.OwnerPlayerId,"",entityKey,
+                        drone.Position,0,"vehicle-repair-drone-exploded:"+drone.PathIndex);
+                    if(Terminal)return;
+                }
+                if(active!=drone.Active)
+                {
+                    stateRevision++;
+                    if(drone.Active)Emit(MatchEventKind.VehicleRepairDroneRespawned,army.OwnerPlayerId,"",
+                        entityKey,drone.Position,drone.Health,"vehicle-repair-drone-respawn:"+drone.PathIndex);
+                }
+                if(ratio<=0)continue;
+                if(!armyVitality.TryGetValue(entityKey,out var vitality))
+                    throw new InvalidDataException("Transporter repair target lacks vitality.");
+                float amount=vitality.Maximum*ratio;
+                float before=vitality.Current;vitality.Current=Math.Min(vitality.Maximum,vitality.Current+amount);
+                float applied=vitality.Current-before;
+                if(!vehicles.TryHeal(entityKey,amount,out float registryApplied)||Math.Abs(applied-registryApplied)>.001f)
+                    throw new InvalidDataException("Transporter repair diverged from vehicle health.");
+                if(applied>0)
+                {
+                    army.Health=vitality.Current;armyEntityRevision++;stateRevision++;
+                }
+            }
+        }
+    }
+
+    private void ApplyTransporterRepairDroneExplosion(string ownerId,ulong vehicleId,
+        TransporterRepairDroneState drone)
+    {
+        if(!HasArmyCombatView||damageRoll==null||groundVehicleWeapons==null||explosionPolicy==null)
+            throw new InvalidDataException("Missing repair-drone explosion authority.");
+        var attacker=Find(ownerId)??throw new InvalidDataException("Repair-drone owner disappeared.");
+        var binding=groundVehicleWeapons.RepairDronePrefab;
+        float full=drone.MaximumHealth*binding.ExplosionDamageRatio;
+        float minimum=drone.MaximumHealth*binding.SplashDamageRatio;
+        float Damage(float distance,out CombatDamageType kind)
+        {
+            if(distance<binding.DeadRadius){kind=CombatDamageType.Explosion;return full;}
+            kind=CombatDamageType.Shiver;
+            float fraction=Math.Clamp(1-(distance-binding.DeadRadius)/
+                (binding.HurtRadius-binding.DeadRadius),0,1);
+            return minimum+(full-minimum)*fraction*fraction;
+        }
+        IReadOnlyList<MapDynamicCollider> overlaps=Array.Empty<MapDynamicCollider>();
+        if(map!=null)
+        {
+            Func<int,bool>? enabled=barrels==null?null:index=>barrels.ColliderEnabled(index);
+            Func<int,int,int>? layer=barrels==null?null:(index,source)=>barrels.RuntimeLayer(index,source);
+            overlaps=map.DynamicSphereOverlaps(drone.Position,binding.HurtRadius,uint.MaxValue,enabled,layer);
+        }
+        foreach(var collider in overlaps)
+        {
+            float amount=Damage(Vector3.Distance(collider.TransformPosition,drone.Position),out var kind);
+            if(shields!=null&&shields.IsLiveShield(collider.DynamicOwner))
+            {
+                var shield=shields.ApplyUnitExplosion(collider.DynamicOwner,attacker.Definition.Fraction,amount,tick);
+                if(shield!=null){stateRevision++;EmitShield(shield.Destroyed?MatchEventKind.ShieldDestroyed:
+                    MatchEventKind.ShieldDamaged,ownerId,shield,vehicleId);}
+            }
+            else if(barrels?.Contains(collider.ColliderIndex)==true)
+            {
+                ApplyBarrelDamage(ownerId,vehicleId,collider.ColliderIndex,amount,
+                    kind==CombatDamageType.Explosion?BarrelChainCause.Explosion:BarrelChainCause.Shiver);
+                if(Terminal)return;
+            }
+        }
+        foreach(var victim in players.Where(x=>!x.Dead).ToArray())
+        {
+            var parts=ArmyPlayerCollision(victim.Definition.PlayerId).Parts
+                .Where(p=>p.OverlapsSphere(drone.Position,binding.HurtRadius))
+                .OrderBy(p=>p.DistanceToPoint(drone.Position)).ThenBy(p=>p.SourcePath,StringComparer.Ordinal).ToArray();
+            if(parts.Length==0)continue;
+            float amount=Damage(Vector3.Distance(parts[0].TransformPosition,drone.Position),out var kind);
+            _=ApplyResolvedPlayerDamage(ownerId,victim.Definition.PlayerId,
+                new ResolvedPlayerDamage(amount,kind,HasWeapon:false,FriendKill:true,
+                    ExplosiveCoefficient:1,ExplosiveOvertimeCoefficient:1,Overtime:overtime),
+                damageRoll(),attacker!=victim&&attacker.Definition.Fraction!=victim.Definition.Fraction);
+            if(Terminal)return;
+        }
+        if(vehicles!=null)
+            foreach(var target in vehicles.Snapshot().OrderBy(x=>x.EntityId).ToArray())
+            {
+                if(!activeArmyEntities.ContainsKey(target.EntityId)||
+                   !groundVehicleFacing.TryGetValue(target.EntityId,out var facing))continue;
+                var targetOwner=Find(target.OwnerPlayerId)??throw new InvalidDataException(
+                    "Repair-drone explosion vehicle owner disappeared.");
+                var parts=groundVehicleWeapons.PlaceBody(target.UnitId,target.EntityId,target.Position,facing,
+                        targetOwner.Definition.Fraction)
+                    .Where(x=>x.Hitbox.OverlapsSphere(drone.Position,binding.HurtRadius))
+                    .OrderBy(x=>x.Hitbox.DistanceToPoint(drone.Position))
+                    .ThenBy(x=>x.PartComponentFileId).ToArray();
+                if(parts.Length==0)continue;
+                float amount=Damage(Vector3.Distance(parts[0].Hitbox.TransformPosition,drone.Position),out _);
+                if(targetOwner.Definition.Fraction==attacker.Definition.Fraction)
+                    amount*=explosionPolicy.Friendly;
+                float before=ArmyHealth(target.EntityId)??
+                    throw new InvalidDataException("Repair-drone explosion vehicle lacks shared vitality.");
+                if(!ApplyArmyHostDamage(target.EntityId,amount))continue;
+                if(activeArmyEntities.ContainsKey(target.EntityId))
+                {
+                    float after=ArmyHealth(target.EntityId)??
+                        throw new InvalidDataException("Repair-drone explosion lost surviving vehicle vitality.");
+                    float applied=before-after;
+                    if(applied>0&&(!vehicles.TryDamage(target.EntityId,applied,out float registryApplied,out bool destroyed)||
+                       destroyed||Math.Abs(applied-registryApplied)>.001f))
+                        throw new InvalidDataException("Repair-drone explosion diverged from vehicle health.");
+                }
+            }
+        ApplyTransporterRepairDroneInfantryExplosion(ownerId,drone.Position,drone.MaximumHealth);
+        if(transporterRepairDrones.TryGetValue(vehicleId,out var siblings))
+            foreach(var sibling in siblings.Where(x=>x!=drone&&x.Active).ToArray())
+            {
+                var hitbox=groundVehicleWeapons.PlaceRepairDrone(vehicleId,sibling.PathIndex,23,sibling.Snapshot()).Hitbox;
+                if(!hitbox.OverlapsSphere(drone.Position,binding.HurtRadius))continue;
+                float amount=Damage(Vector3.Distance(sibling.Position,drone.Position),out _)*
+                    explosionPolicy.Friendly;
+                bool wasActive=sibling.Active;
+                if(sibling.ApplyDamage(amount,tick,NextArmyFloat)&&wasActive&&!sibling.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,ownerId,"",vehicleId,sibling.Position,0,
+                        "vehicle-repair-drone-down:"+sibling.PathIndex);
+            }
+    }
+
+    private void InitializeRusherMotionCandidate(ulong entityKey,string unitId)
+    {
+        if(!rusherSlotByEntity.ContainsKey(entityKey))return;
+        float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(unitId,1f);
+        if(unitId=="ID_UNIT-WARPER")
+        {
+            StartWarperRelocation(entityKey,false);
+            return;
+        }
+        var route=RusherWalkingRoute(entityKey);
+        if(route is not {PlanarCovered:true})return;
+        var state=new ArmyRusherArrivalState(route,armyCatalog!.InfantryAgent,speed);
+        InitializeRusherCombatState(entityKey,unitId,state);
+    }
+
+    private void InitializeStationaryArmyCombat(ulong entityKey,string unitId)
+    {
+        if (unitId == "ID_UNIT-MORTAR")
+        {
+            InitializeMortarNavigation(entityKey);
+            return;
+        }
+        if (unitId == "ID_UNIT-GRENADIER")
+        {
+            // Its two weapons must already exist before the ordinary spawn observers execute.
+            return;
+        }
+        if (unitId == "ID_UNIT-GUNSLINGER")
+        {
+            InitializeGunslingerNavigation(entityKey);
+            return;
+        }
+        var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
+        if (unitId == "ID_UNIT-ASSAULT")
+        {
+            InitializeAssaulterNavigation(entityKey);
+            return;
+        }
+        if (family.BehaviorType == "SoldierBehaviourSniper")
+        {
+            InitializeNormalSniper(entityKey);
+            return;
+        }
+        if(family.BehaviorType!="SoldierBehaviourMinigunner")return;
+        if(!activeArmyEntities.TryGetValue(entityKey,out var army)||map==null||
+           armyMinigunnerPoints==null||armyNavMeshConnectivity==null)
+            throw new InvalidDataException("Minigunner spawn lacks point-navigation authority.");
+        var point=armyMinigunnerPoints.NearestFree(map,army.OwnerFraction,
+            new(army.X,army.Y,army.Z),null,occupiedMinigunnerPoints.ContainsKey)??
+            throw new InvalidDataException("Minigunner spawn has no free source point.");
+        StartMinigunnerMovement(entityKey,point,null);
+    }
+
+    private void StartMinigunnerAttack(ulong entityKey)
+    {
+        if(!activeArmyEntities.TryGetValue(entityKey,out var army))
+            throw new InvalidDataException("Minigunner attack lacks its host entity.");
+        if(!armyShots.TryGetValue(entityKey,out var shot))
+            throw new InvalidDataException("Minigunner lacks composed shot authority.");
+        int interval=armyWeapons?.CadenceTicks(army.UnitId)??
+            throw new InvalidDataException("Minigunner lacks pinned cadence authority.");
+        var attack=new ArmyRusherAttackState(shot,NextArmyFloat,interval);
+        // SwitchStateToMinigunner schedules Random.Range(2f,4.5f). Later
+        // EndShooting calls the serialized base-shot two-to-five-second timer.
+        attack.BeginInitialCooldown(2f,4.5f);
+        minigunnerAttacks.Add(entityKey,attack);
+        minigunnerPointChangeTicks.Add(entityKey,checked(tick+MinigunnerPointDelayTicks()));
+        rusherShotCounts.TryAdd(entityKey,0);
+    }
+
+    private ulong MinigunnerPointDelayTicks()
+        =>(ulong)MathF.Ceiling((6f+NextArmyFloat()*4f)*MatchManifest.TickRate);
+
+    private void StartMinigunnerMovement(ulong entityKey,ArmyMinigunnerPoint point,int? oldPoint)
+    {
+        if(!activeArmyEntities.TryGetValue(entityKey,out var army)||map==null||
+           armyNavMeshConnectivity==null||point.Fraction!=army.OwnerFraction)
+            throw new InvalidDataException("Minigunner movement lacks its entity, map or faction proof.");
+        var start=new Vector3(army.X,army.Y,army.Z);
+        var route=armyNavMeshConnectivity.PlanCorridor(map,start,point.Position);
+        if(route is not {PlanarCovered:true})
+            throw new InvalidDataException("Minigunner point has no covered host corridor.");
+        float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
+        var movement=new ArmyMinigunnerMovementState(point.ComponentFileId,route,
+            armyCatalog!.InfantryAgent,speed);
+        if(!occupiedMinigunnerPoints.TryAdd(point.ComponentFileId,entityKey))
+            throw new InvalidDataException("Minigunner destination was occupied during transfer.");
+        if(oldPoint.HasValue)
+        {
+            if(!occupiedMinigunnerPoints.TryGetValue(oldPoint.Value,out ulong owner)||owner!=entityKey||
+               !occupiedMinigunnerPoints.Remove(oldPoint.Value))
+            {
+                occupiedMinigunnerPoints.Remove(point.ComponentFileId);
+                throw new InvalidDataException("Minigunner lost its prior point reservation.");
+            }
+        }
+        minigunnerPointByEntity[entityKey]=point.ComponentFileId;
+        minigunnerMovements.Add(entityKey,movement);
+        minigunnerSteering.Add(entityKey,new ArmyRusherLateralSteering(start));
+    }
+
+    private void AdvanceMinigunnerMovements()
+    {
+        var priorPositions=activeArmyEntities.Where(pair=>
+                armyCatalog!.Families.Single(f=>f.UnitId==pair.Value.UnitId).BehaviorType==
+                    "SoldierBehaviourMinigunner")
+            .ToDictionary(pair=>pair.Key,pair=>new Vector3(pair.Value.X,pair.Value.Y,pair.Value.Z));
+        foreach(var (key,movement) in minigunnerMovements.OrderBy(x=>x.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army)||
+               !minigunnerPointByEntity.TryGetValue(key,out int point)||point!=movement.PointFileId||
+               !occupiedMinigunnerPoints.TryGetValue(point,out ulong owner)||owner!=key)
+                throw new InvalidDataException("Minigunner movement lost its reservation proof.");
+            if(!minigunnerSteering.ContainsKey(key))
+                throw new InvalidDataException("Minigunner movement lost its steering proof.");
+            movement.AdvanceTick();
+        }
+        foreach(var (key,movement) in minigunnerMovements.OrderBy(x=>x.Key).ToArray())
+        {
+            var army=activeArmyEntities[key];
+            var peers=priorPositions.Where(pair=>pair.Key!=key&&
+                    activeArmyEntities[pair.Key].OwnerPlayerId==army.OwnerPlayerId)
+                .Select(pair=>(pair.Value,minigunnerMovements.TryGetValue(pair.Key,out var peer)
+                    ?peer.PlanarDirection:Vector2.Zero)).ToArray();
+            var steering=minigunnerSteering[key];
+            steering.Advance(movement.Position,movement.PlanarDirection,peers,(before,next)=>
+                before==next || Vector3.Distance(before,next)<=.07f&&
+                armyNavMeshConnectivity!.Classify(map!,before,next)==ArmyNavMeshConnection.Connected);
+            army.X=steering.Position.X;army.Y=steering.Position.Y;army.Z=steering.Position.Z;
+            army.PositionTick=tick;
+            if (army.SourceCardId.Length > 0)
+                cardUnitCombat?.UpdatePose(army);
+            if(!movement.Arrived || steering.Offset!=Vector2.Zero ||
+               Vector2.Distance(new(army.X,army.Z),new(movement.Destination.X,movement.Destination.Z))>=.04f)
+                continue;
+            army.X=movement.Destination.X;army.Z=movement.Destination.Z;
+            if (army.SourceCardId.Length > 0)
+                cardUnitCombat?.UpdatePose(army);
+            if(!minigunnerMovements.Remove(key)||!minigunnerSteering.Remove(key))
+                throw new InvalidDataException("Minigunner arrival removal failed.");
+            StartMinigunnerAttack(key);
+        }
+    }
+
+    private void InitializeRusherCombatState(ulong entityKey,string unitId,ArmyRusherArrivalState state)
+    {
+        rusherMotionCandidates.Add(entityKey,state);
+        rusherSteering.Add(entityKey,new ArmyRusherLateralSteering(state.Position));
+        rusherRetargetClocks.Add(entityKey,new ArmyRusherRetargetClock());
+        rusherDetours.Add(entityKey,0);
+        var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
+        if((armyShots.TryGetValue(entityKey,out var effective)?effective:family.BaseShot) is { } shot)
+        {
+            var attack=walkingShotgunnerSpecials.TryGetValue(entityKey,out float special)
+                ?CreateWalkingShotgunnerAttack(family,shot,special):CreateRusherAttack(family,shot);
+            rusherAttacks.Add(entityKey,attack);
+            rusherShotCounts.TryAdd(entityKey,0);
+        }
+    }
+
+    private Vector3 RusherSlotPosition(int slot)
+        =>armyRusherPoints!.ForCover(map!,Enumerable.Range(0,map!.Covers.Count).Single(i=>
+            armyRusherPoints.ForCover(map,i).Any(p=>p.ComponentFileId==slot)))
+            .Single(p=>p.ComponentFileId==slot).Position;
+
+    private void StartWarperRelocation(ulong entityKey,bool repeatAfterShot)
+    {
+        if(!activeArmyEntities.TryGetValue(entityKey,out var army)||army.UnitId!="ID_UNIT-WARPER"||
+           !rusherSlotByEntity.TryGetValue(entityKey,out int slot))
+            throw new InvalidDataException("Warper relocation lacks its entity and Rusher slot.");
+        float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
+        var policy=armyWeapons!.WarperRelocation;
+        warperRelocations.Add(entityKey,new ArmyWarperRelocationState(new(army.X,army.Y,army.Z),
+            RusherSlotPosition(slot),policy,policy.Fields[map!.Source],map,armyNavMeshConnectivity!,
+            armyCatalog!.InfantryAgent,speed,NextArmyFloat,repeatAfterShot));
+    }
+
+    private void StartDueWarperRestarts()
+    {
+        foreach(var (key,due) in warperRestartTicks.Where(pair=>pair.Value<=tick).OrderBy(pair=>pair.Key).ToArray())
+        {
+            if(!warperRestartTicks.Remove(key))throw new InvalidDataException("Warper restart timer removal failed.");
+            if(!activeArmyEntities.ContainsKey(key))continue;
+            rusherMotionCandidates.Remove(key);rusherSteering.Remove(key);rusherRetargetClocks.Remove(key);
+            rusherDetours.Remove(key);rusherAttacks.Remove(key);rusherAttackTargets.Remove(key);
+            StartWarperRelocation(key,true);
+        }
+    }
+
+    private void AdvanceWarperRelocations()
+    {
+        foreach(var (key,state) in warperRelocations.OrderBy(pair=>pair.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army)||army.UnitId!="ID_UNIT-WARPER"||
+               !rusherSlotByEntity.TryGetValue(key,out int slot))
+                throw new InvalidDataException("Warper relocation lost its host entity or slot.");
+            ArmyWarperPresentationTransition presentation=state.AdvanceTick();
+            army.X=state.Position.X;army.Y=state.Position.Y;army.Z=state.Position.Z;army.PositionTick=tick;
+            if(presentation!=ArmyWarperPresentationTransition.None)
+            {
+                if(events.Count>=MaximumRetainedEvents-1)
+                {End("army-event-backpressure","",false);return;}
+                Emit(presentation==ArmyWarperPresentationTransition.WarpStarted
+                        ?MatchEventKind.WarperWarpStarted:MatchEventKind.WarperWarpEnded,
+                    army.OwnerPlayerId,"",0,state.Position,army.Health,"warper");
+                var eventRow=events[^1];
+                eventRow.ArmyEntityId=army.LocalEntityId;
+                eventRow.ArmyOptionIndex=army.OptionIndex;
+                eventRow.ArmyUnitId=army.UnitId;
+                eventRow.ArmySpawnComponentFileId=army.SpawnComponentFileId;
+                eventRow.ArmyReservationFileId=army.ReservationFileId;
+            }
+            if(state.Phase!=ArmyWarperRelocationPhase.Complete)continue;
+            var target=RusherSlotPosition(slot);
+            if(!warperRelocations.Remove(key))throw new InvalidDataException("Warper relocation removal failed.");
+            InitializeRusherCombatState(key,army.UnitId,new ArmyRusherArrivalState(state.Position,target));
+        }
+    }
+
+    private ArmyRusherAttackState CreateWalkingShotgunnerAttack(ArmyDeploymentFamily family,
+        ArmyBaseShotStats shot,float special)
+    {
+        if(family.BehaviorType!="SoldierBehaviourShotgunner"||!float.IsFinite(special)||special<=0||special>10)
+            throw new InvalidDataException("Invalid Shotgunner walking-fire authority.");
+        int interval=armyWeapons?.CadenceTicks(family.UnitId)??
+            throw new InvalidDataException("Shotgunner attack lacks pinned cadence authority.");
+        var attack=new ArmyRusherAttackState(shot,NextArmyFloat,shotIntervalTicks:interval,
+            cooldownMinSeconds:shot.MinShootTime/special,cooldownMaxSeconds:shot.MaxShootTime/special);
+        attack.BeginInitialCooldown();
+        return attack;
+    }
+
+    private ArmyRusherAttackState CreateRusherAttack(ArmyDeploymentFamily family,ArmyBaseShotStats shot)
+    {
+        int interval=armyWeapons?.CadenceTicks(family.UnitId)??
+            throw new InvalidDataException("Rusher attack lacks pinned cadence authority.");
+        // EndShooting -> ReturnToPreviousStateFromShot replaces the generic
+        // definition cooldown for both Rusher states with Random.Range(2,4).
+        return new ArmyRusherAttackState(shot,NextArmyFloat,shotIntervalTicks:interval,
+            cooldownMinSeconds:2f,cooldownMaxSeconds:4f);
+    }
+
+    private float NextArmyFloat()
+    {
+        const int scale=1_000_000;
+        int value=armyChoice(scale);
+        if(value<0||value>=scale)
+            throw new InvalidDataException("Army random source returned an invalid value.");
+        return value/(float)scale;
+    }
+
+    private bool TryRetargetRusher(ulong key,int destinationCover)
+    {
+        if(map==null || armyRusherPoints==null || armyNavMeshConnectivity==null ||
+           !activeArmyEntities.TryGetValue(key,out var army) ||
+           !rusherSlotByEntity.TryGetValue(key,out int oldSlot) ||
+           !occupiedRusherSlots.TryGetValue(oldSlot,out ulong occupant) || occupant!=key)
+            throw new InvalidDataException("Rusher retarget lacks its source slot and entity proof.");
+        int oldCover=Enumerable.Range(0,map.Covers.Count).Single(i=>
+            armyRusherPoints.ForCover(map,i).Any(p=>p.ComponentFileId==oldSlot));
+        var previous=armyRusherPoints.ForCover(map,oldCover);
+        var destination=armyRusherPoints.ForCover(map,destinationCover);
+        int currentIndex=previous.Single(p=>p.ComponentFileId==oldSlot).Index;
+        var selected=ArmyRusherRetargetSelector.Select(previous,destination,currentIndex,
+            occupiedRusherSlots.ContainsKey,
+            (candidate,from)=>armyRusherPoints.IsFreeWithNearNeighbour(map,candidate,from,
+                occupiedRusherSlots.ContainsKey));
+        if(!selected.Qualified || occupiedRusherSlots.ContainsKey(selected.Point.ComponentFileId))
+            return false;
+        var start=new Vector3(army.X,army.Y,army.Z);
+        var route=armyNavMeshConnectivity.PlanCorridor(map,start,selected.Point.Position);
+        if(route is not {PlanarCovered:true})return false;
+        float speed=ArmySpeed(key)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
+        var motion=new ArmyRusherArrivalState(route,armyCatalog!.InfantryAgent,speed);
+        var steering=new ArmyRusherLateralSteering(start);
+        if(!occupiedRusherSlots.Remove(oldSlot) ||
+           !occupiedRusherSlots.TryAdd(selected.Point.ComponentFileId,key))
+            throw new InvalidDataException("Rusher retarget lost its atomic slot transfer.");
+        rusherSlotByEntity[key]=selected.Point.ComponentFileId;
+        rusherMotionCandidates[key]=motion;
+        rusherSteering[key]=steering;
+        var family=armyCatalog.Families.Single(f=>f.UnitId==army.UnitId);
+        if((armyShots.TryGetValue(key,out var effective)?effective:family.BaseShot) is { } shot)
+        {
+            rusherAttacks[key]=CreateRusherAttack(family,shot);
+        }
+        rusherAttackTargets.Remove(key);
+        rusherRetargetClocks[key].Reset();
+        return true;
+    }
+
+    private void AdvanceRusherMotionCandidates()
+    {
+        rusherShotIntents.Clear();
+        foreach(var (key,state) in rusherMotionCandidates.OrderBy(pair=>pair.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army) ||
+               !rusherSlotByEntity.TryGetValue(key,out int slot) ||
+               !occupiedRusherSlots.TryGetValue(slot,out ulong occupant) || occupant!=key ||
+               !rusherSteering.ContainsKey(key) || !rusherRetargetClocks.ContainsKey(key) ||
+               !rusherDetours.ContainsKey(key))
+                throw new InvalidDataException("Rusher motion lost its host entity or slot proof.");
+            var owner=Find(army.OwnerPlayerId) ?? throw new InvalidDataException("Rusher owner disappeared.");
+            var opponent=players.Single(p=>p!=owner);
+            bool pointActive=!opponent.Dead && opponent.Cover>=0 && !opponent.IsMoving &&
+                armyRusherPoints!.ForCover(map!,opponent.Cover)
+                    .Any(p=>p.ComponentFileId==slot);
+            bool shotPending=rusherAttacks.TryGetValue(key,out var pendingAttack) &&
+                pendingAttack.Phase is ArmyRusherAttackPhase.Windup or ArmyRusherAttackPhase.Firing;
+            if(state.Phase==ArmyRusherTravelPhase.Rusher &&
+               rusherRetargetClocks[key].AdvanceTick(pointActive,shotPending) &&
+               !opponent.Dead && opponent.Cover>=0 && !opponent.IsMoving &&
+               TryRetargetRusher(key,opponent.Cover))continue;
+            // The source-backed queue gate applies to allied Rushers sharing
+            // spawn/corridor space. Head-on opposing agents need lateral
+            // steering; a longitudinal wait can deadlock both routes.
+            var otherPositions=rusherMotionCandidates.Where(pair=>pair.Key!=key &&
+                activeArmyEntities.TryGetValue(pair.Key,out var other) &&
+                other.OwnerPlayerId==army.OwnerPlayerId)
+                .Select(pair=>pair.Value.Position).ToArray();
+            bool advanced=state.TryAdvanceTick((before,proposed)=>ArmyRusherAvoidance.CanAdvance(
+                before,proposed,otherPositions,armyCatalog!.InfantryAgent.Radius));
+            if(!advanced && state.Phase==ArmyRusherTravelPhase.Walking &&
+               state.RejectedMotionTicks>=15 && state.RejectedMotionTicks%15==0)
+            {
+                var blockers=rusherMotionCandidates.Where(pair=>pair.Key!=key &&
+                    activeArmyEntities.TryGetValue(pair.Key,out var other) &&
+                    other.OwnerPlayerId==army.OwnerPlayerId)
+                    .Select(pair=>rusherSteering[pair.Key].Position).ToArray();
+                var start=new Vector3(army.X,army.Y,army.Z);
+                var detour=ArmyRusherDetourPlanner.Plan(map!,armyNavMeshConnectivity!,
+                    start,state.Destination,blockers,armyCatalog!.InfantryAgent.Radius);
+                if(detour!=null)
+                {
+                    float speed=ArmySpeed(key)??armyCatalog.EffectiveSpeed(army.UnitId,1f);
+                    rusherMotionCandidates[key]=new ArmyRusherArrivalState(detour,
+                        armyCatalog.InfantryAgent,speed);
+                    rusherSteering[key]=new ArmyRusherLateralSteering(start);
+                    rusherDetours[key]=checked(rusherDetours[key]+1);
+                }
+            }
+        }
+        // Every agent observes the same prior published positions. Reading a
+        // peer after its projection would make avoidance depend on entity ID.
+        var priorSteeringPositions=rusherSteering.ToDictionary(
+            pair=>pair.Key,pair=>pair.Value.Position);
+        foreach(var (key,state) in rusherMotionCandidates.OrderBy(pair=>pair.Key))
+        {
+            var army=activeArmyEntities[key];
+            var opposing=rusherMotionCandidates.Where(pair=>pair.Key!=key &&
+                activeArmyEntities.TryGetValue(pair.Key,out var other) &&
+                other.OwnerPlayerId!=army.OwnerPlayerId)
+                .Select(pair=>(priorSteeringPositions[pair.Key],pair.Value.PlanarDirection))
+                .ToArray();
+            var steering=rusherSteering[key];
+            steering.Advance(state.Position,state.PlanarDirection,opposing,
+                (before,next)=>before==next ||
+                    Vector3.Distance(before,next)<=.07f &&
+                    armyNavMeshConnectivity!.Classify(map!,before,next)==
+                        ArmyNavMeshConnection.Connected);
+            var position=steering.Position;
+            if(!float.IsFinite(position.X) || !float.IsFinite(position.Y) ||
+               !float.IsFinite(position.Z) || Math.Abs(position.X)>10000 ||
+               Math.Abs(position.Y)>10000 || Math.Abs(position.Z)>10000)
+                throw new InvalidDataException("Rusher motion produced an invalid host position.");
+            state.RecordPublishedMovement(new Vector3(army.X, army.Y, army.Z), position);
+            army.X=position.X;army.Y=position.Y;army.Z=position.Z;
+            army.PositionTick=tick;
+        }
+        foreach(var (key,attack) in rusherAttacks.OrderBy(pair=>pair.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army) || !rusherMotionCandidates.TryGetValue(key,out var motion))
+                continue;
+            if(walkingShotgunnerSpecials.ContainsKey(key)&&motion.Phase==ArmyRusherTravelPhase.Rusher&&
+               attack.Phase is not (ArmyRusherAttackPhase.Windup or ArmyRusherAttackPhase.Firing))
+            {
+                var family=armyCatalog!.Families.Single(f=>f.UnitId==army.UnitId);
+                rusherAttacks[key]=CreateRusherAttack(family,armyShots[key]);
+                walkingShotgunnerSpecials.Remove(key);
+                continue;
+            }
+            bool walkingSpecial=walkingShotgunnerSpecials.ContainsKey(key)&&
+                motion.Phase==ArmyRusherTravelPhase.Walking;
+            var target=walkingSpecial&&motion.MotionLength-motion.MotionProgress>1f
+                ?RusherWalkingTarget(key):RusherInitialShotTarget(key);
+            bool eligible=target!=null&&(walkingSpecial||motion.InitialShotDelayElapsed);
+            if(attack.Phase==ArmyRusherAttackPhase.Ready)
+            {
+                int windup=walkingSpecial?(int)MathF.Ceiling(
+                    armyWeapons!.ShotgunnerWalkingFire.WindupSeconds*MatchManifest.TickRate):
+                    armyWeapons?.WindupTicks(army.UnitId)??
+                    throw new InvalidDataException("Rusher attack lacks pinned windup authority.");
+                if(attack.TryBegin(eligible,1,windup))
+                    rusherAttackTargets[key]=target!;
+            }
+            var priorPhase=attack.Phase;
+            attack.AdvanceTick();
+            if(priorPhase==ArmyRusherAttackPhase.Windup&&attack.Phase==ArmyRusherAttackPhase.Firing&&
+               army.UnitId=="ID_UNIT-WARPER")
+            {
+                ulong delay=(ulong)MathF.Ceiling(armyWeapons!.WarperRelocation.RepeatAfterShotSeconds*
+                    MatchManifest.TickRate);
+                if(!warperRestartTicks.TryAdd(key,checked(tick+delay)))
+                    throw new InvalidDataException("Warper already has a post-shot restart timer.");
+            }
+            if(attack.ShotDue)
+            {
+                if(!rusherAttackTargets.TryGetValue(key,out var shot))
+                    throw new InvalidDataException("Rusher pending batch lost its latched target.");
+                rusherShotIntents.Add(new(key,army.OwnerPlayerId,shot.PlayerId,shot.TargetFileId,shot.Position,
+                    attack.CurrentShotIsReal,attack.BatchCursor,attack.BatchSize));
+                attack.CommitShot();
+                if(attack.Phase==ArmyRusherAttackPhase.Cooldown)
+                    rusherAttackTargets.Remove(key);
+            }
+        }
+        LaunchRusherShotIntents();
+    }
+
+    private void AdvanceMinigunnerAttacks()
+    {
+        rusherShotIntents.Clear();
+        foreach(var (key,attack) in minigunnerAttacks.OrderBy(pair=>pair.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army) ||
+               armyCatalog!.Families.Single(f=>f.UnitId==army.UnitId).BehaviorType!=
+                   "SoldierBehaviourMinigunner")
+                throw new InvalidDataException("Minigunner attack lost its host entity.");
+            if(!minigunnerPointChangeTicks.TryGetValue(key,out ulong changeTick)||
+               !minigunnerPointByEntity.TryGetValue(key,out int currentPoint))
+                throw new InvalidDataException("Minigunner attack lost its point clock.");
+            if(attack.Phase==ArmyRusherAttackPhase.Cooldown&&tick>changeTick)
+            {
+                var next=armyMinigunnerPoints!.RandomFree(map!,army.OwnerFraction,currentPoint,
+                    occupiedMinigunnerPoints.ContainsKey,armyChoice);
+                if(next==null)
+                {
+                    minigunnerPointChangeTicks[key]=checked(changeTick+2u*MatchManifest.TickRate);
+                }
+                else
+                {
+                    minigunnerAttacks.Remove(key);minigunnerPointChangeTicks.Remove(key);
+                    minigunnerAttackTargets.Remove(key);
+                    StartMinigunnerMovement(key,next,currentPoint);
+                    continue;
+                }
+            }
+            var target=MinigunnerBodyTarget(key);
+            if(attack.Phase==ArmyRusherAttackPhase.Ready)
+            {
+                int windup=armyWeapons?.WindupTicks(army.UnitId)??
+                    throw new InvalidDataException("Minigunner lacks pinned windup authority.");
+                if(attack.TryBegin(target!=null,1,windup))
+                    minigunnerAttackTargets[key]=target!;
+            }
+            attack.AdvanceTick();
+            if(!attack.ShotDue)continue;
+            if(!minigunnerAttackTargets.TryGetValue(key,out var shot))
+                throw new InvalidDataException("Minigunner pending batch lost its latched target.");
+            rusherShotIntents.Add(new(key,army.OwnerPlayerId,shot.PlayerId,shot.TargetFileId,
+                shot.Position,attack.CurrentShotIsReal,attack.BatchCursor,attack.BatchSize));
+            attack.CommitShot();
+            if(attack.Phase==ArmyRusherAttackPhase.Cooldown)
+                minigunnerAttackTargets.Remove(key);
+        }
+        LaunchRusherShotIntents();
+    }
+
+    private void LaunchRusherShotIntents()
+    {
+        if (!HasArmyCombatView || rusherShotIntents.Count == 0)
+        {
+            return;
+        }
+        ArmyWeaponBindingCatalog weaponBindings = armyWeapons ??
+            throw new InvalidDataException("Army projectile lacks weapon binding authority.");
+        foreach(var intent in rusherShotIntents)
+        {
+            if(!activeArmyEntities.TryGetValue(intent.EntityKey,out var army) ||
+               army.OwnerPlayerId!=intent.OwnerPlayerId ||
+               !rusherShotCounts.TryGetValue(intent.EntityKey,out int shotCount))continue;
+            shotCount=checked(shotCount+1);rusherShotCounts[intent.EntityKey]=shotCount;
+            string behavior=armyCatalog!.Families.Single(f=>f.UnitId==army.UnitId).BehaviorType;
+            int muzzleIndex=behavior=="SoldierBehaviourCommando"&&shotCount%2==0?1:0;
+            if(!intent.IsReal)continue;
+            if(behavior=="SoldierBehaviourFlamethrower")
+            {
+                if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot())continue;
+                var flameEntityPosition=new Vector3(army.X,army.Y,army.Z);
+                var flameOrigin=weaponBindings.RestMuzzleOrigin(army.UnitId,
+                    flameEntityPosition, intent.TargetPosition-flameEntityPosition);
+                if(projectileId==ulong.MaxValue)throw new InvalidDataException("Army flame identity exhausted.");
+                ulong flameId=++projectileId;
+                _armyFlames.StartBurst(flameId,intent.EntityKey,intent.OwnerPlayerId,_cooldownClock.ElapsedSeconds);
+                Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
+                    flameId,flameOrigin,0,"army-flame");
+                continue;
+            }
+            float? projectileSpeed = InfantryProjectileSpeed(behavior, army.UnitId,
+                weaponBindings);
+            if(!projectileSpeed.HasValue)continue;
+            var entityPosition=new Vector3(army.X,army.Y,army.Z);
+            Vector3 origin = InfantryMuzzleOrigin(intent, army, behavior,
+                weaponBindings, entityPosition, muzzleIndex);
+            bool shotgun = behavior is "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper";
+            if(!weaponBindings.TryProjectileDamage(army.UnitId,ArmyDamage(intent.EntityKey)??0,
+                origin,intent.TargetPosition,out float launchDamage))
+            {
+                if(!shotgun || PendingProjectileCount>MaximumProjectiles-4 ||
+                   !EventCapacityForShot())continue;
+                if(projectileId>ulong.MaxValue-5)
+                    throw new InvalidDataException("Army projectile identity exhausted.");
+                Vector3[] missedFakeTargets=PlanShotgunFakeTargets(origin,intent.TargetPosition);
+                ulong missId=++projectileId;
+                LaunchShotgunFakeFlights(intent.EntityKey,army.OwnerPlayerId,
+                    army.OwnerFraction,army.UnitId,army.SourceCardId,origin,
+                    projectileSpeed.Value,missedFakeTargets);
+                Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
+                    missId,origin,0,"army-shotgun-cone-miss");
+                continue;
+            }
+            if (behavior == "SoldierBehaviourSniper")
+                launchDamage = SniperDamageAfterCritical(army, launchDamage);
+            int poisonEvents=behavior=="SoldierBehaviourCommando"&&armySpecial.ContainsKey(intent.EntityKey)
+                ?ArmyPoisonEffect.PulseCount:0;
+            int projectileCount = shotgun ? 5 : 1;
+            if(PendingProjectileCount>MaximumProjectiles-projectileCount ||
+               !EventCapacityForShot(1,poisonEvents))continue;
+            if(projectileId>ulong.MaxValue-(ulong)projectileCount)
+                throw new InvalidDataException("Army projectile identity exhausted.");
+            Vector3[] fakeTargets = shotgun ?
+                PlanShotgunFakeTargets(origin,intent.TargetPosition) : [];
+            ulong id=++projectileId;
+            var flight=new ArmyProjectileFlight(id,intent.EntityKey,origin,intent.TargetPosition,
+                projectileSpeed.Value,tick,
+                (from, direction, range) => TraceArmyShot(
+                    intent.OwnerPlayerId, from, direction, range),
+                weaponBindings.SlowBulletCheckDistance(army.UnitId),
+                fastBullet:shotgun,
+                targetVelocity:shotgun?ArmyFastBulletTargetVelocity:null);
+            _armyBullets.AddActive(id,flight,new PvpArmyBulletPayload
+            {
+                EntityKey = intent.EntityKey, OwnerPlayerId = army.OwnerPlayerId,
+                OwnerFraction = army.OwnerFraction, Damage = launchDamage,
+                PoisonRatio = armySpecial.GetValueOrDefault(intent.EntityKey),
+                UnitId = army.UnitId, SourceCardId = army.SourceCardId, IsCosmetic = false
+            });
+            LaunchShotgunFakeFlights(intent.EntityKey,army.OwnerPlayerId,
+                army.OwnerFraction,army.UnitId,army.SourceCardId,origin,
+                projectileSpeed.Value,fakeTargets);
+            Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
+                id,origin,0,"army");
+        }
+    }
+
+    private float SniperDamageAfterCritical(BattleArmyEntityState sniper, float baseDamage)
+    {
+        float chance = 0f;
+        if (sniper.SourceCardId.Length == 0 &&
+            !sniperCriticalProbabilities.TryGetValue(sniper.EntityKey, out chance))
+            throw new InvalidDataException("Normal Sniper lost its composed critical chance.");
+
+        // Ammo.LoadAmmoSetup draws even when probability is zero. The elite
+        // card has no special upgrade; the ordinary soldier uses its trusted
+        // upgrade lanes. The validated SniperRifleEnemy prefab supplies the
+        // critical damage multiplier.
+        bool critical = NextArmyFloat() < chance;
+        float multiplier = armyWeapons?.SniperCriticalAmount ??
+            throw new InvalidDataException("Sniper lost its source critical setup.");
+        float damage = critical ? baseDamage * multiplier : baseDamage;
+        if (!float.IsFinite(damage) || damage < 0f || damage > 10_000_000f)
+            throw new InvalidDataException("Sniper critical damage exceeded host bounds.");
+        return damage;
+    }
+
+    private static float? InfantryProjectileSpeed(string behavior, string unitId,
+        ArmyWeaponBindingCatalog bindings)
+    {
+        // The recovered weapons use different projectile families. An unknown
+        // behavior has no host-authorized flight, even if it requested a shot.
+        return behavior switch
+        {
+            "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper" or
+            "SoldierBehaviourParachuter" or "SoldierBehaviourSwat" or
+            "SoldierBehaviourCommando" or "SoldierBehaviourMinigunner" or
+            "SoldierBehaviourSniper" => bindings.ProjectileSpeed(unitId),
+            _ => null
+        };
+    }
+
+    private Vector3 ArmyFastBulletTargetVelocity(ShotCollision hit)
+    {
+        // DestroyableObject.velocity is the target's observed root movement.
+        // Stationary scene objects, Decoys, and turrets retain zero velocity.
+        string? playerId=hit.PlayerId??hit.DynamicOwner;
+        if(playerId!=null && Find(playerId) is { } player)
+            return !player.IsMoving?Vector3.Zero:player.MoveVelocity;
+        if(hit.DynamicEntityId is not ulong entityId)return Vector3.Zero;
+        if(groundVehicleVelocities.TryGetValue(entityId,out Vector3 vehicleVelocity))
+            return vehicleVelocity;
+        if(armyDronePaths.TryGetValue(entityId,out var drone))
+            return drone.Velocity*MatchManifest.TickRate;
+        if(armyHelicopterPaths.TryGetValue(entityId,out var helicopter))
+            return helicopter.Velocity*MatchManifest.TickRate;
+        if(armyAssaultHelicopterPaths.TryGetValue(entityId,out var assault))
+            return assault.Velocity*MatchManifest.TickRate;
+        if(rusherMotionCandidates.TryGetValue(entityId,out var infantry))
+        {
+            Vector2 forward=infantry.PlanarDirection;
+            return new Vector3(forward.X,0f,forward.Y)*infantry.PlanarSpeed;
+        }
+        return Vector3.Zero;
+    }
+
+    private static Vector3 InfantryMuzzleOrigin(ArmyRusherShotIntent intent,
+        BattleArmyEntityState army, string behavior, ArmyWeaponBindingCatalog bindings,
+        Vector3 entityPosition, int muzzleIndex)
+    {
+        if (intent.MuzzleOverride is not Vector3 sampledOrigin)
+        {
+            return bindings.RestMuzzleOrigin(army.UnitId, entityPosition,
+                intent.TargetPosition - entityPosition, muzzleIndex);
+        }
+
+        bool cardParatrooper = behavior == "SoldierBehaviourParachuter" &&
+            army.SourceCardId == "ELITEPARA";
+        bool sniper = behavior == "SoldierBehaviourSniper";
+        if ((!cardParatrooper && !sniper) ||
+            !PlayerHitbox.Finite(sampledOrigin) ||
+            Vector3.Distance(sampledOrigin, entityPosition) > 5f)
+        {
+            throw new InvalidDataException("Invalid card soldier muzzle sample.");
+        }
+
+        return sampledOrigin;
+    }
+
+    private void LaunchShotgunFakeFlights(ulong entityKey,string ownerPlayerId,
+        int ownerFraction,string unitId,string sourceCardId,Vector3 origin,
+        float speed,IReadOnlyList<Vector3> targets)
+    {
+        foreach(Vector3 target in targets)
+        {
+            ulong fakeId=++projectileId;
+            var flight=new ArmyProjectileFlight(fakeId,entityKey,origin,target,speed,tick,
+                (from,direction,range)=>null,cosmeticTrail:true);
+            _armyBullets.AddActive(fakeId,flight,new PvpArmyBulletPayload
+            {
+                EntityKey = entityKey, OwnerPlayerId = ownerPlayerId, OwnerFraction = ownerFraction,
+                Damage = 0, PoisonRatio = 0, UnitId = unitId, SourceCardId = sourceCardId, IsCosmetic = true
+            });
+        }
+    }
+
+    private Vector3[] PlanShotgunFakeTargets(Vector3 origin,Vector3 target)
+    {
+        // Both recovered Rusher shotguns have shotOnlyMainBullet enabled.
+        // BulletShotGun.Fire adds four fake trails with this source offset bound.
+        float distance=Vector3.Distance(origin,target);
+        float spread=Math.Clamp(distance/2f,0f,1f)*.25f;
+        var targets=new Vector3[4];
+        for(int index=0;index<targets.Length;index++)
+        {
+            float angle=NextArmyFloat()*2f*MathF.PI;
+            float height=NextArmyFloat()*2f-1f;
+            float radius=MathF.Sqrt(1f-height*height);
+            var direction=new Vector3(radius*MathF.Cos(angle),height,
+                radius*MathF.Sin(angle));
+            targets[index]=target+direction*spread;
+        }
+        return targets;
+    }
+
+    private void AdvanceArmyProjectiles()
+    {
+        PvpArmyBulletSystem.FlightFrame flights = _armyBullets.BeginFlightFrame(tick);
+        while(flights.TryAdvanceNext(out PvpArmyBulletStep step))
+        {
+            if(step.HasInvalidAuthority){End("invalid-army-projectile-authority","",false);return;}
+            PvpArmyBulletPayload launch = step.Payload;
+            ArmyProjectileImpact? impact = step.Impact;
+            if(launch.IsCosmetic)
+            {
+                if(impact!=null)
+                    throw new InvalidDataException("Cosmetic army pellet returned a collision.");
+                continue;
+            }
+            if(impact==null)continue;
+            Player shooter=Find(launch.OwnerPlayerId)??
+                throw new InvalidDataException("Army projectile owner left its match.");
+            if(impact.EntityKey!=launch.EntityKey ||
+               shooter.Definition.Fraction!=launch.OwnerFraction)
+                throw new InvalidDataException("Army projectile changed its launch owner.");
+            Emit(MatchEventKind.Impact,impact.EntityKey.ToString(),
+                impact.Collision.PlayerId??impact.Collision.BonusBoxId??"",
+                impact.ProjectileId,impact.Collision.Position,0,"army");
+            if (launch.UnitId is "ID_UNIT-ASSAULT" or "ID_UNIT-GUNSLINGER")
+            {
+                try { ApplyAssaulterEntityImpact(impact, launch); }
+                catch (InvalidDataException) { End("invalid-assaulter-impact", "", false); return; }
+                catch (InvalidOperationException) { End("assaulter-impact-backpressure", "", false); return; }
+                if (Terminal) return;
+            }
+            if (impact.Collision.BonusBoxId != null)
+            {
+                try { ApplyArmyProjectileBonusImpact(impact, launch.OwnerPlayerId,
+                    launch.Damage); }
+                catch (InvalidDataException)
+                { End("invalid-pvp-bonus-authority", "", false); return; }
+                catch (InvalidOperationException)
+                { End("pvp-bonus-backpressure", "", false); return; }
+                if (Terminal) return;
+            }
+            if(impact.Collision.DynamicOwner!=null && shields!=null)
+            {
+                try
+                {
+                    var shield=shields.ApplyUnitShot(impact.Collision.DynamicOwner,
+                        launch.OwnerFraction,launch.Damage,tick);
+                    if(shield!=null)
+                    {
+                        stateRevision++;
+                        EmitShield(shield.Destroyed?MatchEventKind.ShieldDestroyed:
+                            MatchEventKind.ShieldDamaged,launch.OwnerPlayerId,shield,
+                            impact.ProjectileId);
+                    }
+                }
+                catch(InvalidDataException){End("invalid-shield-authority","",false);return;}
+            }
+            if(impact.Collision.PlayerId==null)continue;
+            try
+            {
+                var proof=ArmyRusherImpactResolver.Resolve(
+                    new ArmyRusherShotIntent(impact.EntityKey,launch.OwnerPlayerId,
+                        impact.Collision.PlayerId,0,impact.Collision.Position,true,0,1),impact.Collision,
+                    launch.Damage);
+                var result=ApplyResolvedPlayerDamage(proof.AttackerPlayerId,
+                    proof.VictimPlayerId,new ResolvedPlayerDamage(proof.Damage,
+                        CombatDamageType.Shot,proof.PartWeight,
+                        PlayerCoefficient: launch.PlayerPolicy?.PlayerDamageRatio ?? 1f,
+                        PlayerOvertimeCoefficient: launch.PlayerPolicy?.OvertimePlayerDamageRatio ?? 1f,
+                        Overtime: overtime),
+                    damageRoll?.Invoke()??1f,confirmedProjectileImpact:true,
+                    pvpPlayerDamageReceiptId:pvpBonusProgress==null?null:
+                        PvpHitReceiptId("army-projectile",impact.ProjectileId,proof.VictimPlayerId),
+                    pvpDamageOwner:PvpPlayerDamageOwner.Army);
+                // A launched bullet survives its soldier; only a live soldier can later grant a revenge kill.
+                if (result is { Applied: true } && activeArmyEntities.ContainsKey(impact.EntityKey))
+                {
+                    MarkArmyRevenge(impact.EntityKey, proof.VictimPlayerId);
+                }
+                if(result is {Applied:true,Dead:false}&&launch.PoisonRatio>0)
+                {
+                    float pulse=launch.Damage/ArmyPoisonEffect.PulseCount*launch.PoisonRatio;
+                    _armyPoisons.StartEffect(new ArmyPoisonSource(impact.ProjectileId,impact.EntityKey,
+                        launch.OwnerPlayerId,impact.Collision.PlayerId),pulse,impact.Collision.Position,tick);
+                }
+            }
+            catch(InvalidDataException){End("invalid-army-impact-authority","",false);return;}
+            catch(InvalidOperationException){End("pvp-score-backpressure","",false);return;}
+            if(Terminal)return;
+        }
+    }
+
+    private void AdvanceArmyPoisons()
+    {
+        PvpArmyPoisonSystem.PulseFrame pulses = _armyPoisons.BeginFrame(tick);
+        while(pulses.TryTakeNext(out ArmyPoisonPulse pulse))
+        {
+            ArmyPoisonSource poison = pulse.Source;
+            var victim=Find(poison.VictimPlayerId);
+            if(victim==null||victim.Dead){pulses.DiscardCurrent();continue;}
+            Emit(MatchEventKind.Impact,poison.AttackerPlayerId,poison.VictimPlayerId,
+                poison.ProjectileId,pulse.Position,victim.Health,"army-poison");
+            var result = ApplyResolvedPlayerDamage(poison.AttackerPlayerId,poison.VictimPlayerId,
+                new ResolvedPlayerDamage(pulse.DamagePerPulse,CombatDamageType.Poison),
+                damageRoll?.Invoke()??1f,false);
+            if (result is { Applied: true } && activeArmyEntities.ContainsKey(poison.EntityKey))
+            {
+                MarkArmyRevenge(poison.EntityKey, poison.VictimPlayerId);
+            }
+            if(victim.Dead)pulses.DiscardCurrent();else pulses.CompleteCurrent();
+            if(Terminal)return;
+        }
+    }
+
+    private void AdvanceArmyFlameBursts()
+    {
+        if(_armyFlames.Count==0)return;
+        PvpArmyFlameSystem.PulseFrame pulses = _armyFlames.BeginFrame(_cooldownClock.ElapsedSeconds);
+        while(pulses.TryNextDue(out ArmyFlameSource burst))
+        {
+            if(!activeArmyEntities.TryGetValue(burst.EntityKey,out var army))
+            {pulses.DiscardCurrent();continue;}
+            var owner=Find(burst.OwnerPlayerId);
+            if(owner==null){pulses.DiscardCurrent();continue;}
+            var victim=players.Single(x=>x!=owner);
+            PlayerCollisionModel target = ArmyPlayerCollision(victim.Definition.PlayerId);
+            var entityPosition=new Vector3(army.X,army.Y,army.Z);
+            var forward=target.RootPosition-entityPosition;
+            var origin=armyWeapons?.RestMuzzleOrigin(army.UnitId,entityPosition,forward)??
+                throw new InvalidDataException("Army flame requires pinned weapon muzzle authority.");
+            float sourceDamage=ArmyDamage(burst.EntityKey)??
+                throw new InvalidDataException("Army flame lacks trusted damage.");
+            var hit=ArmyFlameBurst.ResolvePlayer(origin,forward,target,sourceDamage);
+            ArmyFlamePulse pulse = pulses.CommitCurrent();
+            if(hit!=null&&!victim.Dead)
+            {
+                try
+                {
+                    string? receiptId = pvpBonusProgress == null ? null : PvpHitReceiptId(
+                        "army-flame-pulse-" + pulse.PulseIndex.ToString(CultureInfo.InvariantCulture),
+                        burst.ProjectileId, victim.Definition.PlayerId);
+                    var result=ApplyResolvedPlayerDamage(owner.Definition.PlayerId,victim.Definition.PlayerId,
+                        new ResolvedPlayerDamage(hit.RawDamage,CombatDamageType.Flame,
+                            HasWeapon:true,FriendKill:false),
+                        damageRoll?.Invoke()??1f,true,
+                        pvpPlayerDamageReceiptId: receiptId,
+                        pvpDamageOwner: PvpPlayerDamageOwner.Army);
+                    if (result is { Applied: true })
+                    {
+                        MarkArmyRevenge(burst.EntityKey, victim.Definition.PlayerId);
+                    }
+                    Emit(MatchEventKind.Impact,burst.EntityKey.ToString(),victim.Definition.PlayerId,
+                        burst.ProjectileId,origin,result?.Health??victim.Health,"army-flame");
+                }
+                catch (InvalidDataException)
+                {
+                    End("invalid-army-flame-authority", "", false);
+                    return;
+                }
+                catch (InvalidOperationException)
+                {
+                    End("pvp-score-backpressure", "", false);
+                    return;
+                }
+            }
+            if(!Terminal)ApplyArmyFlameInfantryPulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameDronePulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameHelicopterPulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameVehiclePulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameRepairDronePulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameDecoyPulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameHeavyTurretPulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameShieldPulse(burst.EntityKey,origin,forward,burst.ProjectileId);
+            if(!Terminal)ApplyArmyFlameBonusBoxes(pulse,origin,forward);
+            pulses.CompleteCurrent();
+            if(Terminal)return;
+        }
+    }
+
+    // The live burst supplies its sampled weapon muzzle and facing. Keeping this
+    // transition separate also lets host tests place real spawned infantry at a
+    // deterministic cone boundary without altering the recovered scene.
+    internal int ApplyArmyFlameInfantryPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army flame infantry pulse authority.");
+        var sourceOwner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army flame source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army flame source damage.");
+        int hits=0;
+        foreach(var targetId in infantryAnimations.Keys.Order().ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(targetId,out var infantry))
+                throw new InvalidDataException("Army flame infantry target disappeared.");
+            if(infantry.OwnerPlayerId==source.OwnerPlayerId)continue;
+            var targetOwner=Find(infantry.OwnerPlayerId)??
+                throw new InvalidDataException("Army flame infantry lacks an owner.");
+            if(targetOwner.Definition.Fraction==sourceOwner.Definition.Fraction)continue;
+            var infantryPose=InfantryPose(targetId)??
+                throw new InvalidDataException("Army flame infantry lacks current collision authority.");
+            var hit=ArmyFlameBurst.ResolveParts(origin,forward,infantryPose.Parts,sourceDamage);
+            if(hit!=null&&hit.RawDamage>0&&ApplyArmyHostDamage(targetId,hit.RawDamage))hits++;
+        }
+        return hits;
+    }
+
+    internal int ApplyArmyFlameDronePulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army Flame Drone pulse authority.");
+        if(droneColliders==null)return 0;
+        var owner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army Flame Drone source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army Flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army Flame source damage.");
+        int hits=0;
+        foreach(var drone in activeArmyEntities.Values.Where(x=>x.UnitId=="ID_UNIT-DRONE")
+            .OrderBy(x=>x.EntityKey).ToArray())
+        {
+            if(drone.OwnerPlayerId==source.OwnerPlayerId||drone.OwnerFraction==owner.Definition.Fraction)continue;
+            var q=drone.DroneRotation??
+                throw new InvalidDataException("Flame Drone lost its host rotation.");
+            var colliders=droneColliders.Place(new(drone.X,drone.Y,drone.Z),
+                new(q.X,q.Y,q.Z,q.W));
+            var root=colliders.Single(x=>x.RootOwned&&x.ComponentFileId==6544804);
+            var hit=ArmyFlameBurst.ResolveParts(origin,forward,[root.Hitbox],sourceDamage);
+            if(hit!=null&&hit.RawDamage>0&&
+               ApplyArmyHostDamage(drone.EntityKey,hit.RawDamage*DroneColliderCatalog.FlameCoefficient))
+                hits++;
+        }
+        return hits;
+    }
+
+    internal int ApplyArmyFlameHelicopterPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army Flame Helicopter pulse authority.");
+        if(helicopterBodyColliders==null)return 0;
+        var owner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army Flame Helicopter source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army Flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army Flame source damage.");
+        int hits=0;
+        foreach(var helicopter in activeArmyEntities.Values.Where(x=>x.UnitId=="ID_UNIT-HELICOPTER")
+            .OrderBy(x=>x.EntityKey).ToArray())
+        {
+            if(helicopter.OwnerPlayerId==source.OwnerPlayerId||
+               helicopter.OwnerFraction==owner.Definition.Fraction)continue;
+            var q=helicopter.HelicopterRotation??
+                throw new InvalidDataException("Flame Helicopter lost its host rotation.");
+            var boxes=helicopterBodyColliders.Place(new(helicopter.X,helicopter.Y,helicopter.Z),
+                new(q.X,q.Y,q.Z,q.W));
+            var hit=ArmyFlameBurst.ResolveParts(origin,forward,
+                boxes.Select(x=>x.Hitbox).ToArray(),sourceDamage);
+            if(hit!=null&&hit.RawDamage>0&&ApplyArmyHostDamage(helicopter.EntityKey,
+               hit.RawDamage*HelicopterBodyColliderCatalog.FlamePartCoefficient))hits++;
+        }
+        return hits;
+    }
+
+    internal int ApplyArmyFlameVehiclePulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army flame vehicle pulse authority.");
+        if(vehicles==null||groundVehicleWeapons==null)return 0;
+        var sourceOwner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army flame source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army flame source damage.");
+        int hits=0;
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(x=>x.EntityId))
+        {
+            if(vehicle.OwnerPlayerId==source.OwnerPlayerId)continue;
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Flame vehicle owner disappeared.");
+            if(owner.Definition.Fraction==sourceOwner.Definition.Fraction)continue;
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Flame vehicle lacks shared pose authority.");
+            var rig=groundVehicleWeapons.For(vehicle.UnitId);
+            var planarFacing=facing with {Y=0};
+            if(planarFacing.LengthSquared()<1e-10f)
+                throw new InvalidDataException("Flame vehicle has no planar facing.");
+            float yaw=MathF.Atan2(planarFacing.X,planarFacing.Z);
+            var rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);
+            // FlameAmmo de-duplicates all child colliders by their damage root.
+            // Use serialized part order as the deterministic overlap order.
+            foreach(var collider in groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,
+                vehicle.Position,facing,owner.Definition.Fraction))
+            {
+                var part=rig.BodyParts.Single(x=>x.PartComponentFileId==collider.PartComponentFileId);
+                var sourceCollider=part.Colliders.Single(x=>collider.Hitbox.SourcePath.EndsWith(
+                    "/"+x.ColliderFileId,StringComparison.Ordinal));
+                if(!collider.Hitbox.Enabled||!collider.Hitbox.Active||
+                   !collider.Hitbox.OverlapsSphere(origin,ArmyFlameBurst.Radius))continue;
+                // FlameAmmo reads the transform origin for capsules, and the
+                // transformed local collider center only for boxes/spheres.
+                Vector3 center=sourceCollider.Kind==PlayerHitboxKind.Capsule?
+                    vehicle.Position+Vector3.Transform(part.Position,rotation):collider.Hitbox.Center;
+                var hit=ArmyFlameBurst.ResolveCenter(origin,forward,center,sourceDamage,
+                    collider.Hitbox.SourcePath);
+                if(hit==null||hit.RawDamage<=0)continue;
+                float damage=hit.RawDamage*part.Weight*rig.FlamePartCoefficient;
+                if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+                    throw new InvalidDataException("Vehicle Flame damage is outside host bounds.");
+                float before=ArmyHealth(vehicle.EntityId)??
+                    throw new InvalidDataException("Flame vehicle lacks shared health authority.");
+                if(!ApplyArmyHostDamage(vehicle.EntityId,damage))break;
+                hits++;
+                if(activeArmyEntities.ContainsKey(vehicle.EntityId))
+                {
+                    float after=ArmyHealth(vehicle.EntityId)??
+                        throw new InvalidDataException("Vehicle health disappeared after Flame impact.");
+                    float healthDamage=before-after;
+                    if(healthDamage>0&&(!vehicles.TryDamage(vehicle.EntityId,healthDamage,
+                       out var applied,out var destroyed)||destroyed||Math.Abs(applied-healthDamage)>.001f))
+                        throw new InvalidDataException("Vehicle registry health diverged from Flame vitality.");
+                }
+                break;
+            }
+        }
+        return hits;
+    }
+
+    internal int ApplyArmyFlameRepairDronePulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army Flame repair-drone pulse authority.");
+        if(vehicles==null||groundVehicleWeapons==null)return 0;
+        var sourceOwner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army Flame repair-drone source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army Flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army Flame source damage.");
+        int hits=0;
+        foreach(var vehicle in vehicles.Snapshot().Where(x=>x.UnitId=="ID_UNIT-TRANSPORTER")
+            .OrderBy(x=>x.EntityId))
+        {
+            if(vehicle.OwnerPlayerId==source.OwnerPlayerId)continue;
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Repair-drone Flame owner disappeared.");
+            if(owner.Definition.Fraction==sourceOwner.Definition.Fraction)continue;
+            if(!transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))continue;
+            if(drones.Count!=2)throw new InvalidDataException("Repair-drone Flame path count changed.");
+            int layer=owner.Definition.Fraction==1?23:22;
+            foreach(var drone in drones.OrderBy(x=>x.PathIndex))
+            {
+                if(!drone.Active)continue;
+                var collider=groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,drone.PathIndex,
+                    layer,drone.Snapshot());
+                var hit=ArmyFlameBurst.ResolveParts(origin,forward,[collider.Hitbox],sourceDamage);
+                if(hit==null||hit.RawDamage<=0)continue;
+                float damage=hit.RawDamage*groundVehicleWeapons.RepairDronePrefab.FlameCoefficient;
+                if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+                    throw new InvalidDataException("Repair-drone Flame damage escaped host bounds.");
+                if(!ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,drone.PathIndex,damage))continue;
+                hits++;
+                if(!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",vehicle.EntityId,
+                        drone.Position,0,"vehicle-repair-drone-down:"+drone.PathIndex);
+            }
+        }
+        return hits;
+    }
+
+    internal int ApplyArmyFlameShieldPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward,ulong projectile)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||projectile==0||
+           !PlayerHitbox.Finite(origin)||!PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army flame shield pulse authority.");
+        if(shields==null||map==null)return 0;
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army flame source damage.");
+        var seen=new HashSet<string>(StringComparer.Ordinal);
+        int hits=0;
+        foreach(var collider in map.DynamicSphereOverlaps(origin,ArmyFlameBurst.Radius,
+            uint.MaxValue,barrels==null?null:index=>barrels.ColliderEnabled(index),
+            barrels==null?null:(index,layer)=>barrels.RuntimeLayer(index,layer)))
+        {
+            if(!shields.IsLiveEnemyShield(collider.DynamicOwner,source.OwnerFraction)||
+               !seen.Add(collider.DynamicOwner))continue;
+            Vector3 center=(collider.BoundsMin+collider.BoundsMax)*.5f;
+            var hit=ArmyFlameBurst.ResolveCenter(origin,forward,center,sourceDamage,collider.SourcePath);
+            if(hit==null||hit.RawDamage<=0)continue;
+            var shield=shields.ApplyUnitFlame(collider.DynamicOwner,source.OwnerFraction,hit.RawDamage,tick);
+            if(shield==null)continue;
+            stateRevision++;
+            EmitShield(shield.Destroyed?MatchEventKind.ShieldDestroyed:MatchEventKind.ShieldDamaged,
+                source.OwnerPlayerId,shield,projectile);
+            hits++;
+        }
+        return hits;
+    }
+
+    // A route from the host entity's current position to its reserved source
+    // Rusher point. It does not move the entity or authorize arrival/fire.
+    internal ArmyNavMeshCorridor? RusherWalkingRoute(ulong entityKey)
+    {
+        if(phase!=BattlePhase.Running || map==null || armyRusherPoints==null ||
+           armyNavMeshConnectivity==null ||
+           !activeArmyEntities.TryGetValue(entityKey,out var army) ||
+           !rusherSlotByEntity.TryGetValue(entityKey,out int slot))return null;
+        if(!occupiedRusherSlots.TryGetValue(slot,out ulong occupant) || occupant!=entityKey)
+            throw new InvalidDataException("Rusher route lacks its occupied source slot.");
+        if(Find(army.OwnerPlayerId)==null)
+            throw new InvalidDataException("Rusher route owner disappeared.");
+        // The old point remains reserved while its defender is moving. Route
+        // authority follows that reservation until a validated transfer.
+        var point=Enumerable.Range(0,map.Covers.Count)
+            .SelectMany(i=>armyRusherPoints.ForCover(map,i))
+            .Single(p=>p.ComponentFileId==slot);
+        var position=new Vector3(army.X,army.Y,army.Z);
+        return armyNavMeshConnectivity.PlanSourceSpawnCorridor(map,
+                   army.SpawnComponentFileId,slot,position,point.Position) ??
+               armyNavMeshConnectivity.PlanCorridor(map,position,point.Position);
+    }
+
+    // SoldierBehaviourRusher.PickTarget uses the nearest Body target until the
+    // controller reaches EnemyAIState.Rusher. This is target intent, not fire.
+    internal ArmyRusherTarget? RusherWalkingTarget(ulong entityKey)
+    {
+        if(phase!=BattlePhase.Running || !HasArmyCombatView || playerShotTargets==null ||
+           !activeArmyEntities.TryGetValue(entityKey,out var army) ||
+           !rusherSlotByEntity.TryGetValue(entityKey,out int slot))return null;
+        if(!occupiedRusherSlots.TryGetValue(slot,out ulong occupant) || occupant!=entityKey)
+            throw new InvalidDataException("Walking Rusher target lacks its occupied source slot.");
+        var owner=Find(army.OwnerPlayerId) ?? throw new InvalidDataException("Rusher owner disappeared.");
+        var opponent=players.Single(p=>p!=owner);
+        if(opponent.Dead)return null;
+        var origin=new Vector3(army.X,army.Y,army.Z);
+        Vector3 BodyPosition(PlayerShotTarget target) => rifleCombat != null
+            ? rifleCombat.Pose(opponent.Definition.PlayerId).BodyTargetPosition(target.TransformFileId)
+            : GrenadePlayerShotTarget(opponent.Definition.PlayerId, target.TransformFileId);
+        var source=playerShotTargets.Nearest(1,origin,BodyPosition);
+        return new(entityKey,opponent.Definition.PlayerId,source.TransformFileId,slot,
+            BodyPosition(source));
+    }
+
+    private ArmyRusherTarget? MinigunnerBodyTarget(ulong entityKey)
+    {
+        if(phase!=BattlePhase.Running || !HasArmyCombatView || playerShotTargets==null ||
+           !activeArmyEntities.TryGetValue(entityKey,out var army))return null;
+        var owner=Find(army.OwnerPlayerId) ?? throw new InvalidDataException("Minigunner owner disappeared.");
+        var opponent=players.Single(p=>p!=owner);
+        if(opponent.Dead)return null;
+        if(map==null || opponent.Cover<0 || opponent.Cover>=map.Covers.Count)return null;
+        // A Minigunner deployed from the army card calls PickPlayerOpponent(1f).
+        // GameShootableEntityPlayer replaces the serialized type-2 child with
+        // the current cover shield's shotPosition, so this branch is certain
+        // while that cover has a shield object.
+        var source=playerShotTargets.Gameplay.Single(t=>t.Type==2);
+        return new(entityKey,opponent.Definition.PlayerId,source.TransformFileId,0,
+            map.Covers[opponent.Cover].ShotPosition);
+    }
+
+    // Target projection only. The source enters EnemyAIState.Rusher after its
+    // navigation transition; this does not cause a shot or claim arrival.
+    internal ArmyRusherTarget? RusherMovingTarget(ulong entityKey)
+    {
+        if(phase!=BattlePhase.Running || !HasArmyCombatView || map==null ||
+           armyRusherPoints==null || playerShotTargets==null ||
+           !activeArmyEntities.TryGetValue(entityKey,out var army) ||
+           !rusherSlotByEntity.TryGetValue(entityKey,out int slot))return null;
+        if(!occupiedRusherSlots.TryGetValue(slot,out ulong occupant) || occupant!=entityKey)
+            throw new InvalidDataException("Rusher target lacks its occupied source slot.");
+        var owner=Find(army.OwnerPlayerId) ?? throw new InvalidDataException("Rusher owner disappeared.");
+        var opponent=players.Single(p=>p!=owner);
+        if(opponent.Dead || opponent.Cover<0 || opponent.IsMoving ||
+           !armyRusherPoints.ForCover(map,opponent.Cover).Any(p=>p.ComponentFileId==slot))
+            return null;
+        var source=playerShotTargets.Gameplay.Single(p=>p.Type==16);
+        Vector3 position;
+        if (rifleCombat != null)
+        {
+            var moving = rifleCombat.Pose(opponent.Definition.PlayerId).MovingTarget;
+            if (moving == null || moving.SourcePath != source.Path)
+            {
+                throw new InvalidDataException("Rusher moving target is not bound to host pose.");
+            }
+
+            position = moving.Position;
+        }
+        else
+        {
+            position = GrenadePlayerShotTarget(opponent.Definition.PlayerId, source.TransformFileId);
+        }
+
+        if (!PlayerHitbox.Finite(position))
+        {
+            throw new InvalidDataException("Rusher moving target position is invalid.");
+        }
+
+        return new(entityKey, opponent.Definition.PlayerId, source.TransformFileId, slot, position);
+    }
+
+    // EnemyController.RusherUpdate may first call PrepareToShoot only after
+    // SwitchStateToRusher's strict 0.5-second delay and while the reserved
+    // player's Moving target still exists. This is eligibility, not a shot:
+    // animation, aim, cooldown, and damage remain separate host work.
+    internal ArmyRusherTarget? RusherInitialShotTarget(ulong entityKey)
+        =>rusherMotionCandidates.TryGetValue(entityKey,out var state) &&
+           state.InitialShotDelayElapsed ? RusherMovingTarget(entityKey) : null;
+
+    // Army projectile impacts use the spawned entity as authority, then reuse
+    // the same victim damage kernel and terminal statistics as player shots.
+    internal PlayerDamageResult? ApplyArmyRusherPlayerImpact(
+        ArmyRusherPlayerImpact impact,float randomRoll)
+    {
+        if(phase!=BattlePhase.Running ||
+           !impact.IsReal ||
+           !activeArmyEntities.TryGetValue(impact.EntityKey,out var army) ||
+           army.OwnerPlayerId!=impact.AttackerPlayerId)
+            return null;
+        var result = ApplyResolvedPlayerDamage(impact.AttackerPlayerId,
+            impact.VictimPlayerId,new ResolvedPlayerDamage(impact.Damage,
+                CombatDamageType.Shot,impact.PartWeight),randomRoll,
+            confirmedProjectileImpact:true);
+        if (result is { Applied: true })
+        {
+            MarkArmyRevenge(impact.EntityKey, impact.VictimPlayerId);
+        }
+        return result;
+    }
+
+    // Damage is already established by trusted host collision/weapon logic.
+    // No client packet can call this transition or choose an army victim.
+    internal bool ApplyArmyHostDamage(ulong entityKey,float damage,
+        bool ignoreImmortality=false)
+    {
+        if(!float.IsFinite(damage) || damage<=0 || damage>10_000_000)
+            throw new ArgumentOutOfRangeException(nameof(damage));
+        if (activeArmyEntities.TryGetValue(entityKey, out var cardRow) &&
+            cardRow.SourceCardId.Length > 0)
+        {
+            if (phase != BattlePhase.Running || cardUnitCombat == null)
+                return false;
+            if (damage >= cardRow.Health + cardRow.Kevlar)
+                return ConfirmCardUnitDeath(entityKey, false);
+            var result = cardUnitCombat.ApplyHostDamage(entityKey, damage);
+            if (result is not { Died: false })
+                throw new InvalidDataException("Card-unit damage lost its health authority.");
+            cardRow.Health = result.Entity.Health;
+            cardRow.Kevlar = result.Entity.Kevlar;
+            armyEntityRevision++;
+            stateRevision++;
+            return true;
+        }
+        if(phase!=BattlePhase.Running || !activeArmyEntities.ContainsKey(entityKey) ||
+           !armyVitality.TryGetValue(entityKey,out var vitality))return false;
+        if(!ignoreImmortality && ArmyDroneImmortal(entityKey))return false;
+        float absorbed=Math.Min(damage,vitality.Kevlar);
+        float remainingKevlar=vitality.Kevlar-absorbed;
+        damage-=absorbed;
+        if(damage>=vitality.Current)return ConfirmArmyDeath(entityKey,false);
+        vitality.Kevlar=remainingKevlar;
+        vitality.Current-=damage;
+        if(!float.IsFinite(vitality.Current) || vitality.Current<=0 || vitality.Current>vitality.Maximum)
+            throw new InvalidDataException("Army damage produced invalid host vitality.");
+        if(!float.IsFinite(vitality.Kevlar)||vitality.Kevlar<0||vitality.Kevlar>vitality.KevlarMaximum)
+            throw new InvalidDataException("Army damage produced invalid host kevlar.");
+        activeArmyEntities[entityKey].Health=vitality.Current;
+        activeArmyEntities[entityKey].Kevlar=vitality.Kevlar;
+        armyEntityRevision++;
+        stateRevision++;
+        return true;
+    }
+
+    private void RecordPlayerExplosionArmyKills(ArmyBlastSnapshot beforeBlast,
+        int firstEventIndex, string attackerPlayerId, string cause)
+    {
+        if(cause is not ("player-mine" or "player-bazooka"))
+            throw new InvalidDataException("Unsupported direct player explosion cause.");
+
+        BattleArmyEntityState[] allDeaths = ConfirmedBlastArmyDeaths(
+            beforeBlast.Entities, firstEventIndex);
+        int attackerFraction = players.Single(player =>
+            player.Definition.PlayerId == attackerPlayerId).Definition.Fraction;
+        var enemyDeaths=allDeaths.Where(army=>army.OwnerFraction!=attackerFraction)
+            .ToArray();
+        if(directArmyKills.Count+enemyDeaths.Length>256)
+        {
+            End("source-kill-backpressure","",false);
+            return;
+        }
+
+        PvpBonusProgressCoordinator? scoredDeaths = pvpBonusProgress;
+        if (scoredDeaths != null)
+        {
+            try
+            {
+                foreach (var army in allDeaths)
+                {
+                    int flags = PvpArmyKillSkillShotPolicy.ExplosionFlags(
+                        armyCatalog ?? throw new InvalidDataException(
+                            "Player explosion lacks a recovered army catalog."),
+                        army.UnitId) |
+                        PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(
+                            army.Health, army.MaxHealth) |
+                        BlastRunnerFlag(beforeBlast, army.EntityKey) |
+                        BlastRevengeFlag(beforeBlast, army.EntityKey);
+                    string receiptId = PvpHitReceiptId(cause, army.EntityKey, attackerPlayerId);
+                    scoredDeaths = scoredDeaths.PrepareConfirmedPlayerOwnedDeathCopy(
+                        attackerPlayerId, receiptId, flags, PlayerOwnedDeathGameTime,
+                        army.OwnerFraction != attackerFraction, out _);
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                End("pvp-score-backpressure", "", false);
+                return;
+            }
+        }
+
+        foreach(var army in enemyDeaths)
+            directArmyKills.Add((army.EntityKey,army.UnitId,army.OwnerPlayerId,
+                attackerPlayerId,cause,tick));
+        pvpBonusProgress = scoredDeaths;
+    }
+
+    // Called only after host combat/AI establishes a death. There is no UDP
+    // command capable of naming an entity, selecting a cause, or granting energy.
+    internal bool ConfirmArmyDeath(ulong entityKey,bool suicide)
+    {
+        if(phase!=BattlePhase.Running || !activeArmyEntities.TryGetValue(entityKey,out var row))return false;
+        if (row.SourceCardId.Length > 0)
+            return ConfirmCardUnitDeath(entityKey, suicide);
+        var owner=Find(row.OwnerPlayerId) ?? throw new InvalidDataException("Army entity owner disappeared.");
+        var recipient=suicide ? owner : players.Single(p=>p!=owner);
+        var spawned=owner.Army?.Entity(row.LocalEntityId);
+        if(spawned==null || spawned.UnitId!=row.UnitId || spawned.OptionIndex!=row.OptionIndex ||
+           row.EntityKey!=(((ulong)owner.Definition.Fraction<<32)|(uint)row.LocalEntityId) ||
+           armyReservations?.Owns(entityKey,row.ReservationFileId)!=true)
+            throw new InvalidDataException("Army death lacks a complete host entity and route proof.");
+        _=checked(owner.ConfirmedArmyLosses+1);
+        _=recipient.Army!.PreviewKillEnergy(spawned.Power);
+        if(!EventCapacityForArmyDeath())
+        {End("army-event-backpressure","",false);return false;}
+        float? mortarHideDelay = PrepareMortarCorpseDelay(entityKey, row.UnitId);
+        FreezeGunslingerTargetsForDeath(entityKey);
+        if(owner.Army!.RemoveEntity(row.LocalEntityId)==null ||
+           !armyReservations!.Release(entityKey) || !activeArmyEntities.Remove(entityKey))
+            throw new InvalidDataException("Army death compare-and-remove failed.");
+        if (mortarHideDelay.HasValue)
+        {
+            _mortarWeaponPool!.BeginCorpseReturn(entityKey, tick, mortarHideDelay.Value);
+        }
+        armyVitality.Remove(entityKey);
+        armyAssaultGlass.Remove(entityKey);
+        if(droneArmyTargets.Remove(entityKey))droneTargets.Disable(DroneArmyId(entityKey));
+        armyDroneSpecials.Remove(entityKey);
+        armyDronePaths.Remove(entityKey);
+        armyHelicopterPaths.Remove(entityKey);
+        armyAssaultHelicopterPaths.Remove(entityKey);
+        armyAssaultHelicopterShots.Remove(entityKey);
+        armyAssaultHelicopterTargets.Remove(entityKey);
+        armyAssaultHelicopterVolleys.Remove(entityKey);
+        armyAssaultHelicopterRoundIntents.Remove(entityKey);
+        armyHelicopterOrientations.Remove(entityKey);
+        armyHelicopterCrew.Remove(entityKey);
+        armyHelicopterCrewMembers.Remove(entityKey);
+        armyHelicopterSchedules.Remove(entityKey);
+        armyDroneShots.Remove(entityKey);
+        armyHelicopterShots.Remove(entityKey);
+        armyHelicopterGunners.Remove(entityKey);
+        armyHelicopterTurrets.Remove(entityKey);
+        armyHelicopterAcquisitions.Remove(entityKey);
+        armyHelicopterWeapons.Remove(entityKey);
+        droneAttacks.Remove(entityKey);
+        droneLastIntents.Remove(entityKey);
+        armyDamage.Remove(entityKey);
+        armySpecial.Remove(entityKey);
+        sniperCriticalProbabilities.Remove(entityKey);
+        armySpeed.Remove(entityKey);
+        armyShots.Remove(entityKey);
+        _ordinaryMortarWeapons.Remove(entityKey);
+        RemoveMortarNavigation(entityKey);
+        armyVehicleShots.Remove(entityKey);
+        infantryAnimations.Remove(entityKey);
+        if (row.UnitId == "ID_UNIT-ROCKETSOLDIER")
+        {
+            RemoveOrdinaryRocket(entityKey);
+        }
+        if (row.UnitId == "ID_UNIT-GRENADIER")
+        {
+            cardGrenadierThrows.Remove(entityKey);
+            _cardGrenadierDamage.Remove(entityKey);
+            grenadierPointRetryTicks.Remove(entityKey);
+            grenadierWalks.Remove(entityKey);
+            grenadierAttacks.Remove(entityKey);
+            grenadierShotTargets.Remove(entityKey);
+            grenadierShotIntents.RemoveAll(intent => intent.EntityKey == entityKey);
+            grenadierCornerChangeTicks.Remove(entityKey);
+            RemoveGrenadierWeaponVisibility(entityKey);
+            cardEnemyPoints?.Release(entityKey);
+        }
+        if (row.UnitId == "ID_UNIT-GUNSLINGER")
+        {
+            RemoveGunslingerNavigation(entityKey);
+        }
+        if (row.UnitId == "ID_UNIT-ASSAULT")
+        {
+            RemoveAssaulterNavigation(entityKey);
+        }
+        rusherMotionCandidates.Remove(entityKey);
+        _armyRevengeWindows.Remove(entityKey);
+        warperRelocations.Remove(entityKey);
+        warperRestartTicks.Remove(entityKey);
+        rusherSteering.Remove(entityKey);
+        rusherRetargetClocks.Remove(entityKey);
+        rusherDetours.Remove(entityKey);
+        rusherAttacks.Remove(entityKey);
+        minigunnerAttacks.Remove(entityKey);
+        minigunnerMovements.Remove(entityKey);
+        minigunnerSteering.Remove(entityKey);
+        minigunnerPointChangeTicks.Remove(entityKey);
+        vehicleRouteMotions.Remove(entityKey);
+        groundVehicleFacing.Remove(entityKey);
+        groundVehicleVelocities.Remove(entityKey);
+        groundVehicleShotSpeed.Remove(entityKey);
+        transporterShotStats.Remove(entityKey);
+        buggyCannonAttacks.Remove(entityKey);
+        buggyCannonTargets.Remove(entityKey);
+        tankCannonAttacks.Remove(entityKey);
+        tankCannonTargets.Remove(entityKey);
+        tankCannonDamage.Remove(entityKey);
+        vehiclePassengers.Remove(entityKey);
+        transporterRepairDrones.Remove(entityKey);
+        foreach(var id in buggyProjectiles.Where(x=>x.Value.Flight.VehicleId==entityKey)
+            .Select(x=>x.Key).ToArray())buggyProjectiles.Remove(id);
+        foreach(var id in tankProjectiles.Where(x=>x.Value.Flight.VehicleId==entityKey)
+            .Select(x=>x.Key).ToArray())tankProjectiles.Remove(id);
+        scheduledTransporterShots.RemoveAll(x=>x.VehicleId==entityKey);
+        if(vehicles?.TryGet(entityKey,out var vehicle)==true&&vehicle!=null&&
+           !vehicles.TryDestroy(entityKey,vehicle.Generation))
+            throw new InvalidDataException("Ground vehicle death cleanup failed.");
+        walkingShotgunnerSpecials.Remove(entityKey);
+        rusherAttackTargets.Remove(entityKey);
+        minigunnerAttackTargets.Remove(entityKey);
+        if(minigunnerPointByEntity.Remove(entityKey,out int minigunnerPoint) &&
+           (!occupiedMinigunnerPoints.TryGetValue(minigunnerPoint,out ulong minigunnerOwner)||
+            minigunnerOwner!=entityKey||!occupiedMinigunnerPoints.Remove(minigunnerPoint)))
+            throw new InvalidDataException("Minigunner point release lost its host entity proof.");
+        rusherShotCounts.Remove(entityKey);
+        if (row.UnitId == "ID_UNIT-SNIPER")
+            ReleaseNormalSniperPoint(entityKey);
+        owner.ConfirmedArmyLosses=checked(owner.ConfirmedArmyLosses+1);
+        if(rusherSlotByEntity.Remove(entityKey,out int rusherSlot) &&
+           (!occupiedRusherSlots.TryGetValue(rusherSlot,out ulong occupant) ||
+            occupant!=entityKey || !occupiedRusherSlots.Remove(rusherSlot)))
+            throw new InvalidDataException("Rusher slot release lost its host entity proof.");
+        recipient.Army!.CreditKillEnergy(spawned.Power);
+        armyEntityRevision++;
+        stateRevision++;
+        Emit(MatchEventKind.ArmyDied,"",owner.Definition.PlayerId,0,
+            new Vector3(row.X,row.Y,row.Z),0,suicide?"suicide":"combat");
+        var eventRow=events[^1];
+        eventRow.ArmyEntityId=row.LocalEntityId;
+        eventRow.ArmyOptionIndex=row.OptionIndex;
+        eventRow.ArmyUnitId=row.UnitId;
+        eventRow.ArmySpawnComponentFileId=row.SpawnComponentFileId;
+        eventRow.ArmyReservationFileId=row.ReservationFileId;
+        eventRow.ArmyEnergyRecipientId=recipient.Definition.PlayerId;
+        return true;
+    }
+}

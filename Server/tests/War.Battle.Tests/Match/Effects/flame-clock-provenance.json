@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "description": "Inspected Client source and existing binding inputs for C31. Fire/Update bodies are compared against the compiled reference with identifier-only substitutions. No source or artifact digest was repaired to bypass V07.",
+  "inputs": {
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/FlameAmmo.cs": "348d1eede592505e1edff070a6593a18d7c46e77a5b6df4f862c8cd2f9eb511a",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/TimeManager.cs": "5196b3cd5b3ef3c4e519bd58dab6747e048a96f5ef7b15e703a989ae2a9c78af",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SkillShotControllerPlayer.cs": "6888489cdb419de17ff7e3e5d70540307c5f108ac003b13a3917b2fa1cd38c14",
+    "Server/content/recovered-rusher-weapon-bindings.json": "3c1d9f194edc2e023be94eb5832e7c43a93abbcd87de1f3bf83a72cd3c9efcba",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BulletPoison.cs": "8972c5054a6f17a97a8bc5b11d69b36f488cd6375a4a75e5b1211b80391945a7",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/MainGameEntity.cs": "703452806af22660faad7b411836c03d3edf6879931723342e4ed2ebb4b8e48e"
+  }
+}

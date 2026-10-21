@@ -84,7 +84,18 @@ internal static class MinigunCatalogTests
         state.UpdateTarget(new Vector3(4,5,6));state.Release();
         Check(state.Due(100,first,catalog.Binding)==null,"minigun release stops fire");
         try{state.Press(1,new(float.NaN,0,0));throw new Exception("FAIL: minigun finite target");}catch(InvalidDataException){checks++;}
-        var shot=catalog.Prepare(0,1,"00000000000000000000000000000001",Vector3.Zero,Vector3.UnitZ,10,0,(_,_,_)=>null);
+        var shot=catalog.Prepare(
+            0,
+            new BulletLaunch
+            {
+                ProjectileId = 1,
+                OwnerId = "00000000000000000000000000000001",
+                MuzzlePosition = Vector3.Zero,
+                TargetPosition = Vector3.UnitZ,
+                SimulationTick = 10,
+                CriticalRoll = 0,
+                TraceCollision = (_,_,_)=>null
+            });
         Check(shot.WeaponSourceId==MinigunCatalog.SourceId&&shot.Damage.Amount==19f&&shot.Flight.Position==catalog.Binding.ShotOffset,"minigun projectile authority");
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"),null,null,null,null,
             Path.Combine(directory,"minigun-content-manifest.json"));

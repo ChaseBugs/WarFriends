@@ -125,7 +125,7 @@ public sealed partial class BattleRematchConsentStore
 
     private static string[] ReadParticipants(BattleResultDocument result, string playerId)
     {
-        MatchSnapshot terminal = TerminalOutbox.ValidatePayload(result.Snapshot, result.MatchId, result.Digest);
+        MatchSnapshot terminal = BattleTerminalEvidenceValidator.ValidatePayload(result.Snapshot, result.MatchId, result.Digest);
         string[] players = terminal.Players.Select(player => player.PlayerId)
             .OrderBy(identity => identity, StringComparer.Ordinal).ToArray();
         if (terminal.Phase != BattlePhase.Ended || players.Length != 2 || players[0] == players[1] ||

@@ -23,19 +23,17 @@ def vector(value):
     if set(value) != {"x", "y", "z"}:
         raise ValueError("Unity boss route vector fields differ")
     result = [value[axis] for axis in "xyz"]
-    if any(not isinstance(number, (float, int)) or
+    if any(type(number) not in (float, int) or
            not math.isfinite(number) or abs(number) > 10000
            for number in result):
         raise ValueError("Unity boss route vector is invalid")
     return result
 
 
-def main():
-    if sys.argv[1:] not in ([], ["--check"]):
-        raise SystemExit("usage: package_coop_boss_paths.py [--check]")
-    anchors = json.loads(ANCHORS.read_bytes())
-    navigation = json.loads(NAVIGATION.read_bytes())
-    unity = json.loads(UNITY_RESULT.read_bytes())
+def build_document(anchor_bytes, navigation_bytes, unity_bytes):
+    anchors = json.loads(anchor_bytes)
+    navigation = json.loads(navigation_bytes)
+    unity = json.loads(unity_bytes)
     if unity.get("version") != 1 or len(unity.get("maps", [])) != 5 or \
             len(anchors["maps"]) != 5 or len(navigation["maps"]) != 5:
         raise ValueError("boss route source maps are incomplete")
@@ -79,9 +77,15 @@ def main():
                      "navMeshSha256": nav["navMeshSha256"],
                      "routes": routes})
 
-    artifact = {"version": 1, "anchorSourceSha256": digest(ANCHORS),
-                "navigationSourceSha256": digest(NAVIGATION), "maps": maps}
-    encoded = (json.dumps(artifact, indent=2) + "\n").encode()
+    return {"version": 1, "anchorSourceSha256": hashlib.sha256(anchor_bytes).hexdigest(),
+            "navigationSourceSha256": hashlib.sha256(navigation_bytes).hexdigest(), "maps": maps}
+
+
+def main():
+    if sys.argv[1:] not in ([], ["--check"]):
+        raise SystemExit("usage: package_coop_boss_paths.py [--check]")
+    artifact = build_document(ANCHORS.read_bytes(), NAVIGATION.read_bytes(), UNITY_RESULT.read_bytes())
+    encoded = (json.dumps(artifact, indent=2, allow_nan=False) + "\n").encode()
     if sys.argv[1:] == ["--check"]:
         if OUTPUT.read_bytes() != encoded:
             raise ValueError("packaged boss routes differ from Unity export")

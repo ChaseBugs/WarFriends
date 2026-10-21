@@ -2,14 +2,78 @@
 
 This is a fresh implementation following `../BACKEND_DESIGN.md`, with the owner's overrides: **MongoDB, no Docker, Windows development and Linux deployment, protobuf communication, no Photon dependency in the new stack**.
 
+The server is a standalone .NET application, not a Unity Dedicated Server/headless Player build.
+ASP.NET Core serves Backend HTTP; a separate Worker hosts UDP battles and War.Battle.Simulation.
+Production server execution does not require Unity Editor or UnityEngine. Recovered Client rules
+guide the simulation; managed/native server geometry still requires its own compatibility verification.
+
 The current checkpoint is executable networking and account persistence, not a complete game backend or a completed Unity migration. Read [the detailed client audit](docs/CLIENT_COMMUNICATION.md) before implementing game features.
 
 ## Structure and status
+
+The [battle project boundary extraction](docs/BATTLE_PROJECT_BOUNDARIES.md) separates shared contracts,
+content and managed rules into War.Battle.Domain and mutable execution into War.Battle.Simulation.
+Backend/Persistence have no Worker or Simulation reference. Worker owns transport/local recovery and
+runs Simulation; both libraries stay free of hosting, database and signing dependencies.
+
+Source navigation is described in [Server source ownership](docs/SERVER_STRUCTURE.md).
+Modern Backend HTTP maps and application use cases have feature owners; its Program.cs contains
+only composition. Worker Program also composes its host/control maps in 22 lines. See
+[Backend HTTP ownership](docs/BACKEND_HTTP_STRUCTURE.md) for route, authority,
+body-budget and live queue/reconnect/rematch verification boundaries.
+See [legacy action ownership](docs/LEGACY_ACTION_STRUCTURE.md) for the explicit 175-action registry,
+authentication boundary, feature handlers and the separate 25-action buffered feature registry.
+The first [PvP lifecycle extraction](docs/PVP_CONNECTION_LIFECYCLE.md) gives admission/readiness and
+reconnect state a separate owner, with frozen before/after engine traces; broader S07 work remains.
+The [weapon state extraction](docs/PVP_WEAPON_STATE.md) similarly separates signed slots, ammunition
+and reload/fire deadlines, retaining accepted-shot and card/bonus publication order.
+The [player movement extraction](docs/PVP_PLAYER_MOVEMENT.md) owns cover paths, progress, deadlines
+and frame velocity while preserving command authority, reconnect pauses and speed-effect order.
+The [player bullet extraction](docs/PVP_PLAYER_BULLETS.md) owns real/cosmetic flight lifecycle,
+preserving one-impact-at-a-time ordering, terminal interruption and detached snapshot observations.
+The [bazooka state extraction](docs/PVP_PLAYER_BAZOOKAS.md) owns delayed/active missiles and curve
+history; C30 also fixes their omission from the shared projectile capacity budget.
+The [grenade state extraction](docs/PVP_PLAYER_GRENADES.md) separates equipped flights from bonus/card
+flights and pending explosions, retaining each family's timing, failure and observation boundaries.
+The [army bullet extraction](docs/PVP_ARMY_BULLETS.md) pairs each real/cosmetic flight with immutable
+launch authority, preserving source factories, world-impact order and soldier-death flight lifetime.
+The [army flame clock correction](docs/ARMY_FLAME_CLOCK.md) replaces rounded per-pulse tick intervals
+with the Client's cumulative float deadlines and pause-excluding source frames.
+The [flame interpolation correction](docs/ARMY_FLAME_INTERPOLATION.md) matches the original managed
+Mathf.Lerp clamp for far cone angles and minimum damage on large overlapping colliders.
+The [army effect extraction](docs/PVP_ARMY_EFFECTS.md) gives flame bursts and independent poison
+coroutines separate owners, preserving their different clocks, commit points and world-effect order.
+The [army missile extraction](docs/PVP_ARMY_MISSILES.md) pairs Rocket Soldier/Mortar flights with
+frozen launch authority and owns their detached snapshots and last-frame impact diagnostics.
+The [army missile expiry correction](docs/ARMY_MISSILE_EXPIRY.md) skips collision queries after the
+source lifetime has expired while preserving exact-boundary and earlier collisions.
+The [test workflow](docs/TESTING.md) provides managed focused cases and bounded artifact retention.
+Malformed test commands now exit before shared/full tests; the argument gate checks actual child
+processes and preserves the existing allocation and Unity entry shapes.
+See [Worker host ownership](docs/WORKER_HOST_STRUCTURE.md) and
+[terminal HTTP budgets](docs/TERMINAL_HTTP_ENVELOPE.md) for shared MAC/stream rules, maximum binary
+transport and bounded chunk framing. Other API and UDP limits retain their existing values.
+The explicit test-only auth limiter allowance is twenty requests per window for native smoke;
+the deployment default remains ten. Caller environment is restored after the Windows script.
+Backend and BattleServer keep only `Program.cs` at their C# roots; 687 implementation files now live
+under feature folders. Namespaces and runtime assembly identities are preserved. Project-level
+domain extraction remains tracked in [the active improvement plan](../todo-list.md).
+
+Use [the testing workflow](docs/TESTING.md) for the fast developer gate, full runtime/source gates,
+and bounded artifact retention. New native/legacy smoke runs discard successful temporary databases
+and retain compact reports under `.local/test-runs`; `-KeepArtifacts` preserves a diagnostic run.
+The full recovered-source audit currently has a MainScene provenance mismatch documented there.
+
+The [canonical identity policy](docs/CANONICAL_IDENTITIES.md) now checks exact lower-case N GUIDs
+across account reads/publications, match admission, signing, terminal evidence and SDK readers.
+Malformed stored identities fail before mutation; traffic never trims or rewrites them into an owner.
 
 | Project | Responsibility | Current implementation |
 |---|---|---|
 | War.Shared | Generated protobuf contracts and portable packet codec | .NET Standard 2.0; fixed schema and bounded authenticated packets |
 | War.Client | New portable client SDK | Protobuf registration/login/profile; authenticated UDP hello/ping |
+| War.Battle.Domain | Shared server contracts, source content and managed rules | Host-independent library; Domain/SDK and resource boundaries checked |
+| War.Battle.Simulation | Match state and combat execution | Separate library; Domain/Shared only; native adapters isolated from content |
 | War.Backend | ASP.NET Core/.NET 10 process | Mongo account creation/login/profile, admission grants, readiness/liveness |
 | War.Persistence | Official MongoDB C# driver | Unique account/session indexes; salted PBKDF2 credentials; hashed expiring bearer sessions |
 | War.Infrastructure | Server-only security | Domain-separated session keys, signed expiring server-bound tickets |
@@ -18,6 +82,10 @@ The current checkpoint is executable networking and account persistence, not a c
 The battle process does no database work. It hosts connectivity probes and bounded, provisioned two-player matches. Its queue is capped at 512 datagrams, processing at 128 per tick, with at most 128 admitted/closed unexpired probe sessions. Closed-ticket tombstones expire with their original tickets. Sessions bind to the observed endpoint; reconnect/address migration requires a new grant. Probe sessions expire after 120 seconds.
 
 Datagrams are protobuf bytes followed by a 32-byte HMAC; total size is at most 1,200 bytes. Authentication covers the exact bytes. The control API returns match session keys only to an HMAC-authenticated allocator. UDP provides integrity/authentication, **not encryption**. See [BattleServer status](docs/BATTLE_SERVER.md) for the implemented combat slice and remaining authority gaps.
+
+`Battle__MtuBytes` supports only `1200`, matching the codec, reply pages and SDK. Other values fail
+startup instead of silently changing receive limits. See [UDP budget](docs/UDP_BUDGET.md) for packet
+boundary and real Worker/SDK transfer checks.
 
 Mongo is the only required data service. Battle matchmaking now publishes a pair and consumes both queue tickets in one [Mongo transaction](https://www.mongodb.com/docs/drivers/csharp/current/crud/transactions/), and cancellation uses the same transactional ownership boundary. **The Backend requires a Mongo replica set at startup**, including a single-node replica set for local Windows/Linux development; a standalone `mongod` is no longer sufficient. The native smoke scripts start and initiate isolated single-node replica sets. Future multi-document economy/settlement work can use the same deployment topology. Redis remains optional; there is no PostgreSQL, EF Core, Docker, or Kubernetes dependency.
 
@@ -48,7 +116,7 @@ Install .NET 10 SDK and native MongoDB. From the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File Server/scripts/Smoke.ps1 -MongoExecutable 'C:\Program Files\MongoDB\Server\8.3\bin\mongod.exe'
 ```
 
-Supply your installed mongod path, or omit the parameter if it is on PATH. This launches and initiates an isolated single-node Mongo replica set on 27028, backend on 18080, and UDP host on 30080. It uses generated development secrets, checks two independent clients, stops only processes it started, restores the calling environment, and retains test data/logs under ignored `Server/.local/`. No existing database is modified.
+Supply your installed mongod path, or omit the parameter if it is on PATH. This launches and initiates an isolated single-node Mongo replica set on 27028, backend on 18080, and UDP host on 30080. It uses generated development secrets, checks two independent clients, stops only processes it started, and restores the calling environment. Compact logs remain under ignored `Server/.local/test-runs/`; successful runs discard disposable DB/outbox data. Use `-KeepArtifacts` to preserve it or `-NoBuild` after a successful build. No existing database is modified.
 
 Verified on Windows on 2026-10-09: build with zero warnings/errors, **1,034 protocol/admission/replay checks** including 1,000 malformed-packet fuzz checks, **138,509 BattleServer assertions**, and **74 live MongoDB/HTTP/protobuf/UDP checks**. The live run includes malformed probe rejection, a two-peer match that pauses and resumes through a rotated UDP grant, idempotent reconnect-request retry, old-session revocation, and authenticated fetch/ack of unscored terminal evidence across two BattleServer process restarts. The durable terminal snapshot is checked byte-for-byte against the UDP result. These are console test executables; invoke them with `dotnet run`, not `dotnet test`.
 
@@ -61,6 +129,7 @@ $env:ASPNETCORE_ENVIRONMENT='Development'
 $env:ASPNETCORE_URLS='http://127.0.0.1:8080'
 $env:Battle__SigningKey='<same generated base64 key in both shells>'
 $env:Battle__ControlKey='<same second generated base64 key in both shells>'
+$env:Legacy__ContentPath=(Resolve-Path 'Server/content/recovered-battle-content.json').Path
 dotnet run --project Server/src/War.Backend --no-launch-profile
 # Second shell, same two keys:
 dotnet run --project Server/src/War.BattleServer --no-launch-profile
@@ -88,7 +157,7 @@ deadline before readiness is accepted. See [map assignment](docs/BATTLE_MAP_ASSI
 
 Implemented: **85 of 175 named actions.** The boot chain — reachability, `GetConfigurations` (157),
 `CreateAccount` (118), `LoginToCustomAccount` (30), `GetPlayerData` (34), `GetAllMessages` (5) and
-`SetPlayerStatus` (29); claim-then-apply idempotent replay of 25 of 29 buffered actions
+`SetPlayerStatus` (29); transactional idempotent replay of 25 of 29 buffered actions
 (`WeaponWasShown` 104, `ArmyUnitWasShown` 105, `VisualWasShown` 191, `EquipWeapon` 116,
 `UpdateEquippedUnits` 1003, `BuyWeapon` 76, `BuyUnit` 80, `BuyWeaponUpgrade` 73,
 `ActivateWeaponUpgrade` 75, `InstantWeaponUpgrade` 74, `BuyUnitUpgrade` 77,
@@ -158,7 +227,8 @@ catalog's `StartingGold=75`/`StartingWarbucks=15000`/`DogTagCap=5` rather than f
 placeholders. Every other action returns `ServerMaintenance` and logs, because a hollow `Success`
 would send the client into a handler that indexes response keys it did not receive — most
 remaining economy actions now have a clear unblock path (see `docs/CLIENT_COMMUNICATION.md`) but
-aren't wired one by one yet. See `todo_list.md` for the complete Backend/Battle Server checklist.
+aren't wired one by one yet. See [the active server backlog](../todo-list.md) for the current Backend/Battle Server work;
+`todo_list.md` remains historical.
 This is not a playable game backend: no battles, Squad Wars/leagues/arena, most real purchases, and
 no leaderboard-style Squad search by XP (meaningless without real battle-derived stats).
 
@@ -166,7 +236,8 @@ no leaderboard-style Squad search by XP (meaningless without real battle-derived
 powershell -NoProfile -ExecutionPolicy Bypass -File Server/scripts/LegacySmoke.ps1 -MongoExecutable 'C:\Program Files\MongoDB\Server\8.3\bin\mongod.exe'
 ```
 
-Verified on Windows against live MongoDB: **226 assertions** covering the exact wire shapes the
+Verified on Windows against live MongoDB: **339 base HTTP assertions**, 45 squad and 28 account HTTP assertions, plus targeted buffered
+transaction/fault scenarios covering the exact wire shapes the
 shipped client parses — the DynamoDB AttributeValue encoding of `Player`/`PlayerData`, bare
 top-level `Result`/`Time`, the `"ok"` probe body, the semicolon-delimited configuration stream,
 session rotation, rejection of stale/forged/cross-bound tokens, buffered-request idempotency
@@ -176,10 +247,59 @@ both the direct `SendRequestBuffer` path and buffers carried on `GetPlayerData`)
 explicit JSON `null` rather than an omitted key for an unknown player.
 `docs/CLIENT_COMMUNICATION.md`
 records the evidence for each shape.
+Buffered account changes and complete replay responses now commit together; boot projects the
+returned committed account. Strict envelope validation rejects malformed input before execution.
+Pure buffered calculations now live in `Legacy/Buffering`; the coordinator owns persistence/replay.
+BuyDecal success always includes its required identity/expiry, including owned no-ops and bound
+historical replay. [Buffer contract tests](docs/LEGACY_BUFFER_CONTRACTS.md) execute the actual recovered
+callback/value parser without cloning a Unity project. All 126 current literal server result
+dispositions now have first-delivery/current-authority replay checks using small test fixtures.
+Full gameplay, catalog/state validation and the complete action inventory remain explicit follow-up work.
+The catalog now publishes immutable rows and reviewed identity indexes, rejects malformed/duplicate
+authority, and validates consumed price/duration domains before use. Configured startup also checks
+current dependency sheets/constants, source field types/counts/identities and exact reviewed snapshot
+bytes. Typed upgrade lanes enforce recovered weapon, current-tier and Elite limits; completion needs
+owned current state and matching active delivery before a charge or increment.
+[Catalog validation](docs/LEGACY_CATALOG_VALIDATION.md) documents remaining source-value reconciliation
+and the unresolved V07 scene-provenance mismatch.
+Purchase and promotion gates now compare displayed rank (`Level + 1`) with catalog requirements,
+matching the recovered Client. This fixes delayed unlocks and previously unreachable final-tier gates.
+Dog-tag mutations now preserve source penalty debt, include VIP in refill price/fullness and publish
+against current session/revision authority. Boot uses one validated Time for dog-tag projection and
+UTC midnight. See [dog-tag publication](docs/DOG_TAG_PUBLICATION.md) for source rules and retry limits.
+Typed stored state now rejects numeric-string coercion, present nulls, duplicate/case-shadowed fields
+and required null containers while retaining permitted unmodeled metadata. Complete Settings updates
+preserve current metadata and bind session/revision authority. Root wallet/rank/tier counters now
+require exact persisted BSON integers, and shared readers/transactions reject damaged authority.
+New accounts use the recovered one-match placement constant; Army Power is bounded before the
+Client's signed-Int32 times-ten calculation. Historical invalid records require reviewed migration. See
+[stored state validation](docs/STORED_STATE_VALIDATION.md) for verified scope and remaining C13 work.
+Five direct profile mutations now have feature-owned parsing and persistence, current-session/
+revision predicates, exact device/locale tuples and one source-priced name/count/Gold publication.
+Malformed heartbeats remain callback-safe without refreshing presence. Status and LastAction join
+the twenty required exact root BSON numeric fields. See
+[profile publication](docs/PROFILE_PUBLICATION.md) for source callbacks, forced races and nonce limits.
+Shown-once analytics flags now patch current validated state with session/revision guards, preserving
+other flags, buffered chat updates and exact metadata. Invalid present JSON is refused without reset;
+repeated true flags perform no write. See [analytics publication](docs/ANALYTICS_PUBLICATION.md) for
+the shared field contract and remaining progression/receipt boundaries.
+The tutorial handshake now retains one versioned battle ID through completion, with atomic
+session/revision-bound mirrors and read-only replay. Old completion without a retained ID remains
+readable but cannot authorize a new terminal replay. See
+[tutorial publication](docs/TUTORIAL_PUBLICATION.md); no combat/economy rewards are inferred.
+See [buffered economy publication](docs/BUFFERED_ECONOMY_PUBLICATION.md) for the non-expiring replay
+policy and historical receipt limitations. See [account publication](docs/ACCOUNT_PUBLICATION.md),
+[card pool publication](docs/CARD_POOL_PUBLICATION.md) and [squad publication](docs/SQUAD_PUBLICATION.md)
+for their transaction, validation, replay and verification boundaries.
 
 To point the client at this server, change only the host in its `BeanstalkUrlCreator`; the paths
 already match. Configure starter state under `Legacy:Starter` — it is authoritative, and the
-client's own `StartingGold`/`StartingWarbucks` assertions are discarded. Serving the legacy channel
+client's own `StartingGold`/`StartingWarbucks` assertions are discarded. Starting options are frozen
+and validated before database initialization. Set Legacy__ContentPath for source-backed gameplay.
+Only an explicit Legacy__AllowCatalogFreeStartup=true permits omission for connectivity/profile
+testing; catalog-dependent mutations stay closed. A configured missing, malformed or empty source
+always fails startup. Shared port/key rules and immutable limiter/content options are described in
+[Backend startup policy](docs/BACKEND_STARTUP.md). Serving the legacy channel
 over plain HTTP requires `Legacy__AllowInsecureHttp=true` and logs a warning; it exposes
 credentials and session tokens, so use it only on an isolated offline network.
 

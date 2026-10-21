@@ -1,9 +1,9 @@
 """Pin the recovered co-op Assaulter's primary rifle and cadence sources."""
 
+import argparse
 import hashlib
 import json
 import re
-import sys
 from pathlib import Path
 
 from extract_rusher_weapon_bindings import relative, yaml
@@ -33,8 +33,10 @@ def require(pattern, source, description):
     return match
 
 
-def main():
-    _, scene_blocks, _, _ = yaml(SCENE)
+def build_document(scene_bytes):
+    scene = scene_bytes.decode("utf-8-sig").replace("\r\n", "\n")
+    scene_blocks = {int(match[1]): match[2] for match in re.finditer(
+        r"^--- !u!\d+ &(\d+)\n(.*?)(?=^--- !u!|\Z)", scene, re.M | re.S)}
     behaviour = scene_blocks[35664]
     inventory = scene_blocks[42740]
     if ("m_GameObject: {fileID: 4849}" not in behaviour or
@@ -131,10 +133,10 @@ def main():
             ammo_source):
         raise ValueError("Ammo critical/damage setup changed")
 
-    artifact = {
+    return {
         "version": 1,
         "unitId": "ID_UNIT-ASSAULT",
-        "sceneSha256": digest(SCENE),
+        "sceneSha256": hashlib.sha256(scene_bytes).hexdigest(),
         "behaviourComponentFileId": 35664,
         "inventoryComponentFileId": 42740,
         "weaponPrefab": "Assets/GameObject/AssaultRifleEnemy.prefab",
@@ -163,14 +165,19 @@ def main():
         "bulletSetupSourceSha256": digest(BULLET_SETUP),
         "ammoSourceSha256": digest(AMMO),
     }
-    content = json.dumps(artifact, indent=2) + "\n"
-    if sys.argv[1:] == ["--check"]:
-        if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != content:
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate without writing production content")
+    args = parser.parse_args()
+    artifact = build_document(SCENE.read_bytes())
+    content = (json.dumps(artifact, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    if args.check:
+        if not OUTPUT.exists() or OUTPUT.read_bytes() != content:
             raise ValueError("co-op Assaulter weapon artifact differs from sources")
-    elif not sys.argv[1:]:
-        OUTPUT.write_text(content, encoding="utf-8")
     else:
-        raise ValueError("usage: extract_coop_assaulter_weapon.py [--check]")
+        OUTPUT.write_bytes(content)
     print("co-op Assaulter primary/card rifle binding pinned")
 
 

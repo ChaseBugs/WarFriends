@@ -142,26 +142,31 @@ def parse_maps(scene_lines):
     return result, boss_result
 
 
-def main():
-    scene_bytes = SCENE.read_bytes()
+def build_document(scene_bytes):
     scene_lines = scene_bytes.decode("utf-8-sig").splitlines()
     missions = parse_rows(component_lines(scene_lines))
     maps, boss_maps = parse_maps(scene_lines)
-    document = {
+    return {
         "source": "Clients/ExportedProject/Assets/Scenes/MainScene.unity",
         "sourceSha256": hashlib.sha256(scene_bytes).hexdigest(),
         "maps": maps,
         "bossMaps": boss_maps,
         "missions": missions,
     }
+
+
+def main():
+    if sys.argv[1:] not in ([], ["--check"]):
+        raise SystemExit("usage: extract_mission_catalog.py [--check]")
+    document = build_document(SCENE.read_bytes())
     expected_text = json.dumps(document, indent=2) + "\n"
     if "--check" in sys.argv:
         if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != expected_text:
             raise ValueError("Mission catalog differs from recovered MainScene")
-        print(f"Verified {len(missions)} missions against recovered MainScene")
+        print(f"Verified {len(document['missions'])} missions against recovered MainScene")
     else:
         OUTPUT.write_text(expected_text, encoding="utf-8")
-        print(f"Extracted {len(missions)} missions to {OUTPUT}")
+        print(f"Extracted {len(document['missions'])} missions to {OUTPUT}")
 
 
 if __name__ == "__main__":

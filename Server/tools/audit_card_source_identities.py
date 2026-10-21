@@ -10,9 +10,9 @@ ROOT = Path(__file__).resolve().parents[2]
 ASSETS = ROOT / "Clients/ExportedProject/Assets"
 SCRIPTS = ROOT / "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp"
 SCENE = ROOT / "Clients/ExportedProject/Assets/Scenes/MainScene.unity"
-CATALOG = ROOT / "Server/src/War.BattleServer/WarCardSourceIdentityCatalog.cs"
-EFFECTS = ROOT / "Server/src/War.BattleServer/WarCardEffectCatalog.cs"
-UNIT_CARDS = ROOT / "Server/src/War.BattleServer/CardSpawnUnitSourceCatalog.cs"
+CATALOG = ROOT / "Server/src/War.Battle.Domain/Cards/WarCardSourceIdentityCatalog.cs"
+EFFECTS = ROOT / "Server/src/War.Battle.Domain/Cards/WarCardEffectCatalog.cs"
+UNIT_CARDS = ROOT / "Server/src/War.Battle.Domain/Content/Cards/CardSpawnUnitSourceCatalog.cs"
 CONTENT = ROOT / "Server/content/recovered-battle-content.json"
 
 source = CATALOG.read_text(encoding="utf-8")

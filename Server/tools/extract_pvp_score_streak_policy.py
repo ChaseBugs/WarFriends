@@ -2,15 +2,13 @@
 import hashlib
 import json
 import re
-import sys
+import argparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def main():
-    scene_bytes = (ROOT / "Clients/ExportedProject/Assets/Scenes/MainScene.unity").read_bytes()
-    content_bytes = (ROOT / "Server/content/recovered-battle-content.json").read_bytes()
+def build_document(scene_bytes, content_bytes):
     manager_bytes = (ROOT / "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/ScoreManager.cs").read_bytes()
     online_bytes = (ROOT / "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerOnline.cs").read_bytes()
     levels_bytes = (ROOT / "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/LevelManager.cs").read_bytes()
@@ -34,7 +32,10 @@ def main():
         raise ValueError("Reviewed crate eligibility threshold changed")
     manager = manager_bytes.decode("utf-8-sig")
     for expression in ("Constants.rowIds.MultiPlayerScoreStreakRatio", "killStreakScoreRatio = 0f;",
-                       "killStreakProgress > 100f", "killStreakProgress -= 100f;"):
+                       "private const float KillStreakThreshold = 100f;",
+                       "killStreakProgress > KillStreakThreshold", "killStreakProgress -= KillStreakThreshold;",
+                       "killStreakProgressOpponent > KillStreakThreshold",
+                       "killStreakProgressOpponent -= KillStreakThreshold;"):
         if expression not in manager:
             raise ValueError("Source score-streak transition changed")
     online = online_bytes.decode("utf-8-sig")
@@ -59,9 +60,18 @@ def main():
         "bonusThreshold": 100,
         "maximumBonusesPerUpdate": 1,
     }
-    data = (json.dumps(document, indent=2) + "\n").encode("utf-8")
+    return document
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true")
+    options = parser.parse_args()
+    scene_bytes = (ROOT / "Clients/ExportedProject/Assets/Scenes/MainScene.unity").read_bytes()
+    content_bytes = (ROOT / "Server/content/recovered-battle-content.json").read_bytes()
+    data = (json.dumps(build_document(scene_bytes, content_bytes), indent=2) + "\n").encode("utf-8")
     output = ROOT / "Server/content/recovered-pvp-score-streak-policy.json"
-    if "--check" in sys.argv:
+    if options.check:
         if output.read_bytes() != data:
             raise ValueError("Checked-in PvP score-streak policy differs from current source")
     else:

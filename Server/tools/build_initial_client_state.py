@@ -56,11 +56,8 @@ def create_decals(observed):
             "previousHeadDecal": ""}
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--write", action="store_true", help="Write the reviewed initial subsystem state.")
-    options = parser.parse_args()
-    observed = read_observation()
+def build_document(observation_bytes):
+    observed = read_observation(observation_bytes)
     create_mappings(observed)
     if observed["context"]["isTutorial"] is not False:
         raise ValueError("Initial lobby state requires the observed non-tutorial context.")
@@ -69,8 +66,16 @@ def main():
     if serialized != observed["serialized"]:
         raise ValueError("Source-derived initialization differs from the actual Client observation.")
     result = {"schemaVersion": 1, "clientVersion": "1.4.0",
-              "observationSha256": hashlib.sha256(OBSERVATION.read_bytes()).hexdigest(),
+              "observationSha256": hashlib.sha256(observation_bytes).hexdigest(),
               "mainSceneSha256": observed["source"]["mainSceneSha256"], "serialized": serialized}
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--write", action="store_true", help="Write the reviewed initial subsystem state.")
+    options = parser.parse_args()
+    result = build_document(OBSERVATION.read_bytes())
     expected = (json.dumps(result, indent=2) + "\n").encode("utf-8")
     if options.write:
         TARGET.write_bytes(expected)

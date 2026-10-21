@@ -30,19 +30,27 @@ def build_unit(unit, sheets):
     return result
 
 
+def build_document(content_bytes, observation_bytes=None):
+    if observation_bytes is None:
+        observation_bytes = OBSERVATION.read_bytes()
+    observed = read_observation(observation_bytes)
+    sheets = {sheet["type"]: sheet["rows"] for sheet in json.loads(content_bytes)["sheets"]}
+    units = [build_unit(unit, sheets) for unit in observed["units"]]
+    if len(units) != UNIT_COUNT or len({unit["sourceId"] for unit in units}) != UNIT_COUNT:
+        raise ValueError("The complete unique source unit set is required.")
+    result = {"schemaVersion": 1, "observationSha256": hashlib.sha256(observation_bytes).hexdigest(),
+              "sheetArtifactSha256": hashlib.sha256(content_bytes).hexdigest(), "units": units}
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--write", action="store_true")
     options = parser.parse_args()
-    observed = read_observation()
-    if hashlib.sha256(CONTENT.read_bytes()).hexdigest() != CONTENT_SHA256:
+    content_bytes = CONTENT.read_bytes()
+    if hashlib.sha256(content_bytes).hexdigest() != CONTENT_SHA256:
         raise ValueError("The reviewed source sheets changed.")
-    sheets = {sheet["type"]: sheet["rows"] for sheet in json.loads(CONTENT.read_text())["sheets"]}
-    units = [build_unit(unit, sheets) for unit in observed["units"]]
-    if len(units) != UNIT_COUNT or len({unit["sourceId"] for unit in units}) != UNIT_COUNT:
-        raise ValueError("The complete unique source unit set is required.")
-    result = {"schemaVersion": 1, "observationSha256": hashlib.sha256(OBSERVATION.read_bytes()).hexdigest(),
-              "sheetArtifactSha256": CONTENT_SHA256, "units": units}
+    result = build_document(content_bytes)
     expected = (json.dumps(result, indent=2) + "\n").encode("utf-8")
     if options.write:
         TARGET.write_bytes(expected)

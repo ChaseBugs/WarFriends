@@ -44,9 +44,16 @@
         "resolved": "0.7.3",
         "contentHash": "U9Ix4l4cl58Kzz1rJzj5hoVTjmbx1qGMwzAcbv1j/d3NzrFaESIurQyg+ow4mivCgkE3S413y+U9k4WdnEIkRA=="
       },
+      "war.battle.domain": {
+        "type": "Project",
+        "dependencies": {
+          "War.Shared": "[1.0.0, )"
+        }
+      },
       "war.battleserver": {
         "type": "Project",
         "dependencies": {
+          "War.Battle.Domain": "[1.0.0, )",
           "War.Infrastructure": "[1.0.0, )",
           "War.Shared": "[1.0.0, )"
         }
@@ -54,6 +61,7 @@
       "war.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "War.Battle.Domain": "[1.0.0, )",
           "War.Shared": "[1.0.0, )"
         }
       },
@@ -61,7 +69,7 @@
         "type": "Project",
         "dependencies": {
           "MongoDB.Driver": "[3.12.0, )",
-          "War.BattleServer": "[1.0.0, )",
+          "War.Battle.Domain": "[1.0.0, )",
           "War.Shared": "[1.0.0, )"
         }
       },

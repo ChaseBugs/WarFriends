@@ -140,3 +140,5 @@ main.14008.com.chillingo.warfriends.android.gplay.obb
 .vscode/
 Thumbs.db
 .DS_Store
+/Clients/ExportedProject_Compile
+/Server/tools/__pycache__

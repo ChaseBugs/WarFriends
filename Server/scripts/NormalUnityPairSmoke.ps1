@@ -159,6 +159,12 @@ try {
                 throw "Normal result screen did not follow authoritative termination; inspect $RunRoot"
             }
         }
+        $firstTerminal = $reports[0].normalBattle.terminal
+        $secondTerminal = $reports[1].normalBattle.terminal
+        if (!$firstTerminal.hasRequestedForfeit -or $secondTerminal.hasRequestedForfeit -or
+            $firstTerminal.endReason -ne 'Forfeit' -or $secondTerminal.endReason -ne 'WinByForfeit') {
+            throw "Normal result screens did not preserve the designated forfeiter and winner; inspect $RunRoot"
+        }
     }
     if (!$reports[0].normalBattle.matchId -or
         $reports[0].normalBattle.matchId -ne $reports[1].normalBattle.matchId) {

@@ -1,0 +1,171 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using War.BattleServer;
+using War.Shared;
+
+namespace War.Backend;
+
+/// <summary>Allocator-side projection of the same immutable rifle rows the
+/// Worker validates. This never accepts weapon numbers from a Client.</summary>
+public sealed class BattleRifleManifestCatalog : IBattleWeaponManifestCatalog
+{
+    private static readonly (string Name,int Count)[] Expected=
+    [
+        ("AssaultRifle_AK47",26),("AssaultRifle_Famas",56),("AssaultRifle_G36",76),
+        ("AssaultRifle_M16",36),("AssaultRifle_QBZ95",46),("AssaultRifle_SteyrAUG",66),
+        ("AssaultRifle_AKS47U",76),("AssaultRifle_G36Elite",76),("AssaultRifle_FamasElite",56),
+        ("AssaultRifle_QBZ95Elite",46),("AssaultRifle_AK47Elite",26)
+    ];
+    private sealed record ContentManifest(int Version,string SceneRevision,string StatsRevision,string BindingsRevision,string AllWeaponBindingsRevision,
+        string PosesRevision,string BarrelBindingsRevision,string BarrelOverlapRevision,string ArmyDeploymentRevision,
+        string ArmyWeaponBindingsRevision,string GroundVehicleWeaponsRevision,string EnemyPosesRevision,string DecoyRevision,string LandMineRevision,string HeavyTurretRevision,string ArmySpawnPointsRevision,string ArmyRusherPointsRevision,string ArmyMinigunnerPointsRevision,string PlayerShotTargetsRevision,
+        string ArmyNavMeshSourcesRevision,string ArmyNavMeshTriangulationRevision,string ArmyNavMeshPathsRevision,string AirWaypointRoutesRevision,string DroneWeaponRevision,string AirGeometryRevision,string HelicopterCrewPointsRevision,string DroneProjectileRevision,string EnemyShotTargetsRevision,string? MortarWeaponPoolRevision=null,string? CoopAssaulterWeaponRevision=null);
+    private sealed record Stage(string SourceId,int UpgradeIndex,int ClipSize,int ReserveAmmo,double CadenceSeconds,double ReloadSeconds);
+    private readonly IReadOnlyDictionary<string,Stage[]> stages;
+    private readonly WeaponBindingGraphCatalog bindings;
+    public string PackageRevision { get; }
+    public string SceneRevision { get; }
+    public string StatsRevision { get; }
+
+    private BattleRifleManifestCatalog(Dictionary<string,Stage[]> stages,WeaponBindingGraphCatalog bindings,string packageRevision,
+        string sceneRevision,string statsRevision)
+    {this.stages=stages;this.bindings=bindings;PackageRevision=packageRevision;SceneRevision=sceneRevision;StatsRevision=statsRevision;}
+
+    public static BattleRifleManifestCatalog Load(string manifestPath)
+    {
+        byte[] manifestBytes=ReadBounded(manifestPath,2,4096,"combat content manifest");
+        ContentManifest manifest;
+        try {manifest=JsonSerializer.Deserialize<ContentManifest>(manifestBytes,new JsonSerializerOptions
+            {PropertyNameCaseInsensitive=true,UnmappedMemberHandling=System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow})
+            ??throw new InvalidDataException("Missing combat content manifest.");}
+        catch(JsonException e){throw new InvalidDataException("Malformed combat content manifest.",e);}
+        string[] hashes=[manifest.SceneRevision,manifest.StatsRevision,manifest.BindingsRevision,manifest.AllWeaponBindingsRevision,manifest.PosesRevision,
+            manifest.BarrelBindingsRevision,manifest.BarrelOverlapRevision,manifest.ArmyDeploymentRevision,
+            manifest.ArmyWeaponBindingsRevision,
+            manifest.GroundVehicleWeaponsRevision,
+            manifest.EnemyPosesRevision,
+            manifest.DecoyRevision,
+            manifest.LandMineRevision,
+            manifest.HeavyTurretRevision,
+            manifest.ArmySpawnPointsRevision,manifest.ArmyRusherPointsRevision,manifest.ArmyMinigunnerPointsRevision,manifest.PlayerShotTargetsRevision,
+            manifest.ArmyNavMeshSourcesRevision,manifest.ArmyNavMeshTriangulationRevision,manifest.ArmyNavMeshPathsRevision,manifest.AirWaypointRoutesRevision,manifest.DroneWeaponRevision,manifest.AirGeometryRevision,manifest.HelicopterCrewPointsRevision,manifest.DroneProjectileRevision,manifest.EnemyShotTargetsRevision];
+        string mortarRevision=CombatManifestRevisionPolicy.ResolveMortarPool(manifest.Version,manifest.MortarWeaponPoolRevision);
+        string assaulterRevision=CombatManifestRevisionPolicy.ResolveAssaulterWeapon(manifest.Version,manifest.CoopAssaulterWeaponRevision);
+        if(hashes.Any(x=>x==null || !Regex.IsMatch(x,@"\A[0-9a-f]{64}\z")))
+            throw new InvalidDataException("Invalid combat content revisions.");
+        string contentPath=Path.Combine(Path.GetDirectoryName(Path.GetFullPath(manifestPath))!,"recovered-battle-content.json");
+        byte[] content=ReadBounded(contentPath,2,16_000_000,"rifle content");
+        if(Convert.ToHexStringLower(SHA256.HashData(content))!=manifest.StatsRevision)
+            throw new InvalidDataException("Rifle content revision mismatch.");
+        string crewPath=Path.Combine(Path.GetDirectoryName(Path.GetFullPath(manifestPath))!,
+            "recovered-helicopter-crew-points.json");
+        byte[] crew=ReadBounded(crewPath,100,10_000,"Helicopter crew source");
+        if(Convert.ToHexStringLower(SHA256.HashData(crew))!=manifest.HelicopterCrewPointsRevision)
+            throw new InvalidDataException("Helicopter crew source revision mismatch.");
+        string directory = Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
+        var army = ArmyDeploymentCatalog.Load(Path.Combine(directory, "recovered-army-deployment.json"),
+            manifest.ArmyDeploymentRevision, manifest.SceneRevision);
+        MortarWeaponPoolSource.Load(Path.Combine(directory, "recovered-mortar-weapon-pool.json"),
+            army, manifest.SceneRevision, mortarRevision);
+        byte[] assaulter=ReadBounded(Path.Combine(directory,"recovered-coop-assaulter-weapon.json"),500,5000,"Assaulter source");
+        if(Convert.ToHexStringLower(SHA256.HashData(assaulter))!=assaulterRevision)
+            throw new InvalidDataException("Assaulter source revision mismatch.");
+        var bindings=WeaponBindingGraphCatalog.Load(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(manifestPath))!,
+            "recovered-all-weapon-bindings.json"),manifest.AllWeaponBindingsRevision,manifest.SceneRevision,contentPath);
+        try
+        {
+            using var document=JsonDocument.Parse(content);
+            var root=document.RootElement;
+            if(root.GetProperty("client").GetString()!="1.4.0" || root.GetProperty("mainSceneSha256").GetString()!=manifest.SceneRevision)
+                throw new InvalidDataException("Rifle scene provenance mismatch.");
+            var sheets=new Dictionary<string,JsonElement>(StringComparer.Ordinal);
+            foreach(var sheet in root.GetProperty("sheets").EnumerateArray())
+                if(!sheets.TryAdd(sheet.GetProperty("type").GetString()!,sheet.GetProperty("rows")))
+                    throw new InvalidDataException("Duplicate source sheet.");
+            var definitions=new Dictionary<string,JsonElement>(StringComparer.Ordinal);
+            foreach(var row in sheets["Google2u.WeaponUpgrades"].EnumerateArray())
+                if(!definitions.TryAdd(row.GetProperty("NAME").GetString()!,row))
+                    throw new InvalidDataException("Duplicate weapon definition.");
+            if(definitions.Count!=66)throw new InvalidDataException("Incomplete weapon definitions.");
+            var result=new Dictionary<string,Stage[]>(StringComparer.Ordinal);
+            foreach(var (name,count) in Expected)
+            {
+                string id="Google2u."+name;
+                JsonElement definition=definitions[id],rows=sheets[id];
+                if(rows.GetArrayLength()!=count)throw new InvalidDataException("Incomplete rifle upgrade lane.");
+                var lane=new Stage[count];
+                for(int i=0;i<count;i++)
+                {
+                    JsonElement row=rows[i];
+                    lane[i]=new(id,i,Integer(row,"CLIPSIZE",1,1000),Integer(row,"AMMO",0,100000),
+                        Number(definition,"RATEOFFIRE",0.01f,60),Number(row,"RELOADTIME",0.01f,120));
+                }
+                result.Add(id,lane);
+            }
+            var boundRevisions = hashes.Append(mortarRevision);
+            if(manifest.Version==14)boundRevisions=boundRevisions.Append(assaulterRevision);
+            string packageRevision = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
+                "WarFriends/combat-content/v8\n" + string.Join("\n", boundRevisions))));
+            return new(result,bindings,packageRevision,manifest.SceneRevision,manifest.StatsRevision);
+        }
+        catch(Exception e) when(e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or OverflowException or ArgumentException)
+        {throw new InvalidDataException("Malformed rifle source catalog.",e);}
+    }
+
+    public void Bind(JsonObject participant,BattlePlayerPresentation view)
+    {
+        view=BattlePlayerPresentation.Validate(view);
+        var resolved=view.Weapons.Select(equipped=>(Equipped:equipped,Stage:Resolve(equipped))).ToArray();
+        var slots=new JsonArray();
+        foreach(var row in resolved)
+        {
+            slots.Add(new JsonObject { ["Slot"]=row.Equipped.Slot,["WeaponIndex"]=row.Equipped.WeaponIndex,
+                ["Weapon"]=Weapon(row.Stage),["WeaponUpgrade"]=row.Stage.UpgradeIndex });
+        }
+        participant["Weapon"]=Weapon(resolved[0].Stage);
+        participant["WeaponUpgrade"]=resolved[0].Stage.UpgradeIndex;
+        participant["WeaponSlots"]=slots;
+    }
+
+    private Stage Resolve(BattleWeaponPresentation weapon)
+    {
+        if(!stages.TryGetValue(weapon.SourceId,out Stage[]? lane) || weapon.UpgradeIndex<0 || weapon.UpgradeIndex>=lane.Length ||
+           bindings.Get(weapon.SourceId).InventoryIndex!=weapon.WeaponIndex)
+            throw new InvalidDataException("Durable equipped weapon is not in the recovered rifle combat catalog.");
+        return lane[weapon.UpgradeIndex];
+    }
+    private static JsonObject Weapon(Stage row)=>new()
+    {
+        ["SourceId"]=row.SourceId,["ClipSize"]=row.ClipSize,["ReserveAmmo"]=row.ReserveAmmo,
+        ["CadenceSeconds"]=row.CadenceSeconds,["ReloadSeconds"]=row.ReloadSeconds
+    };
+
+    public void ValidateTemplate(JsonObject template)
+    {
+        if(template["Mode"]?.GetValue<string>()!="unscored-rifle-combat" ||
+           template["CatalogRevision"]?.GetValue<string>()!=PackageRevision)
+            throw new InvalidDataException("Battle template does not bind the recovered rifle combat package.");
+    }
+
+    private static byte[] ReadBounded(string path,int min,int max,string name)
+    {
+        using var input=File.OpenRead(path);
+        if(input.Length<min || input.Length>max)throw new InvalidDataException("Invalid "+name+" size.");
+        var bytes=new byte[checked((int)input.Length)];input.ReadExactly(bytes);return bytes;
+    }
+    private static int Integer(JsonElement row,string key,int min,int max)
+    {
+        if(!row.GetProperty(key).TryGetInt32(out int value) || value<min || value>max)
+            throw new InvalidDataException("Invalid rifle "+key+".");
+        return value;
+    }
+    private static double Number(JsonElement row,string key,float min,float max)
+    {
+        float value=row.GetProperty(key).GetSingle();
+        if(!float.IsFinite(value) || value<min || value>max)throw new InvalidDataException("Invalid rifle "+key+".");
+        return value;
+    }
+}

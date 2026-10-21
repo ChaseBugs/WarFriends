@@ -9,7 +9,7 @@ public sealed partial class BattleResultStore
     public async Task<string> AcceptAndReleasePairAsync(
         string matchId, string digest, byte[] payload, CancellationToken cancellationToken)
     {
-        var terminal = TerminalOutbox.ValidatePayload(payload, matchId, digest);
+        var terminal = BattleTerminalEvidenceValidator.ValidatePayload(payload, matchId, digest);
         using var session = await _client.StartSessionAsync(cancellationToken: cancellationToken);
         var transaction = new TransactionOptions(
             readConcern: ReadConcern.Snapshot, writeConcern: WriteConcern.WMajority);
@@ -83,6 +83,7 @@ public sealed partial class BattleResultStore
         }
 
         PvpBonusCurrencyManifestValidator.Validate(terminal, manifest);
+        BattleSettlementEligibility.Validate(terminal, manifest);
         return manifest;
     }
 }

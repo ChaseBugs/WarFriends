@@ -60,6 +60,17 @@ public sealed class LegacyRequest
         return value.Length == 0 || value == NullLiteral ? null : value;
     }
 
+    /// <summary>Distinguishes an omitted optional identity from an explicitly empty identity.</summary>
+    public bool HasField(string name) => form.ContainsKey(name);
+
+    /// <summary>Reads exactly one value, refusing ambiguity rather than joining opaque identities.</summary>
+    public string? SingleField(string name)
+    {
+        if (!form.TryGetValue(name, out var values) || values.Count != 1) return null;
+        string value = values[0] ?? "";
+        return value.Length == 0 || value == NullLiteral ? null : value;
+    }
+
     /// <summary>A per-action integer field, or <paramref name="fallback"/> when absent/unparsable.</summary>
     public int Int(string name, int fallback = 0) =>
         int.TryParse(Field(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed) ? parsed : fallback;

@@ -1174,22 +1174,23 @@ internal static class PvpBonusSpawnPlannerTests
             .Entities.Single(entity => entity.OwnerPlayerId == grenadeAttacker &&
                 entity.UnitId == "ID_UNIT-FLAMETHROWER");
         Vector3 flameOrigin = flameBox.Position - Vector3.UnitZ;
-        int flameBoxHits = flameBoxMatch.ApplyArmyFlameBonusBoxes(
-            flameSoldier.EntityKey, flameOrigin, Vector3.UnitZ, 869256);
+        var flameBurst = new ArmyFlameBurst(869256, flameSoldier.EntityKey, grenadeAttacker,
+            flameBoxMatch.ObservedCooldownSeconds - 0.4f);
+        flameBurst.CommitPulse(flameBoxMatch.ObservedCooldownSeconds);
+        int flameBoxHits = flameBoxMatch.ApplyArmyFlameBonusBoxes(ArmyFlamePulse.FromBurst(flameBurst), flameOrigin, Vector3.UnitZ);
         Check(flameBoxHits == 1 &&
               flameBoxMatch.BonusPlanner.BoxSnapshot(flameBox.BoxId).Health is > 0f and < 1f,
             "source Flamethrower damages its own faction's neutral-fraction bonus box");
         float firstPulseHealth = flameBoxMatch.BonusPlanner.BoxSnapshot(flameBox.BoxId).Health;
         ulong flameBoxRevision = flameBoxMatch.Snapshot().StateRevision;
-        Check(flameBoxMatch.ApplyArmyFlameBonusBoxes(flameSoldier.EntityKey,
-                  flameOrigin, Vector3.UnitZ, 869256) == 0 &&
+        Check(flameBoxMatch.ApplyArmyFlameBonusBoxes(ArmyFlamePulse.FromBurst(flameBurst), flameOrigin, Vector3.UnitZ) == 0 &&
               flameBoxMatch.Snapshot().StateRevision == flameBoxRevision &&
               flameBoxMatch.BonusPlanner.BoxSnapshot(flameBox.BoxId).Health == firstPulseHealth,
             "replaying one Flame pulse cannot damage or collect the same box twice");
         for (ulong nextTick = 154; nextTick <= 164; nextTick++)
             flameBoxMatch.Advance(nextTick);
-        Check(flameBoxMatch.ApplyArmyFlameBonusBoxes(flameSoldier.EntityKey,
-                  flameOrigin, Vector3.UnitZ, 869256) == 1 &&
+        flameBurst.CommitPulse(flameBoxMatch.ObservedCooldownSeconds);
+        Check(flameBoxMatch.ApplyArmyFlameBonusBoxes(ArmyFlamePulse.FromBurst(flameBurst), flameOrigin, Vector3.UnitZ) == 1 &&
               flameBoxMatch.BonusPlanner.BoxSnapshot(flameBox.BoxId).Health < firstPulseHealth,
             "the next source Flame pulse has its own damage receipt");
 

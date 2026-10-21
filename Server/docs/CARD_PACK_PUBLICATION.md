@@ -4,13 +4,13 @@
 grant without charging after a failure, overspend competing buffers, or overwrite a battle debit
 with inventory calculated from an earlier account read.
 
-`LegacyPlayerStore.TryPurchaseCardPackAsync` now writes post-purchase stock, Gold and WarBucks
-in one conditional MongoDB update. It compares the exact original card blob, both balances and
-player level, including whether the blob was absent. The level participates because source rarity
-selection depends on it. The replacement balances cannot create currency or become negative.
+Card packs now use the shared [buffered economy transaction](BUFFERED_ECONOMY_PUBLICATION.md),
+which reads the current account, publishes stock and wallet balances, and records the complete
+response in one commit. The previous card-only CAS helper was removed after this shared path
+replaced it. Battle debits change the same account and force conflicting transactions to retry.
 
 When another purchase or battle debit changes those inputs, the rejected plan writes nothing.
-The buffer processor reloads the account and recalculates that same claimed request. A newly
+The buffer processor reloads the account and recalculates that same request. A newly
 unaffordable request returns the existing source-compatible rollback response. An affordable one
 can commit against its fresh state. Intermediate reward draws are never published; client reward
 assertions still do not select the server's result.
@@ -44,8 +44,7 @@ HTTP artifacts: `.local/legacy-0493a8dfd0d744ecabb40015ae600fa5`.
 
 ## Remaining work
 
-The buffer receipt claim/completion and account write are still separate publications. A crash
-between the account commit and receipt completion retains the existing unknown-outcome refusal;
-this change does not claim transactional crash recovery for buffered purchases. Card deposit and
-withdrawal writers still need coordinated updates. Automatic allocation, admission reservations,
+Buffered receipts and account writes now share one transaction, including failed-response replay.
+Historical claims without complete payload/response evidence remain refused rather than guessed.
+Card deposit and withdrawal writers still need coordinated updates. Automatic allocation, admission reservations,
 Buddy behavior, the remaining active card effects, and normal Unity battle proof remain open.

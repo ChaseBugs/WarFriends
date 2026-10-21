@@ -12,13 +12,19 @@ public sealed class BattleTickets
     public BattleTickets(string base64Key)
     {
         key = Convert.FromBase64String(base64Key);
-        if (key.Length != 32) throw new ArgumentException("Battle signing key must contain exactly 32 random bytes.");
+        War.BattleServer.TransportSecurityPolicy.ValidateSigningKey(key);
     }
 
     public byte[] SessionKey(ulong sessionId) => HMACSHA256.HashData(key, Encoding.UTF8.GetBytes("war/session/v1/" + sessionId.ToString(System.Globalization.CultureInfo.InvariantCulture)));
     public string Sign(TicketClaims claims)
     {
-        byte[] payload = claims.ToByteArray();
+        ArgumentNullException.ThrowIfNull(claims);
+        TicketClaims snapshot = claims.Clone();
+        if (!War.Shared.CanonicalGuid.IsCanonical(snapshot.PlayerId))
+        {
+            throw new InvalidDataException("Probe tickets require a canonical player identity.");
+        }
+        byte[] payload = snapshot.ToByteArray();
         return Convert.ToBase64String(payload) + "." + Convert.ToBase64String(HMACSHA256.HashData(key, payload));
     }
 
@@ -33,7 +39,7 @@ public sealed class BattleTickets
             if (!CryptographicOperations.FixedTimeEquals(HMACSHA256.HashData(key, payload), Convert.FromBase64String(parts[1]))) return null;
             TicketClaims claims = TicketClaims.Parser.ParseFrom(payload);
             if (claims.ServerId != serverId || claims.Purpose != "connectivity-probe" || claims.SessionId == 0 ||
-                !Guid.TryParseExact(claims.PlayerId, "N", out _) || claims.IssuedUnixSeconds < 0 ||
+                !War.Shared.CanonicalGuid.IsCanonical(claims.PlayerId) || claims.IssuedUnixSeconds < 0 ||
                 claims.IssuedUnixSeconds > now || claims.ExpiresUnixSeconds <= now ||
                 claims.ExpiresUnixSeconds <= claims.IssuedUnixSeconds ||
                 claims.ExpiresUnixSeconds - claims.IssuedUnixSeconds > LifetimeSeconds) return null;

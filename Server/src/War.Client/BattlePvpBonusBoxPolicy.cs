@@ -18,8 +18,7 @@ namespace War.Client
             string previousBoxId = null;
             foreach (BattlePvpBonusBoxState box in snapshot.PvpBonusBoxes)
             {
-                if (!Guid.TryParseExact(box.BoxId, "N", out _) ||
-                    box.BoxId != box.BoxId.ToLowerInvariant() ||
+                if (!War.Shared.CanonicalGuid.IsCanonical(box.BoxId) ||
                     (previousBoxId != null &&
                      StringComparer.Ordinal.Compare(previousBoxId, box.BoxId) >= 0) ||
                     !owners.Contains(box.OwnerPlayerId) ||

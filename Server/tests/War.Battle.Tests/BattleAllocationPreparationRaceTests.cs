@@ -1,7 +1,9 @@
+using MongoDB.Driver;
 using War.Backend;
 using War.Backend.Legacy;
 using War.BattleServer;
 using War.Persistence;
+using War.Battle.Tests.Support;
 using War.Shared;
 
 /// <summary>Forces inventory publication between the preparation read and account reservation.</summary>
@@ -17,7 +19,7 @@ internal static class BattleAllocationPreparationRaceTests
         var allocations = new BattleAllocationStore(uri, databaseName);
         var preparation = new BattleAllocationPreparationStore(uri, databaseName);
         LegacyPlayerDocument player = CreatePlayer();
-        await players.Insert(player, LegacyPlayerStore.NewPassword(), cancellationToken);
+        await LegacyTestAccounts.InsertAsync(uri, databaseName, player, cancellationToken);
 
         var observed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var release = new ManualResetEventSlim();
@@ -35,7 +37,8 @@ internal static class BattleAllocationPreparationRaceTests
         try
         {
             await observed.Task.WaitAsync(TimeSpan.FromSeconds(GateDeadlineSeconds), cancellationToken);
-            await players.SetSerialized(player.Id, "CardManagerData", PlayerState.Write(new CardManagerData()),
+            await LegacyTestAccounts.SetCardsForTestAsync(new MongoClient(uri).GetDatabase(databaseName),
+                player.Id, PlayerState.Write(new CardManagerData()),
                 cancellationToken);
         }
         finally
@@ -72,10 +75,15 @@ internal static class BattleAllocationPreparationRaceTests
         serialized["CardManagerData"] = PlayerState.Write(cards);
         return new LegacyPlayerDocument
         {
-            Id = new string('d', 32), Name = "PreparationRace", Country = "US", Locale = "en", Level = 1,
+            Id = new string('d', 32),
+            Name = "PreparationRace",
+            Country = "US",
+            Locale = "en",
+            Level = 1,
             CreatedUtc = DateTime.UtcNow,
             SessionHash = LegacyPlayerStore.HashToken(LegacyPlayerStore.NewToken()),
-            SessionExpiresUtc = DateTime.UtcNow.AddHours(1), Serialized = serialized
+            SessionExpiresUtc = DateTime.UtcNow.AddHours(1),
+            Serialized = serialized
         };
     }
 

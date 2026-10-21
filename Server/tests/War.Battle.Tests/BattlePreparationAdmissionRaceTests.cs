@@ -3,6 +3,7 @@ using MongoDB.Driver.Core.Events;
 using War.Backend;
 using War.Backend.Legacy;
 using War.Persistence;
+using War.Battle.Tests.Support;
 using War.Shared;
 
 /// <summary>Forces normal queue admission to compete with a preparation transaction holding the shared fence.</summary>
@@ -16,7 +17,7 @@ internal static class BattlePreparationAdmissionRaceTests
         CancellationToken cancellationToken = deadline.Token;
         LegacyPlayerDocument player = CreatePlayer();
         var players = new LegacyPlayerStore(uri, databaseName);
-        await players.Insert(player, LegacyPlayerStore.NewPassword(), cancellationToken);
+        await LegacyTestAccounts.InsertAsync(uri, databaseName, player, cancellationToken);
         var attempted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var settings = MongoClientSettings.FromConnectionString(uri);
         settings.ClusterConfigurator = cluster => cluster.Subscribe<CommandStartedEvent>(command =>

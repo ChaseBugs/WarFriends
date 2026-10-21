@@ -192,8 +192,7 @@ namespace War.Client
         public Task<MatchReply> UseUnitCardAsync(string requestId,
             string sourceCardId, CancellationToken ct)
         {
-            if (!Guid.TryParseExact(requestId, "N", out _) ||
-                requestId != requestId.ToLowerInvariant() ||
+            if (!War.Shared.CanonicalGuid.IsCanonical(requestId) ||
                 !CardUnitSourceIdentity.IsKnown(sourceCardId))
                 throw new ArgumentException("Invalid unit-card request or source identity.");
 
@@ -370,8 +369,7 @@ namespace War.Client
                     if(entity.EntityKey<=prior || entity.OwnerFraction<1 || entity.OwnerFraction>2 ||
                        entity.LocalEntityId<=0 || entity.EntityKey!=
                            (((ulong)entity.OwnerFraction<<32)|(uint)entity.LocalEntityId) ||
-                       !Guid.TryParseExact(entity.OwnerPlayerId,"N",out _) ||
-                       entity.OwnerPlayerId!=entity.OwnerPlayerId.ToLowerInvariant() ||
+                       !War.Shared.CanonicalGuid.IsCanonical(entity.OwnerPlayerId) ||
                        (entity.SourceCardId.Length == 0
                            ? entity.OptionIndex < 0 || entity.OptionIndex >= 45
                            : entity.OptionIndex != -1 ||
@@ -635,14 +633,14 @@ namespace War.Client
                               !CardUnitSourceIdentity.Matches(row.SourceCardId, row.ArmyUnitId)) ||
                         row.ArmySpawnComponentFileId<=0 || row.ArmyReservationFileId<0 ||
                         (row.Kind==MatchEventKind.ArmySpawned ?
-                            !Guid.TryParseExact(row.ActorId,"N",out _) || row.ArmyEnergyRecipientId!="" :
+                            !War.Shared.CanonicalGuid.IsCanonical(row.ActorId) || row.ArmyEnergyRecipientId!="" :
                          row.Kind==MatchEventKind.ArmyDied ?
-                            !Guid.TryParseExact(row.TargetId,"N",out _) ||
+                            !War.Shared.CanonicalGuid.IsCanonical(row.TargetId) ||
                             (row.SourceCardId.Length == 0
-                                ? !Guid.TryParseExact(row.ArmyEnergyRecipientId,"N",out _)
+                                ? !War.Shared.CanonicalGuid.IsCanonical(row.ArmyEnergyRecipientId)
                                 : row.ArmyEnergyRecipientId != "") ||
                             row.Reason!="suicide" && row.Reason!="combat" :
-                            !Guid.TryParseExact(row.ActorId,"N",out _) || row.TargetId!="" ||
+                            !War.Shared.CanonicalGuid.IsCanonical(row.ActorId) || row.TargetId!="" ||
                             row.ArmyEnergyRecipientId!="" || row.ArmyUnitId!="ID_UNIT-WARPER" ||
                             row.Reason!="warper") ||
                         !System.Text.RegularExpressions.Regex.IsMatch(row.ArmyUnitId,@"\AID_UNIT-[A-Z0-9-]{1,50}\z") ||
@@ -672,31 +670,31 @@ namespace War.Client
                         throw new InvalidOperationException("Battle host returned an unbound canopy death pose.");
                     bool entityLifecycle = row.Kind==MatchEventKind.AirSpawned || row.Kind==MatchEventKind.AirDespawned ||
                         row.Kind==MatchEventKind.DeployableSpawned || row.Kind==MatchEventKind.DeployableDespawned;
-                    if(entityLifecycle && (row.ProjectileId==0 || !Guid.TryParseExact(row.ActorId,"N",out _)))
+                    if(entityLifecycle && (row.ProjectileId==0 || !War.Shared.CanonicalGuid.IsCanonical(row.ActorId)))
                         throw new InvalidOperationException("Battle host returned invalid entity lifecycle metadata.");
                     bool cardLifecycle = row.Kind==MatchEventKind.CardEffectApplied || row.Kind==MatchEventKind.CardEffectExpired;
-                    if(cardLifecycle && (!Guid.TryParseExact(row.ActorId,"N",out _) || string.IsNullOrWhiteSpace(row.Reason)))
+                    if(cardLifecycle && (!War.Shared.CanonicalGuid.IsCanonical(row.ActorId) || string.IsNullOrWhiteSpace(row.Reason)))
                         throw new InvalidOperationException("Battle host returned invalid card lifecycle metadata.");
                     if(row.Kind==MatchEventKind.ObjectiveProgress &&
-                       (!Guid.TryParseExact(row.ActorId,"N",out _) || row.ProjectileId==0 || string.IsNullOrWhiteSpace(row.Reason)))
+                       (!War.Shared.CanonicalGuid.IsCanonical(row.ActorId) || row.ProjectileId==0 || string.IsNullOrWhiteSpace(row.Reason)))
                         throw new InvalidOperationException("Battle host returned invalid objective metadata.");
                     if(row.Kind==MatchEventKind.ArenaSettled &&
-                       (!Guid.TryParseExact(row.ActorId,"N",out _) ||
+                       (!War.Shared.CanonicalGuid.IsCanonical(row.ActorId) ||
                         (!row.Reason.EndsWith(":won",StringComparison.Ordinal) && !row.Reason.EndsWith(":lost",StringComparison.Ordinal))))
                         throw new InvalidOperationException("Battle host returned invalid Arena settlement metadata.");
                     if((row.Kind==MatchEventKind.VehicleSpawned || row.Kind==MatchEventKind.VehicleDestroyed) &&
-                       (!Guid.TryParseExact(row.ActorId,"N",out _) || !uint.TryParse(row.Reason,out var generation) || generation==0 ||
+                       (!War.Shared.CanonicalGuid.IsCanonical(row.ActorId) || !uint.TryParse(row.Reason,out var generation) || generation==0 ||
                         row.ProjectileId==0 || string.IsNullOrWhiteSpace(row.TargetId)))
                         throw new InvalidOperationException("Battle host returned invalid vehicle lifecycle metadata.");
                     if((row.Kind==MatchEventKind.VehiclePassengerDown||
                         row.Kind==MatchEventKind.VehiclePassengerRespawned)&&
-                       (!Guid.TryParseExact(row.ActorId,"N",out _)||row.ProjectileId==0||row.TargetId!=""||
+                       (!War.Shared.CanonicalGuid.IsCanonical(row.ActorId)||row.ProjectileId==0||row.TargetId!=""||
                         !row.Reason.StartsWith("vehicle-passenger-",StringComparison.Ordinal)))
                         throw new InvalidOperationException("Battle host returned invalid vehicle passenger metadata.");
                     if((row.Kind==MatchEventKind.VehicleRepairDroneDown||
                         row.Kind==MatchEventKind.VehicleRepairDroneRespawned||
                         row.Kind==MatchEventKind.VehicleRepairDroneExploded)&&
-                       (!Guid.TryParseExact(row.ActorId,"N",out _)||row.ProjectileId==0||row.TargetId!=""||
+                       (!War.Shared.CanonicalGuid.IsCanonical(row.ActorId)||row.ProjectileId==0||row.TargetId!=""||
                         (row.Kind==MatchEventKind.VehicleRepairDroneDown?
                             row.Reason!="vehicle-repair-drone-down:0"&&row.Reason!="vehicle-repair-drone-down:1":
                          row.Kind==MatchEventKind.VehicleRepairDroneRespawned?
@@ -704,22 +702,22 @@ namespace War.Client
                             row.Reason!="vehicle-repair-drone-exploded:0"&&row.Reason!="vehicle-repair-drone-exploded:1")))
                         throw new InvalidOperationException("Battle host returned invalid repair-drone metadata.");
                     if((row.Kind==MatchEventKind.DecoySpawned||row.Kind==MatchEventKind.DecoyDestroyed)&&
-                       (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||
+                       (row.ProjectileId==0||!War.Shared.CanonicalGuid.IsCanonical(row.ActorId)||
                         !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
                         throw new InvalidOperationException("Battle host returned invalid Decoy lifecycle metadata.");
                     if((row.Kind==MatchEventKind.LandMineSpawned||row.Kind==MatchEventKind.LandMineTriggered)&&
-                       (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||
+                       (row.ProjectileId==0||!War.Shared.CanonicalGuid.IsCanonical(row.ActorId)||
                         !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
                         throw new InvalidOperationException("Battle host returned invalid Land Mine lifecycle metadata.");
                     if((row.Kind==MatchEventKind.HeavyTurretSpawned||row.Kind==MatchEventKind.HeavyTurretDestroyed)&&
-                       (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||
+                       (row.ProjectileId==0||!War.Shared.CanonicalGuid.IsCanonical(row.ActorId)||
                         !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
                         throw new InvalidOperationException("Battle host returned invalid Heavy Turret lifecycle metadata.");
                     if(row.Kind==MatchEventKind.DroneFired)
                     {
                         var shot=row.DroneShot;
                         if(shot==null||shot.ArmyEntityKey==0||row.ProjectileId==0||
-                           !Guid.TryParseExact(row.ActorId,"N",out _)||row.Reason!="drone"||
+                           !War.Shared.CanonicalGuid.IsCanonical(row.ActorId)||row.Reason!="drone"||
                            !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)||
                            !FiniteCoordinate(shot.MuzzleX)||!FiniteCoordinate(shot.MuzzleY)||!FiniteCoordinate(shot.MuzzleZ)||
                            float.IsNaN(shot.Speed)||float.IsInfinity(shot.Speed)||shot.Speed<=0||shot.Speed>1500)
@@ -731,7 +729,7 @@ namespace War.Client
                     {
                         var shot=row.HelicopterShot;
                         if(shot==null||shot.ArmyEntityKey==0||row.ProjectileId==0||
-                           !Guid.TryParseExact(row.ActorId,"N",out _)||row.Reason!="helicopter"||
+                           !War.Shared.CanonicalGuid.IsCanonical(row.ActorId)||row.Reason!="helicopter"||
                            !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)||
                            !FiniteCoordinate(shot.MuzzleX)||!FiniteCoordinate(shot.MuzzleY)||
                            !FiniteCoordinate(shot.MuzzleZ)||float.IsNaN(shot.Speed)||
@@ -744,7 +742,7 @@ namespace War.Client
                     {
                         var shot=row.AssaultHelicopterShot;
                         if(shot==null||shot.ArmyEntityKey==0||shot.GunIndex>1||row.ProjectileId==0||
-                           !Guid.TryParseExact(row.ActorId,"N",out _)||row.Reason!="assault-helicopter"||
+                           !War.Shared.CanonicalGuid.IsCanonical(row.ActorId)||row.Reason!="assault-helicopter"||
                            !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)||
                            !FiniteCoordinate(shot.MuzzleX)||!FiniteCoordinate(shot.MuzzleY)||
                            !FiniteCoordinate(shot.MuzzleZ)||float.IsNaN(shot.Speed)||
@@ -754,7 +752,7 @@ namespace War.Client
                     else if(row.AssaultHelicopterShot!=null)
                         throw new InvalidOperationException("Assault Helicopter firing metadata accompanied a different event kind.");
                     if((row.Kind==MatchEventKind.HeavyTurretDamaged||row.Kind==MatchEventKind.HeavyTurretFired)&&
-                       (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||row.TargetId.Length<1||row.TargetId.Length>64||
+                       (row.ProjectileId==0||!War.Shared.CanonicalGuid.IsCanonical(row.ActorId)||row.TargetId.Length<1||row.TargetId.Length>64||
                         row.TargetId.Any(char.IsControl)||!FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
                         throw new InvalidOperationException("Battle host returned invalid Heavy Turret combat metadata.");
                 }
@@ -864,8 +862,7 @@ namespace War.Client
                 foreach (var vehicle in snapshot.Vehicles)
                 {
                     if (vehicle.EntityId == 0 || vehicle.EntityId <= priorVehicle || vehicle.Generation == 0 ||
-                        !Guid.TryParseExact(vehicle.OwnerPlayerId, "N", out _) ||
-                        vehicle.OwnerPlayerId != vehicle.OwnerPlayerId.ToLowerInvariant() ||
+                        !War.Shared.CanonicalGuid.IsCanonical(vehicle.OwnerPlayerId) ||
                         string.IsNullOrWhiteSpace(vehicle.UnitId) || vehicle.UnitId.Length > 64 ||
                         !FiniteCoordinate(vehicle.X) || !FiniteCoordinate(vehicle.Y) || !FiniteCoordinate(vehicle.Z) ||
                         !FiniteCoordinate(vehicle.FacingX) || !FiniteCoordinate(vehicle.FacingY) ||
@@ -883,7 +880,7 @@ namespace War.Client
                             float.IsNaN(part.MaxHealth) || float.IsInfinity(part.MaxHealth) || part.MaxHealth <= 0 ||
                             part.MaxHealth > 10_000_000 || float.IsNaN(part.Health) || float.IsInfinity(part.Health) ||
                             part.Health < 0 || part.Health > part.MaxHealth ||
-                            (!string.IsNullOrEmpty(part.PassengerPlayerId) && !Guid.TryParseExact(part.PassengerPlayerId, "N", out _)) ||
+                            (!string.IsNullOrEmpty(part.PassengerPlayerId) && !War.Shared.CanonicalGuid.IsCanonical(part.PassengerPlayerId)) ||
                             (part.PartId.StartsWith("crew:",StringComparison.Ordinal) &&
                                 (!FiniteCoordinate(part.LocalX)||!FiniteCoordinate(part.LocalY)||!FiniteCoordinate(part.LocalZ)||
                                  part.PointComponentFileId<=0||part.TransformFileId<=0||part.RespawnTick>10_000_000||
@@ -918,8 +915,8 @@ namespace War.Client
                 {
                     float facingLength=decoy.FacingX*decoy.FacingX+decoy.FacingY*decoy.FacingY+decoy.FacingZ*decoy.FacingZ;
                     if(decoy.EntityId==0||decoy.EntityId<=priorDecoy||
-                       !Guid.TryParseExact(decoy.RequestId,"N",out _)||
-                       !Guid.TryParseExact(decoy.OwnerPlayerId,"N",out _)||
+                       !War.Shared.CanonicalGuid.IsCanonical(decoy.RequestId)||
+                       !War.Shared.CanonicalGuid.IsCanonical(decoy.OwnerPlayerId)||
                        (decoy.OwnerFraction!=1&&decoy.OwnerFraction!=2)||decoy.ObstacleComponentFileId<=0||
                        !decoySlots.Add(decoy.ObstacleComponentFileId)||
                        !FiniteCoordinate(decoy.X)||!FiniteCoordinate(decoy.Y)||!FiniteCoordinate(decoy.Z)||
@@ -935,7 +932,7 @@ namespace War.Client
                 foreach(var mine in snapshot.LandMines)
                 {
                     if(mine.EntityId==0||mine.EntityId<=priorLandMine||
-                       !Guid.TryParseExact(mine.RequestId,"N",out _)||!Guid.TryParseExact(mine.OwnerPlayerId,"N",out _)||
+                       !War.Shared.CanonicalGuid.IsCanonical(mine.RequestId)||!War.Shared.CanonicalGuid.IsCanonical(mine.OwnerPlayerId)||
                        (mine.OwnerFraction!=1&&mine.OwnerFraction!=2)||
                        !FiniteCoordinate(mine.X)||!FiniteCoordinate(mine.Y)||!FiniteCoordinate(mine.Z)||
                        float.IsNaN(mine.Damage)||float.IsInfinity(mine.Damage)||mine.Damage<=0||mine.Damage>10_000_000||
@@ -960,8 +957,8 @@ namespace War.Client
                            !FiniteCoordinate(rotation.Z)||!FiniteCoordinate(rotation.W)||
                            Math.Abs(rotation.X*rotation.X+rotation.Y*rotation.Y+rotation.Z*rotation.Z+rotation.W*rotation.W-1)>.0002f)
                             throw new InvalidOperationException("Battle host returned an invalid Heavy Turret joint rotation.");
-                    if(turret.EntityId==0||turret.EntityId<=priorHeavyTurret||!Guid.TryParseExact(turret.RequestId,"N",out _)||
-                       !Guid.TryParseExact(turret.OwnerPlayerId,"N",out _)||(turret.OwnerFraction!=1&&turret.OwnerFraction!=2)||
+                    if(turret.EntityId==0||turret.EntityId<=priorHeavyTurret||!War.Shared.CanonicalGuid.IsCanonical(turret.RequestId)||
+                       !War.Shared.CanonicalGuid.IsCanonical(turret.OwnerPlayerId)||(turret.OwnerFraction!=1&&turret.OwnerFraction!=2)||
                        turret.SlotComponentFileId<=0||!heavyTurretSlots.Add(turret.SlotComponentFileId)||
                        !FiniteCoordinate(turret.X)||!FiniteCoordinate(turret.Y)||!FiniteCoordinate(turret.Z)||
                        !Positive(turret.Health)||!Positive(turret.MaxHealth)||turret.Health>turret.MaxHealth||!Positive(turret.Damage)||
@@ -979,8 +976,7 @@ namespace War.Client
                 foreach (var deployable in snapshot.Deployables)
                 {
                     if (deployable.EntityId <= 0 || (ulong)deployable.EntityId <= priorDeployable ||
-                        !Guid.TryParseExact(deployable.OwnerPlayerId, "N", out _) ||
-                        deployable.OwnerPlayerId != deployable.OwnerPlayerId.ToLowerInvariant() ||
+                        !War.Shared.CanonicalGuid.IsCanonical(deployable.OwnerPlayerId) ||
                         deployable.CardId != "LandMine" && deployable.CardId != "HeavyTurret" ||
                         !FiniteCoordinate(deployable.X) || !FiniteCoordinate(deployable.Y) || !FiniteCoordinate(deployable.Z) ||
                         deployable.State < 0 || deployable.State > 2 || deployable.RemainingTicks < 0 || deployable.RemainingTicks > 1_800 ||

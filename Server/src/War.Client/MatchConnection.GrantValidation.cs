@@ -30,7 +30,7 @@ namespace War.Client
                 candidate.Ticket.Length < MinimumTicketCharacters ||
                 candidate.Ticket.Length > MaximumTicketCharacters ||
                 candidate.MatchId.Length < 1 || candidate.MatchId.Length > MaximumIdentityCharacters ||
-                !Guid.TryParseExact(candidate.PlayerId, "N", out _) ||
+                !War.Shared.CanonicalGuid.IsCanonical(candidate.PlayerId) ||
                 !Regex.IsMatch(candidate.ManifestHash, @"\A[0-9a-f]{64}\z") ||
                 candidate.ExpiresUnixSeconds <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() ||
                 candidate.ExpiresUnixSeconds > LatestGrantExpirySeconds)

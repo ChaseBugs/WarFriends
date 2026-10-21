@@ -64,13 +64,14 @@ def extract(unit,name):
  return {'unitId':unit,'source':f'Assets/GameObject/{name}.prefab','sha256':hashlib.sha256(raw).hexdigest(),
   'rootTransformFileId':roots[0],'components':components,'hierarchy':hierarchy,'shootables':shootables,'colliders':colliders}
 
-def main():
+def build_document(deployment_bytes):
  artifact={'version':1,'client':'1.4.0','units':[extract(*u) for u in UNITS]}
- deployment_path=ROOT/'Server/content/recovered-army-deployment.json'
- deployment=json.loads(deployment_path.read_text())
+ deployment=json.loads(deployment_bytes)
+ if any(type(f['isAir']) is not bool for f in deployment['families']):raise ValueError('air classification must be Boolean')
  air_families=[f for f in deployment['families'] if f['isAir']]
+ if len(air_families)!=len(UNITS):raise ValueError('air deployment family inventory changed')
  if {f['unitId'] for f in air_families}!={u[0] for u in UNITS}:raise ValueError('air deployment family set changed')
- artifact['deploymentSource']={'source':'Server/content/recovered-army-deployment.json','sha256':hashlib.sha256(deployment_path.read_bytes()).hexdigest(),
+ artifact['deploymentSource']={'source':'Server/content/recovered-army-deployment.json','sha256':hashlib.sha256(deployment_bytes).hexdigest(),
   'families':[{k:f[k] for k in ('unitId','behaviorFileId','behaviorType','unitType')} for f in air_families]}
  script_names={}
  for meta in [p for folder in ('Scripts','Plugins') for p in (ASSETS/folder).rglob('*.cs.meta')]:
@@ -95,8 +96,16 @@ def main():
   if isinstance(value,list):
    for v in value:validate(v)
  validate(artifact)
+ return artifact
+
+def encode_document(artifact):
  # This hashed artifact is checked out with CRLF on both Windows and Linux.
- serialized=(json.dumps(artifact,indent=2)+'\n').replace('\n','\r\n').encode('utf-8')
+ return (json.dumps(artifact,indent=2,allow_nan=False)+'\n').replace('\n','\r\n').encode('utf-8')
+
+def main():
+ if sys.argv[1:] not in ([],['--check']):raise ValueError('usage: extract_air_unit_geometry.py [--check]')
+ artifact=build_document((ROOT/'Server/content/recovered-army-deployment.json').read_bytes())
+ serialized=encode_document(artifact)
  if sys.argv[1:]==['--check']:
   if not OUTPUT.exists() or OUTPUT.read_bytes()!=serialized:raise ValueError('air geometry inventory is stale')
  elif not sys.argv[1:]:OUTPUT.write_bytes(serialized)

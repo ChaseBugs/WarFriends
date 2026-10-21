@@ -96,7 +96,7 @@ public sealed class BattleManifestSnapshotStore
     private static void ValidateIdentity(string matchId,IReadOnlyList<string> players)
     {
         if(!Regex.IsMatch(matchId??"",@"\Am[0-9a-f]{32}\z") || players is not {Count:2} ||
-            players.Any(x=>!Guid.TryParseExact(x,"N",out _) || x!=x.ToLowerInvariant()) ||
+            players.Any(x=>!War.Shared.CanonicalGuid.IsCanonical(x)) ||
             players[0]==players[1])
             throw new InvalidDataException("Invalid manifest snapshot identity.");
     }

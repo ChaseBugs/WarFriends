@@ -40,8 +40,8 @@ internal sealed class WorkerResultRecoveryProcess : IDisposable
         start.Environment["Battle__BindAddress"] = "127.0.0.1";
         // A terminal match must not be registered again on startup. The new
         // host only drains the existing spool and validates its journal.
-        start.Environment["Battle__MatchManifestPath"] = "";
-        start.Environment["Battle__MatchManifestDirectory"] = "";
+        start.Environment.Remove("Battle__MatchManifestPath");
+        start.Environment.Remove("Battle__MatchManifestDirectory");
         var process = Process.Start(start) ?? throw new Exception("Recovery Worker did not start.");
         var host = new WorkerResultRecoveryProcess(process);
         try

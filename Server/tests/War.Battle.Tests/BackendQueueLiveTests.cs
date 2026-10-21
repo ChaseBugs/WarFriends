@@ -9,6 +9,7 @@ using War.Client;
 using War.BattleServer;
 using War.Infrastructure;
 using War.Persistence;
+using War.Battle.Tests.Support;
 using War.Protocol;
 using War.Shared;
 using MongoDB.Driver;
@@ -25,8 +26,7 @@ internal static class BackendQueueLiveTests
         string workerDll=Path.Combine(directory,"src/War.BattleServer/bin/Release/net10.0/War.BattleServer.dll");
         if(!File.Exists(backendDll)||!File.Exists(workerDll))throw new FileNotFoundException("Build Release processes before the queue smoke.");
         string database="war_queue_live_"+Guid.NewGuid().ToString("N");
-        string run=Path.Combine(directory,".local","queue-live-"+Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(run);
+        string run=Directory.CreateTempSubdirectory("war-queue-live-").FullName;
         int backendPort=FreeTcpPort(),controlPort=FreeTcpPort(),udpPort=FreeUdpPort();
         while(backendPort==controlPort||backendPort==udpPort||controlPort==udpPort)
         {backendPort=FreeTcpPort();controlPort=FreeTcpPort();udpPort=FreeUdpPort();}
@@ -57,7 +57,7 @@ internal static class BackendQueueLiveTests
                     SessionExpiresUtc=DateTime.UtcNow.AddHours(1),CreatedUtc=DateTime.UtcNow,
                     Serialized=new Dictionary<string,string>{["DecalManagerData"]=PlayerState.Write(decals),
                         ["InventoryData"]=PlayerState.Write(inventory),["LevelManagerData"]=PlayerState.Write(levels)}};
-                await legacy.Insert(player,LegacyPlayerStore.NewPassword(),CancellationToken.None);
+                await LegacyTestAccounts.InsertAsync(mongo.GetDatabase(database), player,CancellationToken.None);
             }
             var workerEnvironment=new Dictionary<string,string>
             {
@@ -118,7 +118,7 @@ internal static class BackendQueueLiveTests
                 throw new Exception("Normal queue admission invented card or unit ownership.");
             await LiveInactiveRefreshChecks.RunAsync(left,
                 new LiveInactiveRefreshChecks.Settings(ids[0], tokens[0]),
-                new LiveInactiveRefreshChecks.Stores(legacy, allocations), deadline.Token);
+                new LiveInactiveRefreshChecks.Stores(mongo.GetDatabase(database), allocations), deadline.Token);
             try {await right.JoinMatchQueueAsync(tokens[1],deadline.Token);
                 throw new Exception("Queue pairing succeeded while the Worker was unavailable.");}
             catch(HttpRequestException e) when(e.Message.Contains("Backend status 503",StringComparison.Ordinal)){}

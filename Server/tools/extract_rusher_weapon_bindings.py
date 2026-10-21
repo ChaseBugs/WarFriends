@@ -1,4 +1,5 @@
 """Pin serialized enemy weapons for Rusher families and the card Sniper."""
+import argparse
 import hashlib,json,math,re
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
@@ -256,11 +257,16 @@ def shotgun_falloff(behavior_type,inventory):
             "source":source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
             "sha256":hashlib.sha256(source.read_bytes()).hexdigest()}
 
-def main():
-    raw=SCENE.read_bytes(); text=raw.decode("utf-8-sig")
+def build_document(raw, content_bytes, deployment_bytes):
+    content = json.loads(content_bytes)
+    deployment = json.loads(deployment_bytes)
+    scene_hash = hashlib.sha256(raw).hexdigest()
+    if content["mainSceneSha256"] != scene_hash or deployment["sceneSha256"] != scene_hash:
+        raise ValueError("Rusher weapon inputs refer to different scenes")
+    text=raw.decode("utf-8-sig")
     blocks={int(m.group(1)):m.group(2) for m in re.finditer(
         r"^--- !u!\d+ &(\d+)\r?\n(.*?)(?=^--- !u!|\Z)",text,re.M|re.S)}
-    families=json.loads(DEPLOY.read_text())["families"]; rows=[]
+    families=deployment["families"]; rows=[]
     meta={}
     for path in (ROOT/"Clients/ExportedProject/Assets").rglob("*.meta"):
         m=re.search(r"^guid: ([0-9a-f]{32})$",path.read_text(encoding="utf-8-sig",errors="ignore"),re.M)
@@ -302,12 +308,13 @@ def main():
                      "attackCadence":attack_cadence(family["behaviorType"]),
                      "shotgunFalloff":shotgun_falloff(family["behaviorType"],inventories[0]),
                      "inventory":inventories[0]})
+    if len({row["unitId"] for row in rows}) != len(rows):
+        raise ValueError("Duplicate Rusher weapon family")
     if len(rows)!=8: raise ValueError("expected six Rusher, one Minigunner, and one Sniper weapon binding")
     enemy_text,enemy_blocks,enemy_names,enemy_transforms=yaml(ENEMY)
     soldier_parts=next(block for block in enemy_blocks.values() if "gunSnapPointNotScaled:" in block)
     gun_snap=int(re.search(r"gunSnapPointNotScaled: \{fileID: (\d+)\}",soldier_parts).group(1))
     left_gun_snap=int(re.search(r"gunSnapPointNotScaledLeft: \{fileID: (\d+)\}",soldier_parts).group(1))
-    content=json.loads(BATTLE_CONTENT.read_text())
     constants=next(s for s in content["sheets"] if s["type"]=="Google2u.UnitsContants")
     poison_time=float(constants["rows"][2]["FLOATVALUE"])
     commando_source=SCRIPTS/"SoldierBehaviourCommando.cs"
@@ -367,7 +374,7 @@ def main():
                      "controllerSource":enemy_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                      "controllerSha256":hashlib.sha256(enemy_source.read_bytes()).hexdigest()}
     warper=warper_relocation(content,enemy_source)
-    artifact={"version":15,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    return {"version":15,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
@@ -379,9 +386,21 @@ def main():
               "warperRelocation":warper,
               "sniperRuntimeBullet":sniper_runtime_bullet(text,rows),
               "families":rows}
-    encoded=(json.dumps(artifact,indent=2)+"\n").encode()
-    if __import__("sys").argv[1:]==["--check"]:
-        if OUT.read_bytes()!=encoded: raise ValueError("Rusher weapon artifact is stale")
-    else: OUT.write_bytes(encoded)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate without writing production content")
+    args = parser.parse_args()
+    artifact = build_document(SCENE.read_bytes(), BATTLE_CONTENT.read_bytes(), DEPLOY.read_bytes())
+    encoded = (json.dumps(artifact, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    if args.check:
+        if OUT.read_bytes() != encoded:
+            raise ValueError("Rusher weapon artifact is stale")
+    else:
+        OUT.write_bytes(encoded)
     print("six Rusher, Minigunner, Sniper, and five-map Warper relocation authority pinned")
-if __name__=="__main__": main()
+
+
+if __name__ == "__main__":
+    main()

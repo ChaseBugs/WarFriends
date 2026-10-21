@@ -1,0 +1,3662 @@
+{
+  "schemaVersion": 1,
+  "sceneSha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff",
+  "contentSha256": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
+  "sheetCount": 132,
+  "scalarCounts": {
+    "ObscuredFloat": 25279,
+    "ObscuredInt": 11797,
+    "bool": 285,
+    "float": 18601,
+    "int": 19073,
+    "string": 3920
+  },
+  "schemaHashes": {
+    "Google2u.Achievements": "5ec7d307208ac25abf4a8a68a70e8bba6a11017c2c2a54efc438308e77cdbcd7",
+    "Google2u.TaskDefinitions": "675542e01e17f270c78eeffeb4edb6204046775ed504e15d609e9e7944ddfbdb",
+    "Google2u.SquadLeaderboards": "38c7cc322d9e5d4cc63c4516f35923d242f633a448d3f1e5e1aebcb55595293e",
+    "Google2u.SquadWarsReward": "1e84ec33abbfa5885a1c03dda73b745af2ff540d505dbf3848e6e4b37a48b302",
+    "Google2u.PlayerLeaderboards": "fcf56d43f601a9552517e2e0082ce544beb89c018e71d22386c20a5aaa687f60",
+    "Google2u.Packs": "4584f09bee808651fda8ae0c78bcef5f355713b889cfbf0e0779255f64e7a38e",
+    "Google2u.PlayerBots": "767fb082defb4d693f34d210efa0e86d98ebe557e36f61e008baaf1e45eec528",
+    "Google2u.BotNames": "3f65cdbaef2fabd8b12f96e60db46fef8502c81f5310bd47c82ef2ad7aaf85ee",
+    "Google2u.PlayerBotDiffculties": "34c05e23704fc6407c9a8a6969a95a04be43b5fa59eb82b766982bfb8b0974e3",
+    "Google2u.PlayerVisualsRarities": "d34b047136f587aadfaf9ba65fe27a6a44d180215d260a8dad06cf4ff116aa03",
+    "Google2u.PlayerVisuals": "1f6c95c4d9b0bdd900f9875c4cf85bde95ee99b4e27bb35bdc868a37597bd81f",
+    "Google2u.CardDefinitions": "d16726c66474059a438074d510ce74bad25357a3b054fd2bd4c556aa78c0bea6",
+    "Google2u.Crates": "9ea7a2e9520efbe084bc83741d25e9aea0099e9c466176f2035d7ee265b4eccc",
+    "Google2u.Levels": "b05f3734ab9a7fa3ee139cb99799ceb830a9c56f3f83e1e96bc6a18738590620",
+    "Google2u.ArmyUpgrades": "e2b85e88d828c40c49ab11cef601a401c42aa4bf8f42292dc03bf56c53399bc4",
+    "Google2u.WeaponUpgrades": "70b5c9ba3aadd1d2607b82953c784c01f7156a25ecdb90900be8c96818bfcc2d",
+    "Google2u.AssaultRifle_M16": "9c87641dddf0c0f4a21a905d8086440ea5c90b2b0b764509b48176ebe66fc914",
+    "Google2u.AssaultRifle_AK47": "461a3bf18ff698d08742f07c67659ef0550af217746e595b9657126864d9201b",
+    "Google2u.AssaultRifle_QBZ95": "87129e4581041ab4da6566d56585c487fcca7e0d24668fe4c03adebc8190fcf9",
+    "Google2u.AssaultRifle_Famas": "b308f5ceb15346cc860baacae076c1531c3bb2e8706a995f3ff19d54a3291e77",
+    "Google2u.AssaultRifle_G36": "6763e3f84eabc4e7faacd6f9b869ceb421d8a44e14f4a4c99502ec5cdc821683",
+    "Google2u.AssaultRifle_SteyrAUG": "b06ade954ceb53a9d97b8cd5ed7ad354d3f60f4d46017290e09e4565c0cae2a8",
+    "Google2u.AssaultRifle_AKS47U": "7001ec2b98cbeaf34f2cd74d5f98f4096018a1159ed6927b2106cfbf2c7fd264",
+    "Google2u.AssaultRifle_G36Elite": "b08b830adb5fa6496fdc05f19f2b969dd1f8328b86b0882e8dfb3a3debcf80bf",
+    "Google2u.AssaultRifle_FamasElite": "74d0033a623b64f2955409704aee7446bb1aee0b90f19a97553147199f91bc97",
+    "Google2u.AssaultRifle_QBZ95Elite": "3e51dbc592c85419ab5339ce0f64c234a562c05aaa40df0dba316e87b8e62f9e",
+    "Google2u.AssaultRifle_AK47Elite": "4f42ebd126bbacb23748600b02075b653e04410eb12b44c8ce4d022dd99a66de",
+    "Google2u.SMG_UMP45": "f39e829caa83a0310a00e12afdd82e00770ee57c9421fc6f7aa814eafa670866",
+    "Google2u.SMG_MP5": "a440631a34ed0d716768efd80880b66598ad37f87bc086fa19219d5acd883121",
+    "Google2u.SMG_CPW": "dd7ba171eca02e304e0f1d620902328b00567777f832b3e639f403164b90e826",
+    "Google2u.SMG_MP7": "ce72f202acbc492aef7ce3c23925c83374254c404f6ee9628e53cb5804f815ea",
+    "Google2u.SMG_P90": "4c9cc3ad487d51ccff6242f1235ef395f03124dbba01234d5f646a3d9ef65378",
+    "Google2u.SMG_MP5_elite": "9aa38eebb8337cca8bb9a5344cf1430ac2276e672fadfad0faafa1ee5a62c2aa",
+    "Google2u.SMG_P90Elite": "3b6b08a62103c9f409edfbddb38f5012bc8bf2e2275f5235a58482e1e1da4538",
+    "Google2u.SMG_Vector": "9ba74fef27e66a0fd3fb52b952dbc42ac2a57ab78f43597413009c8cd764d369",
+    "Google2u.LMG_PKMachinegun": "6fb460cd7853fec62a4693c5d6e1150fe4dd6aab49a0324617995d4bffee9cc3",
+    "Google2u.LMG_M249": "2a08e2db442f093fd2cc0ad88dc7a70b83071f5a577ae84bcdd922a5d1cc99b2",
+    "Google2u.LMG_MG4": "e3404858d26101e5580e50ed9c0ab17dc0928f2d9fb40265597bf4c553b78573",
+    "Google2u.LMG_SA80": "c412efba82c1fb89b8c3f42161dcf93bd4cd869cecbcd8425ab198373a6dfa48",
+    "Google2u.LMG_M60": "c13eea1fb354421929b398d745cb6ec6ca7a54cb2387ff2519b01f8b6fda61dd",
+    "Google2u.LMG_Minigun": "6bab47d5cddac03412f66bc33912ec46cf3e13ef9264c4dab2a08af7dc067633",
+    "Google2u.LMG_M60Elite": "05af02dbcd71f255751e1427b253b9b3c5d12a588a357ba1a20d74549e41bc75",
+    "Google2u.LMG_M249Elite": "bcd727815ffb9ec8fdb1140abc09adb98ac6d05105e7980e09346298099eb014",
+    "Google2u.LMG_PKMachinegunElite": "35b80bcab680ba35ed76406d3551cd09911f37ab19a0ccec1d3aa64fbd1b26d5",
+    "Google2u.SniperRifle_M24": "09a2d45bb656cb6cae0127ea162b94c40178e0bf6e2850843760e1c2e7614aeb",
+    "Google2u.SniperRifle_M110": "81f353cf00cbe858760e707b4ee5d6c82d7a3a01ab69d7813e147de8de009b6d",
+    "Google2u.SniperRifle_Dragunov": "d6f091575041338b2b6e2db181a55f50a5fb5828f23f45c18e4fd16ade70cf3d",
+    "Google2u.SniperRifle_AWMF": "9aeb4deb059be7dc0bcea87c8cb88a8f78e15fbc5f8b2e0edfbe13b43a60d4e7",
+    "Google2u.SniperRifle_M90": "6f1704c7d6798497067d8df04ff7799ff4fdd034ad66d06808bd688ebadfa444",
+    "Google2u.SniperRifle_M90Elite": "cdf11b3f5531e1cf1fc59bc785479cae00a97237c52bd2a0f008088bc47e751c",
+    "Google2u.SniperRifle_MSR": "a9e90a4c0b9ef7eede37e922a2b76773b45b57041593a9e98a7ad12c2d983cdf",
+    "Google2u.SniperRifle_M110Elite": "e669b522518a47a78ee9916edce0b1daaa8481827c81a7a640e5e545290e080d",
+    "Google2u.Shotgun_SPAS": "ec24b901d0ff74584173d80342e8dddd3e000c5889d73a7e4cb3aa049b0b539c",
+    "Google2u.Shotgun_Benelli": "2b0e47e0b4cc8bf1cd32266d9836e9807fe933f012f229da80ee376bfdfaeaba",
+    "Google2u.Shotgun_Saiga": "6f273637d922471f534fda0e2683ee13142a3c4a06394ab32ec5eb5768c6fe14",
+    "Google2u.Shotgun_Striker": "bdf8c45182ca9a41fff5785167c23929649df34dd7cf8edd9285e2537eeb8678",
+    "Google2u.Shotgun_Blackhand": "51bc3fa4981ea3957b174be1634c97f9bde0fa624240bb90838189fdb7c06758",
+    "Google2u.Shotgun_SawnOff": "76c7cd1e406dc2ab2e2c0e48dc8882fe4ddde1a781914f70aa5ca9bcd06c85e7",
+    "Google2u.Shotgun_StrikerElite": "8e4402d85251cdbf1e0d760e7faa4df4c7093472bc5e7cdb7d9582fbee2ad6fa",
+    "Google2u.Shotgun_AA12": "572ee9efcc0d9734d5848152dd2de17bae022bb6463b3dad864ace041c414b9b",
+    "Google2u.Shotgun_SaigaElite": "3e28c69b49b29869119860013a8d2c22b1d6c331a3d96c54e01045d058e6ff9b",
+    "Google2u.Grenade_FRAG": "d0065d22e0ccf46aa83ed4a8baaf65d1831ed5f30d6f34aed6f0272e2d6def35",
+    "Google2u.Grenade_FLASH": "2141a98373979ee1c5c4c26003d997cede1508c40b37a22777f48c6ac9304edb",
+    "Google2u.Grenade_SMOKE": "ed22035e3ba90c24256e14e0b9e0de03cb39b4150034c72d7f9d7b6ffe440583",
+    "Google2u.Grenade_POISON": "16e13d3e886e56f9b5a4df450aa496aee42100e86ac13f205b7b2d562223e643",
+    "Google2u.Grenade_Molotov": "6c3d4a33b4e6260466c41dd646718991b28d33a710d12e9bb3320c8fb3a22620",
+    "Google2u.Grenade_M84": "3194b82b322a6bbbf015099700a081cf16a69d7b0ab54f236c15035244c30e12",
+    "Google2u.Grenade_SMOKEElite": "de7a278e37e273206fbda54e1497f53cef199c89c1cdf8c703bd2d29437ed405",
+    "Google2u.Bazooka_RPG7": "780bc4b07c9a1622dee94270f86d3a7123c4ddd98782c4479028e64ff6065dcb",
+    "Google2u.GrenadeLauncher_M320": "44288547adf5854ccf33ac35412a64577c8b00fe4e8c5f8b5f7226dafcc3688d",
+    "Google2u.Bazooka_FGM": "8edecb69b63ae77c1a06d8e40e908e2dc3b901fdef0ce7d7b16cdf77ee957df0",
+    "Google2u.Bazooka_HMV": "d5c36c752300e4b984b8b3f1d74449fb4e287b61bbe64ac003d53abb4b5a6e1b",
+    "Google2u.Bazooka_Panzerfaust": "1fa17ef2a10334ed15fa47455c59324cab11383b997a353396dac86848759f55",
+    "Google2u.Bazooka_M202": "22ec2fafa53545ae972c29755cb4d272dc31bf5f649b4f5f9f31824362e2d54b",
+    "Google2u.Bazooka_FGMElite": "d65b5df422ffcc137687a9a2dff3a14784fe8588c2abdfe4045a7209b42e5ccc",
+    "Google2u.Bazooka_Hater": "7243a793d045a089e575c9e783b178092034c0d1728c73fd76833c3dab331ea2",
+    "Google2u.Pistol_DesertEagle": "1379d513f9235e9895bc6620e115bc7e8521df7b6a72bfc5714b22f7ed928dc4",
+    "Google2u.Pistol_Remmington51": "9f90deeb462d0230d1931b2e7747786bf032fc554a973055333b6f03190953f3",
+    "Google2u.Pistol_Berreta": "e95a1aa7dda2fca11d9166bfd2ac66c9bf8b18ddaf2f41d99a17c7b86fdaf374",
+    "Google2u.Pistol_M1911": "18925747f674ef106b50249081cd8e77333c9a4698cf08ecc19cf6e2dc78e428",
+    "Google2u.Pistol_Magnum357": "3f8984b9bb29427451b325ec19e923b6508fb6a49624ec04fb1a1541658356c5",
+    "Google2u.Pistol_Jester": "422d5b5b9270c8439ed40039272d7ab5b4ea772f5b0587efab4d19dbd6c2c177",
+    "Google2u.DBUpgradeSlotsAssaulter": "44457035b3b3527808fc89d5a7767d59024d13abc96a987a09f31aa56d44d3ec",
+    "Google2u.DBUpgradeSlotsBazooka": "a29a57ebd01c4c04976cfbcc72c6376598e49da9e30edefd297dc6ce589a6aca",
+    "Google2u.DBUpgradeSlotsCar": "c656e51abc51158adb9fe0d649977942545487025579c79e1cd853f4e3c2f348",
+    "Google2u.DBUpgradeSlotsDrone": "73f29728f1518025af80dbf60338961cf285b007bf2d876d3b703d87b8feb9c2",
+    "Google2u.DBUpgradeSlotsEngineer": "b2bfdf18fe103d325b6f5b486543283699c944969b1568ac2eff5b0c5ba53396",
+    "Google2u.DBUpgradeSlotsGrennader": "e7d6e0c473d692d6e4c034fbafea58ab2387b26e3bf688dc034d24e92c58b7c7",
+    "Google2u.DBUpgradeSlotsHelicopter": "94f8ce14d9cbf235f308d671baa2b33072164f3f8c5d282e55da179d63d24506",
+    "Google2u.DBUpgradeSlotsShotgunner": "8937a7922ff6188598dac93431b48c7ce30527a6237d6b299b7b7952d1ef5e88",
+    "Google2u.DBUpgradeSlotsMinigunner": "64245b9f0fbdd5776cd24afaa35f94ee2b619f4dea150e286e43228f357c5fd5",
+    "Google2u.DBUpgradeSlotsMachineGunner": "4b94678c6ec4cc61ed47559135d3ddd751163759cf1e0ed2d5ffecb5d57fae28",
+    "Google2u.DBUpgradeSlotsParachuter": "79fa816d3aacfe238120a46a57c6a72a315fd3d11afec10dd2556c27c6374b2f",
+    "Google2u.DBUpgradeSlotsSniper": "502e8b40a056e49d9f74aa380ab30e579fa878d3526a01c35854167af835b998",
+    "Google2u.DBUpgradeSlotsSwat": "ee8f6ec946d803c2038eacd32e18521af00150d421e0bc93d81cfb55f53fb6ff",
+    "Google2u.DBUpgradeSlotsTank": "309cdccca564cc8c0b1a57ce5e64c1aa7a62b47f25029dc8fd5fd2657c09c109",
+    "Google2u.DBUpgradeSlotsTurret": "2bce77545a6a0cd4fc3ffcfcbc7be89ad130c53bd44211797e41057d9c8682f2",
+    "Google2u.DBUpgradeSlotsRockyTurret": "6110c5d2137609cc71167f0e0d490a24331cd1c2b8b4e434236d469aa989f96c",
+    "Google2u.DBUpgradeSlotsSciFi": "cc15f994abd08f7da52f9092272663254596c3823041304ef82bcf9238ad6396",
+    "Google2u.DBUpgradeSlotsCarBuggy": "9f308150eca226296232261cf0601d97c48f3f0ae4f0967bbd9ada2a945dd034",
+    "Google2u.DBUpgradeSlotsAssaultHeli": "8bae62b9c70b119c6cbbbf3634e2c57b43e8b1c2cb4d8bf182306f9ea511c88b",
+    "Google2u.DBUpgradeSlotsTransporter": "9e78d80937c82f3d01f2a77988e665d2734345ccbf1e31c22a15970d29ec95f5",
+    "Google2u.DBUpgradeSlotsHeavyTurret": "4167decb276cd8e0d7cbfd439d85c96541e2e03851692f635a97e0e86b181c88",
+    "Google2u.DBUpgradeSlotsFlamethrower": "c436b85c4f137771363236fbfd5104c18e4c2b9dbc1dcbaada420944ce2541f4",
+    "Google2u.DBUpgradeSlotsCommando": "c311d6bdfc9c122db5fcb4198de9b53c81976590d1c52784b3a4609d5d8fb510",
+    "Google2u.DBUpgradeSlotsBuddy": "e8e8671a8d024cbbc9231e747cecbed50bb73b1a86af16b00b17b39b1c27a24b",
+    "Google2u.DBUpgradeSlotsGunslinger": "6acc7a44c780ce0fc3c7bf3e45d58b99e82ff2e9afe278722c3902fd181645d5",
+    "Google2u.DBUpgradeSlotsMortar": "54430b2adcec99af386d3acc60022b8ad680a36eebc6dac0e9169645b6da308d",
+    "Google2u.DBUpgradeSlotsWarper": "0f3e17ae1179520bfbf16df9f0e176efb493b4d80cb4f471fdb1c1bc0abdb35b",
+    "Google2u.DBUpgradeSlotsMech": "6381ee5cad3805baa773d98fd64d88a2a343c39d0545d51112ed6ecd23637a8d",
+    "Google2u.Missions": "2298c7a2068746b12a940fb2e2fd747107dafa7686af14cca34c0fa19db08932",
+    "Google2u.Skillshots": "4b88da1244a4119edfe159de87c030b8a269a359ea5e7177e7dd3769e1659a8d",
+    "Google2u.StarterAssignments": "04580a2fe97aef1b2f399c4be86da836300f60a5dbd21a857b06c45e5066cba6",
+    "Google2u.ArenaLootboxes": "4f9e004dbbab1542186efbf4cc34b66614d6ef3887ee440169ce33253b3e4f0b",
+    "Google2u.WarArenaParameters": "a98486e21522eea0bf8876b18b6de11b31731d4f5a2e4729967908c7f6365fd9",
+    "Google2u.CountryInfo": "015b9bb22bd3c4694a12b47c60d7f7dce727382014d0795c39a3b1b227b42bd8",
+    "Google2u.BonussesDefinitions": "ce6266094110a93e3dc6b1fd3329246f8f48a0dae1c93b2d5496b0b0fcf093d7",
+    "Google2u.CardPacks": "572fd30cfe1d3f0bd320ea57110165083b042b72863e594e9f0c83b3211b949f",
+    "Google2u.VIP": "8f885ab5be141697c7650fb8ca4d4cf6a07d7c5889b0a8cc23608688243e4c71",
+    "Google2u.Squads": "207d2cde07c1f34992fa7766dbe4d8d5cb97b41aec6ad677822ddd513a5b8a44",
+    "Google2u.UnitsContants": "ab48101415eb781bc4eedefe9c4d17ac6f5603315993d9931fbd74f294901ba7",
+    "Google2u.HeroicRewards": "fc73a6a3f75274f011c0513a669172884b01ff8d51ce966915e0c386102f98c0",
+    "Google2u.Lootboxes": "ddc73b69440bf5eb005f3ac641cd496452ed0b3cb375bf41e2abcd1f82654406",
+    "Google2u.Versions": "d980c691cd5a1ee2acf0093e63ee3401d00ef9f1183bbd99430adf039f56b229",
+    "Google2u.SquadEmblems": "cb9f0744fa1d7433646a094c5029eb62958161ba579589620474bec4c9e268cf",
+    "Google2u.BalanceTable": "0f75eba6913a6aaded9fe105a1208a3a994079b160b92a1d12cb16a5df0022d2",
+    "Google2u.CardConstants": "bb6e3766b42b656a5562760c399aad5b67d762cb7fdb1f3165f75596ed073369",
+    "Google2u.MatchMakingDeviation": "f1e2c36a3d1c48498b7c62d4079f0411bbd1ed700338767adb142196c9a69792",
+    "Google2u.InApps": "71e4124954596cbff7337772d0c780e1aa44bde8a5511f80d6585aa56433200e",
+    "Google2u.MatchMakingConstants": "e2dac33ca8d81c7c546579f4e5de60dcf853e940600481aa879949a6329b8562",
+    "Google2u.StringConstants": "02d9ff19bdb7d5a2946afde29505da15d1372f07e9ed5797a646647f592fb581",
+    "Google2u.Constants": "28aede6cf2b87019385a9e4fb490717609c640445eb7d0804fa2d52a7f6efe23"
+  },
+  "releaseVerified": false,
+  "differenceCount": 390,
+  "differences": [
+    {
+      "sheet": "Google2u.BotNames",
+      "rowIndex": 182,
+      "field": "NAME",
+      "kind": "string",
+      "source": "\u02c7vampire\u02c766",
+      "exported": "\u02c7vampire\u02c7",
+      "classification": "unexplained-value-difference"
+    },
+    {
+      "sheet": "Google2u.BotNames",
+      "rowIndex": 205,
+      "field": "NAME",
+      "kind": "string",
+      "source": "spooked\u00b0,\u00b0kitty",
+      "exported": "spooked\u00b0,\u00b0kit",
+      "classification": "unexplained-value-difference"
+    },
+    {
+      "sheet": "Google2u.BotNames",
+      "rowIndex": 231,
+      "field": "NAME",
+      "kind": "string",
+      "source": "sneaky\u00a7thisguys",
+      "exported": "sneaky\u00a7thisguy",
+      "classification": "unexplained-value-difference"
+    },
+    {
+      "sheet": "Google2u.BotNames",
+      "rowIndex": 240,
+      "field": "NAME",
+      "kind": "string",
+      "source": "brown(\u203f\u02e0\u203f)mailr",
+      "exported": "brown(\u203f\u02e0\u203f)",
+      "classification": "unexplained-value-difference"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsAssaulter",
+      "rowIndex": 134,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1908.5103759765625,
+      "exported": 1908.510009765625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsAssaulter",
+      "rowIndex": 135,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1124.884765625,
+      "exported": 1124.885009765625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsAssaulter",
+      "rowIndex": 135,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 237.83277893066406,
+      "exported": 237.83279418945312,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsBazooka",
+      "rowIndex": 118,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 2035.744384765625,
+      "exported": 2035.7440185546875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsBazooka",
+      "rowIndex": 119,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1307.678466796875,
+      "exported": 1307.677978515625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsBazooka",
+      "rowIndex": 119,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1201.7987060546875,
+      "exported": 1201.7989501953125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCar",
+      "rowIndex": 57,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 114.99564361572266,
+      "exported": 114.99559783935547,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsDrone",
+      "rowIndex": 118,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 2035.744384765625,
+      "exported": 2035.7440185546875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsDrone",
+      "rowIndex": 119,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 212.2657470703125,
+      "exported": 212.2657012939453,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsEngineer",
+      "rowIndex": 108,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1830.7498779296875,
+      "exported": 1830.75,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 0,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 39.95428466796875,
+      "exported": 39.954280853271484,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 1,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 40.59428405761719,
+      "exported": 40.59428024291992,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 3,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 179.26272583007812,
+      "exported": 179.2626953125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 4,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 184.44912719726562,
+      "exported": 184.4490966796875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 6,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 46.82331466674805,
+      "exported": 46.82331085205078,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 6,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 196.6579132080078,
+      "exported": 196.65789794921875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 7,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 48.35725784301758,
+      "exported": 48.357261657714844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 7,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 203.10047912597656,
+      "exported": 203.10049438476562,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 8,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 49.97314453125,
+      "exported": 49.973140716552734,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 9,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 50.92033767700195,
+      "exported": 50.92034149169922,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 9,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 216.92063903808594,
+      "exported": 216.92059326171875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 10,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 52.628787994384766,
+      "exported": 52.62879180908203,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 10,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 224.19863891601562,
+      "exported": 224.19859313964844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 11,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 54.5550422668457,
+      "exported": 54.55503845214844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 11,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 232.40447998046875,
+      "exported": 232.4044952392578,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 12,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 240.1862335205078,
+      "exported": 240.1862030029297,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 13,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 58.26450729370117,
+      "exported": 58.26451110839844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 14,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 60.180843353271484,
+      "exported": 60.18083953857422,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 15,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 264.7689514160156,
+      "exported": 264.7690124511719,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 17,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 281.9836730957031,
+      "exported": 281.98370361328125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 18,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 290.7969665527344,
+      "exported": 290.7969970703125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 19,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 298.967041015625,
+      "exported": 298.9670104980469,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 20,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 102.70527648925781,
+      "exported": 102.7052993774414,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 20,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 308.1158447265625,
+      "exported": 308.1158142089844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 21,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 105.76815795898438,
+      "exported": 105.76820373535156,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 21,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 317.3044738769531,
+      "exported": 317.30450439453125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 22,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 108.87455749511719,
+      "exported": 108.87460327148438,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 24,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 115.18567657470703,
+      "exported": 115.18569946289062,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 24,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 345.5570373535156,
+      "exported": 345.5570068359375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 26,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 121.31263732910156,
+      "exported": 121.3125991821289,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 26,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 363.93792724609375,
+      "exported": 363.9378967285156,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 28,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 127.87808227539062,
+      "exported": 127.87809753417969,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 28,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 383.6342468261719,
+      "exported": 383.6341857910156,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 29,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 130.82496643066406,
+      "exported": 130.8249969482422,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 29,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 392.4748840332031,
+      "exported": 392.47491455078125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 30,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 91.88602447509766,
+      "exported": 91.88601684570312,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 32,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 96.50613403320312,
+      "exported": 96.5061264038086,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 32,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 140.89895629882812,
+      "exported": 140.8990020751953,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 32,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 422.6968688964844,
+      "exported": 422.6968994140625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 33,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 143.8933563232422,
+      "exported": 143.89340209960938,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 33,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 431.6800842285156,
+      "exported": 431.68011474609375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 34,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 100.89566802978516,
+      "exported": 100.89569854736328,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 34,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 147.30767822265625,
+      "exported": 147.3076934814453,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 34,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 441.92303466796875,
+      "exported": 441.9230041503906,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 35,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 101.84486389160156,
+      "exported": 101.84490203857422,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 36,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 103.87686157226562,
+      "exported": 103.87689971923828,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 36,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 153.73776245117188,
+      "exported": 153.73779296875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 37,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 106.19319152832031,
+      "exported": 106.19319915771484,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 37,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 157.16592407226562,
+      "exported": 157.1658935546875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 37,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 471.4977722167969,
+      "exported": 471.497802734375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 38,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 108.23351287841797,
+      "exported": 108.2334976196289,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 39,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 163.6465606689453,
+      "exported": 163.6466064453125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 39,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 490.9396667480469,
+      "exported": 490.939697265625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 40,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 112.61902618408203,
+      "exported": 112.61900329589844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 40,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 166.67616271972656,
+      "exported": 166.6761932373047,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 40,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 500.0284729003906,
+      "exported": 500.02850341796875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 41,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 114.95913696289062,
+      "exported": 114.95909881591797,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 41,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 170.1395263671875,
+      "exported": 170.13949584960938,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 41,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 510.4185485839844,
+      "exported": 510.4184875488281,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 44,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 120.09300994873047,
+      "exported": 120.09300231933594,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 44,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 180.1395263671875,
+      "exported": 180.13949584960938,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 46,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 124.43013000488281,
+      "exported": 124.43009948730469,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 47,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 126.4005355834961,
+      "exported": 126.40049743652344,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 48,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 193.1233673095703,
+      "exported": 193.12339782714844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 48,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 579.3700561523438,
+      "exported": 579.3701171875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 49,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 128.9818878173828,
+      "exported": 128.98190307617188,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 49,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 196.05247497558594,
+      "exported": 196.05250549316406,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 50,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 131.29678344726562,
+      "exported": 131.2967987060547,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 50,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 199.5711212158203,
+      "exported": 199.57110595703125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 51,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 133.2233123779297,
+      "exported": 133.22329711914062,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 51,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 202.4994354248047,
+      "exported": 202.49940490722656,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 52,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 135.11825561523438,
+      "exported": 135.11830139160156,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 52,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 205.3797607421875,
+      "exported": 205.3798065185547,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 53,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 137.44146728515625,
+      "exported": 137.44149780273438,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 53,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 208.91104125976562,
+      "exported": 208.91099548339844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 54,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 211.7875213623047,
+      "exported": 211.78750610351562,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 54,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 635.362548828125,
+      "exported": 635.3624877929688,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 55,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 139.7776641845703,
+      "exported": 139.77769470214844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 56,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 141.6417694091797,
+      "exported": 141.6417999267578,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 56,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 218.12832641601562,
+      "exported": 218.1282958984375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 56,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 654.3849487304688,
+      "exported": 654.3848876953125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 57,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 143.47344970703125,
+      "exported": 143.47340393066406,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 57,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 220.94912719726562,
+      "exported": 220.9490966796875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 57,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 662.8473510742188,
+      "exported": 662.847412109375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 58,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 145.7142791748047,
+      "exported": 145.71429443359375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 59,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 147.5403594970703,
+      "exported": 147.5404052734375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 59,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 227.212158203125,
+      "exported": 227.2122039794922,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 60,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 229.9734344482422,
+      "exported": 229.97340393066406,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 60,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 689.9203491210938,
+      "exported": 689.9202880859375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 61,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 149.61666870117188,
+      "exported": 149.61669921875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 62,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 151.37933349609375,
+      "exported": 151.37930297851562,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 62,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 236.15176391601562,
+      "exported": 236.15179443359375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 62,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 708.4552612304688,
+      "exported": 708.455322265625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 64,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 155.30667114257812,
+      "exported": 155.30670166015625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 65,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 156.99415588378906,
+      "exported": 156.99420166015625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 65,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 244.91087341308594,
+      "exported": 244.91090393066406,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 65,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 734.732666015625,
+      "exported": 734.7327270507812,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 66,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 158.66441345214844,
+      "exported": 158.66439819335938,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 66,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 247.5164794921875,
+      "exported": 247.51649475097656,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 66,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 742.5494384765625,
+      "exported": 742.5493774414062,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 67,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 158.82379150390625,
+      "exported": 158.8238067626953,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 68,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 160.38278198242188,
+      "exported": 160.38279724121094,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 69,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 161.86172485351562,
+      "exported": 161.8616943359375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 69,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 255.74151611328125,
+      "exported": 255.7415008544922,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 69,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 767.2245483398438,
+      "exported": 767.2244873046875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 72,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 166.91473388671875,
+      "exported": 166.91470336914062,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 72,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 263.72528076171875,
+      "exported": 263.7253112792969,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 72,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 791.1758422851562,
+      "exported": 791.17578125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 73,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 168.05113220214844,
+      "exported": 168.0511016845703,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 74,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 267.4156799316406,
+      "exported": 267.41571044921875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 75,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 269.9638366699219,
+      "exported": 269.96380615234375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 75,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 809.8915405273438,
+      "exported": 809.8914794921875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 77,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 274.45806884765625,
+      "exported": 274.4580993652344,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 77,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 823.374267578125,
+      "exported": 823.3743286132812,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 78,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 276.1862487792969,
+      "exported": 276.1861877441406,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 79,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 278.6188659667969,
+      "exported": 278.618896484375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 80,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 172.85748291015625,
+      "exported": 172.8574981689453,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 80,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 840.0873413085938,
+      "exported": 840.0872802734375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 81,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 174.26626586914062,
+      "exported": 174.26629638671875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 81,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 282.3113708496094,
+      "exported": 282.3114013671875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 82,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 175.61817932128906,
+      "exported": 175.61819458007812,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 82,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 284.5014343261719,
+      "exported": 284.50140380859375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 82,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 853.5043334960938,
+      "exported": 853.5042724609375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 83,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 176.34864807128906,
+      "exported": 176.34860229492188,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 84,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 177.68148803710938,
+      "exported": 177.68150329589844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 85,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 289.0204772949219,
+      "exported": 289.0205078125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 85,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 867.0614624023438,
+      "exported": 867.0615234375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 87,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 178.19961547851562,
+      "exported": 178.19960021972656,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 87,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 292.2473449707031,
+      "exported": 292.247314453125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 87,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 876.7420654296875,
+      "exported": 876.7421264648438,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 88,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 179.49102783203125,
+      "exported": 179.49099731445312,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 88,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 294.3652648925781,
+      "exported": 294.36529541015625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 89,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 180.755126953125,
+      "exported": 180.75509643554688,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 90,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 181.38536071777344,
+      "exported": 181.38540649414062,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 91,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 182.64292907714844,
+      "exported": 182.6428985595703,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 92,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 183.22537231445312,
+      "exported": 183.22540283203125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 93,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 184.46224975585938,
+      "exported": 184.4622039794922,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 93,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 302.51806640625,
+      "exported": 302.5180969238281,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 93,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 907.5542602539062,
+      "exported": 907.5543212890625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 94,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 182.7943115234375,
+      "exported": 182.79429626464844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 94,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 303.4385681152344,
+      "exported": 303.4385986328125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 95,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 183.98226928710938,
+      "exported": 183.9822998046875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 95,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 305.4105529785156,
+      "exported": 305.4106140136719,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 96,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 184.5020294189453,
+      "exported": 184.5019989013672,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 96,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 306.2733459472656,
+      "exported": 306.2732849121094,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 96,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 918.820068359375,
+      "exported": 918.8201293945312,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 97,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 185.66891479492188,
+      "exported": 185.6688995361328,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 98,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 186.14053344726562,
+      "exported": 186.1405029296875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 98,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 926.9798583984375,
+      "exported": 926.9799194335938,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 99,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 187.29888916015625,
+      "exported": 187.2989044189453,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 99,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 310.9161682128906,
+      "exported": 310.91619873046875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 100,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 187.7349395751953,
+      "exported": 187.73489379882812,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 134,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1480.5413818359375,
+      "exported": 1480.541015625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 134,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 341.5192565917969,
+      "exported": 341.519287109375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 134,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1024.5577392578125,
+      "exported": 1024.5579833984375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 135,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 321.0742492675781,
+      "exported": 321.0741882324219,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 135,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 449.5039367675781,
+      "exported": 449.50390625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGrennader",
+      "rowIndex": 135,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1348.5118408203125,
+      "exported": 1348.511962890625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 0,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 86.57777404785156,
+      "exported": 86.57776641845703,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 1,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 86.98666381835938,
+      "exported": 86.98665618896484,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 5,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 89.70035552978516,
+      "exported": 89.70036315917969,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 6,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 90.53902435302734,
+      "exported": 90.53901672363281,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 13,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 97.56444549560547,
+      "exported": 97.564453125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 16,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 101.15733337402344,
+      "exported": 101.15730285644531,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 17,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 102.41197204589844,
+      "exported": 102.41200256347656,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 18,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 103.50978088378906,
+      "exported": 103.50980377197266,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 20,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 106.14429473876953,
+      "exported": 106.14430236816406,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 21,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 107.4881362915039,
+      "exported": 107.48809814453125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 22,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 108.65550994873047,
+      "exported": 108.65550231933594,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 24,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 111.25395202636719,
+      "exported": 111.25399780273438,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 25,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 112.67301940917969,
+      "exported": 112.6729965209961,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 26,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 113.92084503173828,
+      "exported": 113.9207992553711,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 27,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 115.35955810546875,
+      "exported": 115.3595962524414,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 30,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 119.38658905029297,
+      "exported": 119.3865966796875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 31,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 120.87982177734375,
+      "exported": 120.87979888916016,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 32,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 122.19961547851562,
+      "exported": 122.19960021972656,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 33,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 123.49866485595703,
+      "exported": 123.49870300292969,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 35,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 126.37711334228516,
+      "exported": 126.3770980834961,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 36,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 127.69110870361328,
+      "exported": 127.69110107421875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 37,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 129.2830810546875,
+      "exported": 129.28309631347656,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 38,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 130.58274841308594,
+      "exported": 130.58270263671875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 39,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 131.85333251953125,
+      "exported": 131.85330200195312,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 41,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 134.8323516845703,
+      "exported": 134.8323974609375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 42,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 136.0712890625,
+      "exported": 136.07130432128906,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 43,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 137.5176239013672,
+      "exported": 137.51759338378906,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 44,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 138.7264404296875,
+      "exported": 138.7263946533203,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 45,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 140.423828125,
+      "exported": 140.42379760742188,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 46,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 141.62979125976562,
+      "exported": 141.6298065185547,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 48,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 144.51588439941406,
+      "exported": 144.51589965820312,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 49,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 145.65826416015625,
+      "exported": 145.65829467773438,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 50,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 147.3289337158203,
+      "exported": 147.3289031982422,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 51,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 148.6983184814453,
+      "exported": 148.69830322265625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 52,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 150.06155395507812,
+      "exported": 150.0615997314453,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 54,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 152.8012237548828,
+      "exported": 152.8011932373047,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 55,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 154.1854248046875,
+      "exported": 154.18539428710938,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 57,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 157.2389373779297,
+      "exported": 157.23890686035156,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 58,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 158.62310791015625,
+      "exported": 158.6230926513672,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 59,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 159.9931182861328,
+      "exported": 159.99310302734375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 60,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 161.38026428222656,
+      "exported": 161.3802947998047,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 61,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 162.76101684570312,
+      "exported": 162.76100158691406,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 62,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 164.1353759765625,
+      "exported": 164.13540649414062,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 63,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 165.5111083984375,
+      "exported": 165.51109313964844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 64,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 167.2066650390625,
+      "exported": 167.20669555664062,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 66,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 169.96337890625,
+      "exported": 169.96339416503906,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 67,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 171.33973693847656,
+      "exported": 171.33970642089844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 68,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 172.70956420898438,
+      "exported": 172.7095947265625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 70,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 175.4527587890625,
+      "exported": 175.4528045654297,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsHelicopter",
+      "rowIndex": 82,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 2154.379150390625,
+      "exported": 2154.37890625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsShotgunner",
+      "rowIndex": 133,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1830.7498779296875,
+      "exported": 1830.75,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsShotgunner",
+      "rowIndex": 133,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 333.8329772949219,
+      "exported": 333.8330078125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsMinigunner",
+      "rowIndex": 58,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 2290.21240234375,
+      "exported": 2290.2119140625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsMinigunner",
+      "rowIndex": 59,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 62.92751693725586,
+      "exported": 62.927520751953125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsMachineGunner",
+      "rowIndex": 127,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1124.884765625,
+      "exported": 1124.885009765625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsMachineGunner",
+      "rowIndex": 127,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 167.22616577148438,
+      "exported": 167.2261962890625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsParachuter",
+      "rowIndex": 124,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1665.609130859375,
+      "exported": 1665.6090087890625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsParachuter",
+      "rowIndex": 125,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1778.4427490234375,
+      "exported": 1778.4429931640625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsParachuter",
+      "rowIndex": 125,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 326.3065490722656,
+      "exported": 326.3064880371094,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSniper",
+      "rowIndex": 124,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1665.609130859375,
+      "exported": 1665.6090087890625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSniper",
+      "rowIndex": 125,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 956.1520385742188,
+      "exported": 956.1519775390625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSniper",
+      "rowIndex": 125,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 388.89373779296875,
+      "exported": 388.8937072753906,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSwat",
+      "rowIndex": 103,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1665.609130859375,
+      "exported": 1665.6090087890625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSwat",
+      "rowIndex": 104,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1743.5712890625,
+      "exported": 1743.571044921875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSwat",
+      "rowIndex": 104,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 212.4391632080078,
+      "exported": 212.43919372558594,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsTank",
+      "rowIndex": 57,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 2348.75927734375,
+      "exported": 2348.759033203125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsTurret",
+      "rowIndex": 87,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1214.506591796875,
+      "exported": 1214.5069580078125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsTurret",
+      "rowIndex": 88,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1006.9124755859375,
+      "exported": 1006.9119873046875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 0,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 192.8142852783203,
+      "exported": 192.81430053710938,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 1,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 193.83570861816406,
+      "exported": 193.835693359375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 2,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 194.6965789794922,
+      "exported": 194.69659423828125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 3,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 196.57542419433594,
+      "exported": 196.5753936767578,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 5,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 139.68106079101562,
+      "exported": 139.6811065673828,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 5,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 199.5443878173828,
+      "exported": 199.54440307617188,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 6,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 141.4037322998047,
+      "exported": 141.40370178222656,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 6,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 202.00534057617188,
+      "exported": 202.0052947998047,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 7,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 203.8694305419922,
+      "exported": 203.86940002441406,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 8,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 205.8685760498047,
+      "exported": 205.8686065673828,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 9,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 145.54693603515625,
+      "exported": 145.54690551757812,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 12,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 215.50714111328125,
+      "exported": 215.50709533691406,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 13,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 152.54212951660156,
+      "exported": 152.54209899902344,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 13,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 217.91732788085938,
+      "exported": 217.91729736328125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 14,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 154.2653350830078,
+      "exported": 154.2653045654297,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 14,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 220.37904357910156,
+      "exported": 220.37899780273438,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 15,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 89.1666259765625,
+      "exported": 89.16663360595703,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 15,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 222.91656494140625,
+      "exported": 222.91659545898438,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 16,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 90.20148468017578,
+      "exported": 90.20147705078125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 16,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 225.5037078857422,
+      "exported": 225.50369262695312,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 17,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 227.26885986328125,
+      "exported": 227.26890563964844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 18,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 160.95733642578125,
+      "exported": 160.95730590820312,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 18,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 229.9390411376953,
+      "exported": 229.93899536132812,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 19,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 162.84193420410156,
+      "exported": 162.84190368652344,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 19,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 93.05253601074219,
+      "exported": 93.05254364013672,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 19,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 232.63133239746094,
+      "exported": 232.6313018798828,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 20,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 235.41885375976562,
+      "exported": 235.4188995361328,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 21,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 95.28091430664062,
+      "exported": 95.2809066772461,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 21,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 238.20228576660156,
+      "exported": 238.20230102539062,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 23,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 243.90142822265625,
+      "exported": 243.90139770507812,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 24,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 172.05686950683594,
+      "exported": 172.05690002441406,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 24,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 245.79551696777344,
+      "exported": 245.79550170898438,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 26,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 100.65817260742188,
+      "exported": 100.658203125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 26,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 251.6454315185547,
+      "exported": 251.64540100097656,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 27,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 101.82857513427734,
+      "exported": 101.82859802246094,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 27,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 254.57142639160156,
+      "exported": 254.57139587402344,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 28,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 179.53546142578125,
+      "exported": 179.53550720214844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 28,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 256.479248046875,
+      "exported": 256.47918701171875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 29,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 181.66026306152344,
+      "exported": 181.66029357910156,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 29,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 103.80587005615234,
+      "exported": 103.80590057373047,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 29,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 259.5146789550781,
+      "exported": 259.51470947265625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 30,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 104.98811340332031,
+      "exported": 104.98809814453125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 30,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 262.47027587890625,
+      "exported": 262.4703063964844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 32,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 106.9662857055664,
+      "exported": 106.96630096435547,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 33,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 189.27626037597656,
+      "exported": 189.27630615234375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 33,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 108.15786743164062,
+      "exported": 108.15789794921875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 33,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 270.3946533203125,
+      "exported": 270.39471435546875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 34,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 108.93714141845703,
+      "exported": 108.93710327148438,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 34,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 272.3428649902344,
+      "exported": 272.3428955078125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 37,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 112.09325408935547,
+      "exported": 112.09329986572266,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 37,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 280.233154296875,
+      "exported": 280.2331848144531,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 38,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 113.2565689086914,
+      "exported": 113.25659942626953,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 38,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 283.14141845703125,
+      "exported": 283.1413879394531,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 39,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 114.38811492919922,
+      "exported": 114.38809967041016,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 39,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 285.97027587890625,
+      "exported": 285.9703063964844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 40,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 201.22132873535156,
+      "exported": 201.22129821777344,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 40,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 114.9836196899414,
+      "exported": 114.98359680175781,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 40,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 287.45904541015625,
+      "exported": 287.4590148925781,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 42,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 204.9913330078125,
+      "exported": 204.99130249023438,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 42,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 292.8447570800781,
+      "exported": 292.84478759765625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 43,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 206.7564697265625,
+      "exported": 206.75650024414062,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 43,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 118.14655303955078,
+      "exported": 118.14659881591797,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 44,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 119.17668914794922,
+      "exported": 119.17669677734375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 45,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 210.2776641845703,
+      "exported": 210.27769470214844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 45,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 120.1586685180664,
+      "exported": 120.15869903564453,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 45,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 300.39666748046875,
+      "exported": 300.3966979980469,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 46,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 121.18766021728516,
+      "exported": 121.18769836425781,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 46,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 302.9691467285156,
+      "exported": 302.9690856933594,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 47,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 122.16857147216797,
+      "exported": 122.1686019897461,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 47,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 305.4214172363281,
+      "exported": 305.42138671875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 48,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 215.5029296875,
+      "exported": 215.50289916992188,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 48,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 123.14453125,
+      "exported": 123.14450073242188,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 48,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 307.861328125,
+      "exported": 307.8612976074219,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 49,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 217.1425323486328,
+      "exported": 217.1425018310547,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 49,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 124.08145141601562,
+      "exported": 124.08149719238281,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 50,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 124.98811340332031,
+      "exported": 124.98809814453125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 50,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 312.47027587890625,
+      "exported": 312.4703063964844,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 51,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 220.26333618164062,
+      "exported": 220.2633056640625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 51,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 125.86476135253906,
+      "exported": 125.86479949951172,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 52,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 222.75326538085938,
+      "exported": 222.7532958984375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 52,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 127.28758239746094,
+      "exported": 127.28759765625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 52,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 318.2189636230469,
+      "exported": 318.218994140625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 53,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 224.25332641601562,
+      "exported": 224.2532958984375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 53,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 128.14476013183594,
+      "exported": 128.14480590820312,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 54,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 128.99725341796875,
+      "exported": 128.99729919433594,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 54,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 322.4931335449219,
+      "exported": 322.49310302734375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 55,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 130.44056701660156,
+      "exported": 130.4405975341797,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 55,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 326.1014404296875,
+      "exported": 326.1014099121094,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 56,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 229.75746154785156,
+      "exported": 229.75750732421875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 56,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 131.28997802734375,
+      "exported": 131.2899932861328,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 56,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 328.2249450683594,
+      "exported": 328.22491455078125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 57,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 231.22073364257812,
+      "exported": 231.220703125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 57,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 132.12612915039062,
+      "exported": 132.1260986328125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 57,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 330.3153381347656,
+      "exported": 330.3153076171875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 58,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 132.95726013183594,
+      "exported": 132.95730590820312,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 58,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 332.3931579589844,
+      "exported": 332.3931884765625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 59,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 134.3972625732422,
+      "exported": 134.3972930908203,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 59,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 335.9931335449219,
+      "exported": 335.99310302734375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 60,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 135.21656799316406,
+      "exported": 135.2165985107422,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 60,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 338.04144287109375,
+      "exported": 338.0414123535156,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 61,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 136.03062438964844,
+      "exported": 136.0305938720703,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 61,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 340.0765686035156,
+      "exported": 340.07659912109375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 63,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 138.27554321289062,
+      "exported": 138.27549743652344,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 63,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 345.6888427734375,
+      "exported": 345.6888122558594,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 64,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 243.3618621826172,
+      "exported": 243.3618927001953,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 64,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 139.0639190673828,
+      "exported": 139.06390380859375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 64,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 347.6598205566406,
+      "exported": 347.6597900390625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 65,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 244.73187255859375,
+      "exported": 244.73190307617188,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 65,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 139.84678649902344,
+      "exported": 139.8468017578125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 65,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 349.616943359375,
+      "exported": 349.6169128417969,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 68,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 249.93612670898438,
+      "exported": 249.93609619140625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 68,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 142.82064819335938,
+      "exported": 142.8206024169922,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 69,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 251.25013732910156,
+      "exported": 251.25010681152344,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 69,
+      "field": "GRENADEEXPLODEDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 358.92877197265625,
+      "exported": 358.9288024902344,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 70,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 253.77386474609375,
+      "exported": 253.77389526367188,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 70,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 145.01364135742188,
+      "exported": 145.0135955810547,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 82,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1917.928466796875,
+      "exported": 1917.927978515625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsSciFi",
+      "rowIndex": 82,
+      "field": "GRENADEMINDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 164.818115234375,
+      "exported": 164.81809997558594,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 60,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1001.0703735351562,
+      "exported": 1001.0700073242188,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 61,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1004.9036254882812,
+      "exported": 1004.9039916992188,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 62,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1010.6246948242188,
+      "exported": 1010.625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 64,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1019.4732055664062,
+      "exported": 1019.4730224609375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 65,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1024.7484130859375,
+      "exported": 1024.748046875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 66,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1029.688232421875,
+      "exported": 1029.68798828125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 67,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1034.63427734375,
+      "exported": 1034.634033203125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 69,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1044.3914794921875,
+      "exported": 1044.3909912109375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 72,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1060.6435546875,
+      "exported": 1060.64404296875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 73,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1065.13623046875,
+      "exported": 1065.135986328125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 74,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1069.483642578125,
+      "exported": 1069.4840087890625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 76,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1077.9259033203125,
+      "exported": 1077.926025390625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 77,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1081.9273681640625,
+      "exported": 1081.927001953125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 78,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1085.8726806640625,
+      "exported": 1085.873046875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 79,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1089.7152099609375,
+      "exported": 1089.7149658203125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 81,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1099.481689453125,
+      "exported": 1099.4820556640625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 83,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1106.3529052734375,
+      "exported": 1106.35302734375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 84,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1109.6077880859375,
+      "exported": 1109.6080322265625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 85,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1112.755859375,
+      "exported": 1112.7559814453125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 102,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 2040.9908447265625,
+      "exported": 2040.990966796875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCarBuggy",
+      "rowIndex": 102,
+      "field": "CANNONDAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 1514.266357421875,
+      "exported": 1514.2659912109375,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsAssaultHeli",
+      "rowIndex": 108,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 2348.75927734375,
+      "exported": 2348.759033203125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsAssaultHeli",
+      "rowIndex": 108,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 172.0757293701172,
+      "exported": 172.07569885253906,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsFlamethrower",
+      "rowIndex": 57,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 2266.642822265625,
+      "exported": 2266.64306640625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCommando",
+      "rowIndex": 82,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1874.3392333984375,
+      "exported": 1874.3389892578125,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsCommando",
+      "rowIndex": 82,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 104.70216369628906,
+      "exported": 104.70220184326172,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGunslinger",
+      "rowIndex": 32,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 2092.28564453125,
+      "exported": 2092.285888671875,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsGunslinger",
+      "rowIndex": 32,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 285.2115478515625,
+      "exported": 285.21148681640625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsWarper",
+      "rowIndex": 32,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1830.7498779296875,
+      "exported": 1830.75,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsWarper",
+      "rowIndex": 32,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 289.52423095703125,
+      "exported": 289.5242004394531,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsMech",
+      "rowIndex": 32,
+      "field": "HP",
+      "kind": "ObscuredFloat",
+      "source": 1429.728515625,
+      "exported": 1429.72900390625,
+      "classification": "matches-seven-significant-digit-format"
+    },
+    {
+      "sheet": "Google2u.DBUpgradeSlotsMech",
+      "rowIndex": 32,
+      "field": "DAMAGE",
+      "kind": "ObscuredFloat",
+      "source": 96.7356948852539,
+      "exported": 96.73568725585938,
+      "classification": "matches-seven-significant-digit-format"
+    }
+  ]
+}

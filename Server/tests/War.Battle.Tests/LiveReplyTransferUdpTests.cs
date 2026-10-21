@@ -33,6 +33,7 @@ internal static class LiveReplyTransferUdpTests
         {
             ["Battle:SigningKey"]=signingKey,["Battle:ServerId"]=manifest.ServerId,
             ["Battle:Port"]=port.ToString(),["Battle:MatchManifestPath"]=manifestFile,
+            ["Battle:MtuBytes"]="1200",
             ["Battle:ResultOutboxPath"]=Path.Combine(Path.GetTempPath(),
                 "war-large-reply-outbox-"+Guid.NewGuid().ToString("N"))
         }).Build();

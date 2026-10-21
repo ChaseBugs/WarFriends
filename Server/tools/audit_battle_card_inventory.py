@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCENE = ROOT / "Clients/ExportedProject/Assets/Scenes/MainScene.unity"
 ASSETS = ROOT / "Clients/ExportedProject/Assets"
-IDENTITIES = ROOT / "Server/src/War.BattleServer/WarCardSourceIdentityCatalog.cs"
+IDENTITIES = ROOT / "Server/src/War.Battle.Domain/Cards/WarCardSourceIdentityCatalog.cs"
 CARD_MANAGER = ROOT / "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardManager.cs"
 OUTPUT = ROOT / "Server/docs/BATTLE_CARD_SOURCE_INVENTORY.md"
 
@@ -539,7 +539,7 @@ def check_queued_bonus_card_source():
         "KEVLARCRATE": (6, "ac8b905f5a7ce0c4a94b769453f4b52b"),
         "AMMOCRATE": (8, "4253d98e2148db24cbdab745a1472a7d"),
     }
-    catalog = (ROOT / "Server/src/War.BattleServer/QueuedBonusCardSourceCatalog.cs")
+    catalog = (ROOT / "Server/src/War.Battle.Simulation/Cards/QueuedBonusCardSourceCatalog.cs")
     catalog_source = catalog.read_text(encoding="utf-8-sig")
     for source_id, (index, guid) in expected.items():
         block = next((item for item in re.split(r"(?m)^--- ", scene)
@@ -647,7 +647,7 @@ def render():
         "",
         "Source: `Clients/ExportedProject/Assets/Scenes/MainScene.unity`",
         "`CardDefinitions.Rows`, cross-checked against",
-        "`Server/src/War.BattleServer/WarCardSourceIdentityCatalog.cs` and",
+        "`Server/src/War.Battle.Domain/Cards/WarCardSourceIdentityCatalog.cs` and",
         "the normal Client `CardManager.UseSelfHostedCard` dispatcher.",
         "The scene contains 67 unique rows: 57 marked `IMPLEMENTED: 1` and",
         "10 marked `IMPLEMENTED: 0`. A scene flag does not prove that the",

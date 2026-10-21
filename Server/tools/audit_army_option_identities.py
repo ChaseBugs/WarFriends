@@ -7,7 +7,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 catalog = json.loads((ROOT / "Server/content/recovered-army-deployment.json").read_text(encoding="utf-8"))
-source = (ROOT / "Server/src/War.BattleServer/ArmyOptionIdentityCatalog.cs").read_text(encoding="utf-8")
+source = (ROOT / "Server/src/War.Battle.Domain/Content/Army/ArmyOptionIdentityCatalog.cs").read_text(encoding="utf-8")
 compiled = {}
 for unit_id, encoded in re.findall(r'\("(ID_UNIT-[A-Z0-9-]+)","([0-9:,]+)"\)', source):
     for part in encoded.split(","):

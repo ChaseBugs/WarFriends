@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "description": "C33 original straight Missile.Update expiry-before-collision policy. Test reference is a source-anchored managed lifecycle translation with synthetic rays, not execution of original Unity/native physics. Server digest records the pre-fix model; test hashes are historical red-run inputs.",
+  "redCheckpoint": "checkpoint-ab6a957927a4479ab66f15eb60f55b67",
+  "redFailingGroups": 6,
+  "matrixScenarios": 50,
+  "originalServerSha256": "cd3f9f65c7486b8afb6e7b1ce3792f4016fd48b4e7e39c0c12f3ed33068a6cdf",
+  "inputs": {
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Missile.cs": "0f6cb525bbdced8701efbf170759e58e8e4cc0c74d91f9c383d4c65716a5c1ba",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Mortar.cs": "210babe06a1cfc0e1b12336ae6c00809b779f383cc84d8232b71a5ab6c1ed3d5",
+    "Server/content/recovered-rusher-weapon-bindings.json": "3c1d9f194edc2e023be94eb5832e7c43a93abbcd87de1f3bf83a72cd3c9efcba",
+    "Server/src/War.Battle.Simulation/Match/Projectiles/PvpArmyMissileSystem.cs": "1f7340d5d244aed80cf723b26849d052acd9d6e33109aec78bdf03aa1df27bce",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/MissileExpiryReference.cs": "e21f7407b270db819c15d9f96d5ae329afddf9b5dc3fb6a167b8e096088d1452",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/ArmyMissileExpiryTests.cs": "13038279337ce85526f7ffd1be0795da49f7a95812a92c566ef7b3b026efdb83"
+  }
+}

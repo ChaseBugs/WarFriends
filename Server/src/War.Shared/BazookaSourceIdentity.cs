@@ -56,8 +56,7 @@ namespace War.Shared
             }
 
             return (item.Kind == MatchEventKind.Shot || item.Kind == MatchEventKind.Impact) &&
-                item.ProjectileId != 0 && Guid.TryParseExact(item.ActorId, "N", out _) &&
-                item.ActorId == item.ActorId.ToLowerInvariant() &&
+                item.ProjectileId != 0 && War.Shared.CanonicalGuid.IsCanonical(item.ActorId) &&
                 ValidProjectile(item.WeaponSourceId, item.Reason == "bazooka-fake");
         }
     }

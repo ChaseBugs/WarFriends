@@ -5,6 +5,7 @@ using War.Backend;
 using War.Backend.Legacy;
 using War.BattleServer;
 using War.Persistence;
+using War.Battle.Tests.Support;
 using War.Shared;
 
 /// <summary>Checks fresh durable army lanes and rejection boundaries during mixed rematch generation.</summary>
@@ -20,7 +21,7 @@ internal static class RematchArmyManifestTests
         LegacyPlayerDocument[] players = [CreatePlayer(new string('c', 32)), CreatePlayer(new string('d', 32))];
         foreach (LegacyPlayerDocument player in players)
         {
-            await legacy.Insert(player, LegacyPlayerStore.NewPassword(), cancellationToken);
+            await LegacyTestAccounts.InsertAsync(database, player, cancellationToken);
             await PutAllocationAsync(allocations, player, cancellationToken);
         }
 

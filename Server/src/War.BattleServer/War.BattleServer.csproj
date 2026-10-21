@@ -13,18 +13,12 @@
           CopyToOutputDirectory="PreserveNewest"
           CopyToPublishDirectory="PreserveNewest" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <EmbeddedResource Include="..\..\content\grenadier-corner-muzzle-unity-reference.json"
-                      LogicalName="War.BattleServer.GrenadierCornerMuzzles" />
-    <EmbeddedResource Include="..\..\content\recovered-grenadier-primary-weapon.json"
-                      LogicalName="War.BattleServer.GrenadierPrimaryWeapon" />
-    <EmbeddedResource Include="..\..\content\recovered-grenade-rig.json"
-                      LogicalName="War.BattleServer.GrenadeRig" />
-    <EmbeddedResource Include="..\..\content\recovered-ordinary-card-identities.json"
-                      LogicalName="War.BattleServer.OrdinaryCardIdentities" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\War.Shared\War.Shared.csproj" />
+    <ProjectReference Include="..\War.Battle.Domain\War.Battle.Domain.csproj" />
+    <ProjectReference Include="..\War.Battle.Simulation\War.Battle.Simulation.csproj" />
     <ProjectReference Include="..\War.Infrastructure\War.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

@@ -272,6 +272,18 @@
 - Fail closed when authoritative combat evidence, live-event configuration, or source-backed balancing is unavailable.
 - Add detailed English comments where recovered names are opaque or atomicity, replay, migration, or fallback decisions are not obvious.
 
+## Code style
+
+Full rules: `Docs/CODE_STYLE.md`. Configs: `.editorconfig`, `.prettierrc.json`, `eslint.config.mjs`.
+
+- Applies to new hand-written code only. Recovered/decompiled code (`Clients/`, Unity `Gameplay*`/`ResourceCompatibility*`, patched plugins) and generated data (`Server/content/`, Unity serialized assets) are exempt: never reformat or rename them.
+- In existing dense server files, keep small edits consistent with the surrounding code; reformat a file only in a separate behavior-free commit. Never run whole-solution `dotnet format` or `prettier --write .`.
+- Common: English only; 120-character lines; UTF-8, LF, no trailing whitespace, one final newline; named constants instead of magic numbers; no dead or commented-out code; one blank line between setup, work and result.
+- C#: 4 spaces, Allman braces, braces on every `if`; `PascalCase` types/methods/properties/constants, `_camelCase` private fields, `camelCase` locals/parameters, `I` interfaces, `Async`/`Routine` suffixes, `is/has/can/should` booleans. Functions aim for 40 lines (split above 80), at most 4 parameters, nesting depth 3. Unity code uses block-scoped namespaces compatible with the verified compiler; the .NET server uses file-scoped ones.
+- Unity: `[SerializeField] private` instead of public fields; no `Find`/`GetComponent`/allocation/LINQ in `Update`; subscribe in `OnEnable`, unsubscribe in `OnDisable`; keep rules in plain C# classes, not `MonoBehaviour`s; no `#region`.
+- TypeScript: Prettier (2 spaces, double quotes, semicolons, trailing commas); no `any`, validate `unknown` input; `interface` for shapes; named exports except Next.js pages; imports ordered built-in → external → `@/` → relative; functions aim for 40 lines with at most 3 parameters; no nested ternaries; never swallow errors silently.
+- Comments explain why, not what. TODOs use `// TODO(name): what and why`.
+
 ## Change discipline
 
 - Keep `npm run build` destructive only toward the generated `Server/dist` tree and clean that tree before TypeScript emission. Source renames/deletions must never leave stale compiled handlers or ghost `.test.js` files that can run alongside current sources and produce false verification counts.
@@ -279,3 +291,7 @@
 - Update `Server/BACKEND_FEATURES.md` and `Server/README.md` when backend behavior or a documented gap changes.
 - Keep unresolved backend gaps explicit. Do not mark a feature complete while its authoritative source or external provider integration is missing.
 - The worktree may contain unrelated recovered-client changes. Stage and commit only files belonging to the current increment.
+
+## Local integration reference — 2026-10-19
+
+- The owner designated `E:/Github/Mobile/Ice_Moba/client` and `E:/Github/Mobile/Ice_Moba/server` as references for Unity/server integration and removal of Photon and online-only providers. See `Server/docs/ICE_MOBA_INTEGRATION_REFERENCE.md` for inspected source evidence and migration boundaries. Use its admission, main-thread dispatch, and reconnect patterns without replacing WarFriends gameplay contracts or importing its RakNet dependency. Preserve the existing self-hosted .NET/protobuf/UDP architecture.

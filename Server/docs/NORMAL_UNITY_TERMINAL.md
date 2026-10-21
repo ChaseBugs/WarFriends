@@ -17,6 +17,13 @@ The report exposes those observations separately under `normalBattle.terminal`. 
 are recorded without session-bearing exception messages. Report completion still requires zero
 exceptions, and the paired script checks complete process logs after exit.
 
+The paired gate also requires that only the designated first participant requested forfeit,
+that its recovered `GameEndReason` is `Forfeit`, and that the peer reports `WinByForfeit`.
+An EndScreen and HTTP Success on both peers cannot substitute for correct opposing outcomes.
+These expectations use the existing `GameController.GameEndReason` identities; they do not
+write outcomes or enable rewards. This added assertion has not passed a rendered pair run:
+the independently reproduced Editor execution stall below remains unresolved.
+
 ## Source boundary
 
 `SelfHostedDeathMatchBridge.Apply` projects the host outcome and invokes normal `FinishGame`.

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../War.Shared/War.Shared.csproj" />
+    <ProjectReference Include="../War.Battle.Domain/War.Battle.Domain.csproj" />
+    <EmbeddedResource Include="../../content/grenadier-corner-muzzle-unity-reference.json"
+                      LogicalName="War.BattleServer.GrenadierCornerMuzzles" />
+    <EmbeddedResource Include="../../content/recovered-grenadier-primary-weapon.json"
+                      LogicalName="War.BattleServer.GrenadierPrimaryWeapon" />
+  </ItemGroup>
+</Project>

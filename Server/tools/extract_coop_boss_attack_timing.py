@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -35,7 +36,10 @@ def finite_decimal(row, field):
     raw = row[field]
     if not re.fullmatch(r"(?:0|[1-9]\d*)(?:\.\d+)?", raw):
         raise ValueError(f"invalid source {field}: {raw}")
-    return float(raw)
+    value = float(raw)
+    if not math.isfinite(value):
+        raise ValueError(f"non-finite source {field}")
+    return value
 
 
 def weapon_category(row, field, accepted):
@@ -52,10 +56,7 @@ def weapon_category(row, field, accepted):
     return value
 
 
-def main():
-    if sys.argv[1:] not in ([], ["--check"]):
-        raise SystemExit("usage: extract_coop_boss_attack_timing.py [--check]")
-    scene_bytes = SCENE.read_bytes()
+def build_document(scene_bytes, bot_bytes):
     scene = scene_bytes.decode("utf-8-sig")
     difficulties = source_rows(scene, DIFFICULTIES_GUID)
     player_bots = source_rows(scene, PLAYER_BOTS_GUID)
@@ -63,7 +64,6 @@ def main():
             [row["NUMBER"] for row in player_bots] != list(range(64)):
         raise ValueError("Bot timing or selection rows are incomplete")
 
-    bot_bytes = BOTS.read_bytes()
     bots = json.loads(bot_bytes)
     if bots["missionSourceSha256"] != hashlib.sha256(scene_bytes).hexdigest():
         raise ValueError("Bot missions differ from the timing scene")
@@ -132,7 +132,7 @@ def main():
     if len(mission_rows) != 15:
         raise ValueError("expected fifteen boss attack rows")
 
-    artifact = {
+    return {
         "version": 1,
         "sceneSha256": hashlib.sha256(scene_bytes).hexdigest(),
         "botRulesSha256": hashlib.sha256(bot_bytes).hexdigest(),
@@ -140,7 +140,13 @@ def main():
         "playerBotsComponentFileId": 46610,
         "missions": mission_rows,
     }
-    encoded = (json.dumps(artifact, indent=2) + "\n").encode()
+
+
+def main():
+    if sys.argv[1:] not in ([], ["--check"]):
+        raise SystemExit("usage: extract_coop_boss_attack_timing.py [--check]")
+    artifact = build_document(SCENE.read_bytes(), BOTS.read_bytes())
+    encoded = (json.dumps(artifact, indent=2, allow_nan=False) + "\n").encode()
     if sys.argv[1:] == ["--check"]:
         if OUTPUT.read_bytes() != encoded:
             raise ValueError("boss attack timing differs from recovered MainScene")

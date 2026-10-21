@@ -7,9 +7,23 @@
         "resolved": "3.36.2",
         "contentHash": "Ci1q1iJg74qAE5riTA2FbMS0wPbpruPQI/JQ9DrAsRo2VsSxgt1e/pmxGxgrci+pXJEgrSYg2vPl8rrStZkclQ=="
       },
+      "war.battle.domain": {
+        "type": "Project",
+        "dependencies": {
+          "War.Shared": "[1.0.0, )"
+        }
+      },
+      "war.battle.simulation": {
+        "type": "Project",
+        "dependencies": {
+          "War.Battle.Domain": "[1.0.0, )",
+          "War.Shared": "[1.0.0, )"
+        }
+      },
       "war.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "War.Battle.Domain": "[1.0.0, )",
           "War.Shared": "[1.0.0, )"
         }
       },

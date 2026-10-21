@@ -22,7 +22,7 @@ public sealed partial class BattleMatchQueueStore
             expectedPlayers.Length != ReservedMatchPlayerCount ||
             expectedPlayers.Distinct(StringComparer.Ordinal).Count() != ReservedMatchPlayerCount ||
             !expectedPlayers.Contains(playerId, StringComparer.Ordinal) || expectedPlayers.Any(identity =>
-                !Guid.TryParseExact(identity, "N", out _) || identity != identity.ToLowerInvariant()))
+                !War.Shared.CanonicalGuid.IsCanonical(identity)))
         {
             throw new InvalidDataException("A canonical cancellation match identity is required.");
         }

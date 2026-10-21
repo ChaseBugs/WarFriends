@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "description": "Two equal pre-extraction weapon traces; synthetic prototype and source-backed card rules, not full combat/gameplay proof. Source hashes are historical provenance, not current pins.",
+  "observations": 99,
+  "inputs": {
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.cs": "b699bc64be71984354c22ae626513f09080ecb977c2fc23e886fc2af905ef8e1",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.EmptyMag.cs": "cbec788f9ce15c328940d189001a5d998d60f3408da8f23e1c4310d6469868cd",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.Disarmed.cs": "5d0d21ece43581182ac69ee4a9fb4aa9e069eec48319853f30cc15fb37ccf255",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.Barrels.cs": "a1d544a2e7774b80ef24982c7fc9388c2d736afb930b809bc108c3a818a1e32a",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.PvpBonuses.cs": "7865dcfac3a7072d94f558d2e2d191f3f8a9e0a08355f344b0b1d6e94b121c91",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.MixedCombat.cs": "4ae67a0dabe13fd0464b02fca556fd1416b532d4ede5188e168de68a7b4196b5",
+    "Server/tests/War.Battle.Tests/Match/Weapons/PvpWeaponTraceTests.cs": "f51cc9f720b9db8b367cb6a058c019bcdaf19084132a2d9b434c7136f5c22161",
+    "Server/tests/War.Battle.Tests/Match/Tracing/MatchEngineTrace.cs": "c297fcfecc895828944daf06e5f03ea440161f013f5e4175eae04510518c894c",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Weapon.cs": "158b26fc59923c7093131b62a8197b4b4757c0b73731b13f2b9e8c7482723db8",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Pistol.cs": "d65c1e2ab429f3e1aa0369a68fab763dcfc9514254b4677e7f129ef975c938b1",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/WeaponInventory.cs": "932bc17d045891c75d5db513e8837581b285c7dd1d073d9cb5a853493a40c76d",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardAmmoBox.cs": "deab383f3ce0da8da7399ef5a73ba241e4e73a328f6443dd86e0a8698aace46b",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardAmmoThief.cs": "6c28c50f47dd51c440f53291b1c7e866c2f95fd96c438660a1ef9cdcd20b91f7",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardEmptyMag.cs": "ba36f5fac70c22b84df04d129689dc4e0312772c48b6aff677ec7613cf9d0bfa"
+  }
+}

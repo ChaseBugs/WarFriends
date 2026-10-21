@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 
-SERVER_SOURCE = Path(__file__).resolve().parents[1] / "src" / "War.BattleServer"
+SERVER_SOURCE = Path(__file__).resolve().parents[1] / "src"
 END_REASON = re.compile(r'\bEnd\(\s*"([^"]+)"')
 POLICY_SET = re.compile(
     r'HashSet<string>\s+(ScoredReasons|AbortedReasons).*?\{(.*?)\};',
@@ -17,13 +17,14 @@ STRING_LITERAL = re.compile(r'"([^"]+)"')
 
 
 def main() -> int:
-    engine_files = sorted(SERVER_SOURCE.glob("MatchEngine*.cs"))
+    engine_files = sorted((SERVER_SOURCE / "War.Battle.Simulation").rglob("MatchEngine*.cs"))
     emitted = {
         reason
         for source_file in engine_files
         for reason in END_REASON.findall(source_file.read_text(encoding="utf-8"))
     }
-    policy_text = (SERVER_SOURCE / "BattleTerminalPolicy.cs").read_text(encoding="utf-8")
+    policy_text = (SERVER_SOURCE / "War.Battle.Domain/Results/Validation/BattleTerminalPolicy.cs").read_text(
+        encoding="utf-8")
     policy_sets = {
         name: set(STRING_LITERAL.findall(body))
         for name, body in POLICY_SET.findall(policy_text)

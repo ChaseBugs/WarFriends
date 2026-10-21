@@ -1,0 +1,74 @@
+[
+  {
+    "Scenario": "source-flame-natural-completion",
+    "Observations": 1997,
+    "Sha256": "d16883b567d3cd6e499a5d7dbddcd11773d6fe5ca712a6a1fe8ded9216a9b1e7",
+    "FinalPhase": "Running",
+    "FinalTick": 555,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "flame-missing-soldier-removes-on-due-frame",
+    "Observations": 1590,
+    "Sha256": "bf1a56bfd767ce1ae3697997c3ebdc2df8f8e3eb0f2044b491ceee6676399af0",
+    "FinalPhase": "Running",
+    "FinalTick": 455,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "flame-terminal-clears-bursts",
+    "Observations": 1514,
+    "Sha256": "4dd689c564c0eaaa616fa3ba00573ca3e1277925399608a036f95787e2e0deb8",
+    "FinalPhase": "Ended",
+    "FinalTick": 435,
+    "TerminalReason": "forfeit"
+  },
+  {
+    "Scenario": "flame-deferred-source-frame-observations",
+    "Observations": 1567,
+    "Sha256": "a36ac37b58f22dc6fcd51b49b68d6907d469d8938e1d12ee51ea7458ce2b1ff1",
+    "FinalPhase": "Running",
+    "FinalTick": 435,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "poison-immediate-and-four-following-pulses",
+    "Observations": 2119,
+    "Sha256": "6ba2717cfddda53157d4f60e707a6936b58488fee1c5f28e46959e4118ca2010",
+    "FinalPhase": "Running",
+    "FinalTick": 584,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "poison-survives-source-soldier-death",
+    "Observations": 2114,
+    "Sha256": "1b6675fc7def41f467bb5d77339c993bf316a3f867ff477f9c24338568a34e71",
+    "FinalPhase": "Running",
+    "FinalTick": 584,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "existing-poison-terminal-retention-boundary",
+    "Observations": 1613,
+    "Sha256": "51773f5fda011a34d6cfb57fb4a2e84be03fa1caf695a5544372fb1c09649f53",
+    "FinalPhase": "Ended",
+    "FinalTick": 459,
+    "TerminalReason": "forfeit"
+  },
+  {
+    "Scenario": "independent-stacked-poison-receipts",
+    "Observations": 1927,
+    "Sha256": "1b6c53a51eaefd03adf764f52e7d0ae907fd40eb0a90465370305b0f1e87442a",
+    "FinalPhase": "Running",
+    "FinalTick": 538,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "poison-reconnect-freezes-fixed-tick-coroutines",
+    "Observations": 1797,
+    "Sha256": "2cbaa384eb1dbb5196e00175e2237732fd61c4a28360bb712a647f61ce6f81ea",
+    "FinalPhase": "Running",
+    "FinalTick": 519,
+    "TerminalReason": ""
+  }
+]

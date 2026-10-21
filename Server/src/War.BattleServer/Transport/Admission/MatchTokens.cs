@@ -1,0 +1,62 @@
+using System.Security.Cryptography;
+using System.Text;
+using Google.Protobuf;
+using War.Protocol;
+
+namespace War.BattleServer;
+
+// Server-only signing utility for trusted allocator integration and local tests.
+// Separate domains prevent connectivity-probe tickets/keys authorizing a match.
+public sealed class MatchTokens
+{
+    internal const long MaximumUnixSecond=253402300679;
+    internal const long GrantLifetimeSeconds=120;
+    private readonly byte[] key;
+    public MatchTokens(string base64Key)
+    {
+        key = Convert.FromBase64String(base64Key);
+        TransportSecurityPolicy.ValidateSigningKey(key);
+    }
+    private byte[] Mac(string domain, byte[] payload) => HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(domain).Concat(payload).ToArray());
+    public byte[] SessionKey(MatchAdmission claims) =>
+        Mac("war/match/session/v1/", CopyCanonicalAdmission(claims).ToByteArray());
+    public string Sign(MatchAdmission claims)
+    {
+        byte[] bytes = CopyCanonicalAdmission(claims).ToByteArray();
+        return Convert.ToBase64String(bytes) + "." + Convert.ToBase64String(Mac("war/match/ticket/v1/", bytes));
+    }
+    public MatchAdmission? Validate(string ticket, MatchEngine match, string serverId, long now)
+        => Validate(ticket, (IMatchRuntime)match, serverId, now);
+
+    internal MatchAdmission? Validate(string ticket, IMatchRuntime match, string serverId, long now)
+    {
+        if (ticket.Length is < 10 or > 1024 || now is <0 or >MaximumUnixSecond) return null;
+        try
+        {
+            var parts = ticket.Split('.');
+            if (parts.Length != 2) return null;
+            var payload = Convert.FromBase64String(parts[0]);
+            if (!CryptographicOperations.FixedTimeEquals(Mac("war/match/ticket/v1/", payload), Convert.FromBase64String(parts[1]))) return null;
+            var c = MatchAdmission.Parser.ParseFrom(payload);
+            if (c.ServerId != serverId || c.MatchId != match.MatchId || c.ManifestHash != match.ManifestHash ||
+                !War.Shared.CanonicalGuid.IsCanonical(c.PlayerId) || !match.HasPlayer(c.PlayerId) ||
+                c.SessionId == 0 || c.ConnectionGeneration > 1000000 || c.IssuedUnixSeconds < 0 || c.IssuedUnixSeconds > now ||
+                c.ExpiresUnixSeconds <= now || c.ExpiresUnixSeconds <= c.IssuedUnixSeconds ||
+                c.ExpiresUnixSeconds > MaximumUnixSecond ||
+                c.ExpiresUnixSeconds - c.IssuedUnixSeconds > GrantLifetimeSeconds) return null;
+            return c;
+        }
+        catch (Exception e) when (e is FormatException or InvalidProtocolBufferException) { return null; }
+    }
+
+    private static MatchAdmission CopyCanonicalAdmission(MatchAdmission claims)
+    {
+        ArgumentNullException.ThrowIfNull(claims);
+        MatchAdmission snapshot = claims.Clone();
+        if (!War.Shared.CanonicalGuid.IsCanonical(snapshot.PlayerId))
+        {
+            throw new InvalidDataException("Match admission requires a canonical player identity.");
+        }
+        return snapshot;
+    }
+}

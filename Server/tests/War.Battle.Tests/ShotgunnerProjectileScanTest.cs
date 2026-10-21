@@ -9,10 +9,14 @@ internal static class ShotgunnerProjectileScanTest
     private const string UnitId = "ID_UNIT-SHOTGUNNER";
     private const int PelletCount = 5;
 
-    internal static async Task<bool> VerifyAsync(
+    internal sealed record ScanResult(bool ReplayedBurst, ulong SnapshotTick, uint ActiveCount, int PelletCount);
+
+    internal static async Task<ScanResult> VerifyAsync(
         MatchConnection client, MatchSnapshot observed, string ownerId, CancellationToken token)
     {
         MatchProjectileBatch first = await client.FetchProjectilesAsync(token);
+        // The live simulation must advance while this immutable scan keeps its original rows.
+        await Task.Delay(TimeSpan.FromMilliseconds(100), token);
         MatchProjectileBatch replay = await ReplayAsync(client, first.ScanId, token);
         Require(first.ToByteArray().SequenceEqual(replay.ToByteArray()),
             "A frozen projectile scan must replay its complete original rows across all pages.");
@@ -25,15 +29,18 @@ internal static class ShotgunnerProjectileScanTest
                 .Select(row => row.ProjectileId)), "Same-tick snapshots and complete scans must agree on pellet IDs.");
         }
 
-        if (pellets.Length != PelletCount || first.ActiveCount != PelletCount)
+        int realCount = pellets.Count(row => row.Kind == "army-bullet");
+        int fakeCount = pellets.Count(row => row.Kind == "army-fake-bullet");
+        if (fakeCount != PelletCount - 1 || realCount > 1 ||
+            pellets.Length != realCount + fakeCount || first.ActiveCount != pellets.Length)
         {
-            return false;
+            return new(false, first.SnapshotTick, first.ActiveCount, pellets.Length);
         }
 
-        Require(pellets.Count(row => row.Kind == "army-bullet") == 1 &&
-            pellets.Count(row => row.Kind == "army-fake-bullet") == PelletCount - 1,
-            "The complete frozen burst must contain one real and four harmless source pellets.");
-        return true;
+        // The poll and scan are separate reads. The real pellet can hit before scan creation,
+        // leaving four longer-lived cosmetic trails. Both peers must still observe all five
+        // together in the live snapshots; the scan must replay exactly what it actually captured.
+        return new(true, first.SnapshotTick, first.ActiveCount, pellets.Length);
     }
 
     private static async Task<MatchProjectileBatch> ReplayAsync(

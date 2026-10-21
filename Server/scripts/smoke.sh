@@ -24,12 +24,13 @@ if [[ "$http_port" == "$mongo_port" || "$http_port" == "$control_port" ||
     exit 1
 fi
 
-run_parent="${SMOKE_RUN_ROOT:-$server_root/.local}"
-mkdir -p "$run_parent"
-run_root="$(mktemp -d "$run_parent/smoke-XXXXXXXX")"
-mkdir "$run_root/mongo"
+run_parent="${SMOKE_RUN_ROOT:-${WAR_TEST_RUN_ROOT:-$server_root/.local/test-runs}}"
+artifact_tool="$server_root/scripts/test_artifacts.py"
+run_root="$(python3 "$artifact_tool" --root "$run_parent" start smoke --owner-pid "$$")"
+mkdir "$run_root/data/mongo"
 pids=()
 cleanup() {
+    local exit_code=$?
     # Only direct children started by this run may be stopped or reaped.
     for pid in "${pids[@]}"; do
         kill "$pid" 2>/dev/null || true
@@ -37,16 +38,29 @@ cleanup() {
     for pid in "${pids[@]}"; do
         wait "$pid" 2>/dev/null || true
     done
+    local status=failed
+    if [[ "$exit_code" == 0 ]]; then status=passed; fi
+    local keep=()
+    if [[ "${KEEP_TEST_ARTIFACTS:-0}" == 1 ]]; then keep=(--keep); fi
+    python3 "$artifact_tool" --root "$run_parent" finish "$run_root" --status "$status" "${keep[@]}" || true
+    python3 "$artifact_tool" --root "$run_parent" prune --apply || true
 }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
 if [[ -z "$published_root" ]]; then
-    dotnet build "$server_root/WarFriendsServer.sln" --nologo -v minimal
+    if [[ "${NO_BUILD:-0}" != 1 ]]; then
+        dotnet build "$server_root/WarFriendsServer.sln" --nologo -v minimal
+    fi
 else
     published_root="$(cd -- "$published_root" && pwd)"
 fi
+
+python3 "$artifact_tool" --root "$run_parent" temp-root "$run_root" > /dev/null
+export TMPDIR="$run_root/data/temp"
+export TEMP="$TMPDIR"
+export TMP="$TMPDIR"
 
 resolve_command() {
     local project_folder="$1"
@@ -82,6 +96,8 @@ fi
 
 cd -- "$server_root"
 export ASPNETCORE_ENVIRONMENT=Development
+export Legacy__AllowCatalogFreeStartup=true
+export RateLimiting__Auth__PermitLimit=20
 export ASPNETCORE_URLS="http://127.0.0.1:$http_port"
 export Mongo__Uri="mongodb://127.0.0.1:$mongo_port/?replicaSet=wfSmoke"
 export Mongo__Database=warfriends_smoke
@@ -89,9 +105,9 @@ export Battle__SigningKey="$(openssl rand -base64 32)"
 export Battle__ControlKey="$(openssl rand -base64 32)"
 export Battle__Port="$battle_port" Battle__ControlPort="$control_port"
 export Battle__ServerId=local-1 Battle__PublicHost=127.0.0.1 Battle__BindAddress=127.0.0.1
-export Battle__ResultOutboxPath="$run_root/terminal-outbox"
+export Battle__ResultOutboxPath="$run_root/data/terminal-outbox"
 
-"${MONGOD:-mongod}" --dbpath "$run_root/mongo" --bind_ip 127.0.0.1 --port "$mongo_port" \
+"${MONGOD:-mongod}" --dbpath "$run_root/data/mongo" --bind_ip 127.0.0.1 --port "$mongo_port" \
     --replSet wfSmoke --logpath "$run_root/mongo.log" >"$run_root/mongo-startup.log" 2>&1 &
 pids+=("$!")
 "${battle_tests[@]}" --init-mongo-replica-set \
@@ -127,6 +143,8 @@ if [[ "$ready" != 1 ]]; then
     exit 1
 fi
 
+"${battle_tests[@]}" --backend-internal-http-only "$Mongo__Uri" "$Mongo__Database" "http://127.0.0.1:$http_port"
+"${battle_tests[@]}" --worker-control-http-only "http://127.0.0.1:$control_port"
 "${protocol_tests[@]}"
 "${smoke_client[@]}" "http://127.0.0.1:$http_port"
 echo "Smoke passed. Local data/logs: $run_root"

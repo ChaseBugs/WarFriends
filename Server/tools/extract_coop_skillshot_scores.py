@@ -1,9 +1,9 @@
 """Pin mission skill-shot point rows from the recovered 1.4.0 Client."""
 
+import argparse
 import hashlib
 import json
 import re
-import sys
 from pathlib import Path
 
 
@@ -66,17 +66,21 @@ def combo_window(source):
     return float(match.group(1))
 
 
-def main():
-    scene_bytes = SCENE.read_bytes()
-    content_bytes = CONTENT.read_bytes()
+def skill_sheet(content):
+    matches = [row for row in content["sheets"] if row["type"] == "Google2u.Skillshots"]
+    if len(matches) != 1:
+        raise ValueError("Expected exactly one skill-shot source sheet")
+    return matches[0]
+
+
+def build_document(scene_bytes, content_bytes):
     sheet_bytes = SHEET_CODE.read_bytes()
     flag_bytes = SKILL_CODE.read_bytes()
     scene = scene_bytes.decode("utf-8-sig")
     content = json.loads(content_bytes)
     if content["mainSceneSha256"] != hashlib.sha256(scene_bytes).hexdigest():
         raise ValueError("Battle content is bound to a different MainScene")
-    sheet = next(row for row in content["sheets"]
-                 if row["type"] == "Google2u.Skillshots")
+    sheet = skill_sheet(content)
     names = row_names(sheet_bytes.decode("utf-8-sig"))
     flags = skill_flags(flag_bytes.decode("utf-8-sig"))
     if len(sheet["rows"]) != len(names):
@@ -88,11 +92,11 @@ def main():
         if name not in points:
             raise ValueError("Scene skill shot is absent from its source sheet")
         value = points[name]["SCORESINGLE"]
-        if not isinstance(value, int) or value < 0 or value > 1_000_000:
+        if type(value) is not int or not 0 <= value <= 1_000_000:
             raise ValueError("Invalid mission skill-shot score")
         rows.append({"flag": flag, "name": name,
                      "dictionaryId": dictionary_id, "missionPoints": value})
-    document = {
+    return {
         "version": 1,
         "sceneSha256": hashlib.sha256(scene_bytes).hexdigest(),
         "battleContentSha256": hashlib.sha256(content_bytes).hexdigest(),
@@ -101,13 +105,20 @@ def main():
         "comboWindowSeconds": combo_window(scene),
         "rows": rows,
     }
-    expected = json.dumps(document, indent=2) + "\n"
-    if "--check" in sys.argv:
-        if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != expected:
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate without writing production content")
+    args = parser.parse_args()
+    document = build_document(SCENE.read_bytes(), CONTENT.read_bytes())
+    expected = (json.dumps(document, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    if args.check:
+        if not OUTPUT.exists() or OUTPUT.read_bytes() != expected:
             raise ValueError("Skill-shot scores differ from recovered Client")
         print("Verified 19 mission skill-shot score rows")
     else:
-        OUTPUT.write_text(expected, encoding="utf-8")
+        OUTPUT.write_bytes(expected)
         print("Extracted 19 mission skill-shot score rows")
 
 

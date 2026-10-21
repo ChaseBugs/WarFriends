@@ -48,7 +48,7 @@ public sealed class BattleResultArchivalLeaseStore
 
     public async Task Release(string ownerId, CancellationToken ct)
     {
-        if (!Guid.TryParseExact(ownerId, "N", out _))
+        if (!War.Shared.CanonicalGuid.IsCanonical(ownerId))
             throw new InvalidDataException("Invalid battle archival lease owner.");
 
         await leases.DeleteOneAsync(x => x.Id == "battle-results" && x.OwnerId == ownerId, ct);
@@ -56,7 +56,7 @@ public sealed class BattleResultArchivalLeaseStore
 
     private static void ValidateArguments(string ownerId, DateTime nowUtc, TimeSpan lifetime)
     {
-        if (!Guid.TryParseExact(ownerId, "N", out _) ||
+        if (!War.Shared.CanonicalGuid.IsCanonical(ownerId) ||
             nowUtc.Kind != DateTimeKind.Utc || nowUtc < DateTime.UnixEpoch ||
             lifetime <= TimeSpan.Zero || lifetime > TimeSpan.FromMinutes(10) ||
             nowUtc > DateTime.MaxValue - lifetime)

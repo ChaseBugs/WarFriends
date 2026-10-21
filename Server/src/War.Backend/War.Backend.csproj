@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <EmbeddedResource Include="../../content/legacy-catalog-profile.json"
+                      LogicalName="War.Backend.LegacyCatalogProfile" />
     <EmbeddedResource Include="../../content/recovered-army-perks.json"
                       LogicalName="War.Backend.RecoveredArmyPerks" />
     <EmbeddedResource Include="../../content/recovered-battle-unit-rules.json"
@@ -14,13 +16,11 @@
     <ProjectReference Include="..\War.Shared\War.Shared.csproj" />
     <ProjectReference Include="..\War.Persistence\War.Persistence.csproj" />
     <ProjectReference Include="..\War.Infrastructure\War.Infrastructure.csproj" />
-    <ProjectReference Include="..\War.BattleServer\War.BattleServer.csproj" />
+    <ProjectReference Include="..\War.Battle.Domain\War.Battle.Domain.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <!-- Referenced hosts supply assemblies, not their appsettings or executable metadata. -->
-    <_GetChildProjectCopyToPublishDirectoryItems>false</_GetChildProjectCopyToPublishDirectoryItems>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>

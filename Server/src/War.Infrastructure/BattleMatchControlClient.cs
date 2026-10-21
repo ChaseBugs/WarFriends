@@ -27,7 +27,7 @@ public sealed class BattleMatchControlClient
             canonicalManifest is not {Length:>0 and <=65536} || !ValidMatchId(expectedMatchId))
             throw new InvalidDataException("Invalid battle registration request.");
         string[] players=(expectedPlayerIds??throw new ArgumentNullException(nameof(expectedPlayerIds))).ToArray();
-        if(players.Length!=2 || players.Any(x=>!Guid.TryParseExact(x,"N",out _) || x!=x.ToLowerInvariant()) ||
+        if(players.Length!=2 || players.Any(x=>!War.Shared.CanonicalGuid.IsCanonical(x)) ||
             players.Distinct(StringComparer.Ordinal).Count()!=2)
             throw new InvalidDataException("Invalid battle registration roster.");
         string timestamp=DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -112,7 +112,7 @@ public sealed class BattleMatchControlClient
             };
             if(Uri.CheckHostName(grant.Host)==UriHostNameType.Unknown || grant.Port is <1 or >65535 || grant.Ticket.Length is <10 or >4096 ||
                 grant.SessionKey.Length!=32 || grant.SessionId==0 || !ValidMatchId(grant.MatchId) ||
-                !Guid.TryParseExact(grant.PlayerId,"N",out _) || grant.PlayerId!=grant.PlayerId.ToLowerInvariant() ||
+                !War.Shared.CanonicalGuid.IsCanonical(grant.PlayerId) ||
                 !System.Text.RegularExpressions.Regex.IsMatch(grant.ManifestHash,@"\A[0-9a-f]{64}\z") ||
                 grant.ExpiresUnixSeconds is <0 or >253402300799)
                 throw new InvalidDataException("Invalid battle grant authority.");
@@ -123,6 +123,5 @@ public sealed class BattleMatchControlClient
         {throw new InvalidDataException("Invalid battle grant encoding.",e);}
     }
     private static bool ValidMatchId(string? value)=>System.Text.RegularExpressions.Regex.IsMatch(value??"",@"\A[a-zA-Z0-9_-]{1,64}\z");
-    private static bool CanonicalGuid(string? value)=>Guid.TryParseExact(value,"N",out _) &&
-        value==value.ToLowerInvariant();
+    private static bool CanonicalGuid(string? value)=>War.Shared.CanonicalGuid.IsCanonical(value);
 }

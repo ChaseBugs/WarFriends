@@ -24,7 +24,7 @@ public sealed class BattleAllocationProjection
     { PlayerId=playerId; CardIds=cardIds; BuddyCardIds=buddyCardIds; NormalUpgradeIndexes=normalUpgradeIndexes; SpecialUpgradeIndexes=specialUpgradeIndexes; EliteUpgradeIndexes=eliteUpgradeIndexes; }
     public static BattleAllocationProjection Validate(BattleAllocationProjection value)
     {
-        if (value is null || string.IsNullOrWhiteSpace(value.PlayerId) || value.PlayerId.Length > 128)
+        if (value is null || !CanonicalGuid.IsCanonical(value.PlayerId))
             throw new InvalidDataException("Invalid battle allocation player.");
         ValidateIds(value.CardIds, MaximumCardInventoryIdentities, "card");
         if (value.CardCounts == null || value.CardCounts.Count != value.CardIds.Count ||

@@ -57,7 +57,7 @@ namespace War.Client
         private static BattlePlayerState FindLocalPlayer(MatchSnapshot snapshot, string playerId)
         {
             if (snapshot == null || snapshot.Players.Count != 2 ||
-                !Guid.TryParseExact(playerId, "N", out _))
+                !War.Shared.CanonicalGuid.IsCanonical(playerId))
                 throw new InvalidOperationException("Battle host returned an invalid player snapshot.");
 
             BattlePlayerState localPlayer = null;

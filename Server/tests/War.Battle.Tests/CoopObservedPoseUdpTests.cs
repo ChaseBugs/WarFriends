@@ -99,7 +99,7 @@ internal static class CoopObservedPoseUdpTests
         internal Host(CoopObstacleVolleyRuntimeTests.Sources sources)
         {
             const int KeyBytes = 32;
-            string signingKey = Convert.ToBase64String(new byte[KeyBytes]);
+            string signingKey = Convert.ToBase64String(Enumerable.Repeat((byte)1, KeyBytes).ToArray());
             _tokens = new MatchTokens(signingKey);
             _serverId = sources.Manifest.ServerId;
             _runtime = CoopObstacleVolleyRuntimeTests.CreateUnstartedRuntime(sources);

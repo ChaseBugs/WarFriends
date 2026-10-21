@@ -1,114 +1,127 @@
-using System.Text.Json;
-using System.Text.Json.Nodes;
+using System.Collections.Frozen;
+using System.Text;
+using War.Backend.Legacy.Catalog;
 
 namespace War.Backend.Legacy;
 
-/// <summary>
-/// Loads the recovered Google2u sheet data — the client's economy/balance catalog — and exposes
-/// typed lookups.
-/// </summary>
+/// <summary>Owns immutable source rows, validated numeric cells and explicit ordinal identity indexes.</summary>
 /// <remarks>
-/// <para><b>Source and provenance.</b> The Google2u row <em>schema</em> classes are fully recovered
-/// as C# source under
-/// <c>Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/Google2u/*Row.cs</c> (e.g.
-/// <c>WeaponUpgradesRow</c>) — an earlier pass of this work searched only
-/// <c>Assets/Scripts</c> and wrongly concluded they were missing. The row <em>data</em> — actual
-/// prices, unlock levels, balance constants — was separately exported by the Battle Server effort's
-/// <c>SelfHostedBattleExport.Run</c> Unity Editor tool into
-/// <c>Server/content/recovered-battle-content.json</c>'s <c>sheets</c> array: 132 sheet instances,
-/// each <c>{ "type": "Google2u.&lt;Name&gt;", "path": "&lt;scene GameObject path&gt;", "rows": [...] }</c>,
-/// with row field names matching the recovered row classes exactly (all-caps: <c>PRICE</c>,
-/// <c>PRICEGOLD</c>, <c>DBKEY</c>, …). This loader reads that JSON directly rather than depending on
-/// a Unity-only assembly, so any field used here can be cross-checked against the recovered row
-/// class source at any time.</para>
-/// <para><b>This is a read-only reference catalog, not authoritative game balance.</b>
-/// <c>content/README.md</c> is explicit: "Source sheet rows are not yet a validated combat catalog
-/// and must not authorize purchases or rewards" — that caveat was written for the Battle Server's
-/// use of the same file for combat. For Backend economy actions (shop purchases, rewards), the
-/// values here are the same numbers <c>ServerResponseHandler</c>'s original PHP counterpart would
-/// have priced against, so they are the correct source to build shop pricing from — but each new
-/// consumer should still cross-check its specific row shape against the row class before trusting
-/// a field.</para>
-/// <para><b>Missing file is not an error.</b> Unset <c>Legacy:ContentPath</c> or a missing file
-/// leaves the catalog empty; callers that need a specific entry get <c>null</c> and must fail
-/// closed (return <c>ServerMaintenance</c>), exactly as they did before this loader existed.</para>
+/// LoadConfigured is the host startup boundary. Parse/Load also support small partial catalogs for
+/// pure use cases; missing entries remain absent, and every supplied consumed row must validate.
+/// Source metadata records export claims, not proof that the current Unity scene matches that export.
 /// </remarks>
 public sealed class LegacyCatalog
 {
-    private readonly Dictionary<string, IReadOnlyList<JsonObject>> sheetsByType;
+    private static readonly UTF8Encoding StrictUtf8 = new(false, true);
+    private readonly FrozenDictionary<string, LegacyCatalogSheet> _sheets;
+    private readonly FrozenDictionary<string, LegacyCatalogValue> _constants;
+    private readonly FrozenDictionary<string, LegacyUpgradeTrack> _upgradeTracks;
 
-    /// <summary>The GameVariables/Constants sheet, indexed by <c>DBKEY</c> for direct lookup.</summary>
-    private readonly Dictionary<string, double> constants;
-
-    private LegacyCatalog(Dictionary<string, IReadOnlyList<JsonObject>> sheetsByType, Dictionary<string, double> constants)
+    internal LegacyCatalog(Dictionary<string, LegacyCatalogSheet> sheets, LegacyCatalogSource? source)
     {
-        this.sheetsByType = sheetsByType;
-        this.constants = constants;
+        _sheets = sheets.ToFrozenDictionary(StringComparer.Ordinal);
+        Source = source;
+        var constants = new Dictionary<string, LegacyCatalogValue>(StringComparer.Ordinal);
+        foreach (LegacyCatalogRow row in Sheet("Google2u.Constants"))
+        {
+            constants.Add(row["DBKEY"]!.Value.GetValue<string>(), row["FLOATVALUE"]!.Value);
+        }
+
+        _constants = constants.ToFrozenDictionary(StringComparer.Ordinal);
+        _upgradeTracks = LegacyCatalogUpgradeBindings.Create(this);
     }
 
-    /// <summary>An empty catalog: every lookup returns null/false. Used when no content path is configured.</summary>
-    public static LegacyCatalog Empty { get; } = new([], []);
+    public static LegacyCatalog Empty { get; } = new([], null);
 
-    public bool IsLoaded => sheetsByType.Count > 0;
+    public bool IsLoaded => _sheets.Count != 0;
 
-    /// <summary>
-    /// Loads from the exported content JSON. Throws on a malformed file — a configured path is an
-    /// explicit operator choice, so a bad file should fail startup loudly rather than silently
-    /// leave every priced action refusing forever.
-    /// </summary>
+    public LegacyCatalogSource? Source { get; }
+
+    internal IReadOnlyCollection<string> SheetTypes => _sheets.Keys;
+
+    /// <summary>Only an omitted path selects compatibility mode; configured damage fails before traffic.</summary>
+    public static LegacyCatalog LoadConfigured(string? path)
+    {
+        if (path == null)
+        {
+            return Empty;
+        }
+
+        return ValidateConfigured(Load(path));
+    }
+
+    /// <summary>Validates a complete configured release in memory using the same host startup boundary.</summary>
+    public static LegacyCatalog ParseConfigured(string json) => ValidateConfigured(Parse(json));
+
+    private static LegacyCatalog ValidateConfigured(LegacyCatalog catalog)
+    {
+        if (!catalog.IsLoaded || catalog.Source == null)
+        {
+            throw new InvalidDataException("Configured catalog needs nonempty source data and provenance metadata.");
+        }
+
+        LegacyCatalogDependencies.Validate(catalog);
+        LegacyCatalogReleaseProfile.Validate(catalog);
+
+        return catalog;
+    }
+
+    /// <summary>Reads one bounded file and validates every row before publishing its immutable snapshot.</summary>
     public static LegacyCatalog Load(string path)
     {
-        using var stream = File.OpenRead(path);
-        var root = JsonNode.Parse(stream) as JsonObject
-            ?? throw new InvalidDataException($"'{path}' is not a JSON object.");
-        if (root["sheets"] is not JsonArray sheets)
-            throw new InvalidDataException($"'{path}' has no top-level 'sheets' array.");
-
-        var byType = new Dictionary<string, IReadOnlyList<JsonObject>>(StringComparer.Ordinal);
-        foreach (var entry in sheets)
+        using FileStream stream = File.OpenRead(path);
+        if (stream.Length > LegacyCatalogReader.MaximumContentBytes)
         {
-            if (entry is not JsonObject sheet) continue;
-            string? type = sheet["type"]?.GetValue<string>();
-            if (string.IsNullOrEmpty(type) || sheet["rows"] is not JsonArray rows) continue;
-            var rowList = rows.OfType<JsonObject>().ToList();
-            // The exporter guarantees unique types (verified against the current export: 132
-            // sheets, 132 distinct type strings). A duplicate is unexpected content drift, not a
-            // reason to silently drop half the data — merge rather than overwrite.
-            if (byType.TryGetValue(type, out var existing)) rowList.InsertRange(0, existing);
-            byType[type] = rowList;
+            throw new InvalidDataException("Catalog file exceeds its resource bound.");
         }
 
-        var constants = new Dictionary<string, double>(StringComparer.Ordinal);
-        if (byType.TryGetValue("Google2u.Constants", out var constantRows))
+        var bytes = new byte[(int)stream.Length];
+        stream.ReadExactly(bytes);
+        if (stream.ReadByte() != -1)
         {
-            foreach (var row in constantRows)
-            {
-                string? key = row["DBKEY"]?.GetValue<string>();
-                if (key != null && row["FLOATVALUE"] != null && row["FLOATVALUE"]!.AsValue().TryGetValue(out double value))
-                    constants[key] = value;
-            }
+            throw new InvalidDataException("Catalog file grew while being read.");
         }
 
-        return new LegacyCatalog(byType, constants);
+        return LegacyCatalogReader.Read(bytes);
     }
 
-    /// <summary>
-    /// A GameVariables constant by its <c>Constants.rowIds</c> name (e.g. <c>"SecondRenameGoldCost"</c>,
-    /// <c>"StartingGold"</c>). Null if the catalog is empty or the key does not exist — never a
-    /// default value, since a wrong default here is a fabricated game-balance number.
-    /// </summary>
-    public double? Constant(string dbKey) => constants.TryGetValue(dbKey, out double value) ? value : null;
+    /// <summary>Parses bounded UTF-8 source text through the same validation used by file loading.</summary>
+    public static LegacyCatalog Parse(string json)
+    {
+        if (json.Length > LegacyCatalogReader.MaximumContentBytes)
+        {
+            throw new InvalidDataException("Catalog text exceeds its resource bound.");
+        }
 
-    /// <summary>Convenience for a constant that is conceptually an integer (levels, counts, caps).</summary>
-    public int? ConstantInt(string dbKey) => Constant(dbKey) is double value ? (int)value : null;
+        return LegacyCatalogReader.Read(StrictUtf8.GetBytes(json));
+    }
 
-    /// <summary>All rows of one sheet type (e.g. <c>"Google2u.WeaponUpgrades"</c>), or empty if absent.</summary>
-    public IReadOnlyList<JsonObject> Sheet(string type) => sheetsByType.GetValueOrDefault(type, []);
+    public double? Constant(string key) => _constants.TryGetValue(key, out var value) ? value.GetValue<double>() : null;
 
-    /// <summary>
-    /// One row of a sheet matched by a string field (most sheets key rows by <c>NAME</c>;
-    /// <c>Constants</c> uses <c>DBKEY</c>). Null if the sheet or the row is absent.
-    /// </summary>
-    public JsonObject? Row(string type, string keyField, string keyValue) =>
-        Sheet(type).FirstOrDefault(row => string.Equals(row[keyField]?.GetValue<string>(), keyValue, StringComparison.Ordinal));
+    public int? ConstantInt(string key) => _constants.TryGetValue(key, out var value) ? value.GetValue<int>() : null;
+
+    public IReadOnlyList<LegacyCatalogRow> Sheet(string type) =>
+        _sheets.TryGetValue(type, out LegacyCatalogSheet? sheet) ? sheet.Rows : Array.Empty<LegacyCatalogRow>();
+
+    public LegacyCatalogRow? Row(string type, string identityField, string identity) =>
+        _sheets.TryGetValue(type, out LegacyCatalogSheet? sheet) ? sheet.Find(identityField, identity) : null;
+
+    /// <summary>Only base-catalog item identities may select upgrade-row authority.</summary>
+    public IReadOnlyList<LegacyCatalogRow> UpgradeStages(string identity) =>
+        _upgradeTracks.TryGetValue(identity, out LegacyUpgradeTrack? track) ? track.Rows : Array.Empty<LegacyCatalogRow>();
+
+    public LegacyUpgradeTrack? WeaponUpgrades(string identity) =>
+        FindUpgradeTrack(identity, LegacyCatalogItemKind.Weapon);
+
+    public LegacyUpgradeTrack? UnitUpgrades(string identity) => FindUpgradeTrack(identity, LegacyCatalogItemKind.Unit);
+
+    /// <summary>Retains helper source rows for audit while refusing them as player purchases or promotions.</summary>
+    public LegacyCatalogRow? PlayerUnit(string identity)
+    {
+        LegacyCatalogRow? row = Row("Google2u.ArmyUpgrades", "NAME", identity);
+        return row?["STARTINGTIER"]?.GetValue<int>() is >= 1 and <= 6 ? row : null;
+    }
+
+    private LegacyUpgradeTrack? FindUpgradeTrack(string identity, LegacyCatalogItemKind kind) =>
+        _upgradeTracks.TryGetValue(identity, out LegacyUpgradeTrack? track) && track.Kind == kind ? track : null;
 }

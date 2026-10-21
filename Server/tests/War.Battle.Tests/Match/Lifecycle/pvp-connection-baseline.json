@@ -1,0 +1,74 @@
+[
+  {
+    "Scenario": "admission-deadline-and-terminal-freeze",
+    "Observations": 5,
+    "Sha256": "59ad947bde033118574f9b533bcb21c9b01e372ea58a26eb69b5bd6f4118cea3",
+    "FinalPhase": "Aborted",
+    "FinalTick": 300,
+    "TerminalReason": "admission-timeout"
+  },
+  {
+    "Scenario": "ready-hash-countdown-and-presentation-order",
+    "Observations": 9,
+    "Sha256": "67eb40f30899052410e6b1dd85368a65e9003d705d9aa6bd0ff1d5495ba9a7ea",
+    "FinalPhase": "Running",
+    "FinalTick": 60,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "countdown-idle-precedes-start",
+    "Observations": 6,
+    "Sha256": "91494c3b1ed752b3ab3287a041df6d2ab0ecc155e7de6658811907207ec1f0e1",
+    "FinalPhase": "Aborted",
+    "FinalTick": 300,
+    "TerminalReason": "prestart-disconnect"
+  },
+  {
+    "Scenario": "idle-pause-host-clock-and-resume",
+    "Observations": 13,
+    "Sha256": "d6e1532ed81ba7a0d48cf1c10aad835ca74ff9f5be04ecdbb80538e9179deb6e",
+    "FinalPhase": "Running",
+    "FinalTick": 300,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "three-grace-windows-and-fourth-disconnect",
+    "Observations": 24,
+    "Sha256": "06bb5283832c0e6eb28ae33e4a35d8bf817a71c5e8d8a9ac09e3f9558edc6ecd",
+    "FinalPhase": "Ended",
+    "FinalTick": 1196,
+    "TerminalReason": "opponent-disconnected"
+  },
+  {
+    "Scenario": "inclusive-grace-expiry-active-opponent",
+    "Observations": 12,
+    "Sha256": "bfa9e82661edb81cfe220c519805bcfc1a3f359e3257e5c5434f39fc5ae3fe14",
+    "FinalPhase": "Ended",
+    "FinalTick": 299,
+    "TerminalReason": "opponent-disconnected"
+  },
+  {
+    "Scenario": "silent-peer-no-winner",
+    "Observations": 11,
+    "Sha256": "a9a4d520fd0db8fac425a5dfae7807c375c8835c24e459d3d953d17382e4e779",
+    "FinalPhase": "Aborted",
+    "FinalTick": 299,
+    "TerminalReason": "both-disconnected"
+  },
+  {
+    "Scenario": "poll-replay-presentation-and-forfeit-during-pause",
+    "Observations": 15,
+    "Sha256": "3064ddc5ced93b82891efc37b2186be016251feab0ab4be60cb3dbba7d7ece6a",
+    "FinalPhase": "Ended",
+    "FinalTick": 299,
+    "TerminalReason": "forfeit"
+  },
+  {
+    "Scenario": "shutdown-clears-pause-and-refuses-resume",
+    "Observations": 13,
+    "Sha256": "c326b65a65f497ca2abd2ea7436ca47ee31ed43450eddc2de5bbc8c43412c1e6",
+    "FinalPhase": "Aborted",
+    "FinalTick": 299,
+    "TerminalReason": "host-shutdown"
+  }
+]

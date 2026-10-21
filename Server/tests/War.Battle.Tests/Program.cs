@@ -21,6 +21,410 @@ using War.Shared;
 using War.Persistence;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using War.Battle.Tests.Legacy;
+using War.Battle.Tests.Legacy.Squads;
+using War.Battle.Tests.Legacy.Accounts;
+using War.Battle.Tests.Transport;
+using War.Battle.Tests.Legacy.DogTags;
+using War.Battle.Tests.Legacy.Preferences;
+using War.Battle.Tests.Legacy.State;
+
+if (args is ["--battle-settlement-store-only", var settlementUri, var settlementContent])
+{
+    await War.Battle.Tests.Legacy.Progression.BattleSettlementStoreTests.RunAsync(settlementUri, settlementContent);
+    return;
+}
+
+if (args is ["--battle-rank-content-path", var rankDirectory])
+{
+    War.Battle.Tests.Legacy.Progression.BattleRankProgressionTests.Run(rankDirectory);
+    War.Battle.Tests.Legacy.Progression.BattleRewardPolicyTests.Run(rankDirectory);
+    Console.WriteLine("PASS: source-backed battle rank advancement and reward boundaries");
+    return;
+}
+
+if (args is ["--blast-reference-candidate-path", var blastDirectory])
+{
+    int blastChecks = GrenadeCombatPoseProjectionTests.Run(blastDirectory);
+    blastChecks += PlayerExplosionOverlapReferenceTests.Run(blastDirectory);
+    Console.WriteLine($"PASS: {blastChecks} blast reference assertions");
+    return;
+}
+
+if (args is ["--player-reference-candidate-path", var referenceDirectory])
+{
+    int referenceChecks = War.Battle.Tests.Catalogs.PlayerReferenceCandidateTests.Run(referenceDirectory);
+    Console.WriteLine($"PASS: {referenceChecks} player reference assertions");
+    return;
+}
+
+if (args is ["--coop-navigation-candidate-path", var navigationDirectory])
+{
+    War.Battle.Tests.Catalogs.CoopNavigationCandidateTests.Run(navigationDirectory);
+    Console.WriteLine("PASS: candidate co-op navigation catalogs and connectivity accepted");
+    return;
+}
+
+if (args is ["--combat-candidate-path", var combatDirectory])
+{
+    War.Battle.Tests.Catalogs.WeaponCandidatePackageTests.RunCombat(combatDirectory);
+    Console.WriteLine("PASS: candidate combat package accepted by production loader");
+    return;
+}
+
+if (args is ["--weapon-candidate-path", var candidateDirectory])
+{
+    War.Battle.Tests.Catalogs.WeaponCandidatePackageTests.Run(candidateDirectory);
+    Console.WriteLine("PASS: eight candidate weapon packages accepted by production loaders");
+    return;
+}
+
+if (args is ["--content-precision-only"])
+{
+    int rows = War.Battle.Tests.Catalogs.ContentPrecisionBoundaryTests.Run();
+    Console.WriteLine($"PASS: {rows} reviewed scalar corrections at synthetic vehicle/air vitality boundaries");
+    return;
+}
+
+if (args is ["--army-missile-expiry-only"])
+{
+    int expiryGroups = War.Battle.Tests.Match.Projectiles.ArmyMissileExpiryTests.Run();
+    Console.WriteLine($"PASS: {expiryGroups} source-anchored army missile expiry groups");
+    return;
+}
+
+if (args is ["--pvp-army-missiles-only"])
+{
+    int missileTraces = War.Battle.Tests.Match.Projectiles.PvpArmyMissileTraceTests.Run();
+    int missileGroups = War.Battle.Tests.Match.Projectiles.PvpArmyMissileSystemTests.Run();
+    Console.WriteLine($"PASS: {missileTraces} unchanged army missile traces and {missileGroups} owner/order groups");
+    return;
+}
+
+if (args is ["--pvp-army-effects-only"])
+{
+    int effectTraces = War.Battle.Tests.Match.Effects.PvpArmyEffectTraceTests.Run();
+    int flameGroups = War.Battle.Tests.Match.Effects.PvpArmyFlameSystemTests.Run();
+    int poisonGroups = War.Battle.Tests.Match.Effects.PvpArmyPoisonSystemTests.Run();
+    Console.WriteLine($"PASS: {effectTraces} unchanged army effect traces, {flameGroups} flame owner/order groups " +
+        $"and {poisonGroups} poison owner/order groups");
+    return;
+}
+
+if (args is ["--army-flame-interpolation-only"])
+{
+    int interpolationChecks = War.Battle.Tests.Match.Effects.ArmyFlameInterpolationTests.Run();
+    Console.WriteLine($"PASS: {interpolationChecks} original-Unity flame interpolation groups");
+    return;
+}
+
+if (args is ["--army-flame-clock-only"])
+{
+    int flameClockChecks = War.Battle.Tests.Match.Effects.ArmyFlameClockTests.Run();
+    Console.WriteLine($"PASS: {flameClockChecks} recovered flame clock groups");
+    return;
+}
+
+if (args is ["--test-arguments-only"])
+{
+    int argumentChecks = await War.Battle.Tests.Support.BattleArgumentProcessTests.RunAsync();
+    Console.WriteLine($"PASS: {argumentChecks} actual test-argument process refusals");
+    return;
+}
+
+if (args is ["--pvp-army-bullets-only"])
+{
+    int armyTraces = War.Battle.Tests.Match.Projectiles.PvpArmyBulletTraceTests.Run();
+    int armyGroups = War.Battle.Tests.Match.Projectiles.PvpArmyBulletSystemTests.Run();
+    Console.WriteLine($"PASS: {armyTraces} unchanged source army bullet traces and {armyGroups} owner/order groups");
+    return;
+}
+
+if (args is ["--pvp-grenade-state-only"])
+{
+    int grenadeTraces = War.Battle.Tests.Match.Projectiles.PvpGrenadeTraceTests.Run();
+    int grenadeGroups = War.Battle.Tests.Match.Projectiles.PvpGrenadeStateTests.Run();
+    Console.WriteLine($"PASS: {grenadeTraces} unchanged grenade traces and {grenadeGroups} ownership/order groups");
+    return;
+}
+
+if (args is ["--pvp-bazooka-state-only"])
+{
+    int bazookaTraces = War.Battle.Tests.Match.Projectiles.PvpBazookaTraceTests.Run();
+    int bazookaGroups = War.Battle.Tests.Match.Projectiles.PvpPlayerBazookaSystemTests.Run();
+    int capacityGroups = War.Battle.Tests.Match.Projectiles.PvpBazookaCapacityTests.Run();
+    Console.WriteLine($"PASS: {bazookaTraces} unchanged bazooka traces, {bazookaGroups} owner/order groups, " +
+        $"{capacityGroups} shared-capacity groups");
+    return;
+}
+
+if (args is ["--pvp-bazooka-capacity-only"])
+{
+    int capacityGroups = War.Battle.Tests.Match.Projectiles.PvpBazookaCapacityTests.Run();
+    Console.WriteLine($"PASS: {capacityGroups} live-source bazooka budget groups");
+    return;
+}
+
+if (args is ["--pvp-player-bullets-only"])
+{
+    int bulletTraces = War.Battle.Tests.Match.Projectiles.PvpBulletTraceTests.Run();
+    int bulletGroups = War.Battle.Tests.Match.Projectiles.PvpPlayerBulletSystemTests.Run();
+    Console.WriteLine($"PASS: {bulletTraces} unchanged player-bullet traces and {bulletGroups} ownership/order groups");
+    return;
+}
+
+if (args is ["--pvp-movement-only"])
+{
+    int movementTraces = War.Battle.Tests.Match.Movement.PvpMovementTraceTests.Run();
+    int movementGroups = War.Battle.Tests.Match.Movement.PvpMovementStateTests.Run();
+    Console.WriteLine($"PASS: {movementTraces} unchanged PvP movement traces and {movementGroups} state/order groups");
+    return;
+}
+
+if (args is ["--pvp-weapon-state-only"])
+{
+    int weaponTraces = War.Battle.Tests.Match.Weapons.PvpWeaponTraceTests.Run();
+    int weaponGroups = War.Battle.Tests.Match.Weapons.PvpWeaponStateTests.Run();
+    Console.WriteLine($"PASS: {weaponTraces} unchanged PvP weapon traces and {weaponGroups} state/ordering groups");
+    return;
+}
+
+if (args is ["--pvp-connection-lifecycle-only"])
+{
+    int connectionTraces = War.Battle.Tests.Match.Lifecycle.PvpConnectionTraceTests.Run();
+    int connectionGroups = War.Battle.Tests.Match.Lifecycle.PvpConnectionLifecycleTests.Run();
+    Console.WriteLine($"PASS: {connectionTraces} unchanged PvP connection traces and {connectionGroups} owner/order groups");
+    return;
+}
+
+if (args is ["--legacy-buffer-dispatch-only"])
+{
+    int bufferedGroups = War.Battle.Tests.Legacy.Dispatch.LegacyBufferedRegistryTests.Run();
+    Console.WriteLine($"PASS: {bufferedGroups} buffered feature/registry/request-isolation/publication groups without Mongo");
+    return;
+}
+
+if (args is ["--legacy-diagnostics-only"])
+{
+    int diagnosticGroups = await War.Battle.Tests.Legacy.Diagnostics.LegacyDiagnosticEndpointTests.RunAsync();
+    Console.WriteLine($"PASS: {diagnosticGroups} diagnostic payload/UTF-8 units/Client callback groups without Mongo");
+    return;
+}
+
+if (args is ["--legacy-dispatch-only"])
+{
+    int dispatchGroups = await War.Battle.Tests.Legacy.Dispatch.LegacyActionRegistryTests.RunAsync();
+    Console.WriteLine($"PASS: {dispatchGroups} legacy registry/session/channel/Client-identity groups without Mongo");
+    return;
+}
+
+if (args is ["--worker-control-http-only", string workerControlUrl])
+{
+    await War.Battle.Tests.Http.WorkerControlHttpTests.RunAsync(workerControlUrl);
+    return;
+}
+
+if (args is ["--worker-http-only"])
+{
+    int workerHttpGroups = War.Battle.Tests.Http.WorkerHttpBoundaryTests.Run();
+    Console.WriteLine($"PASS: {workerHttpGroups} Worker route/shape groups without listeners or journals");
+    return;
+}
+
+if (args is ["--terminal-envelope-only"])
+{
+    int envelopeGroups = await War.Battle.Tests.Http.TerminalEnvelopeTests.RunAsync();
+    Console.WriteLine($"PASS: {envelopeGroups} derived terminal-envelope/canonical-payload/local-refusal groups");
+    return;
+}
+
+if (args is ["--backend-http-only"])
+{
+    int httpGroups = await War.Battle.Tests.Http.BackendHttpBoundaryTests.RunAsync();
+    Console.WriteLine($"PASS: {httpGroups} Backend bounded-body/MAC/route-graph groups without Mongo");
+    return;
+}
+
+if (args is ["--backend-internal-http-only", string internalUri, string internalDatabase, string internalUrl])
+{
+    await War.Battle.Tests.Http.BackendInternalHttpTests.RunAsync(internalUri, internalDatabase, internalUrl);
+    return;
+}
+
+if (args is ["--startup-refusal-processes-only"])
+{
+    int refusalChecks = await War.Battle.Tests.Startup.StartupProcessRefusalTests.RunAsync();
+    Console.WriteLine($"PASS: {refusalChecks} real Backend/Worker startup refusals without Mongo fixtures");
+    return;
+}
+
+if (args is ["--backend-startup-only"])
+{
+    int startupChecks = War.Battle.Tests.Startup.BackendStartupPolicyTests.Run();
+    Console.WriteLine($"PASS: {startupChecks} Backend startup/configuration/composition groups");
+    return;
+}
+
+if (args is ["--canonical-account-store-only", string identityUri])
+{
+    await War.Battle.Tests.Identity.CanonicalAccountStoreTests.RunAsync(identityUri);
+    return;
+}
+
+if (args is ["--canonical-identity-only"])
+{
+    int focused = War.Battle.Tests.Identity.CanonicalIdentityTests.Run();
+    Console.WriteLine($"PASS: {focused} canonical manifest/allocation/cover/signing/terminal groups");
+    return;
+}
+
+if (args is ["--battle-domain-only"] or ["--battle-projects-only"])
+{
+    int focused = War.Battle.Tests.Architecture.BattleProjectBoundaryTests.Run();
+    Console.WriteLine($"PASS: {focused} compiled Domain/simulation/host/resource/portable-boundary assertions");
+    return;
+}
+
+if (args is ["--legacy-tutorial-store-only", string tutorialUri])
+{
+    await War.Battle.Tests.Legacy.Tutorial.LegacyTutorialStoreTests.RunAsync(tutorialUri);
+    return;
+}
+
+if (args is ["--legacy-tutorial-http-only", string tutorialHttpUri, string tutorialDb, string tutorialUrl])
+{
+    await War.Battle.Tests.Legacy.Tutorial.LegacyTutorialHttpTests.RunAsync(tutorialHttpUri, tutorialDb, tutorialUrl);
+    return;
+}
+
+if (args is ["--legacy-analytics-store-only", string analyticsUri])
+{
+    await War.Battle.Tests.Legacy.Analytics.LegacyAnalyticsStoreTests.RunAsync(analyticsUri);
+    return;
+}
+
+if (args is ["--legacy-analytics-http-only", string analyticsHttpUri, string analyticsDb, string analyticsUrl])
+{
+    await War.Battle.Tests.Legacy.Analytics.LegacyAnalyticsHttpTests.RunAsync(analyticsHttpUri, analyticsDb, analyticsUrl);
+    return;
+}
+
+if (args is ["--legacy-profile-store-only", string profileUri])
+{
+    await War.Battle.Tests.Legacy.Profile.LegacyProfileStoreTests.RunAsync(profileUri);
+    return;
+}
+
+if (args is ["--legacy-profile-http-only", string profileHttpUri, string profileDatabase, string profileUrl])
+{
+    await War.Battle.Tests.Legacy.Profile.LegacyProfileHttpTests.RunAsync(profileHttpUri, profileDatabase, profileUrl);
+    return;
+}
+
+if (args is ["--legacy-root-state-http-only", string rootStateUri, string rootStateDatabase, string rootStateUrl])
+{
+    await LegacyRootStateHttpTests.RunAsync(rootStateUri, rootStateDatabase, rootStateUrl);
+    return;
+}
+
+if (args is ["--legacy-settings-store-only", string settingsMongoUri])
+{
+    await LegacySettingsStoreTests.RunAsync(settingsMongoUri);
+    return;
+}
+
+if (args is ["--legacy-settings-http-only", string settingsHttpUri, string settingsHttpDatabase, string settingsHttpUrl])
+{
+    await LegacySettingsHttpTests.RunAsync(settingsHttpUri, settingsHttpDatabase, settingsHttpUrl);
+    return;
+}
+
+if (args is ["--legacy-dogtags-store-only", string dogTagsMongoUri])
+{
+    await LegacyDogTagStoreTests.RunAsync(dogTagsMongoUri);
+    return;
+}
+
+if (args is ["--legacy-dogtags-http-only", string dogTagsHttpUri, string dogTagsHttpDatabase, string dogTagsHttpUrl])
+{
+    await LegacyDogTagHttpTests.RunAsync(dogTagsHttpUri, dogTagsHttpDatabase, dogTagsHttpUrl);
+    return;
+}
+
+if (args is ["--transport-mtu-only"])
+{
+    Console.WriteLine($"PASS: {PacketMtuTests.Run()} MTU configuration and authenticated packet checks");
+    return;
+}
+
+if (args is ["--legacy-account-only"])
+{
+    LegacyAccountRuleTests.Run();
+    return;
+}
+
+if (args is ["--legacy-account-store-only", string accountMongoUri])
+{
+    await LegacyAccountStoreTests.RunAsync(accountMongoUri);
+    return;
+}
+
+if (args is ["--legacy-account-http-only", string accountHttpUri, string accountHttpDatabase, string accountHttpUrl])
+{
+    await LegacyAccountHttpTests.RunAsync(accountHttpUri, accountHttpDatabase, accountHttpUrl);
+    return;
+}
+
+if (args is ["--legacy-squad-only"])
+{
+    LegacySquadRuleTests.Run();
+    return;
+}
+
+if (args is ["--legacy-squad-transactions-only", string squadMongoUri])
+{
+    await LegacySquadTransactionTests.RunAsync(squadMongoUri);
+    return;
+}
+
+if (args is ["--legacy-squad-http-only", string squadHttpMongoUri, string squadHttpDatabase, string squadHttpUrl])
+{
+    await LegacySquadHttpTests.RunAsync(squadHttpMongoUri, squadHttpDatabase, squadHttpUrl);
+    return;
+}
+
+if (args is ["--legacy-card-pool-only"])
+{
+    LegacyCardPoolTests.Run();
+    return;
+}
+
+if (args is ["--legacy-card-pool-transactions-only", string cardPoolMongoUri])
+{
+    await LegacyCardPoolTransactionTests.RunAsync(cardPoolMongoUri);
+    return;
+}
+
+if (args is ["--legacy-buffer-transactions-only", string legacyBufferMongoUri])
+{
+    await LegacyBufferTransactionTests.RunAsync(legacyBufferMongoUri);
+    return;
+}
+
+if (args is ["--legacy-buffer-parser-only"])
+{
+    Console.WriteLine($"PASS: {LegacyBufferParserTests.Run()} buffered envelope validation checks");
+    Console.WriteLine($"PASS: {LegacyBufferedResponseTests.Run()} Client delivery deadline projection checks");
+    Console.WriteLine($"PASS: {LegacyBufferedRollbackTests.Run()} current rollback projection checks");
+    Console.WriteLine($"PASS: {LegacyBufferedCosmeticResponseTests.Run()} bound cosmetic replay projection checks");
+    return;
+}
+
+if (args is ["--legacy-economy-only"])
+{
+    Console.WriteLine($"PASS: {LegacyEconomyPricingTests.Run()} legacy economy price boundary checks");
+    return;
+}
 
 if (args is ["--export-native-crew-descent", string output])
 {
@@ -1106,6 +1510,24 @@ if(args is ["--helicopter-grenade-only"])
     return;
 }
 
+if (args is ["--shotgunner-udp-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+    {
+        root = root.Parent;
+    }
+
+    if (root == null)
+    {
+        throw new InvalidDataException("Recovered battle content artifact not found.");
+    }
+
+    int focused = await LiveRusherUdpTests.RunShotgunnerOnly(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} focused Shotgunner UDP assertions");
+    return;
+}
+
 if(args is ["--rusher-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
@@ -1568,7 +1990,18 @@ if(args is ["--sabotage-target-only"])
     return;
 }
 
+if (!War.Battle.Tests.Support.BattleSharedSuiteArguments.CanRunSharedSuite(args))
+{
+    Console.Error.WriteLine(War.Battle.Tests.Support.BattleSharedSuiteArguments.InvalidArgumentsMessage);
+    Environment.ExitCode = War.Battle.Tests.Support.BattleSharedSuiteArguments.InvalidArgumentsExitCode;
+    return;
+}
+
 int checks = 0;
+checks += War.Battle.Tests.Architecture.BattleProjectBoundaryTests.Run();
+checks += War.Battle.Tests.Identity.CanonicalIdentityTests.Run();
+checks += PacketMtuTests.Run();
+checks += LegacyEconomyPricingTests.Run();
 checks += PresentationReadinessTests.Run();
 checks += SabotageTargetPolicyTests.Run();
 checks += SabotageKillCreditTests.Run();
@@ -2878,7 +3311,7 @@ finally
 string multiOutboxPath=Path.Combine(Path.GetTempPath(),"war-multi-udp-"+Guid.NewGuid().ToString("N"));
 var multiConfig=new ConfigurationBuilder().AddConfiguration(config)
     .AddInMemoryCollection(new Dictionary<string,string?>{
-        ["Battle:MatchManifestPath"]="",["Battle:ResultOutboxPath"]=multiOutboxPath}).Build();
+        ["Battle:MatchManifestPath"]=null,["Battle:ResultOutboxPath"]=multiOutboxPath}).Build();
 string churnOutboxPath = Path.Combine(Path.GetTempPath(),
     "war-endpoint-churn-" + Guid.NewGuid().ToString("N"));
 var churnConfig = new ConfigurationBuilder().AddConfiguration(multiConfig)

@@ -14,9 +14,11 @@ MISSION_CATALOG = ROOT / "Server/content/recovered-mission-catalog.json"
 OUTPUT = ROOT / "Server/content/recovered-coop-bot-rules.json"
 
 
-def source_rows():
+def source_rows(scene_bytes=None):
     rows = []
-    lines = SCENE.read_bytes().decode("utf-8-sig").splitlines()
+    if scene_bytes is None:
+        scene_bytes = SCENE.read_bytes()
+    lines = scene_bytes.decode("utf-8-sig").splitlines()
     for line in component_lines(lines):
         if line.startswith("  - LEVEL:"):
             rows.append({})
@@ -40,14 +42,11 @@ def scene_data(row):
     return text, json.loads(text)
 
 
-def main():
-    if sys.argv[1:] not in ([], ["--check"]):
-        raise SystemExit("usage: extract_coop_bot_rules.py [--check]")
-    missions = json.loads(MISSION_CATALOG.read_bytes())
-    if missions["sourceSha256"] != hashlib.sha256(SCENE.read_bytes()).hexdigest():
+def build_document(scene_bytes, missions):
+    if missions["sourceSha256"] != hashlib.sha256(scene_bytes).hexdigest():
         raise ValueError("mission source changed")
     bots = []
-    for index, row in enumerate(source_rows()):
+    for index, row in enumerate(source_rows(scene_bytes)):
         if row["MISSIONTYPE"] != "KillOpponent":
             continue
         text, data = scene_data(row)
@@ -65,8 +64,13 @@ def main():
                      "bot": bot})
     if len(bots) != 15:
         raise ValueError("expected fifteen source boss missions")
-    output = {"version": 1, "missionSourceSha256": missions["sourceSha256"],
-              "bots": bots}
+    return {"version": 1, "missionSourceSha256": missions["sourceSha256"], "bots": bots}
+
+
+def main():
+    if sys.argv[1:] not in ([], ["--check"]):
+        raise SystemExit("usage: extract_coop_bot_rules.py [--check]")
+    output = build_document(SCENE.read_bytes(), json.loads(MISSION_CATALOG.read_bytes()))
     encoded = (json.dumps(output, indent=2) + "\n").encode()
     if sys.argv[1:] == ["--check"]:
         if OUTPUT.read_bytes() != encoded:

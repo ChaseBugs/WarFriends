@@ -55,10 +55,15 @@ The configured server and Client rank indexes are both 1; the observed game
 controller is outside tutorial mode. This is a configured bootstrap reference,
 not proof of unknown original production account defaults.
 
-Two fresh accounts produced identical subsystem state. Reading metadata did
-not change it. The observation records MainScene SHA-256 and thirteen runtime
-rule-file hashes, all checked against the active Client. Its SHA-256 is
-`7e4d56b6dbbfdc832fe65c1a3320c15d4b9c7b80750d7e6ba36f4d45ccb923c5`.
+The original reference matched two fresh accounts. A current fresh-account re-observation on
+2026-10-22 matches every original gameplay/context/serialized value; only the WeaponInventory.cs
+source hash differs. Reading metadata did not change state. The observation records MainScene
+SHA-256 and thirteen runtime rule-file hashes, all checked against the active Client. Its current
+SHA-256 is `47134e42bab46e5f45534f6749c98335db65acbf85a1f0b2d37de6b6cfe58718`.
+Serialized object-key order also differs in the raw observation; sorted-key JSON comparison proves
+all values and JSON types unchanged after the single reviewed source-hash replacement. The four
+hash-bound observation/derived JSON files are explicitly pinned to LF in `.gitattributes`, preventing
+Windows checkout conversion from invalidating the verified runtime digests.
 MainScene remains
 `5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff`.
 The existing combat graph retains its pre-pointer-restoration provenance;
@@ -85,11 +90,42 @@ Important rules for subsequent authoritative materialization:
 
 ## Reproduction and verification
 
+The managed `observe_starter_loadout.py` runner copies source/settings and cached package sources,
+imports them once without copying the existing asset database or compiled assemblies, then invokes
+the real Client boot smoke. It uses the original MainScene bytes, not the escaped export input.
+
+```powershell
+$env:WAR_TEST_RUN_ROOT = Join-Path $env:LOCALAPPDATA 'WarFriends/ServerTests/test-runs'
+python Server/tools/observe_starter_loadout.py --unity `
+  'C:/Program Files/Unity/Hub/Editor/2018.3.0f2/Editor/Unity.exe' --mongo `
+  'C:/Program Files/MongoDB/Server/8.3/bin/mongod.exe'
+```
+
+Run `starter-observation-1c01d52d59664b2893830602b7e33b16` verified 15,599 unchanged source/package
+inputs and removed its temporary source project/Library. Child `client-boot-c620569ec7f64fe08204b4189ea51780`
+completed actual Backend/Mongo/Unity account startup, 24 units, 66 weapons and 133 weapon index checks,
+with zero runtime exceptions and the same 70 error-level diagnostics. Its Mongo/temp cleanup reclaimed
+211,143,280 bytes. This is startup/loadout proof, not normal battle completion or Android verification.
+
+After comparing the fresh observation, the observation, weapon-index map, initial-state artifact and
+unit-rule artifact were refreshed together with their four owning Backend hash pins. Each derived
+artifact changes only observationSha256; gameplay and source content remain exact. The broad battle
+content precision correction remains a separate staged release. MainScene provenance audit preimage
+hashes were refreshed only for the two affected published index/unit artifacts.
+
+Current Release build has zero warnings/errors. Verification passes 54,236 initial-loadout/weapon/
+unit checks, 268 index checks, protocol checks, native smoke (74 live checks plus transactional/control
+scenarios) and legacy smoke (563 HTTP assertions plus contract/publication scenarios). Native runs
+`smoke-df4242c02651441a85097758b54aa97c` and `legacy-8625d0404b3e4ac18e60bc5b24f722f5` passed and
+reclaimed their owned database/temp data. Original unrelated Mongo PID 6164 was preserved.
+
 Refresh a disposable Client under Server/.local with the current runtime, then
 run `ClientBootSmoke.ps1` with its usual Unity/Mongo arguments and
 `-ExportStarterLoadout`. The script copies the Editor exporter, restores the
-caller's environment and stops only its own processes. The optional export
-must stay under Server/.local. It fails if metadata reads alter state or any
+caller's environment and stops only its own processes. The Editor writes a unique scratch export
+inside the disposable project; the runner retains validated JSON in its managed run, which may use
+an external `WAR_TEST_RUN_ROOT`. Successful owned Mongo/temp data is removed; failed diagnostics are
+retained. `-KeepArtifacts` explicitly retains successful temporary data. It fails if metadata reads alter state or any
 of the 133 actual Client index checks fails.
 
 After reviewing the resulting starter-loadout.json, copy it to the observation

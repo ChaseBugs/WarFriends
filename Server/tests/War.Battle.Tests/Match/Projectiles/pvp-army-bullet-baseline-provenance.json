@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "description": "Two identical original-engine captures before army bullet ownership extraction. Source-bound engine fixtures, not normal Unity gameplay proof. Hashes record historical capture inputs, not current pins.",
+  "observations": 5625,
+  "inputs": {
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.cs": "e87dbcfc757f4e2acb31ef6794c10385a55e5208ce12deafe5ce97ce14369939",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.Army.cs": "1f580ef416fb0dfe6ef2830ab7ea8bd43ef0604c6fbfe80e42062b1255fc6c36",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.AssaulterProjectiles.cs": "49e5572653946054ecdc19d92bc4c2b7a6a18c1cb93db1378731cf47dc3dba3b",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.GunslingerProjectiles.cs": "2039e699c48a1c60d39e9b4d8f2800891b4616d5cc2dd7930ccc5c0fcec7604c",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.GrenadierPrimary.cs": "1b3f57734672f5b7777126de139951b759317cdf73d869bd5d61441bbd0d1525",
+    "Server/src/War.Battle.Simulation/Army/ArmyProjectileFlight.cs": "a9a670c568f195e37a96e878e8ef00419a2e9f553f2d81beb43a1b25e8b42600",
+    "Server/tests/War.Battle.Tests/Match/Projectiles/PvpArmyBulletTraceTests.cs": "711eee3ee8462a197613d9f699f797dd64a06b0e4df401b425dfbdf87b226b17",
+    "Server/tests/War.Battle.Tests/Match/Tracing/MatchEngineTrace.cs": "848bdbd063f8acefe765462d04805bfee5086fda70d21573733c542dbe5c4030",
+    "Server/tests/War.Battle.Tests/OrdinaryArmyTestHost.cs": "80a17dfdc9e27040c970aa9b56b06a6ce6627c01af139a78cb57debec41a3713",
+    "Server/tests/War.Battle.Tests/GrenadierPrimaryDamageTests.cs": "c1f3c4c5704809d0e6346df09f9d32c4b49544e27fe93da5b76e016325139d78",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BulletSlow.cs": "f53b338a904196c6020115a771529c59eeb7ffed49bffa78ad7f44f08b569195",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BulletBase.cs": "5c8cb92b8d53b577b4b765dc486d5b94d49cb2f8515dff72e4a8f7fbee5e7b6b",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BulletShotGun.cs": "62127c498e0a5923978085ee3745afe658a9f0b9187448312bbd26d097540c08",
+    "Server/content/recovered-rusher-weapon-bindings.json": "3c1d9f194edc2e023be94eb5832e7c43a93abbcd87de1f3bf83a72cd3c9efcba"
+  }
+}

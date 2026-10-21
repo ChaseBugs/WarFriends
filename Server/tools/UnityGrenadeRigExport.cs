@@ -82,12 +82,30 @@ public static class UnityGrenadeRigExport
             throw new InvalidOperationException("Set " + OutputVariable + ".");
         }
         string project = Path.GetFullPath(Application.dataPath).Replace('\\', '/');
+        string managedRun = Environment.GetEnvironmentVariable("WAR_GRENADE_RIG_RUN");
+        if (!string.IsNullOrEmpty(managedRun))
+        {
+            return ValidateManagedOutput(project, requested, managedRun);
+        }
         int marker = project.IndexOf(ValidationMarker, StringComparison.OrdinalIgnoreCase);
         string output = Path.GetFullPath(requested).Replace('\\', '/');
         if (marker < 0 || !output.StartsWith(project.Substring(0, marker + ValidationMarker.Length),
             StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("Use a disposable project and output under the same Server/.local.");
+        }
+        return output;
+    }
+
+    private static string ValidateManagedOutput(string project, string requested, string managedRun)
+    {
+        string run = Path.GetFullPath(managedRun).Replace('\\', '/').TrimEnd('/');
+        string output = Path.GetFullPath(requested).Replace('\\', '/');
+        if (!string.Equals(project, run + "/data/project/Assets", StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(output, run + "/recovered-grenade-rig.json", StringComparison.OrdinalIgnoreCase) ||
+            !File.Exists(Path.Combine(run, "test-run.json")))
+        {
+            throw new InvalidOperationException("Use the owned run's disposable project and exact output path.");
         }
         return output;
     }

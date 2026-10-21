@@ -35,7 +35,7 @@ public sealed class BattlePlayerPresentation
 
     public static BattlePlayerPresentation Validate(BattlePlayerPresentation value)
     {
-        if(value==null || !Guid.TryParseExact(value.PlayerId,"N",out _) || value.PlayerId!=value.PlayerId.ToLowerInvariant())
+        if(value==null || !War.Shared.CanonicalGuid.IsCanonical(value.PlayerId))
             throw new InvalidDataException("Invalid battle presentation player identity.");
         Text(value.DisplayName,1,64,"display name");
         Text(value.Country,0,16,"country");

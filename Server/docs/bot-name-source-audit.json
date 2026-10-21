@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "original": {
+    "apkSha256": "b9fe5ca10e4073db4dfd56164c88c8af0786864139c745ae92ef92b7da5981f5",
+    "obbSha256": "078cd1c4ebaeef4a39646274a54d35ce05741bc15a2e13d95ae55340711b5125",
+    "componentFileId": 46609,
+    "payloadBytes": 7392,
+    "payloadSha256": "8d71922e6cecac8bea5f55206851d4dcd1d5374c95f90250577fd538c9892756"
+  },
+  "sceneSha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff",
+  "contentSha256": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
+  "rowCount": 269,
+  "allSceneStringsMatchOriginal": true,
+  "releaseVerified": false,
+  "differences": [
+    {
+      "rowIndex": 182,
+      "original": "\u02c7vampire\u02c766",
+      "exported": "\u02c7vampire\u02c7",
+      "utf8ExtraBytes": 2
+    },
+    {
+      "rowIndex": 205,
+      "original": "spooked\u00b0,\u00b0kitty",
+      "exported": "spooked\u00b0,\u00b0kit",
+      "utf8ExtraBytes": 2
+    },
+    {
+      "rowIndex": 231,
+      "original": "sneaky\u00a7thisguys",
+      "exported": "sneaky\u00a7thisguy",
+      "utf8ExtraBytes": 1
+    },
+    {
+      "rowIndex": 240,
+      "original": "brown(\u203f\u02e0\u203f)mailr",
+      "exported": "brown(\u203f\u02e0\u203f)",
+      "utf8ExtraBytes": 5
+    }
+  ]
+}

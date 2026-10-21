@@ -7,11 +7,13 @@ param(
     [switch]$VerifyReturningPlayer,
     [switch]$VerifyNormalQueue,
     [string]$SecondUnityProject,
-    [ValidateRange(5, 120)][Nullable[int]]$PairAdmissionSeconds
+    [ValidateRange(5, 120)][Nullable[int]]$PairAdmissionSeconds,
+    [switch]$KeepArtifacts
 )
 $ErrorActionPreference = 'Stop'
 if ($VerifyNormalQueue) { $VerifyReturningPlayer = $true }
 $serverRoot = Split-Path $PSScriptRoot -Parent
+. (Join-Path $PSScriptRoot 'TestRun.ps1')
 $projectPath = (Resolve-Path -LiteralPath $UnityProject).Path
 $validationRoot = [IO.Path]::GetFullPath((Join-Path $serverRoot '.local')) + [IO.Path]::DirectorySeparatorChar
 if (!$projectPath.StartsWith($validationRoot, [StringComparison]::OrdinalIgnoreCase)) {
@@ -27,12 +29,12 @@ Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalWeaponSelectionA
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalReloadAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalTerminalAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityStarterLoadoutExport.cs') -Destination $editorFolder
-$runRoot = Join-Path $validationRoot ('client-boot-' + [Guid]::NewGuid().ToString('N'))
-$mongoPath = Join-Path $runRoot 'mongo'
-New-Item -ItemType Directory -Path $mongoPath -Force | Out-Null
+$runRoot = New-WarTestRun 'client-boot'
+$mongoPath = Join-Path $runRoot 'data/mongo'
+$succeeded = $false
 $processes = @()
 $variables = @(
-    'ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database',
+    'TEMP', 'TMP', 'TMPDIR', 'ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database',
     'Battle__SigningKey', 'Battle__ControlKey', 'Legacy__ContentPath',
     'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT', 'WAR_STARTER_LOADOUT_OUTPUT',
     'WAR_LOBBY_BOOT_IDENTITY', 'WAR_NORMAL_QUEUE_REPORT', 'WAR_NORMAL_BATTLE_SELF', 'WAR_NORMAL_BATTLE_PEER',
@@ -74,14 +76,16 @@ function Get-FreeUdpPort {
     finally { $socket.Dispose() }
 }
 try {
+    Set-WarTestTemporaryDirectory $runRoot
+    New-Item -ItemType Directory -Path $mongoPath -Force | Out-Null
     dotnet build (Join-Path $serverRoot 'WarFriendsServer.sln') -c Release --no-restore --nologo -v minimal
     if ($LASTEXITCODE -ne 0) { throw 'Release build failed.' }
     $mongoPort = Get-FreePort
     $httpPort = Get-FreePort
     while ($httpPort -eq $mongoPort) { $httpPort = Get-FreePort }
     $mongoArguments = @(
-        '--bind_ip', '127.0.0.1', '--port', $mongoPort, '--dbpath', $mongoPath,
-        '--replSet', 'wfClientBoot', '--logpath', (Join-Path $runRoot 'mongo.log'), '--logappend'
+        '--bind_ip', '127.0.0.1', '--port', $mongoPort, '--dbpath', ('"' + $mongoPath + '"'),
+        '--replSet', 'wfClientBoot', '--logpath', ('"' + (Join-Path $runRoot 'mongo.log') + '"'), '--logappend'
     )
     $mongo = Start-Process $MongoExecutable -ArgumentList $mongoArguments -WindowStyle Hidden -PassThru
     $processes += $mongo
@@ -165,7 +169,10 @@ try {
     $env:WAR_LOBBY_BOOT_IDENTITY = 'NormalBoot-' + [Guid]::NewGuid().ToString('N')
     $env:WAR_STARTER_LOADOUT_OUTPUT = $null
     if ($ExportStarterLoadout) {
-        $env:WAR_STARTER_LOADOUT_OUTPUT = Join-Path $runRoot 'starter-loadout.json'
+        # The Editor exporter deliberately restricts writes to a disposable Server/.local project.
+        # Give this run a unique scratch file, then retain the validated result in managed storage.
+        $starterScratch = Join-Path $projectPath ((Split-Path $runRoot -Leaf) + '-starter-loadout.json')
+        $env:WAR_STARTER_LOADOUT_OUTPUT = $starterScratch
     }
     $reportPath = Join-Path $projectPath 'normal-client-boot.json'
     if (Test-Path -LiteralPath $reportPath) { Remove-Item -LiteralPath $reportPath }
@@ -204,6 +211,8 @@ try {
             $starter.weaponIndexChecks -ne (2 * $report.recoveredWeaponRows + 1)) {
             throw "Starter export is incomplete; inspect $runRoot"
         }
+        Copy-Item -LiteralPath $starterScratch -Destination (Join-Path $runRoot 'starter-loadout.json')
+        Remove-Item -LiteralPath $starterScratch
     }
     if ($SecondUnityProject) {
         & (Join-Path $PSScriptRoot 'NormalUnityPairSmoke.ps1') -UnityExecutable $UnityExecutable `
@@ -263,18 +272,13 @@ try {
             Write-Output 'PASS: normal Unity DeathMatch controller reached the real Backend queue'
         }
     }
+    $succeeded = $true
     Write-Output "PASS: actual isolated Client account/unit initialization boundary; $runRoot"
 }
 finally {
     [array]::Reverse($processes)
-    foreach ($process in $processes) {
-        if (!$process.HasExited) {
-            Stop-Process -Id $process.Id
-            $process.WaitForExit(5000) | Out-Null
-        }
-        $process.Dispose()
-    }
-    foreach ($name in $variables) {
-        [Environment]::SetEnvironmentVariable($name, $prior[$name], 'Process')
-    }
+    $stopped = Stop-WarTestProcesses $processes
+    Restore-WarTestEnvironment $prior
+    if ($stopped) { Complete-WarTestRun $runRoot $succeeded $KeepArtifacts.IsPresent }
+    foreach ($process in $processes) { $process.Dispose() }
 }

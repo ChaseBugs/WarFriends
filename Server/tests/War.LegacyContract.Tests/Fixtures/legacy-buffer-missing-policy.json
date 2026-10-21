@@ -1,0 +1,222 @@
+{
+  "testOnly": true,
+  "sheets": [
+    {
+      "type": "fixture-unit-wb",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60,
+          "TIER": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        },
+        {
+          "TIER": 20,
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 5,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "Google2u.ArmyUpgrades",
+      "rows": [
+        {
+          "NAME": "fixture-unit-wb",
+          "CANBEBOUGHT": 1,
+          "PRICE": 100,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 2,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-gold",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 10,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 2,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-locked",
+          "CANBEBOUGHT": 10,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 2,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-delivery",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 30,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 2,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-free",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": 2,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        },
+        {
+          "NAME": "fixture-unit-elite-closed",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "STARTINGTIER": 1,
+          "STARTINGELITE": -1,
+          "UNLOCKTIER2": 10,
+          "UNLOCKTIER3": 20,
+          "UNLOCKTIER4": 25,
+          "UNLOCKTIER5": 30,
+          "UNLOCKTIER6": 40,
+          "STARTINGSPECIAL": 2
+        }
+      ]
+    },
+    {
+      "type": "Google2u.CardPacks",
+      "rows": [
+        {
+          "NAME": "BRONZE_CARDPACK",
+          "GOLD": 19,
+          "WARBUCKS": 0
+        },
+        {
+          "NAME": "THREE_CARDS",
+          "GOLD": 0,
+          "WARBUCKS": 100
+        },
+        {
+          "NAME": "fixture-unknown-pack",
+          "GOLD": 0,
+          "WARBUCKS": 0
+        }
+      ]
+    },
+    {
+      "type": "fixture-weapon-wb",
+      "rows": [
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 100,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 60
+        },
+        {
+          "NEXTUPGRADEPRICE": 0,
+          "NEXTUPGRADEPRICEGOLD": 0,
+          "DELIVERYTIME": 0
+        }
+      ]
+    },
+    {
+      "type": "Google2u.WeaponUpgrades",
+      "rows": [
+        {
+          "NAME": "fixture-weapon-wb",
+          "CANBEBOUGHT": 1,
+          "PRICE": 100,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "PURCHASABLE": "shop"
+        },
+        {
+          "NAME": "fixture-weapon-gold",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 10,
+          "DELIVERTIME": 0,
+          "PURCHASABLE": "shop"
+        },
+        {
+          "NAME": "fixture-weapon-locked",
+          "CANBEBOUGHT": 10,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "PURCHASABLE": "shop"
+        },
+        {
+          "NAME": "fixture-weapon-delivery",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 30,
+          "PURCHASABLE": "shop"
+        },
+        {
+          "NAME": "fixture-weapon-free",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "PURCHASABLE": "shop"
+        },
+        {
+          "NAME": "fixture-weapon-noshop",
+          "CANBEBOUGHT": 1,
+          "PRICE": 0,
+          "PRICEGOLD": 0,
+          "DELIVERTIME": 0,
+          "PURCHASABLE": "hidden"
+        }
+      ]
+    }
+  ]
+}

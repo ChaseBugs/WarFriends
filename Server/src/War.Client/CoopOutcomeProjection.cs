@@ -66,8 +66,7 @@ namespace War.Client
 
         private static bool IsCanonicalId(string playerId)
         {
-            Guid parsed;
-            return Guid.TryParseExact(playerId, "N", out parsed) && playerId == playerId.ToLowerInvariant();
+            return War.Shared.CanonicalGuid.IsCanonical(playerId);
         }
 
         private static void ValidateNonterminal(MatchSnapshot snapshot)

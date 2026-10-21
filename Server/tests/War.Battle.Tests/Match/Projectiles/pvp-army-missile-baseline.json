@@ -1,0 +1,82 @@
+[
+  {
+    "Scenario": "natural-ID_UNIT-ROCKETSOLDIER-Real",
+    "Observations": 1246,
+    "Sha256": "bf55fba27116e1ef5f4670175c26901a41d7d55f181f36c3878c103a6b389b12",
+    "FinalPhase": "Running",
+    "FinalTick": 370,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "natural-ID_UNIT-ROCKETSOLDIER-Fake",
+    "Observations": 1246,
+    "Sha256": "8df84698c86cefa1c05e8462acf67a8b494f744a22030db4489fc212b528acc6",
+    "FinalPhase": "Running",
+    "FinalTick": 370,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "natural-ID_UNIT-MORTAR-Real",
+    "Observations": 1106,
+    "Sha256": "af4319340645ec7c012b913f29183a48af1adc2de556763c3a50a2e8a2d20183",
+    "FinalPhase": "Running",
+    "FinalTick": 335,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "natural-ID_UNIT-MORTAR-Fake",
+    "Observations": 1114,
+    "Sha256": "c244da1d3fd8448c8652e1708920c7137d37f780edd27566e80531a647e9fd66",
+    "FinalPhase": "Running",
+    "FinalTick": 337,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "soldier-death-ID_UNIT-ROCKETSOLDIER",
+    "Observations": 1247,
+    "Sha256": "814f670707ec0a2057a7d713cf896e86b77f32d3d2125526419f0de52bd9e83f",
+    "FinalPhase": "Running",
+    "FinalTick": 369,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "soldier-death-ID_UNIT-MORTAR",
+    "Observations": 1107,
+    "Sha256": "cda35223d6309354fc4aee454190402cb54f7a72b5bba9c79336b26dcb8e8684",
+    "FinalPhase": "Running",
+    "FinalTick": 334,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "terminal-flight-clear-ID_UNIT-ROCKETSOLDIER",
+    "Observations": 878,
+    "Sha256": "61266cc5a20f1286f10b58769f84fb9b563aac6c7e108ce2ec48a10b7d091d40",
+    "FinalPhase": "Ended",
+    "FinalTick": 276,
+    "TerminalReason": "forfeit"
+  },
+  {
+    "Scenario": "terminal-flight-clear-ID_UNIT-MORTAR",
+    "Observations": 802,
+    "Sha256": "95f858f9bff7a6824de3cb0307102bb1ee189143e4acc8cd8454c7ffd883b3eb",
+    "FinalPhase": "Ended",
+    "FinalTick": 257,
+    "TerminalReason": "forfeit"
+  },
+  {
+    "Scenario": "mortar-live-reconnect-clock",
+    "Observations": 981,
+    "Sha256": "30352f791a7fd99f45c85e948289799feb977e519138659649c09327a49b64bf",
+    "FinalPhase": "Running",
+    "FinalTick": 317,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "source-BIGROCKET-card",
+    "Observations": 1062,
+    "Sha256": "6f58e7f2fd4e3e3e3258c8c8759f74ad0e1f877c84266f24c0ea99bb445cc00e",
+    "FinalPhase": "Running",
+    "FinalTick": 324,
+    "TerminalReason": ""
+  }
+]

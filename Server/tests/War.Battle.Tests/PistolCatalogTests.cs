@@ -25,10 +25,32 @@ internal static class PistolCatalogTests
                 "pistol manifest retains source clip and infinite reserve: "+pair.Key);
             Reject(()=>catalog.Stage(pair.Key,pair.Value.Count),"pistol stage overflow rejected: "+pair.Key);
         }
-        var projectile=catalog.Prepare("Google2u.Pistol_M1911",0,1,new string('a',32),Vector3.Zero,new Vector3(1,0,0),1,1,(_,_,_)=>null);
+        var projectile=catalog.Prepare(
+            new WeaponStageSelection("Google2u.Pistol_M1911", 0),
+            new BulletLaunch
+            {
+                ProjectileId = 1,
+                OwnerId = new string('a',32),
+                MuzzlePosition = Vector3.Zero,
+                TargetPosition = new Vector3(1,0,0),
+                SimulationTick = 1,
+                CriticalRoll = 1,
+                TraceCollision = (_,_,_)=>null
+            });
         Check(projectile.WeaponSourceId=="Google2u.Pistol_M1911"&&projectile.Damage.Amount==catalog.Stage("Google2u.Pistol_M1911",0).Damage,
             "pistol projectile retains source damage and identity");
-        Reject(()=>catalog.Prepare("Google2u.Pistol_M1911",0,1,"",Vector3.Zero,Vector3.One,1,0,(_,_,_)=>null),
+        Reject(()=>catalog.Prepare(
+            new WeaponStageSelection("Google2u.Pistol_M1911", 0),
+            new BulletLaunch
+            {
+                ProjectileId = 1,
+                OwnerId = "",
+                MuzzlePosition = Vector3.Zero,
+                TargetPosition = Vector3.One,
+                SimulationTick = 1,
+                CriticalRoll = 0,
+                TraceCollision = (_,_,_)=>null
+            }),
             "pistol projectile rejects empty owner");
 
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"),null,null,

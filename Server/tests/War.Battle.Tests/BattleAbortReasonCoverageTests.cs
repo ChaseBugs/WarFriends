@@ -8,9 +8,9 @@ internal static class BattleAbortReasonCoverageTests
     internal static int Run(string serverDirectory)
     {
         const string Pattern = @"End\(\s*""(?<reason>[a-z-]+)""\s*,\s*""""\s*,\s*false\s*\)";
-        string directory = Path.Combine(serverDirectory, "src/War.BattleServer");
+        string directory = Path.Combine(serverDirectory, "src/War.Battle.Simulation");
         var reasons = new HashSet<string>(StringComparer.Ordinal);
-        foreach (string path in Directory.EnumerateFiles(directory, "MatchEngine*.cs"))
+        foreach (string path in Directory.EnumerateFiles(directory, "MatchEngine*.cs", SearchOption.AllDirectories))
         {
             foreach (Match match in Regex.Matches(File.ReadAllText(path), Pattern))
             {

@@ -16,7 +16,10 @@ SCRIPT_GUID = "3c6382a9565da1dc77b10ffb246c509f"
 
 
 def extract():
-    data = SCENE.read_bytes()
+    return build_document(SCENE.read_bytes())
+
+
+def build_document(data):
     text = data.decode("utf-8-sig")
     blocks = {int(m.group(2)): (int(m.group(1)), m.group(3)) for m in re.finditer(
         r"^--- !u!(\d+) &(\d+)\r?\n(.*?)(?=^--- !u!|\Z)", text, re.M | re.S)}
@@ -82,6 +85,8 @@ def extract():
 
 
 def main():
+    if sys.argv[1:] not in ([], ["--check"]):
+        raise ValueError("usage: extract_player_shot_targets.py [--check]")
     output = json.dumps(extract(), indent=2, ensure_ascii=False) + "\n"
     if sys.argv[1:] == ["--check"]:
         if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != output:

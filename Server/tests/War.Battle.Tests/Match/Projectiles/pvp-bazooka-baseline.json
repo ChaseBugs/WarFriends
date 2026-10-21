@@ -1,0 +1,50 @@
+[
+  {
+    "Scenario": "source-rpg-hold-flight-impact",
+    "Observations": 198,
+    "Sha256": "7b7b12c401a10d6770331e99f023c142073a89cb5f2a303bb7c0d63dde5292fd",
+    "FinalPhase": "Running",
+    "FinalTick": 250,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "m202-delayed-order-and-switch-lock",
+    "Observations": 199,
+    "Sha256": "9fa701916c000142b41ef698bf696dd75a10b8da1489d054cf57457b010643fe",
+    "FinalPhase": "Running",
+    "FinalTick": 250,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "cancel-before-source-hold-deadline",
+    "Observations": 38,
+    "Sha256": "39e87f79b90c7f6846c91426b0ba3074c834e60fc48b8bded1bfd42eba7a4546",
+    "FinalPhase": "Running",
+    "FinalTick": 90,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "pause-freezes-launched-missile",
+    "Observations": 252,
+    "Sha256": "3ed4c2b0632ff78517bd82016c47a179dd60e9e5274e3889e1304ad1856c922d",
+    "FinalPhase": "Running",
+    "FinalTick": 300,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "terminal-clears-active-and-delayed-m202",
+    "Observations": 29,
+    "Sha256": "c9e6d377a3ee9ffd08d6eab3712800e7166400f45b03d7619ee4e2cd2c96f11a",
+    "FinalPhase": "Ended",
+    "FinalTick": 81,
+    "TerminalReason": "forfeit"
+  },
+  {
+    "Scenario": "two-owner-m202-global-curve-and-delay",
+    "Observations": 198,
+    "Sha256": "51f4ed82846becf8fb86d2458b1dfa8f6e5b4ca89d771883f5c95dfa7a8da2c1",
+    "FinalPhase": "Running",
+    "FinalTick": 250,
+    "TerminalReason": ""
+  }
+]

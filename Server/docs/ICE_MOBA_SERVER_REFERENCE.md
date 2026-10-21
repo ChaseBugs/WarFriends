@@ -45,17 +45,17 @@ domain. Inferring that this policy is optimal for WarFriends would require measu
 
 ## Existing WarFriends mechanisms to retain
 
-- `src/War.BattleServer/NetworkWorker.cs`: 30 Hz monotonic scheduling, four-tick catch-up cap,
+- `src/War.BattleServer/Hosting/NetworkWorker.cs`: 30 Hz monotonic scheduling, four-tick catch-up cap,
   bounded input channel, per-endpoint pending limit, bounded datagram work and drop/backlog metrics.
 - `src/War.Shared/PacketCodec.cs`: protobuf packets, explicit authentication and a 1,200-byte cap.
 - `src/War.Client/MatchConnection.cs`: one pending mutation identity, retry/recovery APIs and
   authenticated state/event polling. These are not the same wire protocol as RakNet.
-- `src/War.BattleServer/MatchReplyTransfer.cs`: frozen replies, 900-byte indexed pages, a
+- `src/War.BattleServer/Transport/Reliability/MatchReplyTransfer.cs`: frozen replies, 900-byte indexed pages, a
   262,144-byte transfer limit and a SHA-256 digest before acknowledgement publication.
-- `src/War.BattleServer/MatchRouter.cs:184`: idempotent reconnect grants with player binding,
+- `src/War.BattleServer/Matches/MatchRouter.cs:184`: idempotent reconnect grants with player binding,
   expiry checks, new sessions and bounded connection generations.
-- `src/War.BattleServer/ReliableEventWindow.cs`: bounded event retention and explicit cursors.
-- `src/War.BattleServer/ActiveMatchJournal.cs`: durable allocation crash markers. This is
+- `src/War.BattleServer/Transport/Reliability/ReliableEventWindow.cs`: bounded event retention and explicit cursors.
+- `src/War.BattleServer/Persistence/ActiveMatchJournal.cs`: durable allocation crash markers. This is
   explicitly not a gameplay checkpoint; startup recovers abandoned allocations as unscored
   host-crash results rather than resuming combat from an absent state.
 - `src/War.BattleServer/Program.cs:39` and `deploy/warfriends-battle.service`: existing live/ready/

@@ -36,7 +36,7 @@ internal sealed class CoopCrewUdpHost : IAsyncDisposable
             MapRevision = map.SceneSha256,
             DurationSeconds = sources.Missions.Get(MissionIndex).TimeSeconds,
         });
-        string signingKey = Convert.ToBase64String(new byte[SigningKeyBytes]);
+        string signingKey = Convert.ToBase64String(Enumerable.Repeat((byte)1, SigningKeyBytes).ToArray());
         _tokens = new MatchTokens(signingKey);
         _runtime = new CoopMatchRuntime(_manifest, sources.Missions, sources.Spawns, sources.Routes,
             sources.Combat, chooseBehaviour: _ => 0, choosePoint: _ => 0, playerWeaponContent: sources.Content,

@@ -1,0 +1,66 @@
+[
+  {
+    "Scenario": "finite-cadence-auto-reload-and-exhaustion",
+    "Observations": 19,
+    "Sha256": "9cab3ba3ae0293c650002041c0c0349680b1c7b0e0e2cc0238da0c73c4d7ebbd",
+    "FinalPhase": "Running",
+    "FinalTick": 81,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "manual-reload-survives-slot-switch",
+    "Observations": 14,
+    "Sha256": "232ae4c4952ceaa82710b5f85f4ba9749c32007abe7187940941830389b76078",
+    "FinalPhase": "Running",
+    "FinalTick": 66,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "immutable-infinite-reserve-sentinel",
+    "Observations": 10,
+    "Sha256": "9a8f327ac848176cef19f3da71104831e552d02e4f597cc606e7b1b3a21a391d",
+    "FinalPhase": "Running",
+    "FinalTick": 69,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "reconnect-pause-keeps-reload-deadline",
+    "Observations": 15,
+    "Sha256": "cc68e60da5e4edf94ebdeeecaf6ae939c5e38bcafe4292e0a601bc5c937729f1",
+    "FinalPhase": "Running",
+    "FinalTick": 300,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "ammo-box-all-slots-and-exact-replay",
+    "Observations": 10,
+    "Sha256": "342a5e23712ef256db9e4107f5b96c6ee27c3aff02d684ae52a1bc1673eb42e2",
+    "FinalPhase": "Running",
+    "FinalTick": 60,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "empty-mag-targets-first-inactive-slot",
+    "Observations": 11,
+    "Sha256": "0b1edcb02ecc41965cb9f6bcaf2d27c7579bbe5a2b1e2b18e6dd8f5d556374ea",
+    "FinalPhase": "Running",
+    "FinalTick": 66,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "ammo-thief-second-slot-conservation",
+    "Observations": 10,
+    "Sha256": "1da4f0a92b38527785a81fa5386b88552f2f34b967b6ae757d8b8863cc14e3dd",
+    "FinalPhase": "Running",
+    "FinalTick": 60,
+    "TerminalReason": ""
+  },
+  {
+    "Scenario": "legacy-single-slot-fallback",
+    "Observations": 10,
+    "Sha256": "04f98ea8a49ef15170278374362c20913e15e1673faaea767e8beebe2edb3d6a",
+    "FinalPhase": "Running",
+    "FinalTick": 66,
+    "TerminalReason": ""
+  }
+]

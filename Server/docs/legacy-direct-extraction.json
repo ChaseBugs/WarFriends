@@ -1,0 +1,518 @@
+{
+  "schemaVersion": 1,
+  "sourcePath": "Server/src/War.Backend/Legacy/LegacyEndpoints.cs",
+  "hashEncoding": "UTF-8 with LF newlines",
+  "originalSha256": "c3d23ea9ef950fbf2c04c681a4c164d683b5570f5dfce0fd06029a5fca62bc49",
+  "directActions": [
+    "GameStartedMaster",
+    "GameStartedClient",
+    "GetPlayerData",
+    "SendRequestBuffer",
+    "GetAllMessages",
+    "SetPlayerStatus",
+    "UpdateDeviceToken",
+    "ChangeLanguage",
+    "ChangePlayerCountry",
+    "UpdateSettings",
+    "ChangePlayerName",
+    "GetPlayerInfo",
+    "RefillDogtags",
+    "PayOneDogTag",
+    "CheckUniqueSquadName",
+    "CreateSquad",
+    "JoinSquad",
+    "GetSquadDetails",
+    "GetAllSquadMembers",
+    "GetFullSquadInfo",
+    "InvitePlayerToSquad",
+    "JoinSquadRequest",
+    "AcceptSquadJoinRequest",
+    "DeclineSquadJoinRequest",
+    "DepositCards",
+    "WithdrawCard",
+    "CraftCard",
+    "ClaimCraftedCard",
+    "NotifyPlayerToDeposit",
+    "LeaveSquad",
+    "PromotePlayer",
+    "DemotePlayer",
+    "PromotePlayerToFounder",
+    "KickPlayer",
+    "UpdateSquad",
+    "UpdateSquadEmblem",
+    "GetSquads",
+    "FindSuggestedSquads",
+    "GameStartedTutorial",
+    "TutorialEnded",
+    "UpdateArmyPower",
+    "UpdateRegionPings",
+    "PhotonIsFull",
+    "ChatShownFirstTime",
+    "CustomizationShown",
+    "WarpathShownFirstTime",
+    "CardpoolShown",
+    "CraftingShown",
+    "LeagueLeaderboardShown",
+    "ElitesFeatureShown",
+    "Test",
+    "OnVIPExpired",
+    "ReportCheater",
+    "SendLog",
+    "SendCrashReport",
+    "ErrorMessage",
+    "UpdateAnalytics",
+    "SaveFuseConfigs",
+    "SpecialOfferShowed",
+    "WarArenaShown"
+  ],
+  "wireActionCount": 175,
+  "directActionCount": 64,
+  "bufferedActionCount": 25,
+  "closedActionCount": 86,
+  "blockedDirectActions": [
+    {
+      "name": "MessageSent",
+      "id": 2
+    },
+    {
+      "name": "AcceptChallenge",
+      "id": 3
+    },
+    {
+      "name": "GetAllPlayers",
+      "id": 4
+    },
+    {
+      "name": "IgnoreMessage",
+      "id": 12
+    },
+    {
+      "name": "GetFriendsInfo",
+      "id": 26
+    },
+    {
+      "name": "UniqueSquadNameFailure",
+      "id": 39
+    },
+    {
+      "name": "UniqueSquadNameSuccess",
+      "id": 40
+    },
+    {
+      "name": "RemoveUserFromSquad",
+      "id": 42
+    },
+    {
+      "name": "AddFacebook",
+      "id": 52
+    },
+    {
+      "name": "SwitchToFacebook",
+      "id": 53
+    },
+    {
+      "name": "FacebookLoginOk",
+      "id": 54
+    },
+    {
+      "name": "UserAddedToSquadSuccess",
+      "id": 60
+    },
+    {
+      "name": "GameEnded",
+      "id": 62
+    },
+    {
+      "name": "GameStartedCampaign",
+      "id": 67
+    },
+    {
+      "name": "GameStartedCoopMaster",
+      "id": 68
+    },
+    {
+      "name": "GameStartedCoopClient",
+      "id": 69
+    },
+    {
+      "name": "BuyWeaponUpgrade",
+      "id": 73
+    },
+    {
+      "name": "InstantWeaponUpgrade",
+      "id": 74
+    },
+    {
+      "name": "ActivateWeaponUpgrade",
+      "id": 75
+    },
+    {
+      "name": "BuyWeapon",
+      "id": 76
+    },
+    {
+      "name": "BuyUnitUpgrade",
+      "id": 77
+    },
+    {
+      "name": "InstantUnitUpgrade",
+      "id": 78
+    },
+    {
+      "name": "ActivateUnitUpgrade",
+      "id": 79
+    },
+    {
+      "name": "BuyUnit",
+      "id": 80
+    },
+    {
+      "name": "AddToHitList",
+      "id": 84
+    },
+    {
+      "name": "GetPlayersFromHitList",
+      "id": 85
+    },
+    {
+      "name": "ExpandHitList",
+      "id": 86
+    },
+    {
+      "name": "HitListPlayerLoggedIn",
+      "id": 87
+    },
+    {
+      "name": "ProvokePlayer",
+      "id": 88
+    },
+    {
+      "name": "SearchPlayers",
+      "id": 89
+    },
+    {
+      "name": "SystemMessage",
+      "id": 90
+    },
+    {
+      "name": "ClaimReward",
+      "id": 91
+    },
+    {
+      "name": "DebugAddLevel",
+      "id": 94
+    },
+    {
+      "name": "BuyCardPack",
+      "id": 97
+    },
+    {
+      "name": "GetSquadsByExperience",
+      "id": 101
+    },
+    {
+      "name": "WeaponWasShown",
+      "id": 104
+    },
+    {
+      "name": "ArmyUnitWasShown",
+      "id": 105
+    },
+    {
+      "name": "GetPlayerLeaguesDivision",
+      "id": 106
+    },
+    {
+      "name": "GetPlayersByExperience",
+      "id": 107
+    },
+    {
+      "name": "DecalWasShown",
+      "id": 108
+    },
+    {
+      "name": "BuyDecal",
+      "id": 109
+    },
+    {
+      "name": "EquipDecal",
+      "id": 110
+    },
+    {
+      "name": "GetMissionLeaderboards",
+      "id": 111
+    },
+    {
+      "name": "SkipAssignment",
+      "id": 112
+    },
+    {
+      "name": "JoinSquadEvent",
+      "id": 113
+    },
+    {
+      "name": "BuyVip",
+      "id": 114
+    },
+    {
+      "name": "EquipWeapon",
+      "id": 116
+    },
+    {
+      "name": "ChangeNameAndPassword",
+      "id": 121
+    },
+    {
+      "name": "CreateFullAccount",
+      "id": 122
+    },
+    {
+      "name": "GetSquadWarsDivision",
+      "id": 124
+    },
+    {
+      "name": "InstantBuyUnit",
+      "id": 125
+    },
+    {
+      "name": "InstantBuyWeapon",
+      "id": 126
+    },
+    {
+      "name": "ActivateUnit",
+      "id": 127
+    },
+    {
+      "name": "ActivateWeapon",
+      "id": 128
+    },
+    {
+      "name": "BuyPack",
+      "id": 130
+    },
+    {
+      "name": "DebugAddSquadLevel",
+      "id": 134
+    },
+    {
+      "name": "GenerateSpecialOffer",
+      "id": 135
+    },
+    {
+      "name": "AcceptSpecialOffer",
+      "id": 136
+    },
+    {
+      "name": "AcceptRentalOffer",
+      "id": 138
+    },
+    {
+      "name": "BuyInApp",
+      "id": 142
+    },
+    {
+      "name": "AddDebugGoodies",
+      "id": 147
+    },
+    {
+      "name": "SendPlayerReport",
+      "id": 148
+    },
+    {
+      "name": "GetNewAssignments",
+      "id": 149
+    },
+    {
+      "name": "GetLastWeeksPlayerLeague",
+      "id": 152
+    },
+    {
+      "name": "AddGameCenter",
+      "id": 154
+    },
+    {
+      "name": "AddVideoReward",
+      "id": 156
+    },
+    {
+      "name": "PromoteUnit",
+      "id": 158
+    },
+    {
+      "name": "DebugChangeLevel",
+      "id": 159
+    },
+    {
+      "name": "InformSquadLeaderAboutEvent",
+      "id": 160
+    },
+    {
+      "name": "AddOneTimeReward",
+      "id": 161
+    },
+    {
+      "name": "DebugChangeMedals",
+      "id": 162
+    },
+    {
+      "name": "RemoveFacebook",
+      "id": 164
+    },
+    {
+      "name": "ClaimAssignment",
+      "id": 171
+    },
+    {
+      "name": "ClaimAssignmentMegaReward",
+      "id": 173
+    },
+    {
+      "name": "ReadMessage",
+      "id": 184
+    },
+    {
+      "name": "CompleteStarterAssignments",
+      "id": 185
+    },
+    {
+      "name": "ClaimStarterAssignment",
+      "id": 186
+    },
+    {
+      "name": "AddGooglePlay",
+      "id": 187
+    },
+    {
+      "name": "RemoveGooglePlay",
+      "id": 188
+    },
+    {
+      "name": "RestorePacks",
+      "id": 189
+    },
+    {
+      "name": "BuyLootboxes",
+      "id": 190
+    },
+    {
+      "name": "VisualWasShown",
+      "id": 191
+    },
+    {
+      "name": "SaveLastSeenSquadChatTimeStamp",
+      "id": 193
+    },
+    {
+      "name": "MessageWasShown",
+      "id": 194
+    },
+    {
+      "name": "FinishPlayerLeague",
+      "id": 198
+    },
+    {
+      "name": "InstantBattle",
+      "id": 199
+    },
+    {
+      "name": "EnterArena",
+      "id": 200
+    },
+    {
+      "name": "BuyArenaHearth",
+      "id": 201
+    },
+    {
+      "name": "TakeArenaLife",
+      "id": 202
+    },
+    {
+      "name": "GetScrapsReward",
+      "id": 203
+    },
+    {
+      "name": "DebugChangeArenaLives",
+      "id": 204
+    },
+    {
+      "name": "DebugChangeArenaWins",
+      "id": 205
+    },
+    {
+      "name": "GetArenaLeaderboards",
+      "id": 206
+    },
+    {
+      "name": "ConvertScrapsToParts",
+      "id": 207
+    },
+    {
+      "name": "ConvertPartsToScraps",
+      "id": 208
+    },
+    {
+      "name": "UpgradeEliteSlot",
+      "id": 209
+    },
+    {
+      "name": "DebugAddScraps",
+      "id": 210
+    },
+    {
+      "name": "WarArenaEnded",
+      "id": 211
+    },
+    {
+      "name": "MaxAll",
+      "id": 1000
+    },
+    {
+      "name": "CheckDailyReward",
+      "id": 1001
+    },
+    {
+      "name": "ClaimDailyReward",
+      "id": 1002
+    },
+    {
+      "name": "UpdateEquippedUnits",
+      "id": 1003
+    },
+    {
+      "name": "DebugRenewRental",
+      "id": 1004
+    },
+    {
+      "name": "RemoveOrUpdateGC",
+      "id": 1005
+    },
+    {
+      "name": "RemoveFromLeague",
+      "id": 1006
+    },
+    {
+      "name": "ExistGCAccount",
+      "id": 1008
+    },
+    {
+      "name": "ExistFBAccount",
+      "id": 1009
+    },
+    {
+      "name": "DebugChangeLeague",
+      "id": 1010
+    },
+    {
+      "name": "DebugChangeDivision",
+      "id": 1011
+    },
+    {
+      "name": "DebugChangeAnticheat",
+      "id": 1012
+    },
+    {
+      "name": "RefundPack",
+      "id": 1013
+    }
+  ]
+}

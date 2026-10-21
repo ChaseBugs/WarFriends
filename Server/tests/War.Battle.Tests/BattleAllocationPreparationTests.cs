@@ -2,6 +2,7 @@ using MongoDB.Driver;
 using War.Backend;
 using War.Backend.Legacy;
 using War.Persistence;
+using War.Battle.Tests.Support;
 
 /// <summary>Checks atomic initial allocation against stale durable account revisions.</summary>
 internal static class BattleAllocationPreparationTests
@@ -21,8 +22,9 @@ internal static class BattleAllocationPreparationTests
             SessionExpiresUtc = DateTime.UtcNow.AddHours(1),
             Serialized = LegacyInitialLoadout.CreateSerializedState()
         };
-        await players.Insert(player, LegacyPlayerStore.NewPassword(), cancellationToken);
-        await players.Update(player.Id, Builders<LegacyPlayerDocument>.Update.Inc(row => row.Gold, 1), cancellationToken);
+        await LegacyTestAccounts.InsertAsync(uri, databaseName, player, cancellationToken);
+        await LegacyTestAccounts.UpdateForTestAsync(new MongoClient(uri).GetDatabase(databaseName), player.Id,
+            Builders<LegacyPlayerDocument>.Update.Inc(row => row.Gold, 1), cancellationToken);
 
         bool staleRejected = false;
         try

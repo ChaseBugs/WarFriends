@@ -50,11 +50,15 @@ EXPECTED_SHAPES = (8, 78, 31, 11)  # mesh, box, capsule, sphere
 
 def blocks_in(path):
     source = path.read_bytes()
+    return source, blocks_from(source)
+
+
+def blocks_from(source):
     blocks = {int(match.group(2)): (int(match.group(1)), match.group(3))
               for match in re.finditer(
                   r"^--- !u!(\d+) &(\d+)\r?\n(.*?)(?=^--- !u!|\Z)",
                   source.decode("utf-8-sig"), re.M | re.S)}
-    return source, blocks
+    return blocks
 
 
 def prefab_paths():
@@ -151,12 +155,8 @@ def prefab_colliders(name, component_id, guid, path):
     }
 
 
-def main():
-    if sys.argv[1:] not in ([], ["--check"]):
-        raise SystemExit("usage: extract_coop_prefab_colliders.py [--check]")
-    scene, blocks = blocks_in(MAIN_SCENE)
-    if hashlib.sha256(scene).hexdigest() != MAIN_SCENE_SHA256:
-        raise ValueError("MainScene changed")
+def build_document(scene):
+    blocks = blocks_from(scene)
     paths = prefab_paths()
     prefabs = []
     selected_guids = set()
@@ -188,17 +188,24 @@ def main():
     wheel_count = sum(prefab["wheelColliderCount"] for prefab in prefabs)
     if len(prefabs) != 32 or counts != EXPECTED_SHAPES or wheel_count != 14:
         raise ValueError(f"battle prefab collider set changed: {counts}")
-    artifact = {"version": 1, "mainSceneSha256": MAIN_SCENE_SHA256,
-                "prefabs": prefabs, "networkEntries": network_entries}
+    return {"version": 1, "mainSceneSha256": hashlib.sha256(scene).hexdigest(),
+            "prefabs": prefabs, "networkEntries": network_entries}
+
+
+def main():
+    if sys.argv[1:] not in ([], ["--check"]):
+        raise SystemExit("usage: extract_coop_prefab_colliders.py [--check]")
+    scene = MAIN_SCENE.read_bytes()
+    if hashlib.sha256(scene).hexdigest() != MAIN_SCENE_SHA256:
+        raise ValueError("MainScene changed")
+    artifact = build_document(scene)
     encoded = (json.dumps(artifact, indent=2) + "\n").encode("utf-8")
     if sys.argv[1:] == ["--check"]:
         if OUTPUT.read_bytes() != encoded:
             raise ValueError("battle prefab colliders differ from source")
     else:
         OUTPUT.write_bytes(encoded)
-    print(f"{len(prefabs)} prefabs, {sum(counts)} colliders "
-          f"(mesh={counts[0]}, box={counts[1]}, capsule={counts[2]}, "
-          f"sphere={counts[3]}); {wheel_count} vehicle WheelColliders")
+    print(f"{len(artifact['prefabs'])} prefabs; collider inventory verified")
 
 
 if __name__ == "__main__":

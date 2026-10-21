@@ -1,0 +1,496 @@
+{
+  "schemaVersion": 1,
+  "clientVersion": "1.4.0",
+  "sourceSha256": {
+    "ServerResponseHandler.ProcessBuffer": "b5d7e63e51b6f57f2299a529db85d50ba2008b395c00f68e81355274f2f19023",
+    "StringParser": "18c73c5822ce89447dda8ea5ddfe83584ac9fd9ce1926fb75359a367b5f0fbd2",
+    "DatabaseAction": "b7f79fdfd7928bfb8c04d3806264c769959618a183ff80e79af0a6ea53e62166",
+    "DatabaseResult": "8a90810249f723487efb703f1e30cb752c56ac5a4edc06aed025fdb40cc63c2d",
+    "GameItem": "e606505c020db57105741c3d1a4f72805dc5aaca05a29ab9e266c58ed47feaa9",
+    "Rank.DisplayNumber": "fac7b20a86721602a413ff4b2b087346dddad2bd73d63628c22b1ba185f13b8e",
+    "Rank.WeaponPurchase": "ab1ab698d12857b423c45fc1459b6ef39621dd2e9ced11d57fdcc69d06de9bb1",
+    "Rank.UnitPurchase": "e305852772507cd5cbe4759b4d34e84e44fc549ea363f6ff1b68344ba08ad036",
+    "Rank.VisualIndex": "cb6187cf5b9a3aab0d3f0a0c115e014ee0a627e8e4ee178cf6b90cafc23dd07b",
+    "Rank.VisualUnlock": "86684501fcc84abca10dcfced71dd67f6a900c3e58996114163e0e3f4c8c4aa1",
+    "Rank.Promotion": "14868e5f68db2b995593435a25df239ed2437ed01bfdd64f8bc9ed5937b7d7e8",
+    "Upgrade.WeaponMaximum": "369eeab1cbcfc3f66ac98973ce715ae6033d550b6d55a401d19fc9ea34e92b29",
+    "Upgrade.WeaponCanBuy": "1dc2fed804c198afbc32145db1a0b38f997c4e798146b99f8920d9f0671c3a25",
+    "Upgrade.UnitMaximum": "1180801f795a1641abe59aea7f2b772ef3b73731b163f555a39c64e1cbb287cd",
+    "Upgrade.UnitTierMaximum": "6e7cb31e08d8f6d086c0138e20469cd5fbb5dd22820832d8210fb77623188487",
+    "Upgrade.UnitIsMax": "5d3196a410f659832485fcccdd3ce9e48ed86eca6dd325b5ec56b69d20a281c2",
+    "Upgrade.NormalId": "2cfb1fef2c9139c2a2abc619d2499bd388dd35529fef41c9b6d47f685b7856d2",
+    "Upgrade.EliteId": "595b83b007561a3dbc9333ad954a810d1af80cd994ecba0390a9589639ae0033",
+    "Upgrade.EliteUnlocked": "0f2bda876f9b51935dc85a6c26a98cb051bc02f12da1e18094029e5c30509858",
+    "Upgrade.EliteIsMax": "d2081b7d23bf1641a07f9855fab91f51ca21827aa76f3a087c31499385554774",
+    "Upgrade.EliteTierMaximum": "52b49bf1e12a01efc96aedaf7814514c2aa2cde6dead345275e9a6bdc4847e39",
+    "DogTags.Manager": "7bdbde46218768b331c3d33b6a21fa92bcf8408076eb5d6eb978c75d576d98b5",
+    "DogTags.VipActive": "2fee652cc39523143db90aece366900641eaa3f33192a53611d4fea4e2b310ec",
+    "DogTags.PayBuilder": "8a3cd52f5cb82863cf53243c1d11999b5395cb15c3ad2acca74a0ab3128fd2a0",
+    "DogTags.RefillBuilder": "2322700105df4b9cdf7273413220e9e10c4f0523d85f4e0525e975ee9f835f53",
+    "DogTags.PayCallback": "688d3a3d209428b618214182dfd7ba9bcac47d6a662fe43aa40781d5cf6f0730",
+    "DogTags.RefillCallback": "4f97f32d842066462fd3cb459e4be75f998a402f8dd1293462872002f307d2a9",
+    "DogTags.VipCallback": "6868740a6888c9ef525a5e76fe7be3e7930d2c8a4d49d665c60f8bf5e23f701e",
+    "Settings.Model": "49cb1c4cdaab32318bc609a92bd5e60a1d2c71afc7da23f21f0d541f642d4d34",
+    "Settings.Defaults": "4575cde218648898867e5ee7c113058bf7e08994ed3f231432d382a8bbec3177",
+    "Settings.Builder": "206ae3fefad3e001151febc147e98d8438c408125bb117d74891fc6ec5c17b05",
+    "Settings.Callback": "411e1ed9b82c9363e0f3aaeb73a1094f9eb169c9b2afb25d735a618f9dc7c8dc",
+    "Root.ArmyPowerScale": "4b7c0891598d005af41da3bdaa3dc468acd2efb8b4dbdc42196527ac7fc44cda",
+    "Root.League": "ecf9143f79409a76e52691c0c6b1a208a9beddd842c6acf8e1520f5513184561",
+    "Root.BeginnerNames": "aa3be1369fa10a387ad6868bcaff73368230827a90067d0d1da57f0efdf09004",
+    "Profile.StatusBuilder": "d1bad76d0b2a7e522f61da03c1eb4f64df0fd2b136977b4533f6360413cc191b",
+    "Profile.DeviceBuilder": "12818efd567c5fa3313a0f6d6a7114472984558112ba60241f59af843a65b3b2",
+    "Profile.LanguageBuilder": "7d84302205a4ebab3ef97dfc0fbfd52aa7d2bf0364f1640e644e711eff8cf70b",
+    "Profile.CountryBuilder": "6933bb81cb22c8387c15d41cd4e4fe5e1e9ce05381e0b90f7c77ea11304f6f5f",
+    "Profile.RenameBuilder": "0ca6a053acab1447e570a9ad40fe35f873e8714a51281d6bd3c45cc5bc72b562",
+    "Profile.StatusCallback": "6cb6a3156c68f26820fc8500b0b6dec67f15fe0c55207ff257bb52b5ef9f2daa",
+    "Profile.DeviceCallback": "582da893654fd9a185074fa4c62b3f357ee20d2b69b65edd7b83dfbf02ef3b9c",
+    "Profile.LanguageCallback": "d7b6b30df5fd4128f55cc66a7c8913d69b38e41e01056026fc58eec5ba5cf842",
+    "Profile.RenameCallback": "366158a01fab9a14d1d5d9624b1bfcf7dc9bb49062821e54f2b8932a3be2980a",
+    "Profile.RenamePrice": "9860f388d1f20389fee4a802027ea2e3c79c456be80c3ea407f4dcd37c2b147a",
+    "Profile.StatusEnum": "4e5273316e74d924a5abefa845b46b369c8d432203d382693e1d3c828b817ca0",
+    "Profile.RenameFailure": "b5dc3c3fbb5786237cf3487ff96163a5cf3c4b3fd031c31031a5f8b753dc29f3",
+    "Analytics.Fields": "c9049f7f1137f62c5f892164ea649e7120aff50c4050801cd4b1d3da22bde2a9",
+    "Analytics.Transaction": "08c9bf78cf1e2d53d00747cad7387fca40c455c668feb22b2cffd1770b557a6a",
+    "Analytics.Defaults": "3c49bf3166a06a7dcc702e5651787d434aa22113e62a6d741224dbd50466586b",
+    "Analytics.LastSeen": "3dd968a35c4e9253b1f892b26d6707b5cd2a4b9fe064d93a76a524b90bf6c5d9",
+    "Analytics.ElitesBuilder": "1dc64931f77c357a9d4f033cb15dd8cdbd9bcc4a24397842ad7908c0118507ea",
+    "Analytics.ElitesCallback": "905dfcb20846782cf8154280dc1eb3b42d825de12a458fce9557e0eb238177c5",
+    "Analytics.Builder.ChatShown": "e6236b34e5297228ef8a1a23c9097596e9e257aaffffad19c91ff542133cc295",
+    "Analytics.Builder.CustomizationShown": "628110986807cd0a0325ae6fbbe9ce691ceff6eaf2d6cab5438d46882894b078",
+    "Analytics.Builder.WarpathShown": "b3589ec4ed7eab34879cc689cabcd4d422e3beea7a8ea642c9b4dc75396cbc2a",
+    "Analytics.Builder.CardpoolShown": "f335a9ab62864e1d624d1468befcd3ab160653a17d6106dfc325e68a84d10a78",
+    "Analytics.Builder.CraftingShown": "e73d5ca8462ab77670d87e7ae609b78fbe97600db477d28c114c335a091d797b",
+    "Analytics.Builder.LeagueLeaderboardsShown": "ef4842717620167960cd87dd8bb0c80f70befe79370ac8acc20e91322807e5c5",
+    "Analytics.Callback.OnChatShownFirstTime": "5d5b5a2835d00feb4a781d88c23faa8075f9c248b449bbb39ac6ffbc09d4b440",
+    "Analytics.Callback.OnCustomizationShown": "40dc334eb7102b46ecb74bc129cb8e15eab5cd4aee412236ca45ca0d9954ebca",
+    "Analytics.Callback.OnWarpathShown": "882dfdebec16af2b26428e8a132251ff9df5834ffab6da790988827b8036d0c1",
+    "Analytics.Callback.OnCardpoolShown": "83a0345fa27ce3032ece886f2ff51c3068931fba376a99606ea82ce11e0ec158",
+    "Analytics.Callback.OnCraftingShown": "449944dbc5750c098ee5a54009f27a867da4a936b260af2b7faf91d68c3aba0a",
+    "Tutorial.StartBuilder": "10a55bef10a0dc4eca5cd8792a0d1a9ae6ef7a70988b26ca8f36dc41f7361388",
+    "Tutorial.EndBuilder": "73b3cfdb1f10b9ec4ec59f46d13ca9ae8546c4ce132580d15c5b0ac4363cabdb",
+    "Tutorial.StartCallback": "aa82cbbd3191fcb6b9ec7fc4d160fa6b1e4bad3edf6b75b1c27ac595e3cdb354",
+    "Tutorial.Dispatch": "f755b9cd88a58395cfce785495be664c13d89e523c15410309119e5e1edd1192",
+    "Tutorial.ClassicCallback": "58692b237ec1b21693a8725d52be49585fca345ed3bcfa6539bafc6839a60a9e",
+    "Tutorial.CompletionExcerpt": "5a40b69504e82fe5ea414f3e6086abd9f0226b2cb4153bec6ea1a286565b1c09",
+    "Tutorial.ErrorBranch": "d615e71c506ec9f5f8c82cc5e63446cc2f0e467f283575d5c8dbbcd7e7a5b8ab"
+  },
+  "scope": "Actual ProcessBuffer and StringParser control flow; instrumented manager/UI boundaries. This is not Unity gameplay verification.",
+  "specialOffers": "NoDiscountFound calls OfferManager.UpdateFromServer with an unguarded token. The callee explicitly accepts null and clears offers.",
+  "genericResults": [
+    "ServerMaintenance",
+    "WrongPlayerData",
+    "JsonFailure",
+    "ServerRespondedWithError"
+  ],
+  "groups": [
+    {
+      "family": "weapon",
+      "actions": [
+        "BuyWeaponUpgrade",
+        "InstantWeaponUpgrade",
+        "ActivateWeaponUpgrade",
+        "BuyWeapon",
+        "WeaponWasShown",
+        "InstantBuyWeapon",
+        "ActivateWeapon"
+      ],
+      "failures": [
+        "NotEnoughWarbucks",
+        "NotEnoughLevel",
+        "AlreadyMaximumUpgrade",
+        "NotEnoughGold",
+        "WrongIndexToActivate",
+        "AlreadyUpgrading",
+        "TooSoonToActivate",
+        "PriceNotFound",
+        "PriceDidntCorrespond",
+        "NegativePriceFromClient",
+        "WeaponNotBought",
+        "NoDiscountFound"
+      ],
+      "required": [
+        "LevelName",
+        "Weapon"
+      ],
+      "guarded": [
+        "WarBucks",
+        "Gold",
+        "weaponDelivery"
+      ],
+      "successRequired": [],
+      "successGuarded": [
+        "DeliveryTime"
+      ]
+    },
+    {
+      "family": "unit",
+      "actions": [
+        "BuyUnitUpgrade",
+        "InstantUnitUpgrade",
+        "ActivateUnitUpgrade",
+        "BuyUnit",
+        "ArmyUnitWasShown",
+        "InstantBuyUnit",
+        "ActivateUnit"
+      ],
+      "failures": [
+        "NotEnoughWarbucks",
+        "NotEnoughLevel",
+        "AlreadyMaximumUpgrade",
+        "NotEnoughGold",
+        "WrongIndexToActivate",
+        "AlreadyUpgrading",
+        "TooSoonToActivate",
+        "PriceNotFound",
+        "PriceDidntCorrespond",
+        "NegativePriceFromClient",
+        "NoDiscountFound"
+      ],
+      "required": [
+        "LevelName",
+        "Unit"
+      ],
+      "guarded": [
+        "WarBucks",
+        "Gold",
+        "unitDelivery"
+      ],
+      "successRequired": [],
+      "successGuarded": [
+        "DeliveryTime"
+      ]
+    },
+    {
+      "family": "card-pack",
+      "actions": [
+        "BuyCardPack"
+      ],
+      "failures": [
+        "NotEnoughWarbucks",
+        "CardPackNotFound",
+        "NoDiscountFound"
+      ],
+      "required": [
+        "CardManagerData",
+        "Gold",
+        "WarBucks"
+      ],
+      "guarded": [],
+      "successRequired": [],
+      "successGuarded": []
+    },
+    {
+      "family": "buy-decal",
+      "actions": [
+        "BuyDecal"
+      ],
+      "failures": [
+        "NotEnoughWarbucks",
+        "NotEnoughLevel",
+        "NotEnoughGold",
+        "DecalOnlyForVip",
+        "NoDiscountFound"
+      ],
+      "required": [
+        "DecalManagerData"
+      ],
+      "guarded": [
+        "Gold",
+        "WarBucks"
+      ],
+      "successRequired": [
+        "DecalId",
+        "ExpiresOn"
+      ],
+      "successGuarded": []
+    },
+    {
+      "family": "equip-decal",
+      "actions": [
+        "EquipDecal"
+      ],
+      "failures": [
+        "DecalNotBought",
+        "DecalCategoryNotFound"
+      ],
+      "required": [
+        "DecalManagerData"
+      ],
+      "guarded": [],
+      "successRequired": [],
+      "successGuarded": [
+        "DecalManagerData"
+      ]
+    },
+    {
+      "family": "equip-weapon",
+      "actions": [
+        "EquipWeapon"
+      ],
+      "failures": [
+        "WeaponNotBought"
+      ],
+      "required": [
+        "LevelName",
+        "Weapon",
+        "InventoryData"
+      ],
+      "guarded": [],
+      "successRequired": [],
+      "successGuarded": []
+    },
+    {
+      "family": "equip-units",
+      "actions": [
+        "UpdateEquippedUnits"
+      ],
+      "failures": [
+        "CantEquipUnit"
+      ],
+      "required": [],
+      "guarded": [
+        "data"
+      ],
+      "successRequired": [],
+      "successGuarded": []
+    },
+    {
+      "family": "elite",
+      "actions": [
+        "UpgradeEliteSlot"
+      ],
+      "failures": [
+        "WrongIndexToActivate",
+        "NotEnoughWarbucks",
+        "NotEnoughParts",
+        "IncorrectValuesOnClient"
+      ],
+      "required": [],
+      "guarded": [],
+      "successRequired": [],
+      "successGuarded": []
+    },
+    {
+      "family": "parts",
+      "actions": [
+        "ConvertPartsToScraps"
+      ],
+      "failures": [
+        "EliteSlotLocked",
+        "IncorrectPartsAmount"
+      ],
+      "required": [],
+      "guarded": [],
+      "successRequired": [],
+      "successGuarded": []
+    },
+    {
+      "family": "scraps",
+      "actions": [
+        "ConvertScrapsToParts"
+      ],
+      "failures": [
+        "NotEnoughScraps"
+      ],
+      "required": [],
+      "guarded": [],
+      "successRequired": [],
+      "successGuarded": []
+    },
+    {
+      "family": "no-dedicated-rollback",
+      "actions": [
+        "VisualWasShown",
+        "PromoteUnit",
+        "SaveLastSeenSquadChatTimeStamp"
+      ],
+      "failures": [],
+      "required": [],
+      "guarded": [],
+      "successRequired": [],
+      "successGuarded": []
+    }
+  ],
+  "dependencySha256": {
+    "Clients/ExportedProject/Assets/Plugins/Newtonsoft.Json.dll": "d336648fe52520a662c548cea98f0948bb3eca823e7c5eb78c917de535d3d596",
+    "Clients/AuxiliaryFiles/GameAssemblies/UnityEngine.dll": "e428db4e8652f5d548024ccbbb994dc1636a3c4ad374bac48e18e2fd5db6c76b"
+  },
+  "serverResults": {
+    "ActivateUnit": [
+      "Success",
+      "TooSoonToActivate",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "ActivateUnitUpgrade": [
+      "Success",
+      "TooSoonToActivate",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "ActivateWeapon": [
+      "Success",
+      "TooSoonToActivate",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "ActivateWeaponUpgrade": [
+      "Success",
+      "TooSoonToActivate",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "ArmyUnitWasShown": [
+      "Success",
+      "WrongPlayerData"
+    ],
+    "BuyCardPack": [
+      "CardPackNotFound",
+      "NoDiscountFound",
+      "NotEnoughWarbucks",
+      "ServerMaintenance",
+      "Success",
+      "WrongPlayerData"
+    ],
+    "BuyDecal": [
+      "DecalOnlyForVip",
+      "NoDiscountFound",
+      "NotEnoughGold",
+      "NotEnoughLevel",
+      "NotEnoughWarbucks",
+      "PriceNotFound",
+      "Success",
+      "WrongPlayerData"
+    ],
+    "BuyUnit": [
+      "NoDiscountFound",
+      "NotEnoughGold",
+      "NotEnoughLevel",
+      "NotEnoughWarbucks",
+      "PriceNotFound",
+      "ServerMaintenance",
+      "Success",
+      "WrongPlayerData"
+    ],
+    "BuyUnitUpgrade": [
+      "AlreadyMaximumUpgrade",
+      "AlreadyUpgrading",
+      "NoDiscountFound",
+      "NotEnoughGold",
+      "NotEnoughWarbucks",
+      "PriceNotFound",
+      "ServerMaintenance",
+      "Success",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "BuyWeapon": [
+      "NoDiscountFound",
+      "NotEnoughGold",
+      "NotEnoughLevel",
+      "NotEnoughWarbucks",
+      "PriceNotFound",
+      "ServerMaintenance",
+      "Success",
+      "WeaponNotBought",
+      "WrongPlayerData"
+    ],
+    "BuyWeaponUpgrade": [
+      "AlreadyMaximumUpgrade",
+      "AlreadyUpgrading",
+      "NoDiscountFound",
+      "NotEnoughGold",
+      "NotEnoughWarbucks",
+      "PriceNotFound",
+      "Success",
+      "WeaponNotBought",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "ConvertPartsToScraps": [
+      "EliteSlotLocked",
+      "IncorrectPartsAmount",
+      "ServerMaintenance",
+      "Success",
+      "WrongPlayerData"
+    ],
+    "ConvertScrapsToParts": [
+      "NotEnoughScraps",
+      "ServerMaintenance",
+      "Success",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "EquipDecal": [
+      "DecalCategoryNotFound",
+      "DecalNotBought",
+      "Success",
+      "WrongPlayerData"
+    ],
+    "EquipWeapon": [
+      "Success",
+      "WeaponNotBought",
+      "WrongPlayerData"
+    ],
+    "InstantBuyUnit": [
+      "NotEnoughGold",
+      "ServerMaintenance",
+      "Success",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "InstantBuyWeapon": [
+      "NotEnoughGold",
+      "ServerMaintenance",
+      "Success",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "InstantUnitUpgrade": [
+      "NotEnoughGold",
+      "ServerMaintenance",
+      "Success",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "InstantWeaponUpgrade": [
+      "NotEnoughGold",
+      "ServerMaintenance",
+      "Success",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "PromoteUnit": [
+      "NotEnoughLevel",
+      "PriceNotFound",
+      "Success",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "SaveLastSeenSquadChatTimeStamp": [
+      "Success",
+      "WrongPlayerData"
+    ],
+    "UpdateEquippedUnits": [
+      "CantEquipUnit",
+      "Success",
+      "WrongPlayerData"
+    ],
+    "UpgradeEliteSlot": [
+      "IncorrectValuesOnClient",
+      "NotEnoughParts",
+      "NotEnoughWarbucks",
+      "Success",
+      "WrongIndexToActivate",
+      "WrongPlayerData"
+    ],
+    "VisualWasShown": [
+      "Success",
+      "WrongPlayerData"
+    ],
+    "WeaponWasShown": [
+      "Success",
+      "WrongPlayerData"
+    ]
+  }
+}

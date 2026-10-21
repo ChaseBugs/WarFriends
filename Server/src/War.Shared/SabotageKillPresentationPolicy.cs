@@ -39,9 +39,7 @@ namespace War.Shared
 
         private static bool CanonicalId(string value)
         {
-            Guid parsed;
-            return Guid.TryParseExact(value, "N", out parsed) &&
-                value == value.ToLowerInvariant();
+            return War.Shared.CanonicalGuid.IsCanonical(value);
         }
     }
 }

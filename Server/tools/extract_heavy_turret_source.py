@@ -1,5 +1,6 @@
 """Pin recovered CardHeavyTurret placement, progression rows and prefab weapon graph."""
 
+import argparse
 import hashlib, json, math, re, sys
 from pathlib import Path
 
@@ -151,28 +152,43 @@ def extract_prefab():
                       "bulletSource":"Assets/GameObject/BulletSlow.prefab","bulletSha256":digest(bullet_path)},
             "meshComponentFileIds":[i for i,_ in meshes],"colliders":collider_rows}
 
-def main():
-    content=json.loads(CONTENT.read_text(encoding="utf-8"))
+def build_document(scene_bytes, content_bytes):
+    content=json.loads(content_bytes)
+    scene_hash = hashlib.sha256(scene_bytes).hexdigest()
+    if content["mainSceneSha256"] != scene_hash:
+        raise ValueError("Heavy Turret content differs from MainScene")
     rows=next(s["rows"] for s in content["sheets"] if s["type"]=="Google2u.DBUpgradeSlotsHeavyTurret")
     if len(rows)!=2: raise ValueError("HeavyTurret stat endpoints changed")
     army_rows=next(s["rows"] for s in content["sheets"] if s["type"]=="Google2u.ArmyUpgrades")
     army=next((x for x in army_rows if x["NAME"]=="Google2u.DBUpgradeSlotsHeavyTurret"),None)
     if army is None: raise ValueError("HeavyTurret army policy missing")
-    main_path=ASSETS/'Scenes/MainScene.unity';main_blocks=blocks(main_path.read_text(encoding='utf-8-sig'))
+    main_blocks=blocks(scene_bytes.decode("utf-8-sig").replace("\r\n", "\n"))
     behaviors=[(i,b) for i,(k,b) in main_blocks.items() if k==114 and 'guid: fd71049152d87b95a9002e247514a2c9' in b]
     if len(behaviors)!=1 or int(field(behaviors[0][1],'unitType'))!=0: raise ValueError('Heavy Turret source target group changed')
-    artifact={"version":5,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
-              "behavior":{"source":"Assets/Scenes/MainScene.unity","sha256":digest(main_path),"componentFileId":behaviors[0][0],"unitType":0},
+    return {"version":5,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
+              "behavior":{"source":"Assets/Scenes/MainScene.unity","sha256":scene_hash,"componentFileId":behaviors[0][0],"unitType":0},
               "maxDisplayLevel":44,"stats":rows,
               "armyPolicy":{"bulletSpeed":army["BULLETSPEED"],"playerDamageRatio":army["PLAYERDAMAGERATIO"],
                              "playerOvertimeDamageRatio":army["PLAYERDAMAGEOVERTIMERATIO"],
                              "playerBehindShieldDamageRatio":army["PLAYERBEHINDSHIELDDMGRATIO"],
                              "shieldHitProbability":army["HITSHIELDPROB"]},
               "prefab":extract_prefab(),"maps":[extract_map(x) for x in content["maps"]]}
-    serialized=json.dumps(artifact,indent=2,ensure_ascii=False)+"\n"
-    if sys.argv[1:]==["--check"]:
-        if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8")!=serialized: raise ValueError("Heavy Turret artifact is stale")
-    elif not sys.argv[1:]: OUTPUT.write_text(serialized,encoding="utf-8")
-    else: raise ValueError("usage: extract_heavy_turret_source.py [--check]")
-    print(f"{len(artifact['maps'])} maps, {sum(len(c['slots']) for m in artifact['maps'] for c in m['covers'])} Heavy Turret slots")
-if __name__=="__main__": main()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate without writing production content")
+    args = parser.parse_args()
+    artifact = build_document((ASSETS / "Scenes/MainScene.unity").read_bytes(), CONTENT.read_bytes())
+    serialized = (json.dumps(artifact, indent=2, ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
+    if args.check:
+        if not OUTPUT.exists() or OUTPUT.read_bytes() != serialized:
+            raise ValueError("Heavy Turret artifact is stale")
+    else:
+        OUTPUT.write_bytes(serialized)
+    slots = sum(len(cover['slots']) for row in artifact['maps'] for cover in row['covers'])
+    print(f"{len(artifact['maps'])} maps, {slots} Heavy Turret slots")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../War.Shared/War.Shared.csproj" />
+    <EmbeddedResource Include="../../content/recovered-ordinary-card-identities.json"
+                      LogicalName="War.BattleServer.OrdinaryCardIdentities" />
+    <EmbeddedResource Include="../../content/recovered-grenade-rig.json"
+                      LogicalName="War.BattleServer.GrenadeRig" />
+  </ItemGroup>
+</Project>

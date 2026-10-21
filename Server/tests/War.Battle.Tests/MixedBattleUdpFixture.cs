@@ -49,9 +49,7 @@ internal sealed class MixedBattleUdpFixture : IAsyncDisposable
                 player.ArmyNormalUpgradeIndexes!, player.ArmySpecialUpgradeIndexes!, player.ArmyEliteUpgradeIndexes!))
                 .ToArray()
         });
-        RunDirectory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(directory))!, ".local",
-            "mixed-grenade-udp-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(RunDirectory);
+        RunDirectory = Directory.CreateTempSubdirectory("warfriends-mixed-grenade-udp-").FullName;
         string manifestPath = Path.Combine(RunDirectory, "manifest.json");
         File.WriteAllBytes(manifestPath, JsonSerializer.SerializeToUtf8Bytes(Manifest));
         _port = ReservePort();
@@ -113,7 +111,7 @@ internal sealed class MixedBattleUdpFixture : IAsyncDisposable
         };
     }
 
-    /// <summary>Stops and disposes only this fixture's Worker; retained artifacts stay under Server/.local.</summary>
+    /// <summary>Stops only this fixture's Worker; artifacts follow the caller's temporary root.</summary>
     public async ValueTask DisposeAsync()
     {
         try

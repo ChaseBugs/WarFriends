@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "description": "Two identical original-engine captures after C31/C32, before flame/poison ownership extraction. Includes prior server terminal poison retention, not certified Client terminal policy. Hashes record historical capture inputs, not current pins.",
+  "observations": 16238,
+  "inputs": {
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.Army.cs": "4da83a08f74fec0f178d02cec2ac882cf5c13f1179384da85ce7bceb25bd6aaa",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.cs": "44aabc29dfba187331d78ec2e970389f4e878788d91774e85de49ccb4bf619ce",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.Events.cs": "c2da97e015e024abda8ddb6633c36626c01549acd8df7dc1dc5ed49e4316edfb",
+    "Server/src/War.Battle.Simulation/Match/MatchEngine.PvpBonuses.cs": "fb370602ac8cc94a6db84849754bccaa93d1c67aac60790dacca39cae0bdcfe5",
+    "Server/src/War.Battle.Simulation/Army/ArmyFlameBurst.cs": "b6b49be429a6c3ccc38ab26848ccf6765af914d2a7cbcc28576f3c0f680059f7",
+    "Server/src/War.Battle.Simulation/Army/ArmyFlamePulseClock.cs": "7df5a3be8bcbef39cd9b2cb611d59b3daef99e57ab881c2fb737a0cabe865024",
+    "Server/src/War.Battle.Simulation/Army/ArmyPoisonEffect.cs": "c64ee12e9e54b24993fb3b64fabd92870a925fb7b59952a7d8164c580c20b850",
+    "Server/tests/War.Battle.Tests/OrdinaryArmyTestHost.cs": "17e4a819c0a167d9b547e0e3d8f0efd0711ede33e6806c4e47e990422860d815",
+    "Server/tests/War.Battle.Tests/Match/Tracing/MatchEngineTrace.cs": "f91f35c311f2fbf0c69951222eac2028ab966e7e0778670ab3d536964bd3ae14",
+    "Server/tests/War.Battle.Tests/Match/Effects/PvpArmyEffectTraceFixture.cs": "90eb4fbacc5460c3200350bfd6e60d09de3582d3201dfd3654c1397ed45d3afe",
+    "Server/tests/War.Battle.Tests/Match/Effects/PvpArmyEffectTraceTests.cs": "acc08550494c2b5d04ef2d9cec890fe1f057f0d3f122dcf2829709eaab423121",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/FlameAmmo.cs": "348d1eede592505e1edff070a6593a18d7c46e77a5b6df4f862c8cd2f9eb511a",
+    "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BulletPoison.cs": "8972c5054a6f17a97a8bc5b11d69b36f488cd6375a4a75e5b1211b80391945a7",
+    "Server/content/recovered-rusher-weapon-bindings.json": "3c1d9f194edc2e023be94eb5832e7c43a93abbcd87de1f3bf83a72cd3c9efcba"
+  }
+}

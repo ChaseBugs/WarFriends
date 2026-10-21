@@ -1,10 +1,10 @@
 """Pin recovered CardLandmine placement, damage, setup and prefab geometry."""
 
+import argparse
 import hashlib
 import json
 import math
 import re
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -128,11 +128,10 @@ def setup_number(block, name):
     return result
 
 
-def extract_main_scene(expected_digest):
-    path = ASSETS / "Scenes/MainScene.unity"
-    if digest(path) != expected_digest:
+def extract_main_scene(scene_bytes, expected_digest):
+    if hashlib.sha256(scene_bytes).hexdigest() != expected_digest:
         raise ValueError("MainScene changed")
-    source = blocks(path.read_text(encoding="utf-8-sig"))
+    source = blocks(scene_bytes.decode("utf-8-sig").replace("\r\n", "\n"))
     mines = [(i, block) for i, (kind, block) in source.items()
              if kind == 114 and f"guid: {MINE_GUID}" in block]
     if len(mines) != 2:
@@ -179,30 +178,37 @@ def extract_prefab():
                      "localPosition": world(source, mesh_transform), "asset": field(mesh, "m_Mesh")}}
 
 
-def main():
-    content = json.loads(CONTENT.read_text(encoding="utf-8"))
+def build_document(scene_bytes, content_bytes):
+    content = json.loads(content_bytes)
     constants = {}
     for sheet in content["sheets"]:
         for row in sheet["rows"]:
             if row.get("DBKEY") in ("LandMineDamageMin", "LandMineDamageMax"):
+                if row["DBKEY"] in constants:
+                    raise ValueError("Duplicate Land Mine damage constant")
                 constants[row["DBKEY"]] = row["FLOATVALUE"]
     if constants.keys() != {"LandMineDamageMin", "LandMineDamageMax"}:
         raise ValueError("missing Land Mine damage constants")
-    artifact = {"version": 1, "client": "1.4.0", "spawnLimit": 3,
+    return {"version": 1, "client": "1.4.0", "spawnLimit": 3,
                 "navMeshSampleRadius": 10.0, "navMeshAreaMask": 1,
                 "damage": {"minimum": constants["LandMineDamageMin"],
                            "maximum": constants["LandMineDamageMax"], "cardScale": 0.1,
                            "playerRadiusCoefficient": 0.9},
-                "mainScene": extract_main_scene(content["mainSceneSha256"]),
+                "mainScene": extract_main_scene(scene_bytes, content["mainSceneSha256"]),
                 "prefab": extract_prefab(), "maps": [extract_map(row) for row in content["maps"]]}
-    serialized = json.dumps(artifact, indent=2, ensure_ascii=False) + "\n"
-    if sys.argv[1:] == ["--check"]:
-        if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != serialized:
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate without writing production content")
+    args = parser.parse_args()
+    artifact = build_document((ASSETS / "Scenes/MainScene.unity").read_bytes(), CONTENT.read_bytes())
+    serialized = (json.dumps(artifact, indent=2, ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
+    if args.check:
+        if not OUTPUT.exists() or OUTPUT.read_bytes() != serialized:
             raise ValueError("Land Mine source artifact is stale")
-    elif not sys.argv[1:]:
-        OUTPUT.write_text(serialized, encoding="utf-8")
     else:
-        raise ValueError("usage: extract_landmine_source.py [--check]")
+        OUTPUT.write_bytes(serialized)
     print(f"{len(artifact['maps'])} maps, {sum(len(x['slots']) for x in artifact['maps'])} Land Mine hiding slots")
 
 

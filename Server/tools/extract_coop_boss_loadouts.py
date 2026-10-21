@@ -153,18 +153,15 @@ def last_unlocked(weapons, category, level):
     return chosen
 
 
-def main():
-    if sys.argv[1:] not in ([], ["--check"]):
-        raise SystemExit("usage: extract_coop_boss_loadouts.py [--check]")
-    scene_bytes = SCENE.read_bytes()
-    weapons = scene_weapon_rows(scene_bytes.decode("utf-8-sig"),
-                                level_manager_order())
-    bots = json.loads(BOTS.read_bytes())
-    attack_bytes = ATTACKS.read_bytes()
+def build_document(scene_bytes, bot_bytes, attack_bytes):
+    bots = json.loads(bot_bytes)
     attacks = json.loads(attack_bytes)
     if bots["missionSourceSha256"] != hashlib.sha256(scene_bytes).hexdigest() or \
             attacks["sceneSha256"] != bots["missionSourceSha256"]:
         raise ValueError("boss loadout input revisions differ")
+    if attacks["botRulesSha256"] != hashlib.sha256(bot_bytes).hexdigest():
+        raise ValueError("boss attacks do not bind the exact bot rules")
+    weapons = scene_weapon_rows(scene_bytes.decode("utf-8-sig"), level_manager_order())
     missions = []
     for bot, attack in zip(bots["bots"], attacks["missions"], strict=True):
         if bot["missionIndex"] != attack["missionIndex"]:
@@ -181,7 +178,7 @@ def main():
                           "sheetName": weapon["sheetName"]})
         missions.append({"missionIndex": bot["missionIndex"],
                          "level": bot["bot"]["level"], "slots": slots})
-    artifact = {
+    return {
         "version": 1,
         "sceneSha256": hashlib.sha256(scene_bytes).hexdigest(),
         "obbSha256": SOURCE_OBB_SHA256,
@@ -191,7 +188,13 @@ def main():
         "weapons": weapons,
         "missions": missions,
     }
-    encoded = (json.dumps(artifact, indent=2) + "\n").encode()
+
+
+def main():
+    if sys.argv[1:] not in ([], ["--check"]):
+        raise SystemExit("usage: extract_coop_boss_loadouts.py [--check]")
+    artifact = build_document(SCENE.read_bytes(), BOTS.read_bytes(), ATTACKS.read_bytes())
+    encoded = (json.dumps(artifact, indent=2, allow_nan=False) + "\n").encode()
     if sys.argv[1:] == ["--check"]:
         if OUTPUT.read_bytes() != encoded:
             raise ValueError("boss loadouts differ from source weapon order")

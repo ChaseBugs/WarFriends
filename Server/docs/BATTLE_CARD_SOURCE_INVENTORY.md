@@ -2,7 +2,7 @@
 
 Source: `Clients/ExportedProject/Assets/Scenes/MainScene.unity`
 `CardDefinitions.Rows`, cross-checked against
-`Server/src/War.BattleServer/WarCardSourceIdentityCatalog.cs` and
+`Server/src/War.Battle.Domain/Cards/WarCardSourceIdentityCatalog.cs` and
 the normal Client `CardManager.UseSelfHostedCard` dispatcher.
 The scene contains 67 unique rows: 57 marked `IMPLEMENTED: 1` and
 10 marked `IMPLEMENTED: 0`. A scene flag does not prove that the

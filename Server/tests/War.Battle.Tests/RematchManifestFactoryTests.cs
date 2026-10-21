@@ -5,6 +5,7 @@ using War.Backend;
 using War.Backend.Legacy;
 using War.BattleServer;
 using War.Persistence;
+using War.Battle.Tests.Support;
 using War.Shared;
 
 /// <summary>Checks current durable equipment against ordered source manifests on real MongoDB.</summary>
@@ -26,7 +27,7 @@ internal static class RematchManifestFactoryTests
             string[] players = [new string('b', 32), new string('a', 32)];
             foreach (string playerId in players)
             {
-                await SeedAsync(legacy, playerId, deadline.Token);
+                await SeedAsync(mongo.GetDatabase(databaseName), playerId, deadline.Token);
                 await allocations.Put(new BattleAllocationProjection(playerId, [], [], [], [], []), deadline.Token);
             }
             string content = FindContent();
@@ -108,7 +109,7 @@ internal static class RematchManifestFactoryTests
             staleArmy.Digest(), nextId, cancellationToken));
     }
 
-    private static async Task SeedAsync(LegacyPlayerStore store, string playerId, CancellationToken cancellationToken)
+    private static async Task SeedAsync(IMongoDatabase database, string playerId, CancellationToken cancellationToken)
     {
         var decals = new DecalManagerData();
         for (int slot = 0; slot < 4; slot++)
@@ -119,7 +120,7 @@ internal static class RematchManifestFactoryTests
         inventory.Slots[0] = new SerializedSlotDetail { Name = RifleId, WeaponIndex = 1 };
         var levels = new LevelManagerData();
         levels.SavedWeapons[RifleId] = new SavedWeaponSlots { Bought = true, BoughtIndex = 0 };
-        await store.Insert(new LegacyPlayerDocument
+        await LegacyTestAccounts.InsertAsync(database, new LegacyPlayerDocument
         {
             Id = playerId, Name = "OriginalPlayer", Locale = "en", Country = "US", Level = 1,
             ArmyPower = 1, LeagueId = "1-local", CreatedUtc = DateTime.UtcNow,
@@ -131,7 +132,7 @@ internal static class RematchManifestFactoryTests
                 ["InventoryData"] = PlayerState.Write(inventory),
                 ["LevelManagerData"] = PlayerState.Write(levels),
             },
-        }, LegacyPlayerStore.NewPassword(), cancellationToken);
+        }, cancellationToken);
     }
 
     private static async Task UpdateEquipmentAsync(IMongoDatabase database, string playerId,
