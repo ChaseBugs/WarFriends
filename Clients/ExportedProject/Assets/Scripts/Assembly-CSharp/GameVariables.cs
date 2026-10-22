@@ -1024,6 +1024,10 @@ public class GameVariables : Singleton<GameVariables>
 	public Tuple<float, string> RegularPriceOfPack(float sale, string id)
 	{
 		Tuple<float, string> itemPrice = Singleton<BeanstalkServerManager>.instance.inAppHandler.GetItemPrice(id);
+		if (itemPrice.Value1 < 0f)
+		{
+			return itemPrice;
+		}
 		string itemCountryCode = Singleton<BeanstalkServerManager>.instance.inAppHandler.GetItemCountryCode(id);
 		string cultureInfo = GetCultureInfo(itemCountryCode);
 		bool flag = Regex.IsMatch(itemPrice.Value2, "^[^0-9\\.\\,].*$");

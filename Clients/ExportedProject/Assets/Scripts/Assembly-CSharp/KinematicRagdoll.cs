@@ -61,7 +61,7 @@ public class KinematicRagdoll : MonoBehaviour
 			transform.GetComponent<Rigidbody>().angularDrag = angularDrag;
 			transform.GetComponent<Rigidbody>().drag = drag;
 			transform.GetComponent<Rigidbody>().maxAngularVelocity = maxAngularVelocity;
-			transform.GetComponent<Rigidbody>().isKinematic = true;
+			RigidbodyKinematicMode.Set(transform.GetComponent<Rigidbody>(), true);
 			newSize++;
 		}
 		if (newSize == 0)
@@ -106,7 +106,7 @@ public class KinematicRagdoll : MonoBehaviour
 		foreach (Transform transform in array)
 		{
 			Rigidbody component = transform.GetComponent<Rigidbody>();
-			component.isKinematic = false;
+			RigidbodyKinematicMode.Set(component, false);
 			if (velocityLerp > 0f)
 			{
 				component.velocity = rigidVelocities[num].ReplaceY(Mathf.Max(0.001f, component.velocity.y));

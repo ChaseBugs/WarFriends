@@ -38,95 +38,14 @@ public class PhotonPingManager
 
 	public bool Done => PingsRunning == 0;
 
-	public IEnumerator PingSocket(Region region)
-	{
-		region.Ping = Attempts * MaxMilliseconsPerPing;
-		PingsRunning++;
-		PhotonPing ping;
-		if (PhotonHandler.PingImplementation != typeof(PingNativeDynamic))
-		{
-			ping = ((PhotonHandler.PingImplementation != typeof(PingMono)) ? ((PhotonPing)Activator.CreateInstance(PhotonHandler.PingImplementation)) : new PingMono());
-		}
-		else
-		{
-			UnityEngine.Debug.Log("Using constructor for new PingNativeDynamic()");
-			ping = new PingNativeDynamic();
-		}
-		float rttSum = 0f;
-		int replyCount = 0;
-		string regionAddress = region.HostAndPort;
-		int indexOfColon = regionAddress.LastIndexOf(':');
-		if (indexOfColon > 1)
-		{
-			regionAddress = regionAddress.Substring(0, indexOfColon);
-		}
-		regionAddress = ResolveHost(regionAddress);
-		for (int i = 0; i < Attempts; i++)
-		{
-			bool overtime = false;
-			Stopwatch sw = new Stopwatch();
-			sw.Start();
-			try
-			{
-				ping.StartPing(regionAddress);
-			}
-			catch (Exception ex)
-			{
-				UnityEngine.Debug.Log("catched: " + ex);
-				PingsRunning--;
-				break;
-			}
-			while (!ping.Done())
-			{
-				if (sw.ElapsedMilliseconds >= MaxMilliseconsPerPing)
-				{
-					overtime = true;
-					break;
-				}
-				yield return 0;
-			}
-			int rtt = (int)sw.ElapsedMilliseconds;
-			if ((!IgnoreInitialAttempt || i != 0) && ping.Successful && !overtime)
-			{
-				rttSum += (float)rtt;
-				replyCount++;
-				region.Ping = (int)(rttSum / (float)replyCount);
-			}
-			yield return new WaitForSeconds(0.1f);
-		}
-		PingsRunning--;
-		yield return null;
-	}
+    public IEnumerator PingSocket(Region region)
+    {
+        // No DNS lookup or socket probe: endpoint selection belongs to the self-hosted Backend.
+        yield break;
+    }
 
-	public static string ResolveHost(string hostName)
-	{
-		string text = string.Empty;
-		try
-		{
-			IPAddress[] hostAddresses = Dns.GetHostAddresses(hostName);
-			if (hostAddresses.Length == 1)
-			{
-				return hostAddresses[0].ToString();
-			}
-			foreach (IPAddress iPAddress in hostAddresses)
-			{
-				if (iPAddress != null)
-				{
-					if (iPAddress.ToString().Contains(":"))
-					{
-						return iPAddress.ToString();
-					}
-					if (string.IsNullOrEmpty(text))
-					{
-						text = hostAddresses.ToString();
-					}
-				}
-			}
-		}
-		catch (Exception ex)
-		{
-			UnityEngine.Debug.Log("Exception caught! " + ex.Source + " Message: " + ex.Message);
-		}
-		return text;
-	}
+    public static string ResolveHost(string hostName)
+    {
+        return string.Empty;
+    }
 }

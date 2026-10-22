@@ -29,6 +29,12 @@ using War.Battle.Tests.Legacy.DogTags;
 using War.Battle.Tests.Legacy.Preferences;
 using War.Battle.Tests.Legacy.State;
 
+if (args is ["--legacy-protobuf-http-only", var protobufBackend])
+{
+    await War.Battle.Tests.Legacy.Dispatch.LegacyProtobufHttpTests.RunAsync(protobufBackend);
+    return;
+}
+
 if (args is ["--battle-settlement-store-only", var settlementUri, var settlementContent])
 {
     await War.Battle.Tests.Legacy.Progression.BattleSettlementStoreTests.RunAsync(settlementUri, settlementContent);

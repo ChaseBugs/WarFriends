@@ -1,5 +1,76 @@
 # Recovered Client lobby bootstrap boundary
 
+## Offline shop and special-pack pooling (2026-10-22)
+
+The latest user Editor.log reached the shop, where the Android billing handler
+repeatedly queried unavailable Google Play prices. Special-pack panel animation
+also dereferenced null panel entries, aborting the pooled-grid creation callback
+and eventually exhausting its leased records. The Client now selects an explicit
+`OfflineInAppHandler`: prices remain unavailable (`-1`, localized Offline label),
+purchase/restore complete through an unavailable callback, and no provider is
+initialized and no receipt or reward is fabricated. Regular-price formatting
+preserves unavailable quotes. Optional/destroyed panel references are skipped
+in both special-pack tween overloads, matching the neighboring record's policy.
+
+Enable `WAR_VERIFY_OFFLINE_STORE=1` with `ClientBootSmoke.ps1` to exercise the
+actual WarBucks, Packs and Gold tabs four times. Run
+`client-boot-7ad8a81ebc124e59b1fb0f69034942c1` passed: normal account boot,
+12 tab transitions, no leaked special-pack records, unavailable purchase/restore
+callbacks with no grant, no blocking warning dialog, zero errors and exceptions.
+Real-money purchases remain unavailable in this offline deployment. This test
+does not establish rendered layout or Android purchase support.
+
+## Maintenance dialog after account loading (2026-10-22)
+
+The user's Editor.log exposed a gap in the previous readiness gate: the automatic
+`CheckDailyReward` (1001) request returned `Result:503` after account data loaded.
+The recovered Client treats that result as global maintenance, logs out and shows
+a blocking retry dialog. The authenticated availability endpoint now succeeds
+without `dailyRewardData`, exactly as the optional-field check in the recovered
+callback permits. There is no published offline calendar or claimable reward;
+`ClaimDailyReward` remains closed. This is an availability compatibility response,
+not a completed reward calendar implementation.
+
+Absent Arena event configuration and absent retired Fuse overrides are expected
+offline states and are now ordinary informational logs. Kinematic ragdolls and
+pooled soldier bodies switch to Discrete collision before becoming kinematic;
+their original dynamic collision mode is restored when physics takes over.
+`RigidbodyKinematicMode` shares this state between ragdoll and soldier controllers
+with weak references, without changing serialized prefab data.
+
+The native boot audit now waits for the successful daily-reward probe, rejects
+visible warning dialogs and kinematic CCD errors, and observes the ready lobby
+for three seconds. Account data alone is no longer enough to pass.
+
+Native run `client-boot-eec8360ab0da4d99be40e03cdad283f9` passed the stronger gate:
+MainScene and account data ready, daily-reward probe completed, no blocking
+dialog, 24 unit and 66 weapon rows initialized, cards ready, zero CCD errors,
+zero exceptions and zero error-level logs. Registry/session checks passed all
+12 groups and static asset references remained intact. The running local
+Backend and Worker were restarted with the change on ports 8080/30000/30001.
+
+## Offline Kochava account-save repair (2026-10-22)
+
+A real local Backend returned a complete `CreateAccount` response, then
+`GameLoginManager.SavePlayer` called `KochavaManager.LinkPlayer`. The retired
+Kochava instance was null, so `Kochava.IdentityLink` threw before
+`ServerResponseHandler.OnCreateAccount` could call `LoadPlayerData`. The normal
+screen stayed on "DOWNLOADING CONFIGURATIONS". The active Client now treats
+Kochava identity and device-ID calls as offline no-ops and returns empty optional
+attribution IDs. Event tracking no longer sends the two remaining direct Kochava
+events. No account or gameplay callback was skipped.
+
+`ClientBootSmoke.ps1` and its insert observer now allow 600 seconds for a cold
+disposable Unity import. The second normal SplashScene run
+`client-boot-0468db4d120848a29695ccbf63f35559` passed against an isolated
+native Backend and Mongo replica set: MainScene loaded, PlayerData completed,
+24/24 unit rows and 66/66 weapon rows initialized, cards ready, no invalid
+bootstrap queries and zero exceptions. The earlier cold-import run passed the
+same Client readiness evidence but its account insert watcher expired before
+Unity finished importing. This older checkpoint still emitted kinematic CCD
+warnings; the maintenance repair above addresses them. This run does not prove
+tutorial, battle or Android execution.
+
 The active 1.4.0 Client is recovered, but recovery is not proof that its normal
 login/menu/battle bootstrap works with the replacement services. This checkpoint
 addresses one real prerequisite of that path, not a completed lobby migration.

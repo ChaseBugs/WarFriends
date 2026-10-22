@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
+using War.Backend.Legacy.Transport;
 
 namespace War.Backend.Legacy;
 
@@ -86,7 +87,7 @@ public sealed class LegacyRequest
     public static bool TryParse(HttpRequest request, [NotNullWhen(true)] out LegacyRequest? parsed)
     {
         parsed = null;
-        if (!request.HasFormContentType) return false;
+        if (!request.HasFormContentType && !LegacyProtobufTransport.IsRequested(request)) return false;
         var form = request.Form;
         if (!form.TryGetValue("requestId", out var raw)) return false;
         if (!int.TryParse(raw.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int id)) return false;
@@ -150,9 +151,12 @@ public static class LegacyResponse
         public async Task ExecuteAsync(HttpContext context)
         {
             context.Response.StatusCode = 200;
-            context.Response.ContentType = "application/json";
+            bool protobuf = LegacyProtobufTransport.IsRequested(context.Request);
+            context.Response.ContentType = protobuf ? LegacyProtobufTransport.ContentType : "application/json";
             context.Response.Headers.CacheControl = "no-store";
-            await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes(Payload.ToJsonString()), context.RequestAborted);
+            byte[] bytes = Encoding.UTF8.GetBytes(Payload.ToJsonString());
+            if (protobuf) bytes = LegacyProtobufTransport.Encode("application/json", bytes);
+            await context.Response.Body.WriteAsync(bytes, context.RequestAborted);
         }
     }
 
@@ -161,9 +165,12 @@ public static class LegacyResponse
         public async Task ExecuteAsync(HttpContext context)
         {
             context.Response.StatusCode = 200;
-            context.Response.ContentType = "text/plain";
+            bool protobuf = LegacyProtobufTransport.IsRequested(context.Request);
+            context.Response.ContentType = protobuf ? LegacyProtobufTransport.ContentType : "text/plain";
             context.Response.Headers.CacheControl = "no-store";
-            await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes(Body), context.RequestAborted);
+            byte[] bytes = Encoding.UTF8.GetBytes(Body);
+            if (protobuf) bytes = LegacyProtobufTransport.Encode("text/plain", bytes);
+            await context.Response.Body.WriteAsync(bytes, context.RequestAborted);
         }
     }
 }

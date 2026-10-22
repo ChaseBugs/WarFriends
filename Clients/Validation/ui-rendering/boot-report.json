@@ -1,0 +1,10 @@
+{
+  "unityVersion": "2018.3.0f2",
+  "mainSceneLoaded": true,
+  "playerDataLoadComplete": true,
+  "blockingDialogVisible": false,
+  "exceptions": 0,
+  "errors": 0,
+  "kinematicCcdErrors": 0,
+  "run": "client-boot-dcf21799ec134cfe87e13b0824832881"
+}

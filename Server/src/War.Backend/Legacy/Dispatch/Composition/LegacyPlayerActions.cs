@@ -41,6 +41,8 @@ internal static class LegacyPlayerActions
                 (request, _, token) => query.ReadAsync(request, token)),
             Entry.Authenticated(Action.GetAllMessages, Feature.Player,
                 (_, _, _) => Task.FromResult(LegacyInboxEndpoint.Read())),
+            Entry.Authenticated(Action.CheckDailyReward, Feature.Player,
+                (_, _, _) => Task.FromResult(LegacyDailyRewardAvailabilityEndpoint.Read())),
             Entry.Authenticated(Action.UpdateArmyPower, Feature.Player,
                 (request, player, token) => LegacyArmyPowerEndpoint.HandleAsync(request, player, players, token)),
         ];

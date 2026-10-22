@@ -1282,6 +1282,8 @@ try {
     }
 
     $succeeded = $true
+    & dotnet $testDll --legacy-protobuf-http-only "http://127.0.0.1:$HttpPort/"
+    if ($LASTEXITCODE -ne 0) { throw 'Protobuf Client action transport checks failed' }
     Write-Host "`nLegacy smoke passed: $script:checks assertions. Reports: $runRoot"
 }
 finally {

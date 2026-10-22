@@ -630,7 +630,7 @@ public static class PhotonNetwork
 		photonMono = gameObject.AddComponent<PhotonHandler>();
 		gameObject.name = "PhotonMono";
 		gameObject.hideFlags = HideFlags.HideInHierarchy;
-		ConnectionProtocol protocol = PhotonServerSettings.Protocol;
+		ConnectionProtocol protocol = ConnectionProtocol.Udp; // Local compatibility peer; no server transport is allowed.
 		networkingPeer = new NetworkingPeer(string.Empty, protocol);
 		networkingPeer.QuickResendAttempts = 2;
 		networkingPeer.SentCountAllowance = 7;
@@ -651,208 +651,43 @@ public static class PhotonNetwork
 
 	public static bool ConnectUsingSettings(string gameVersion)
 	{
-		if (networkingPeer.PeerState != PeerStateValue.Disconnected)
-		{
-			UnityEngine.Debug.LogWarning("ConnectUsingSettings() failed. Can only connect while in state 'Disconnected'. Current state: " + networkingPeer.PeerState);
-			return false;
-		}
-		if (PhotonServerSettings == null)
-		{
-			UnityEngine.Debug.LogError("Can't connect: Loading settings failed. ServerSettings asset must be in any 'Resources' folder as: PhotonServerSettings");
-			return false;
-		}
-		if (PhotonServerSettings.HostType == ServerSettings.HostingOption.NotSet)
-		{
-			UnityEngine.Debug.LogError("You did not select a Hosting Type in your PhotonServerSettings. Please set it up or don't use ConnectUsingSettings().");
-			return false;
-		}
-		logLevel = PhotonServerSettings.PunLogging;
-		networkingPeer.DebugOut = PhotonServerSettings.NetworkLogging;
-		SwitchToProtocol(PhotonServerSettings.Protocol);
-		networkingPeer.SetApp(PhotonServerSettings.AppID, gameVersion);
-		if (PhotonServerSettings.HostType == ServerSettings.HostingOption.OfflineMode)
-		{
-			offlineMode = true;
-			return true;
-		}
-		if (offlineMode)
-		{
-			UnityEngine.Debug.LogWarning("ConnectUsingSettings() disabled the offline mode. No longer offline.");
-		}
-		offlineMode = false;
-		isMessageQueueRunning = true;
-		networkingPeer.IsInitialConnect = true;
-		if (PhotonServerSettings.HostType == ServerSettings.HostingOption.SelfHosted)
-		{
-			networkingPeer.IsUsingNameServer = false;
-			networkingPeer.MasterServerAddress = ((PhotonServerSettings.ServerPort != 0) ? (PhotonServerSettings.ServerAddress + ":" + PhotonServerSettings.ServerPort) : PhotonServerSettings.ServerAddress);
-			return networkingPeer.Connect(networkingPeer.MasterServerAddress, ServerConnection.MasterServer);
-		}
-		if (PhotonServerSettings.HostType == ServerSettings.HostingOption.BestRegion)
-		{
-			return ConnectToBestCloudServer(gameVersion);
-		}
-		return networkingPeer.ConnectToRegionMaster(PhotonServerSettings.PreferredRegion);
+		// Retained API identity only. War.Client owns all network connections via protobuf.
+		return false;
 	}
 
 	public static bool ConnectToMaster(string masterServerAddress, int port, string appID, string gameVersion)
 	{
-		if (networkingPeer.PeerState != PeerStateValue.Disconnected)
-		{
-			UnityEngine.Debug.LogWarning("ConnectToMaster() failed. Can only connect while in state 'Disconnected'. Current state: " + networkingPeer.PeerState);
-			return false;
-		}
-		if (offlineMode)
-		{
-			offlineMode = false;
-			UnityEngine.Debug.LogWarning("ConnectToMaster() disabled the offline mode. No longer offline.");
-		}
-		if (!isMessageQueueRunning)
-		{
-			isMessageQueueRunning = true;
-			UnityEngine.Debug.LogWarning("ConnectToMaster() enabled isMessageQueueRunning. Needs to be able to dispatch incoming messages.");
-		}
-		networkingPeer.SetApp(appID, gameVersion);
-		networkingPeer.IsUsingNameServer = false;
-		networkingPeer.IsInitialConnect = true;
-		networkingPeer.MasterServerAddress = ((port != 0) ? (masterServerAddress + ":" + port) : masterServerAddress);
-		return networkingPeer.Connect(networkingPeer.MasterServerAddress, ServerConnection.MasterServer);
+		// Retained API identity only. War.Client owns all network connections via protobuf.
+		return false;
 	}
 
 	public static bool Reconnect()
 	{
-		if (string.IsNullOrEmpty(networkingPeer.MasterServerAddress))
-		{
-			UnityEngine.Debug.LogWarning("Reconnect() failed. It seems the client wasn't connected before?! Current state: " + networkingPeer.PeerState);
-			return false;
-		}
-		if (networkingPeer.PeerState != PeerStateValue.Disconnected)
-		{
-			UnityEngine.Debug.LogWarning("Reconnect() failed. Can only connect while in state 'Disconnected'. Current state: " + networkingPeer.PeerState);
-			return false;
-		}
-		if (offlineMode)
-		{
-			offlineMode = false;
-			UnityEngine.Debug.LogWarning("Reconnect() disabled the offline mode. No longer offline.");
-		}
-		if (!isMessageQueueRunning)
-		{
-			isMessageQueueRunning = true;
-			UnityEngine.Debug.LogWarning("Reconnect() enabled isMessageQueueRunning. Needs to be able to dispatch incoming messages.");
-		}
-		networkingPeer.IsUsingNameServer = false;
-		networkingPeer.IsInitialConnect = false;
-		return networkingPeer.ReconnectToMaster();
+		// Retained API identity only. War.Client owns all network connections via protobuf.
+		return false;
 	}
 
 	public static bool ReconnectAndRejoin()
 	{
-		if (networkingPeer.PeerState != PeerStateValue.Disconnected)
-		{
-			UnityEngine.Debug.LogWarning("ReconnectAndRejoin() failed. Can only connect while in state 'Disconnected'. Current state: " + networkingPeer.PeerState);
-			return false;
-		}
-		if (offlineMode)
-		{
-			offlineMode = false;
-			UnityEngine.Debug.LogWarning("ReconnectAndRejoin() disabled the offline mode. No longer offline.");
-		}
-		if (string.IsNullOrEmpty(networkingPeer.GameServerAddress))
-		{
-			UnityEngine.Debug.LogWarning("ReconnectAndRejoin() failed. It seems the client wasn't connected to a game server before (no address).");
-			return false;
-		}
-		if (networkingPeer.enterRoomParamsCache == null)
-		{
-			UnityEngine.Debug.LogWarning("ReconnectAndRejoin() failed. It seems the client doesn't have any previous room to re-join.");
-			return false;
-		}
-		if (!isMessageQueueRunning)
-		{
-			isMessageQueueRunning = true;
-			UnityEngine.Debug.LogWarning("ReconnectAndRejoin() enabled isMessageQueueRunning. Needs to be able to dispatch incoming messages.");
-		}
-		networkingPeer.IsUsingNameServer = false;
-		networkingPeer.IsInitialConnect = false;
-		return networkingPeer.ReconnectAndRejoin();
+		// Retained API identity only. War.Client owns all network connections via protobuf.
+		return false;
 	}
 
 	public static bool ConnectToBestCloudServer(string gameVersion)
 	{
-		if (networkingPeer.PeerState != PeerStateValue.Disconnected)
-		{
-			UnityEngine.Debug.LogWarning("ConnectToBestCloudServer() failed. Can only connect while in state 'Disconnected'. Current state: " + networkingPeer.PeerState);
-			return false;
-		}
-		if (PhotonServerSettings == null)
-		{
-			UnityEngine.Debug.LogError("Can't connect: Loading settings failed. ServerSettings asset must be in any 'Resources' folder as: PhotonServerSettings");
-			return false;
-		}
-		if (PhotonServerSettings.HostType == ServerSettings.HostingOption.OfflineMode)
-		{
-			return ConnectUsingSettings(gameVersion);
-		}
-		networkingPeer.IsInitialConnect = true;
-		networkingPeer.SetApp(PhotonServerSettings.AppID, gameVersion);
-		CloudRegionCode bestRegionCodeInPreferences = PhotonHandler.BestRegionCodeInPreferences;
-		if (bestRegionCodeInPreferences != CloudRegionCode.none)
-		{
-			UnityEngine.Debug.Log("Best region found in PlayerPrefs. Connecting to: " + bestRegionCodeInPreferences);
-			return networkingPeer.ConnectToRegionMaster(bestRegionCodeInPreferences);
-		}
-		return networkingPeer.ConnectToNameServer();
+		// Retained API identity only. War.Client owns all network connections via protobuf.
+		return false;
 	}
 
 	public static bool ConnectToBestCloudServer(string gameVersion, CloudRegionCode bestRegion)
 	{
-		if (networkingPeer.PeerState != PeerStateValue.Disconnected)
-		{
-			UnityEngine.Debug.LogWarning("ConnectToBestCloudServer() failed. Can only connect while in state 'Disconnected'. Current state: " + networkingPeer.PeerState);
-			return false;
-		}
-		if (PhotonServerSettings == null)
-		{
-			UnityEngine.Debug.LogError("Can't connect: Loading settings failed. ServerSettings asset must be in any 'Resources' folder as: PhotonServerSettings");
-			return false;
-		}
-		if (PhotonServerSettings.HostType == ServerSettings.HostingOption.OfflineMode)
-		{
-			return ConnectUsingSettings(gameVersion);
-		}
-		networkingPeer.IsInitialConnect = true;
-		networkingPeer.SetApp(PhotonServerSettings.AppID, gameVersion);
-		if (bestRegion != CloudRegionCode.none)
-		{
-			return networkingPeer.ConnectToRegionMaster(bestRegion);
-		}
-		return networkingPeer.ConnectToNameServer();
+		// Retained API identity only. War.Client owns all network connections via protobuf.
+		return false;
 	}
 
 	public static bool ConnectToRegion(CloudRegionCode region, string gameVersion)
 	{
-		if (networkingPeer.PeerState != PeerStateValue.Disconnected)
-		{
-			UnityEngine.Debug.LogWarning("ConnectToRegion() failed. Can only connect while in state 'Disconnected'. Current state: " + networkingPeer.PeerState);
-			return false;
-		}
-		if (PhotonServerSettings == null)
-		{
-			UnityEngine.Debug.LogError("Can't connect: ServerSettings asset must be in any 'Resources' folder as: PhotonServerSettings");
-			return false;
-		}
-		if (PhotonServerSettings.HostType == ServerSettings.HostingOption.OfflineMode)
-		{
-			return ConnectUsingSettings(gameVersion);
-		}
-		networkingPeer.IsInitialConnect = true;
-		networkingPeer.SetApp(PhotonServerSettings.AppID, gameVersion);
-		if (region != CloudRegionCode.none)
-		{
-			UnityEngine.Debug.Log("ConnectToRegion: " + region);
-			return networkingPeer.ConnectToRegionMaster(region);
-		}
+		// Retained API identity only. War.Client owns all network connections via protobuf.
 		return false;
 	}
 
@@ -1681,13 +1516,7 @@ public static class PhotonNetwork
 
 	public static bool ConnectToNameServer(string gameVersion)
 	{
-		if (PhotonServerSettings == null)
-		{
-			UnityEngine.Debug.LogError("Can't connect: Loading settings failed. ServerSettings asset must be in any 'Resources' folder as: PhotonServerSettings");
-			return false;
-		}
-		networkingPeer.IsInitialConnect = true;
-		networkingPeer.SetApp(PhotonServerSettings.AppID, gameVersion);
-		return networkingPeer.ConnectToNameServer();
+		// Retained API identity only. War.Client owns all network connections via protobuf.
+		return false;
 	}
 }

@@ -1,4 +1,5 @@
 using War.Backend.Legacy.Dispatch;
+using War.Backend.Legacy.Transport;
 
 namespace War.Backend.Legacy;
 
@@ -22,13 +23,18 @@ public static class LegacyEndpoints
         app.MapPost(ActionPath, DispatchAsync).RequireRateLimiting("api");
     }
 
-    private static Task<IResult> DispatchAsync(HttpContext context, LegacyRequestDispatcher dispatcher)
+    private static async Task<IResult> DispatchAsync(HttpContext context, LegacyRequestDispatcher dispatcher)
     {
+        if (LegacyProtobufTransport.IsRequested(context.Request) &&
+            !await LegacyProtobufTransport.ReadAsync(context.Request, context.RequestAborted))
+        {
+            return LegacyResponse.Failure(DatabaseResult.JsonFailure);
+        }
         if (!LegacyRequest.TryParse(context.Request, out LegacyRequest? request))
         {
-            return Task.FromResult(LegacyResponse.Failure(DatabaseResult.JsonFailure));
+            return LegacyResponse.Failure(DatabaseResult.JsonFailure);
         }
 
-        return dispatcher.DispatchAsync(request, context.RequestAborted);
+        return await dispatcher.DispatchAsync(request, context.RequestAborted);
     }
 }

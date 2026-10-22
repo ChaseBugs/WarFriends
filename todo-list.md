@@ -1,5 +1,11 @@
 # WarFriends server improvement plan
 
+Client transport checkpoint (2026-10-22): Photon network connection, region probe and background ACK
+implementations are retired; the Client's Backend action/probe channel now uses protobuf framing.
+Native Backend protobuf tests, Legacy 561 assertions, server smoke and an isolated Unity compile /
+network-refusal / local-room / codec audit pass. Local RPC/ownership and Photon type/asset dependencies
+remain; full SDK removal is not complete. See [migration inventory and remaining work](Server/docs/CLIENT_PHOTON_REMOVAL.md).
+
 Current priority is missing gameplay implementation, starting with ordinary PvP settlement (BE01).
 Action 62 now connects accepted host outcomes to source-backed rank/XP, currency, streak and medal
 calculation. An explicit offline policy is frozen into each eligible allocation. Both account

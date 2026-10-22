@@ -299,12 +299,7 @@ public class EventTrackingManager : Singleton<EventTrackingManager>
 
 	public void RegisterKochavaInApp(string packId, float price, string type, string currency)
 	{
-		FireEventParameters fireEventParameters = new FireEventParameters(FireEventType.Purchase);
-		fireEventParameters.currency = currency;
-		fireEventParameters.price = price;
-		fireEventParameters.name = packId;
-		fireEventParameters.contentType = type;
-		Kochava.FireEventStandard(fireEventParameters);
+		// Retired analytics is not initialized in offline Client builds.
 	}
 
 	public void RegisterFacebookInApp(string packId, float price, string type, string currency)
@@ -358,11 +353,7 @@ public class EventTrackingManager : Singleton<EventTrackingManager>
 		dictionary.Add("Made_IAP_Spend", data.MadeInApp());
 		Dictionary<string, object> parameters = dictionary;
 		FacebookAndroid.logEvent("Player_Level_Up", parameters);
-		FireEventParameters fireEventParameters = new FireEventParameters(FireEventType.LevelComplete);
-		fireEventParameters.level = data.GetPlayerLevel().ToString("D3");
-		fireEventParameters.date = DateTime.Now;
-		fireEventParameters.duration = data.GetDaysSinceInstall();
-		Kochava.FireEventStandard(fireEventParameters);
+		// Keep local level-up bookkeeping; no retired analytics delivery.
 	}
 
 	internal void RegisterLeagueLeaderboardShown(League league)

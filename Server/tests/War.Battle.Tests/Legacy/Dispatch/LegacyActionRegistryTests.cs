@@ -15,6 +15,9 @@ using War.Backend.Legacy;
 using War.Backend.Legacy.Dispatch;
 using War.Battle.Tests.Startup;
 using War.Persistence;
+using Google.Protobuf;
+using War.Client;
+using War.Protocol;
 
 namespace War.Battle.Tests.Legacy.Dispatch;
 
@@ -30,11 +33,27 @@ internal static class LegacyActionRegistryTests
         CheckInvalidRegistrations(registry);
         CheckRoutes(app);
         await CheckHttpAdapterAsync(app);
+        await CheckProtobufAdapterAsync(app);
         await CheckAnonymousDispatchAsync(registry);
         await CheckInvalidSessionAsync(registry);
         await CheckAuthenticatedDispatchAsync(registry);
         await CheckDamagedSessionAsync(registry);
-        return 10;
+        await CheckDailyRewardAvailabilityAsync(registry);
+        return 12;
+    }
+
+    private static async Task CheckDailyRewardAvailabilityAsync(LegacyActionRegistry registry)
+    {
+        var authentication = new ObservedAuthentication { Player = new LegacyPlayerDocument() };
+        LegacyRequestDispatcher dispatcher = CreateDispatcher(registry, authentication);
+        IResult result = await dispatcher.DispatchAsync(Request(DatabaseAction.CheckDailyReward), CancellationToken.None);
+        (string body, _) = await ReadAsync(result);
+        JsonObject response = JsonNode.Parse(body)!.AsObject();
+        Require(authentication.Calls == 1 && response["Result"]!.GetValue<int>() == 1,
+            "The automatic daily-reward availability probe must preserve the authenticated lobby session.");
+        Require(!response.ContainsKey("dailyRewardData"), "An unavailable calendar must not offer a reward claim.");
+        Require(registry.Get(DatabaseAction.ClaimDailyReward).Disposition == LegacyActionDisposition.Closed,
+            "An availability response must not authorize reward mutations.");
     }
 
     private static WebApplication CreateApplication()
@@ -55,11 +74,11 @@ internal static class LegacyActionRegistryTests
         Require(entries.Length == 175, "The reviewed legacy wire inventory changed.");
         Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.Anonymous) == 4,
             "The anonymous boundary changed.");
-        Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.Authenticated) == 61,
+        Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.Authenticated) == 62,
             "An implemented direct action disappeared or opened without review.");
         Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.BufferedOnly) == 25,
             "The buffer-only inventory changed.");
-        Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.Closed) == 85,
+        Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.Closed) == 84,
             "A closed action changed disposition without review.");
         Require(registry.Get(DatabaseAction.GameEnded).Disposition == LegacyActionDisposition.Authenticated,
             "Legacy GameEnded must require authentication before checking accepted host outcome authority.");
@@ -110,6 +129,7 @@ internal static class LegacyActionRegistryTests
             .Select(action => action.GetString()!).ToHashSet(StringComparer.Ordinal);
         // Preserve the extraction baseline; action 62 was subsequently implemented over host authority.
         originalDirect.Add(nameof(DatabaseAction.GameEnded));
+        originalDirect.Add(nameof(DatabaseAction.CheckDailyReward));
         IEnumerable<string> direct = registry.Actions.Values
             .Where(entry => entry.Disposition == LegacyActionDisposition.Authenticated)
             .Select(entry => entry.Action.ToString());
@@ -123,7 +143,7 @@ internal static class LegacyActionRegistryTests
         {
             var action = (DatabaseAction)row.GetProperty("id").GetInt32();
             LegacyActionRegistration entry = registry.Get(action);
-            if (action == DatabaseAction.GameEnded)
+            if (action == DatabaseAction.GameEnded || action == DatabaseAction.CheckDailyReward)
             {
                 Require(entry.Disposition == LegacyActionDisposition.Authenticated,
                     "Host-backed settlement must keep its authenticated boundary.");
@@ -188,6 +208,43 @@ internal static class LegacyActionRegistryTests
 
         (body, type) = await ReadRouteAsync(app, LegacyEndpoints.CheckPath, null);
         Require(body == "ok" && type == "text/plain", "The reachability HTTP delegate lost its exact body.");
+    }
+
+    private static async Task CheckProtobufAdapterAsync(WebApplication app)
+    {
+        byte[] request = BackendActionCodec.Encode(new Dictionary<string, string> { ["requestId"] = "157" });
+        string response = await ReadProtobufRouteAsync(app, LegacyEndpoints.ActionPath, request);
+        Require(response.StartsWith("success;", StringComparison.Ordinal),
+            "Protobuf must preserve the recovered configuration callback payload.");
+        response = await ReadProtobufRouteAsync(app, LegacyEndpoints.CheckPath, []);
+        Require(response == "ok", "Protobuf probe must preserve the local connectivity acknowledgement.");
+
+        var duplicate = new ClientActionRequest { FormatVersion = 1 };
+        duplicate.Fields.Add(new ClientActionField { Name = "requestId", Value = "157" });
+        duplicate.Fields.Add(new ClientActionField { Name = "RequestId", Value = "118" });
+        response = await ReadProtobufRouteAsync(app, LegacyEndpoints.ActionPath, duplicate.ToByteArray());
+        Require(JsonNode.Parse(response)!["Result"]!.GetValue<int>() == (int)DatabaseResult.JsonFailure,
+            "Case-ambiguous protobuf fields must not select an action.");
+        response = await ReadProtobufRouteAsync(app, LegacyEndpoints.ActionPath, [0xff]);
+        Require(JsonNode.Parse(response)!["Result"]!.GetValue<int>() == (int)DatabaseResult.JsonFailure,
+            "Malformed protobuf must return a framed failure without invoking an action.");
+    }
+
+    private static async Task<string> ReadProtobufRouteAsync(WebApplication app, string path, byte[] bytes)
+    {
+        RouteEndpoint route = ((IEndpointRouteBuilder)app).DataSources.SelectMany(source => source.Endpoints)
+            .OfType<RouteEndpoint>().Single(endpoint => endpoint.RoutePattern.RawText == path);
+        var context = new DefaultHttpContext { RequestServices = app.Services };
+        context.Request.Method = "POST";
+        context.Request.Path = path;
+        context.Request.ContentType = BackendActionCodec.ContentType;
+        context.Request.Body = new MemoryStream(bytes);
+        await using var output = new MemoryStream();
+        context.Response.Body = output;
+        await route.RequestDelegate!(context);
+        Require(context.Response.ContentType == BackendActionCodec.ContentType,
+            "The protobuf request must receive a protobuf response.");
+        return BackendActionCodec.Decode(output.ToArray());
     }
 
     private static async Task<(string Body, string? ContentType)> ReadRouteAsync(

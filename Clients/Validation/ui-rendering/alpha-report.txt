@@ -1,0 +1,1 @@
+Nonblack zero-alpha pixels: before=281779, after=0

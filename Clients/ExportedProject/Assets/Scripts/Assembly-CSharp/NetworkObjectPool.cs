@@ -68,6 +68,10 @@ public class NetworkObjectPool : ObjectPool
 				}
 				gameObject2.name = gameObject2.name + "pooled:" + j.ToString("D4");
 				gameObject2.transform.parent = gameObject.transform;
+				foreach (Rigidbody body in gameObject2.GetComponentsInChildren<Rigidbody>(true))
+				{
+					if (body.isKinematic) RigidbodyKinematicMode.Set(body, true);
+				}
 				gameObject2.gameObject.SetActive(value: false);
 				PoolableObject component = gameObject2.GetComponent<PoolableObject>();
 				component.poolParent = gameObject.transform;

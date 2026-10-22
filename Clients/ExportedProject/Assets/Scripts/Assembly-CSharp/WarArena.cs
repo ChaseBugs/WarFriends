@@ -213,6 +213,12 @@ public class WarArena : DatabaseSerializedObjectGeneric<WarArena.WarArenaData>
 
 	public void TryGetNewArena()
 	{
+		// An offline deployment may omit Arena configuration. There is no event ID
+		// to expire in that case; keep the Arena closed and allow menu setup to finish.
+		if (warArenaConfig == null)
+		{
+			return;
+		}
 		if (Singleton<BeanstalkServerManager>.instance.shouldGetMessages && isExpired && !mIsDownloadingNewArena)
 		{
 			DownloadNewArenaData();

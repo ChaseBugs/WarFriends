@@ -8,7 +8,9 @@ using War.Persistence;
 /// <summary>Checks source-exact defaults and observes complete initial state in the original account insert.</summary>
 internal static class LegacyInitialLoadoutTests
 {
-    private const int MaximumWatchSeconds = 180;
+    // Cold Unity imports may finish after several minutes; the account insert must
+    // still be observed before its first persistence update.
+    private const int MaximumWatchSeconds = 600;
     private const int InitialSubsystemCount = 3;
 
     internal static int Run(string contentDirectory)

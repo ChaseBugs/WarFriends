@@ -8,7 +8,7 @@ TextureImporter:
   fileIDToRecycleName: {}
   mipmaps:
     mipMapMode: 0
-    enableMipMap: 1
+    enableMipMap: 0
     linearTexture: 0
     correctGamma: 0
     fadeOut: 0
@@ -27,10 +27,10 @@ TextureImporter:
   cubemapConvolutionSteps: 0
   cubemapConvolutionExponent: 0
   seamlessCubemap: 0
-  textureFormat: 47
+  textureFormat: 4
   maxTextureSize: 2048
   textureSettings:
-    filterMode: 2
+    filterMode: 1
     aniso: 4
     mipBias: 0
     wrapMode: 1
@@ -46,12 +46,12 @@ TextureImporter:
   spritePivot: {x: 0.5, y: 0.5}
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spritePixelsToUnits: 100
-  alphaIsTransparency: 1
+  alphaIsTransparency: 0
   textureType: 0
   buildTargetSettings:
   - buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
-    textureFormat: -1
+    textureFormat: 4
     compressionQuality: 50
     allowsAlphaSplitting: 0
   spriteSheet:

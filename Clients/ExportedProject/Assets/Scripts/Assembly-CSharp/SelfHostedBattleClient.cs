@@ -242,7 +242,8 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
 
         Uri endpoint = SelfHostedBackendEndpoint.Resolve(backendEndpoint);
 
-        var attempt = new SelfHostedMatchmakingAttempt(new BackendClient(endpoint, allowLocalHttp), accessToken);
+        var attempt = new SelfHostedMatchmakingAttempt(
+            SelfHostedBackendClientFactory.Create(endpoint, allowLocalHttp), accessToken);
         this.backendEndpoint = endpoint.AbsoluteUri;
         matchmaking = attempt;
         Active = this;
@@ -600,7 +601,8 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
         {
             IsConnected = false; // Stop new scene input while the Backend issues a grant.
             if (reconnectRequestId == null) reconnectRequestId = Guid.NewGuid().ToString("N");
-            using (var backend = new BackendClient(SelfHostedBackendEndpoint.Resolve(backendEndpoint), allowLocalHttp))
+            using (var backend = SelfHostedBackendClientFactory.Create(
+                SelfHostedBackendEndpoint.Resolve(backendEndpoint), allowLocalHttp))
             {
                 var grant = await backend.ReconnectMatchAsync(matchId, reconnectRequestId,
                     accessToken, CancellationToken.None);

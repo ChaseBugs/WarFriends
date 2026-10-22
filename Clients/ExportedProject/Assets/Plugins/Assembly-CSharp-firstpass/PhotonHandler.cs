@@ -112,39 +112,7 @@ internal class PhotonHandler : MonoBehaviour
 
 	protected void Update()
 	{
-		if (PhotonNetwork.networkingPeer == null)
-		{
-			UnityEngine.Debug.LogError("NetworkPeer broke!");
-		}
-		else
-		{
-			if (PhotonNetwork.connectionStateDetailed == ClientState.PeerCreated || PhotonNetwork.connectionStateDetailed == ClientState.Disconnected || PhotonNetwork.offlineMode || !PhotonNetwork.isMessageQueueRunning)
-			{
-				return;
-			}
-			bool flag = true;
-			while (PhotonNetwork.isMessageQueueRunning && flag)
-			{
-				flag = PhotonNetwork.networkingPeer.DispatchIncomingCommands();
-			}
-			int num = (int)(Time.realtimeSinceStartup * 1000f);
-			if (PhotonNetwork.isMessageQueueRunning && num > nextSendTickCountOnSerialize)
-			{
-				PhotonNetwork.networkingPeer.RunViewUpdate();
-				nextSendTickCountOnSerialize = num + updateIntervalOnSerialize;
-				nextSendTickCount = 0;
-			}
-			num = (int)(Time.realtimeSinceStartup * 1000f);
-			if (num > nextSendTickCount)
-			{
-				bool flag2 = true;
-				while (PhotonNetwork.isMessageQueueRunning && flag2)
-				{
-					flag2 = PhotonNetwork.networkingPeer.SendOutgoingCommands();
-				}
-				nextSendTickCount = num + updateInterval;
-			}
-		}
+		// Local compatibility callbacks are synchronous; protobuf transport is serviced by War.Client.
 	}
 
 	protected void OnJoinedRoom()
@@ -159,11 +127,7 @@ internal class PhotonHandler : MonoBehaviour
 
 	public static void StartFallbackSendAckThread()
 	{
-		if (!sendThreadShouldRun)
-		{
-			sendThreadShouldRun = true;
-			SupportClass.CallInBackground(FallbackSendAckThread);
-		}
+		// No Photon transport thread is started in the self-hosted Client.
 	}
 
 	public static void StopFallbackSendAckThread()
@@ -173,52 +137,17 @@ internal class PhotonHandler : MonoBehaviour
 
 	public static bool FallbackSendAckThread()
 	{
-		if (sendThreadShouldRun && PhotonNetwork.networkingPeer != null)
-		{
-			PhotonNetwork.networkingPeer.SendAcksOnly();
-		}
-		return sendThreadShouldRun;
+		return false;
 	}
 
 	protected internal static void PingAvailableRegionsAndConnectToBest()
 	{
-		SP.StartCoroutine(SP.PingAvailableRegionsCoroutine(connectToBest: true));
+		// The Backend assigns the endpoint; Photon regions are never queried.
 	}
 
 	internal IEnumerator PingAvailableRegionsCoroutine(bool connectToBest)
 	{
 		BestRegionCodeCurrently = CloudRegionCode.none;
-		while (PhotonNetwork.networkingPeer.AvailableRegions == null)
-		{
-			if (PhotonNetwork.connectionStateDetailed != ClientState.ConnectingToNameServer && PhotonNetwork.connectionStateDetailed != ClientState.ConnectedToNameServer)
-			{
-				UnityEngine.Debug.LogError("Call ConnectToNameServer to ping available regions.");
-				yield break;
-			}
-			UnityEngine.Debug.Log(string.Concat("Waiting for AvailableRegions. State: ", PhotonNetwork.connectionStateDetailed, " Server: ", PhotonNetwork.Server, " PhotonNetwork.networkingPeer.AvailableRegions ", PhotonNetwork.networkingPeer.AvailableRegions != null));
-			yield return new WaitForSeconds(0.25f);
-		}
-		if (PhotonNetwork.networkingPeer.AvailableRegions == null || PhotonNetwork.networkingPeer.AvailableRegions.Count == 0)
-		{
-			UnityEngine.Debug.LogError("No regions available. Are you sure your appid is valid and setup?");
-			yield break;
-		}
-		PhotonPingManager pingManager = new PhotonPingManager();
-		foreach (Region region in PhotonNetwork.networkingPeer.AvailableRegions)
-		{
-			SP.StartCoroutine(pingManager.PingSocket(region));
-		}
-		while (!pingManager.Done)
-		{
-			yield return new WaitForSeconds(0.1f);
-		}
-		Region best = pingManager.BestRegion;
-		BestRegionCodeCurrently = best.Code;
-		BestRegionCodeInPreferences = best.Code;
-		UnityEngine.Debug.Log(string.Concat("Found best region: ", best.Code, " ping: ", best.Ping, ". Calling ConnectToRegionMaster() is: ", connectToBest));
-		if (connectToBest)
-		{
-			PhotonNetwork.networkingPeer.ConnectToRegionMaster(best.Code);
-		}
+		yield break;
 	}
 }

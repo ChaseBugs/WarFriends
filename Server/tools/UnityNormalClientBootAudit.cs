@@ -32,8 +32,13 @@ public static class UnityNormalClientBootAudit
     private static bool _normalQueueStarted;
     private static bool _hasObservedEditorUpdate;
     private static bool _hasObservedPlayMode;
+    private static bool _uiPreparationOpened;
+    private static bool _uiAssignmentsDismissed;
     private static double _nextProgressTime;
     private static int _progressSamples;
+    private static bool _dailyRewardChecked;
+    private static int _kinematicCcdErrors;
+    private static double _lobbyReadyAt = -1;
 
     static UnityNormalClientBootAudit()
     {
@@ -95,6 +100,8 @@ public static class UnityNormalClientBootAudit
 
     private static void ObserveLog(string condition, string stackTrace, LogType type)
     {
+        if (condition == "daily reward chacked") _dailyRewardChecked = true;
+        if (condition.Contains("kinematic bodies with CCD enabled")) _kinematicCcdErrors++;
         WarFriends.Validation.UnityNormalBattleEntryAudit.RecordStageLog(condition);
         if (type == LogType.Error || type == LogType.Assert)
         {
@@ -186,9 +193,35 @@ public static class UnityNormalClientBootAudit
                 return;
             }
         }
-        if ((_mainSceneFrame >= 0 && Time.frameCount >= _mainSceneFrame + MainSceneObservationFrames) ||
+        bool lobbyReady = !requireAccount || (_dailyRewardChecked && !HasBlockingDialog());
+        if (observedTarget && lobbyReady && UnityOfflineStoreAudit.Enabled &&
+            !UnityOfflineStoreAudit.Observe() && EditorApplication.timeSinceStartup <= _deadline) return;
+        if (observedTarget && lobbyReady && _lobbyReadyAt < 0) _lobbyReadyAt = EditorApplication.timeSinceStartup;
+        if ((_mainSceneFrame >= 0 && Time.frameCount >= _mainSceneFrame + MainSceneObservationFrames &&
+             _lobbyReadyAt >= 0 && EditorApplication.timeSinceStartup >= _lobbyReadyAt + 3) ||
             EditorApplication.timeSinceStartup > _deadline)
         {
+            if (observedTarget && lobbyReady && !_uiPreparationOpened &&
+                !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_UI_LOBBY_CAPTURE")))
+            {
+                CaptureLobbyIfRequested();
+                Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<BattlePreparationScreen>.instance);
+                _uiPreparationOpened = true;
+                _lobbyReadyAt = EditorApplication.timeSinceStartup;
+                return;
+            }
+            if (_uiPreparationOpened && !_uiAssignmentsDismissed)
+            {
+                DailyAssignmentsDialog assignments = GuiElementSingle<DailyAssignmentsDialog>.instance;
+                if (assignments != null && assignments.isFullyShowed)
+                {
+                    CaptureLobbyIfRequested();
+                    assignments.OnBack();
+                    _uiAssignmentsDismissed = true;
+                    _lobbyReadyAt = EditorApplication.timeSinceStartup;
+                    return;
+                }
+            }
             Finish();
         }
     }
@@ -232,6 +265,12 @@ public static class UnityNormalClientBootAudit
             levels.unitsSortedByLevel.Count == levels.behaviours.Count &&
             levels.weaponsSortedByLevel.Count == levels.weaponLevelsSetups.Count &&
             server != null && !server.loadingPlayerData && HasCardDefinitions();
+    }
+
+    private static bool HasBlockingDialog()
+    {
+        return Resources.FindObjectsOfTypeAll<WarningDialog>()
+            .Any(dialog => dialog.gameObject.scene.IsValid() && dialog.isShowed);
     }
 
     private static bool HasCardDefinitions()
@@ -278,6 +317,10 @@ public static class UnityNormalClientBootAudit
                 ? 0 : levels.weaponLevelsSetups.Count,
             accountDataReady = accountReady,
             playerDataLoadComplete = dataLoadComplete,
+            dailyRewardChecked = _dailyRewardChecked,
+            offlineStoreVerified = UnityOfflineStoreAudit.Completed,
+            blockingDialogVisible = HasBlockingDialog(),
+            kinematicCcdErrors = _kinematicCcdErrors,
             initializedUnitRows = levels == null ? 0 : levels.unitsSortedByLevel.Count,
             initializedWeaponRows = levels == null ? 0 : levels.weaponsSortedByLevel.Count,
             cardDefinitionsReady = accountReady && HasCardDefinitions(),
@@ -302,12 +345,16 @@ public static class UnityNormalClientBootAudit
             ? WarFriends.Validation.UnityNormalBattleEntryAudit.HasCompletedEntry : reachedMain;
         bool hasRequiredData = !requireAccount || (pairedEntry ? _mainSceneFrame >= 0 : dataLoadComplete);
         bool completed = reachedTarget && game != null && _exceptions == 0 && _invalidBootstrapQueries == 0 &&
-            hasRequiredData;
+            hasRequiredData && _kinematicCcdErrors == 0 &&
+            (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_UI_LOBBY_CAPTURE")) || _errors == 0) &&
+            (!UnityOfflineStoreAudit.Enabled || (UnityOfflineStoreAudit.Completed && _errors == 0)) &&
+            (!requireAccount || pairedEntry || (_dailyRewardChecked && !HasBlockingDialog()));
         if (completed && requireAccount && !pairedEntry)
         {
             try
             {
                 UnityStarterLoadoutExport.WriteIfRequested();
+                CaptureLobbyIfRequested();
             }
             catch (Exception failure)
             {
@@ -316,5 +363,55 @@ public static class UnityNormalClientBootAudit
             }
         }
         EditorApplication.Exit(completed ? 0 : 1);
+    }
+
+    private static void CaptureLobbyIfRequested()
+    {
+        string path = Environment.GetEnvironmentVariable("WAR_UI_LOBBY_CAPTURE");
+        if (string.IsNullOrEmpty(path)) return;
+        if (_uiPreparationOpened) path = Path.Combine(Path.GetDirectoryName(path), "battle-preparation.png");
+        if (_uiPreparationOpened && !_uiAssignmentsDismissed &&
+            GuiElementSingle<DailyAssignmentsDialog>.instance.isShowed)
+            path = Path.Combine(Path.GetDirectoryName(path), "daily-assignments.png");
+        File.WriteAllText(path + ".widgets.json", JsonConvert.SerializeObject(
+            UnityEngine.Object.FindObjectsOfType<UIWidget>().Select(sprite => new {
+                name = sprite.name, type = sprite.GetType().Name,
+                spriteName = sprite is UISprite ? ((UISprite)sprite).spriteName : null,
+                atlas = sprite is UISprite && ((UISprite)sprite).atlas != null ? ((UISprite)sprite).atlas.name : null,
+                texture = sprite.mainTexture == null ? null : sprite.mainTexture.name,
+                textureWidth = sprite.mainTexture == null ? 0 : sprite.mainTexture.width,
+                shader = sprite.material == null ? null : sprite.material.shader.name,
+                alpha = sprite.alpha,
+                screen = NGUITools.FindCameraForLayer(sprite.gameObject.layer).WorldToViewportPoint(sprite.transform.position).ToString(),
+                position = sprite.transform.position.ToString(),
+                parent = sprite.transform.parent == null ? null : sprite.transform.parent.name
+            }), Formatting.Indented));
+        var target = new RenderTexture(Screen.width, Screen.height, 24);
+        var image = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+        RenderTexture previous = RenderTexture.active;
+        try
+        {
+            foreach (Camera camera in Camera.allCameras.OrderBy(camera => camera.depth))
+            {
+                RenderTexture oldTarget = camera.targetTexture;
+                if (oldTarget != null) continue;
+                try
+                {
+                    camera.targetTexture = target;
+                    camera.Render();
+                }
+                finally { camera.targetTexture = oldTarget; }
+            }
+            RenderTexture.active = target;
+            image.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
+            image.Apply();
+            File.WriteAllBytes(path, image.EncodeToPNG());
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            UnityEngine.Object.DestroyImmediate(image);
+            UnityEngine.Object.DestroyImmediate(target);
+        }
     }
 }

@@ -1,0 +1,2190 @@
+{
+  "scope": "Active 1.4.0 Client, including Plugins; lexical inventory, not runtime proof",
+  "photonAssemblyRemoved": false,
+  "sourceFiles": 188,
+  "applicationSourceFiles": 133,
+  "componentAttachments": 537,
+  "apiReferences": {
+    "BackgroundTimeout": 1,
+    "ChangeOwner": 5,
+    "CreateRoom": 1,
+    "Destroy": 1,
+    "Disconnect": 2,
+    "EnableLobbyStatistics": 1,
+    "FindGameObjectsWithComponent": 1,
+    "Friends": 1,
+    "GetPing": 3,
+    "LeaveRoom": 2,
+    "LoadLevel": 2,
+    "LobbyStatistics": 1,
+    "MAX_VIEW_IDS": 3,
+    "NetworkStatisticsEnabled": 1,
+    "OnEventCall": 6,
+    "PhotonServerSettings": 14,
+    "RPC": 4,
+    "RegisterPooledPhotonView": 1,
+    "ResumeMessageQueue": 2,
+    "SendMonoMessageTargetType": 1,
+    "SendMonoMessageTargets": 2,
+    "SendOutgoingCommands": 2,
+    "ServerTimestamp": 7,
+    "SetMasterClient": 1,
+    "SetReceivingEnabled": 4,
+    "StopMessageQueue": 1,
+    "autoCleanUpPlayerObjects": 3,
+    "autoJoinLobby": 1,
+    "automaticallySyncScene": 3,
+    "connected": 5,
+    "gameVersion": 2,
+    "inRoom": 2,
+    "isMasterClient": 44,
+    "isMessageQueueRunning": 3,
+    "lastUsedViewSubId": 1,
+    "lastUsedViewSubIdStatic": 1,
+    "logLevel": 35,
+    "manuallyAllocatedViewIds": 1,
+    "masterClient": 2,
+    "networkingPeer": 54,
+    "offlineMode": 27,
+    "player": 48,
+    "playerList": 6,
+    "playerName": 1,
+    "precisionForFloatSynchronization": 1,
+    "precisionForQuaternionSynchronization": 1,
+    "precisionForVectorSynchronization": 2,
+    "room": 34,
+    "sendRate": 1,
+    "sendRateOnSerialize": 3,
+    "time": 10
+  },
+  "sources": [
+    {
+      "path": "Clients/ExportedProject/Assets/Editor/SelfHostedBattleAudit.cs",
+      "references": 4,
+      "types": [
+        "PhotonConnectionManager"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Editor/SelfHostedGrenadeRenderAudit.cs",
+      "references": 1,
+      "types": [
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Editor/SelfHostedScoreHudAudit.cs",
+      "references": 3,
+      "types": [
+        "Photon",
+        "PhotonMessageInfo"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/CustomTypes.cs",
+      "references": 9,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonNetwork",
+        "PhotonPeer",
+        "PhotonPlayer"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/EnterRoomParams.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/AuthenticationValues.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ChatChannel.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ChatClient.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ChatDisconnectCause.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ChatEventCode.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ChatOperationCode.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ChatParameterCode.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ChatPeer.cs",
+      "references": 4,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonPeer"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ChatState.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ChatUserStatus.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/CustomAuthenticationType.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ErrorCode.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/IChatClientListener.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/Chat/ParameterCode.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ExitGames/Client/Photon/SocketWebTcp.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/Extensions.cs",
+      "references": 8,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonView"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/IPunCallbacks.cs",
+      "references": 5,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonMessageInfo",
+        "PhotonPlayer"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/IPunObservable.cs",
+      "references": 2,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/LoadbalancingPeer.cs",
+      "references": 7,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonNetwork",
+        "PhotonPeer",
+        "PhotonServerSettings"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/NetworkingPeer.cs",
+      "references": 415,
+      "types": [
+        "ExitGames.Client.Photon",
+        "Photon",
+        "PhotonHandler",
+        "PhotonLogLevel",
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonNetworkingMessage",
+        "PhotonPlayer",
+        "PhotonServerSettings",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonView",
+        "PhotonViews",
+        "PunRPC"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/OpJoinRandomRoomParams.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/Photon/MonoBehaviour.cs",
+      "references": 7,
+      "types": [
+        "Photon",
+        "PhotonView"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/Photon/PunBehaviour.cs",
+      "references": 6,
+      "types": [
+        "ExitGames.Client.Photon",
+        "Photon",
+        "PhotonMessageInfo",
+        "PhotonPlayer"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonAnimatorView.cs",
+      "references": 17,
+      "types": [
+        "Photon",
+        "PhotonAnimatorView",
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonStream",
+        "PhotonStreamQueue",
+        "PhotonView"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonClasses.cs",
+      "references": 1,
+      "types": [
+        "PhotonClasses"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonHandler.cs",
+      "references": 12,
+      "types": [
+        "ExitGames.Client.Photon",
+        "Photon",
+        "PhotonHandler",
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonLagSimulationGui.cs",
+      "references": 4,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonLagSimulationGui",
+        "PhotonNetwork",
+        "PhotonPeer"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonLogLevel.cs",
+      "references": 1,
+      "types": [
+        "PhotonLogLevel"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonMessageInfo.cs",
+      "references": 7,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonPlayer",
+        "PhotonView"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonNetwork.cs",
+      "references": 57,
+      "types": [
+        "ExitGames.Client.Photon",
+        "Photon",
+        "PhotonHandler",
+        "PhotonLogLevel",
+        "PhotonMono",
+        "PhotonNetwork",
+        "PhotonNetworkingMessage",
+        "PhotonPlayer",
+        "PhotonServerSettings",
+        "PhotonTargets",
+        "PhotonView"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonNetworkingMessage.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetworkingMessage"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonPingManager.cs",
+      "references": 3,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonNetwork",
+        "PhotonPingManager"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonPlayer.cs",
+      "references": 28,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonNetwork",
+        "PhotonNetworkingMessage",
+        "PhotonPlayer"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonRigidbody2DView.cs",
+      "references": 6,
+      "types": [
+        "Photon",
+        "PhotonMessageInfo",
+        "PhotonRigidbody2DView",
+        "PhotonStream",
+        "PhotonView"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonRigidbodyView.cs",
+      "references": 6,
+      "types": [
+        "Photon",
+        "PhotonMessageInfo",
+        "PhotonRigidbodyView",
+        "PhotonStream",
+        "PhotonView"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonStatsGui.cs",
+      "references": 13,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonNetwork",
+        "PhotonStatsGui"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonStream.cs",
+      "references": 4,
+      "types": [
+        "PhotonPlayer",
+        "PhotonStream"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonStreamQueue.cs",
+      "references": 5,
+      "types": [
+        "PhotonStream",
+        "PhotonStreamQueue"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonTargets.cs",
+      "references": 1,
+      "types": [
+        "PhotonTargets"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonTransformView.cs",
+      "references": 21,
+      "types": [
+        "Photon",
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonStream",
+        "PhotonTransformView",
+        "PhotonTransformViewPositionControl",
+        "PhotonTransformViewPositionModel",
+        "PhotonTransformViewRotationControl",
+        "PhotonTransformViewRotationModel",
+        "PhotonTransformViewScaleControl",
+        "PhotonTransformViewScaleModel",
+        "PhotonView"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonTransformViewPositionControl.cs",
+      "references": 27,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonStream",
+        "PhotonTransformViewPositionControl",
+        "PhotonTransformViewPositionModel"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonTransformViewPositionModel.cs",
+      "references": 1,
+      "types": [
+        "PhotonTransformViewPositionModel"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonTransformViewRotationControl.cs",
+      "references": 8,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTransformViewRotationControl",
+        "PhotonTransformViewRotationModel"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonTransformViewRotationModel.cs",
+      "references": 1,
+      "types": [
+        "PhotonTransformViewRotationModel"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonTransformViewScaleControl.cs",
+      "references": 8,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTransformViewScaleControl",
+        "PhotonTransformViewScaleModel"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonTransformViewScaleModel.cs",
+      "references": 1,
+      "types": [
+        "PhotonTransformViewScaleModel"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "references": 54,
+      "types": [
+        "ExitGames.Client.Photon",
+        "Photon",
+        "PhotonHandler",
+        "PhotonLogLevel",
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonNetworkingMessage",
+        "PhotonPlayer",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PunRPC.cs",
+      "references": 1,
+      "types": [
+        "PunRPC"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/Room.cs",
+      "references": 18,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonNetwork",
+        "PhotonNetworkingMessage"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/RoomInfo.cs",
+      "references": 3,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/RoomOptions.cs",
+      "references": 2,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/ServerSettings.cs",
+      "references": 5,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonCloud",
+        "PhotonLogLevel"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/WebRpcResponse.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": true
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/AICar.cs",
+      "references": 2,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/AICarBase.cs",
+      "references": 8,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonStream",
+        "PhotonTransform",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/AICarBuggy.cs",
+      "references": 3,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonMessageInfo",
+        "PhotonStream"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/AICarTransporter.cs",
+      "references": 2,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/AIObject.cs",
+      "references": 16,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/AssaultHelicopter.cs",
+      "references": 4,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTransform"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Barrel.cs",
+      "references": 2,
+      "types": [
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BatchedWeapon.cs",
+      "references": 4,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BeanstalkServerManager.cs",
+      "references": 5,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonIsFull"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/BotMission.cs",
+      "references": 6,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonNetwork",
+        "PhotonTargets"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Card.cs",
+      "references": 2,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardAirstrike.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardAmmoThief.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardBackstab.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardBuddy.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardCantDieJustNow.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardHeadAhead.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardHeadsUp.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardHealingStorm.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardHealthChangeUnit.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardHealthForSoldiers.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardIconIndicator.cs",
+      "references": 8,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardManager.cs",
+      "references": 11,
+      "types": [
+        "PhotonNetwork",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardManagerDeathmatchOffline.cs",
+      "references": 6,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardMassShieldDestroyer.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardParalyzeThese.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardSabotage.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardShieldDestroyer.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardSickness.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardSlowdown.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardSoldierOnSteroids.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardSoldiersShootout.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Chat.cs",
+      "references": 6,
+      "types": [
+        "ExitGames.Client.Photon",
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Crane.cs",
+      "references": 11,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CustomTypes.cs",
+      "references": 3,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonPeer"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/DatabaseAction.cs",
+      "references": 1,
+      "types": [
+        "PhotonIsFull"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/DebugSettings.cs",
+      "references": 10,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Decoy.cs",
+      "references": 4,
+      "types": [
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/DestroyableObject.cs",
+      "references": 26,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Drone.cs",
+      "references": 2,
+      "types": [
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/DroneSteering.cs",
+      "references": 6,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTransform",
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/ElectricTrap.cs",
+      "references": 5,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/EnemyController.cs",
+      "references": 78,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonTransform",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/EventTrackingManager.cs",
+      "references": 2,
+      "types": [
+        "PhotonConnectionManager"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/ExplosionManager.cs",
+      "references": 4,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameController.cs",
+      "references": 4,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerCampaign.cs",
+      "references": 2,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerCoop.cs",
+      "references": 49,
+      "types": [
+        "Photon",
+        "PhotonConnectionManager",
+        "PhotonNetwork",
+        "PhotonPlayer",
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerDeathMatch.cs",
+      "references": 12,
+      "types": [
+        "Photon",
+        "PhotonConnectionManager",
+        "PhotonNetwork",
+        "PhotonPlayer",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerDeathMatchOffline.cs",
+      "references": 1,
+      "types": [
+        "PhotonConnectionManager"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerOnline.cs",
+      "references": 150,
+      "types": [
+        "ExitGames.Client.Photon",
+        "Photon",
+        "PhotonCachedRPC",
+        "PhotonConnectionManager",
+        "PhotonIsFull",
+        "PhotonNetwork",
+        "PhotonPlayer",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerOnline.Rematch.cs",
+      "references": 3,
+      "types": [
+        "PhotonConnectionManager"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerPVP.cs",
+      "references": 14,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonNetwork",
+        "PhotonPlayer",
+        "PhotonTargets"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerTutorial.cs",
+      "references": 1,
+      "types": [
+        "PhotonConnectionManager"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerWarArena.cs",
+      "references": 7,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonPlayer",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameShootableEntity.cs",
+      "references": 2,
+      "types": [
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Grenade.cs",
+      "references": 6,
+      "types": [
+        "PhotonNetwork",
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GrenadeAmmoBase.cs",
+      "references": 2,
+      "types": [
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Helicopter.cs",
+      "references": 6,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonTransform",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/HudScreen.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/InstantBattleAnimation.cs",
+      "references": 1,
+      "types": [
+        "PhotonConnectionManager"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Kevlar.cs",
+      "references": 6,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/KillStreakManager.cs",
+      "references": 16,
+      "types": [
+        "PhotonNetwork",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/MagneticObject.cs",
+      "references": 4,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/MainGameEntity.cs",
+      "references": 3,
+      "types": [
+        "PhotonNetwork",
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/MatchManager.cs",
+      "references": 10,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Mech.cs",
+      "references": 4,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTransform"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/MechAnimator.cs",
+      "references": 14,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/MineAmmo.cs",
+      "references": 7,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/MiniDrone.cs",
+      "references": 6,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Missile.cs",
+      "references": 2,
+      "types": [
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Mission.cs",
+      "references": 1,
+      "types": [
+        "PhotonConnectionManager"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/MissionsManager.cs",
+      "references": 14,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Mortar.cs",
+      "references": 2,
+      "types": [
+        "PhotonNetwork",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/NetworkObjectPool.cs",
+      "references": 23,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonNetwork",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Parachute.cs",
+      "references": 8,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonTransform",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PerformanceLoggerManager.cs",
+      "references": 1,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonCachedRPC.cs",
+      "references": 27,
+      "types": [
+        "Photon",
+        "PhotonCachedRPC",
+        "PhotonConnectionManager",
+        "PhotonPlayer",
+        "PhotonTargets",
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
+      "references": 47,
+      "types": [
+        "ExitGames.Client.Photon",
+        "Photon",
+        "PhotonCachedRPC",
+        "PhotonCompatibility",
+        "PhotonConnectionManager",
+        "PhotonNetwork",
+        "PhotonNetworkingMessage"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "references": 5,
+      "types": [
+        "PhotonLevelIDChanger",
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "references": 2,
+      "types": [
+        "PhotonLevelView",
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonTransform.cs",
+      "references": 5,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonStream",
+        "PhotonTransform"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhysicalAmmo.cs",
+      "references": 2,
+      "types": [
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhysicalAmmoWeapon.cs",
+      "references": 7,
+      "types": [
+        "PhotonNetwork",
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PingShower.cs",
+      "references": 2,
+      "types": [
+        "PhotonNetwork"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PlayerController.cs",
+      "references": 41,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonTransform",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PlayerProperties.cs",
+      "references": 5,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonNetwork",
+        "PhotonPlayer"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/RoomConnection.cs",
+      "references": 1,
+      "types": [
+        "ExitGames.Client.Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/RoomConnectionWarArena.cs",
+      "references": 3,
+      "types": [
+        "ExitGames.Client.Photon",
+        "PhotonConnectionManager"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/ScoreManager.cs",
+      "references": 10,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedAssaultHelicopterPresenter.cs",
+      "references": 1,
+      "types": [
+        "PhotonTransform"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedBattleClient.cs",
+      "references": 6,
+      "types": [
+        "Photon",
+        "PhotonCompatibility"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedBazookaVisual.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedDeathMatchBridge.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedDecoyPresenter.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedDronePresenter.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedGunslingerWeaponAttachment.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedHeavyTurretPresenter.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryPresenter.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryVisualFactory.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryWeaponAppearance.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedLandMinePresenter.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedMortarWarningVisual.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedMortarWeaponAttachment.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedProjectilePresenter.cs",
+      "references": 2,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedRepairDronePresenter.cs",
+      "references": 1,
+      "types": [
+        "Photon"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedRiflePoseRenderer.cs",
+      "references": 3,
+      "types": [
+        "Photon",
+        "PhotonTransform"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/ServerResponseHandler.cs",
+      "references": 2,
+      "types": [
+        "Photon",
+        "PhotonIsFull"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SessionManager.cs",
+      "references": 1,
+      "types": [
+        "PhotonConnectionManager"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Shield.cs",
+      "references": 25,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonNetwork",
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SkillShotController.cs",
+      "references": 5,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SkillShotControllerBonusBox.cs",
+      "references": 2,
+      "types": [
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SkillShotControllerPlayer.cs",
+      "references": 1,
+      "types": [
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SlowMotionManager.cs",
+      "references": 5,
+      "types": [
+        "PhotonNetwork",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
+      "references": 6,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierBehaviourBuddy.cs",
+      "references": 10,
+      "types": [
+        "PhotonTargets",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierBehaviourCommando.cs",
+      "references": 1,
+      "types": [
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SpawningManager.cs",
+      "references": 6,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SpawningManagerDeathMatch.cs",
+      "references": 13,
+      "types": [
+        "PhotonCachedRPC",
+        "PhotonConnectionManager",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Tank.cs",
+      "references": 4,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonStream",
+        "PhotonTransform"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/TimeManager.cs",
+      "references": 14,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Train.cs",
+      "references": 8,
+      "types": [
+        "PhotonMessageInfo",
+        "PhotonNetwork",
+        "PhotonStream",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/TransporterTurret.cs",
+      "references": 1,
+      "types": [
+        "PhotonTargets"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/TurretBase.cs",
+      "references": 4,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/TurretWeaponBasic.cs",
+      "references": 4,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/TutorialManagerStage1.cs",
+      "references": 4,
+      "types": [
+        "PhotonLevelIDChanger",
+        "PhotonView"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/UnitShield.cs",
+      "references": 7,
+      "types": [
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/WaveManager.cs",
+      "references": 5,
+      "types": [
+        "PhotonNetwork",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Weapon.cs",
+      "references": 7,
+      "types": [
+        "PhotonConnectionManager",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    },
+    {
+      "path": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/WeaponInventory.cs",
+      "references": 6,
+      "types": [
+        "Photon",
+        "PhotonConnectionManager",
+        "PhotonTargets",
+        "PhotonView",
+        "PunRPC"
+      ],
+      "retainedPlugin": false
+    }
+  ],
+  "attachments": [
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/assaultHelicopter.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 4
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/AssaultRifleEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/BazookaEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/Buggy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 4
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/Decoy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/dronePrototype.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/enemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/FlamethrowerEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/GrenadeAmmoEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/GrenadeEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/GrenadeLauncherEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/HeavyTurret.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/Helicopter.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 2
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/Humvee.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 3
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/KillStreakBonusBox.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/Mech.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 3
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/MineAmmo.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/miniDrone.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/MiniGun.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/Missile.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/MortarEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/parachute.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/PistolEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/PlayerPrefab.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 69
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/ShotgunEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/SniperRifleEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/SwatPistolEnemy.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/Tank.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 3
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/Transporter.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 3
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/Turret.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/GameObject/TurretRockets.prefab",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 4
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Aztec_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 11
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Aztec_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Aztec_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "count": 11
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Aztec_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 7
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Aztec_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Aztec_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "count": 7
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/City_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 13
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/City_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/City_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "count": 13
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/City_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 9
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/City_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/City_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "count": 9
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Desert_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 16
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Desert_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Desert_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "count": 16
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Desert_New.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 10
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Desert_New.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Desert_New.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "count": 10
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/MainScene.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 153
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/MainScene.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Park_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 18
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Park_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Park_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "count": 18
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Park_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 14
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Park_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Park_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "count": 14
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Snow_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 18
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Snow_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Snow_Multiplayer.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "count": 18
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Snow_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/PhotonView.cs",
+      "count": 12
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Snow_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelIDChanger.cs",
+      "count": 1
+    },
+    {
+      "asset": "Clients/ExportedProject/Assets/Scenes/Snow_Single.unity",
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonLevelView.cs",
+      "count": 12
+    }
+  ]
+}

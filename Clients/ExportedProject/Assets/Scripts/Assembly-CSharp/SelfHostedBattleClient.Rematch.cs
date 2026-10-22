@@ -55,7 +55,7 @@ public sealed partial class SelfHostedBattleClient
         RequireAbortRecoveryReleased();
         RequireNoPendingRematch();
         RequireEndedRematchSource();
-        var backend = new BackendClient(SelfHostedBackendEndpoint.Resolve(endpoint), allowLoopbackHttp);
+        var backend = SelfHostedBackendClientFactory.Create(SelfHostedBackendEndpoint.Resolve(endpoint), allowLoopbackHttp);
         try
         {
             _rematchAttempt = new SelfHostedRematchAttempt(backend, accessToken, State, LocalPlayerId);

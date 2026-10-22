@@ -249,7 +249,7 @@ public class FuseboxxService : IDisposable
 		}
 		if (gameConfiguration == null)
 		{
-			Debug.LogError("Fuseboxx: No Dictionary with configuration found!");
+			Debug.Log("Offline configuration: using recovered defaults without live overrides.");
 			return;
 		}
 		foreach (KeyValuePair<string, string> item in gameConfiguration)

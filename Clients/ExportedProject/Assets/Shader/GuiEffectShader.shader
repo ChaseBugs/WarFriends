@@ -23,12 +23,14 @@ struct appdata_t {
 	float4 vertex : POSITION;
 	fixed4 color : COLOR;
 	float2 texcoord : TEXCOORD0;
+	float2 effectCoord : TEXCOORD1;
 };
 
 struct v2f {
 	float4 vertex : SV_POSITION;
 	fixed4 color : COLOR;
 	half2 texcoord : TEXCOORD0;
+	float2 effectCoord : TEXCOORD1;
 };
 
 sampler2D _MainTex;
@@ -41,16 +43,17 @@ v2f vert (appdata_t v)
 	o.vertex = UnityObjectToClipPos(v.vertex);
 	o.color = v.color;
 	o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
+	// UIReflectionEffect supplies the animated shine sweep in the second UV channel.
+	o.effectCoord = v.effectCoord;
 	return o;
 }
 
 fixed4 frag (v2f i) : SV_Target
 {
 	fixed4 baseCol = tex2D(_MainTex, i.texcoord);
-	fixed4 effect = tex2D(_EffectTex, i.texcoord);
-	fixed4 col = baseCol * i.color;
-	col.rgb = lerp(col.rgb, effect.rgb, effect.a);
-	return col;
+	fixed4 effect = tex2D(_EffectTex, i.effectCoord);
+	// Both masks participate: outside the sweep the overlay must be transparent.
+	return baseCol * effect * i.color;
 }
 ENDCG
 	}

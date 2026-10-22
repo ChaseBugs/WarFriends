@@ -1497,7 +1497,7 @@ public class ServerResponseHandler
 		}
 		else
 		{
-			Debug.LogError("NO WAR ARENA CONFIG!!!");
+			Debug.Log("War Arena is unavailable: no server event configuration.");
 		}
 		mServerTime.Init(StringParser.ParseInt(mResponse["Time"]));
 		if (mResponse.ContainsKey("LeagueEvaluation"))
@@ -2374,7 +2374,7 @@ public class ServerResponseHandler
 		}
 		else
 		{
-			Debug.LogError("NO WAR ARENA CONFIG!!!");
+			Debug.Log("War Arena is unavailable: no server event configuration.");
 		}
 		if (mResponse.ContainsKey("Scraps"))
 		{

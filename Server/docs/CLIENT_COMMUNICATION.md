@@ -1,5 +1,37 @@
 # Recovered 1.4.0 communication contracts
 
+2026-10-22 update: the active Client now selects protobuf framing for Backend action/probe requests.
+The historical form contract below remains available for compatibility; its callback payload schema
+is preserved inside `ClientActionReply`. See [Photon retirement and protobuf migration](CLIENT_PHOTON_REMOVAL.md)
+for implemented transport boundaries and the remaining local Photon SDK dependencies.
+
+Unity Backend HTTP transport is BestHTTP. `BeanstalkServerManager` already used it;
+matchmaking, reconnect and rematch now create the portable protobuf SDK through
+`SelfHostedBackendClientFactory` and `SelfHostedBestHttpHandler`. The SDK keeps its
+`HttpClient` API, but its injected handler sends requests through BestHTTP rather
+than the default platform HTTP handler. Initialize the factory on the Unity thread
+so BestHTTP's update component exists before asynchronous SDK continuations run.
+The adapter preserves status/error bodies and authentication headers, disables
+cache/cookies/retries/redirects, propagates cancellation, and rejects responses
+larger than 64 KiB. Battle packets continue over the separate UDP transport.
+
+Reference inspected: `E:/Github/Mobile/Heyworks/Clients/Troopers/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/RestClient.cs`
+and its `OfflineCatalogOperations.cs` caller. WarFriends retains its own protobuf
+contracts instead of copying that project's JSON operation layer.
+`Server/tools/check_unity_offline_transport.py` compiles a disposable Client copy
+and runs real loopback BestHTTP protobuf POST/GET, bearer-header, error-response,
+response-limit and cancellation checks. These transport checks do not establish
+normal two-Client gameplay or Android compatibility.
+
+Verified 2026-10-22 in native Unity 2018.3.0f2 tooling (not an approved project
+upgrade): full Client compilation and the real BestHTTP checks passed in managed
+run `besthttp-recheck-4e44eeeedb3d46189e43ec6994f56dbc`; all 15,603 source inputs
+remained unchanged and imported test data was removed. The Editor-only harness
+pre-creates the BestHTTP update component before pumping callbacks. The .NET
+solution build and protocol test executable also passed. Static asset checks
+found no missing scripts or broken references; the existing 17 NGUI sprite
+selection mismatches remain.
+
 For the owner's local Ice_Moba Unity/server reference and the offline Photon/provider
 migration sequence, see [integration reference](ICE_MOBA_INTEGRATION_REFERENCE.md).
 Its transport patterns are references; recovered WarFriends contracts remain authoritative.

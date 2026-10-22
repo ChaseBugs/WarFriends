@@ -129,7 +129,6 @@ internal static class LegacyUnavailableActions
             Entry.Closed(Action.DebugAddScraps),
             Entry.Closed(Action.WarArenaEnded),
             Entry.Closed(Action.MaxAll),
-            Entry.Closed(Action.CheckDailyReward),
             Entry.Closed(Action.ClaimDailyReward),
             Entry.Closed(Action.DebugRenewRental),
             Entry.Closed(Action.RemoveOrUpdateGC),

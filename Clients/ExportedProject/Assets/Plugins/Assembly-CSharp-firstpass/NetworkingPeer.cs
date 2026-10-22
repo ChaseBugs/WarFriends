@@ -299,78 +299,20 @@ public class NetworkingPeer : LoadBalancingPeer, IPhotonPeerListener
 
 	public bool Connect(string serverAddress, ServerConnection type)
 	{
-		if (PhotonHandler.AppQuits)
-		{
-			Debug.LogWarning("Ignoring Connect() because app gets closed. If this is an error, check PhotonHandler.AppQuits.");
-			return false;
-		}
-		if (State == ClientState.Disconnecting)
-		{
-			Debug.LogError("Connect() failed. Can't connect while disconnecting (still). Current state: " + PhotonNetwork.connectionStateDetailed);
-			return false;
-		}
-		SetupProtocol(type);
-		bool flag = base.Connect(serverAddress, string.Empty, TokenForInit);
-		if (flag)
-		{
-			switch (type)
-			{
-			case ServerConnection.NameServer:
-				State = ClientState.ConnectingToNameServer;
-				break;
-			case ServerConnection.MasterServer:
-				State = ClientState.ConnectingToMasterserver;
-				break;
-			case ServerConnection.GameServer:
-				State = ClientState.ConnectingToGameserver;
-				break;
-			}
-		}
-		return flag;
+		// Cloud and self-hosted Photon servers are retired. Never create a socket here.
+		return false;
 	}
 
 	public bool ConnectToNameServer()
 	{
-		if (PhotonHandler.AppQuits)
-		{
-			Debug.LogWarning("Ignoring Connect() because app gets closed. If this is an error, check PhotonHandler.AppQuits.");
-			return false;
-		}
-		IsUsingNameServer = true;
-		CloudRegion = CloudRegionCode.none;
-		if (State == ClientState.ConnectedToNameServer)
-		{
-			return true;
-		}
-		SetupProtocol(ServerConnection.NameServer);
-		if (!base.Connect(NameServerAddress, "ns", TokenForInit))
-		{
-			return false;
-		}
-		State = ClientState.ConnectingToNameServer;
-		return true;
+		// Cloud and self-hosted Photon servers are retired. Never create a socket here.
+		return false;
 	}
 
 	public bool ConnectToRegionMaster(CloudRegionCode region)
 	{
-		if (PhotonHandler.AppQuits)
-		{
-			Debug.LogWarning("Ignoring Connect() because app gets closed. If this is an error, check PhotonHandler.AppQuits.");
-			return false;
-		}
-		IsUsingNameServer = true;
-		CloudRegion = region;
-		if (State == ClientState.ConnectedToNameServer)
-		{
-			return CallAuthenticate();
-		}
-		SetupProtocol(ServerConnection.NameServer);
-		if (!base.Connect(NameServerAddress, "ns", TokenForInit))
-		{
-			return false;
-		}
-		State = ClientState.ConnectingToNameServer;
-		return true;
+		// Cloud and self-hosted Photon servers are retired. Never create a socket here.
+		return false;
 	}
 
 	protected internal void SetupProtocol(ServerConnection serverType)
@@ -473,16 +415,8 @@ public class NetworkingPeer : LoadBalancingPeer, IPhotonPeerListener
 
 	public bool GetRegions()
 	{
-		if (Server != ServerConnection.NameServer)
-		{
-			return false;
-		}
-		bool flag = OpGetRegions(AppId);
-		if (flag)
-		{
-			AvailableRegions = null;
-		}
-		return flag;
+		// Cloud and self-hosted Photon servers are retired. Never create a socket here.
+		return false;
 	}
 
 	public override bool OpFindFriends(string[] friendsToFind)

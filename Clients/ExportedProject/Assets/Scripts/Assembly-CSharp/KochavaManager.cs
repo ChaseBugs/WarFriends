@@ -4,8 +4,7 @@ public class KochavaManager : MonoBehaviour
 {
 	private void Start()
 	{
-		Kochava.AttributionCallback attributionCallback = AttributionCallback;
-		Kochava.SetAttributionCallback(attributionCallback);
+		// Offline builds have no attribution service or Kochava runtime instance.
 	}
 
 	private static void AttributionCallback(string data)
@@ -15,34 +14,31 @@ public class KochavaManager : MonoBehaviour
 
 	public static void LinkPlayer(string playerId)
 	{
-		if (!string.IsNullOrEmpty(playerId))
-		{
-			Kochava.IdentityLink("playerId", playerId);
-		}
+		// Account persistence and the following PlayerData callback must never depend on analytics.
 	}
 
 	public static string GetKochavaDeviceId()
 	{
-		return Kochava.GetKochavaDeviceId();
+		return string.Empty;
 	}
 
 	public static string GetIDFA()
 	{
-		return Kochava.GetKochavaIDFA();
+		return string.Empty;
 	}
 
 	public static string GetIDFV()
 	{
-		return Kochava.GetKochavaIDFV();
+		return string.Empty;
 	}
 
 	public static string GetAndroidID()
 	{
-		return Kochava.GetAndroidID();
+		return string.Empty;
 	}
 
 	public static string GetAndroidAdvertisingID()
 	{
-		return Kochava.GetAndroidAdvertisingID();
+		return string.Empty;
 	}
 }

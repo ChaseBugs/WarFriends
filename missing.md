@@ -2,6 +2,11 @@
 
 Reviewed against the current working tree on 2026-10-22.
 
+Client transport update: Photon connection/region/ACK implementations have been retired at the
+retained PUN entry points, and Backend action/probe transport now supports protobuf used by the Client.
+Local RPC/ownership and serialized Photon types remain: full DLL removal is unfinished.
+See [Client migration](Server/docs/CLIENT_PHOTON_REMOVAL.md) and its complete dependency inventory.
+
 Latest documentation refresh: source-layout checks and eight regression tests pass; the card
 inventory validates 67 rows. All 12 Server projects and 175 direct-action dispositions remain
 present. All 29 local links in this register resolve. These checks verify structure and inventory,

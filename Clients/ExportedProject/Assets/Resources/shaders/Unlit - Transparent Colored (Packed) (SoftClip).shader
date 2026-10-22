@@ -29,30 +29,29 @@ struct v2f {
 	float4 vertex : SV_POSITION;
 	fixed4 color : COLOR;
 	half2 texcoord : TEXCOORD0;
-	float4 worldPos : TEXCOORD1;
+	float2 clipPosition : TEXCOORD1;
 };
 
 sampler2D _MainTex;
 float4 _MainTex_ST;
-float4 _ClipRange0;
-float2 _ClipArgs0;
+// UIDrawCall stores panel-local clipping in _MainTex_ST, not atlas UVs.
+float2 _ClipSharpness;
 
 v2f vert (appdata_t v)
 {
 	v2f o;
 	o.vertex = UnityObjectToClipPos(v.vertex);
 	o.color = v.color;
-	o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
-	o.worldPos = mul(unity_ObjectToWorld, v.vertex);
+	o.texcoord = v.texcoord;
+	o.clipPosition = v.vertex.xy * _MainTex_ST.xy + _MainTex_ST.zw;
 	return o;
 }
 
 fixed4 frag (v2f i) : SV_Target
 {
 	fixed4 col = tex2D(_MainTex, i.texcoord) * i.color;
-	half2 factor = (_ClipRange0.zw - abs(i.worldPos.xy - _ClipRange0.xy)) * _ClipArgs0.xy;
-	factor = saturate(factor);
-	col.a *= factor.x * factor.y;
+	float2 factor = (1.0 - abs(i.clipPosition)) * _ClipSharpness;
+	col.a *= saturate(min(factor.x, factor.y));
 	return col;
 }
 ENDCG

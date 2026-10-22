@@ -178,7 +178,7 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 			mServerTime = new ServerTime();
 			mUrlCreator = new BeanstalkUrlCreator();
 			mResponseHandler = new ServerResponseHandler(mServerTime);
-			inAppHandler = new InAppHandlerAndroid();
+			inAppHandler = new OfflineInAppHandler();
 			mServerUrl = mUrlCreator.CreateUrl();
 			GameLoginManager.instance.FriendsLoaded += GetFriendsInfo;
 			inAppHandler.InAppBought += OnInAppBought;
@@ -253,6 +253,12 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 	private void OnInAppFailed(DatabaseAction action, string reason, InAppError inAppError)
 	{
 		WaitingDialog.Hide();
+		if (inAppError == InAppError.Unavailable)
+		{
+			ConfirmDialog.ShowAlert(Localization.Localize("ID_OFFLINE"),
+				Localization.Localize("ID_NOTAVAILABLEATTHEMOMENT"), 0f);
+			return;
+		}
 		if (inAppError == InAppError.Canceled)
 		{
 			return;
@@ -331,14 +337,16 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 					this.ActionUpdated(databaseAction, i, ActionStage.SendingToServer);
 				}
 				HTTPRequest download = GetServerRequest(databaseAction, i, postData);
-				if (CachedApplicationInternetReachability.internetReachability != NetworkReachability.NotReachable)
+				if (SelfHostedBackendEndpoint.Resolve().IsLoopback ||
+                    CachedApplicationInternetReachability.internetReachability != NetworkReachability.NotReachable)
 				{
 					download.Send();
 					while (download.State <= HTTPRequestStates.Processing)
 					{
 						yield return null;
 					}
-					if (download.Response == null || string.IsNullOrEmpty(download.Response.DataAsText))
+					string responseText = ReadBackendResponse(download);
+					if (string.IsNullOrEmpty(responseText))
 					{
 						download.Exception = new SocketException(10014);
 						Debug.Log("Beanstalk: Error - empty response from server");
@@ -362,7 +370,7 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 						}
 						continue;
 					}
-					string text = download.Response.DataAsText;
+					string text = responseText;
 					dataDownloaded += download.Downloaded;
 					if (this.ActionUpdated != null)
 					{
@@ -421,6 +429,30 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 		return 5;
 	}
 
+    private static string ReadBackendResponse(HTTPRequest request)
+    {
+        if (request.Response == null || request.Exception != null)
+        {
+            return string.Empty;
+        }
+        try
+        {
+            string contentType = request.Response.GetFirstHeaderValue("content-type");
+            if (!request.Response.IsSuccess || contentType == null ||
+                !string.Equals(contentType.Split(';')[0].Trim(), War.Client.BackendActionCodec.ContentType,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Backend did not return a protobuf response.");
+            }
+            return War.Client.BackendActionCodec.Decode(request.Response.Data);
+        }
+        catch (Exception error)
+        {
+            request.Exception = error;
+            return string.Empty;
+        }
+    }
+
 	private HTTPRequest GetServerRequest(DatabaseAction databaseAction, int i, IEnumerable<Tuple<string, string>> postData)
 	{
 		Init();
@@ -431,30 +463,31 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 		hTTPRequest.DisableRetry = true;
 		hTTPRequest.DisableCache = true;
 		HTTPRequest hTTPRequest2 = hTTPRequest;
-		hTTPRequest2.AddField("SheetConfig", (!string.IsNullOrEmpty(GameConfigurationManager.instance.data.sheetConfiguration)) ? GameConfigurationManager.instance.data.sheetConfiguration : "0");
+        var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		fields.Add("SheetConfig", (!string.IsNullOrEmpty(GameConfigurationManager.instance.data.sheetConfiguration)) ? GameConfigurationManager.instance.data.sheetConfiguration : "0");
 		hTTPRequest2.CustomCertificationValidator += OnCertificationValidation;
 		hTTPRequest2.AddHeader("App-Version", Singleton<CurrentBundleVersion>.instance.shortVersion);
 		int num = (int)databaseAction;
-		hTTPRequest2.AddField("requestId", num.ToString());
-		hTTPRequest2.AddField("Version", Singleton<CurrentBundleVersion>.instance.version);
-		hTTPRequest2.AddField("Os", "android");
+		fields.Add("requestId", num.ToString());
+		fields.Add("Version", Singleton<CurrentBundleVersion>.instance.version);
+		fields.Add("Os", "android");
 		if (DebugSettings.debugEnabled && DebugSettings.isOurDevice)
 		{
-			hTTPRequest2.AddField("DebugEnabled", "1");
+			fields.Add("DebugEnabled", "1");
 		}
 		if (mDevAccess)
 		{
-			hTTPRequest2.AddField("DevAccess", "true");
+			fields.Add("DevAccess", "true");
 		}
 		if (!mAccountManagementActions.Contains((int)databaseAction))
 		{
 			string accessToken = GameLoginManager.instance.accessToken;
 			DatabasePlayer currentPlayer = GameLoginManager.currentPlayer;
-			hTTPRequest2.AddField("Token", (!string.IsNullOrEmpty(accessToken)) ? accessToken : "null");
-			hTTPRequest2.AddField("PlayerId", (currentPlayer != null) ? currentPlayer.id : "null");
+			fields.Add("Token", (!string.IsNullOrEmpty(accessToken)) ? accessToken : "null");
+			fields.Add("PlayerId", (currentPlayer != null) ? currentPlayer.id : "null");
 			if (Singleton<AntiCheatDetector>.instance.playerCheated)
 			{
-				hTTPRequest2.AddField("Cheat", Convert.ToString((int)Singleton<AntiCheatDetector>.instance.cheatType));
+				fields.Add("Cheat", Convert.ToString((int)Singleton<AntiCheatDetector>.instance.cheatType));
 				Singleton<AntiCheatDetector>.instance.Clear();
 			}
 		}
@@ -463,9 +496,12 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 			foreach (Tuple<string, string> postDatum in postData)
 			{
 				string value = ((!string.IsNullOrEmpty(postDatum.Value2)) ? postDatum.Value2 : "null");
-				hTTPRequest2.AddField(postDatum.Value1, value);
+				fields.Add(postDatum.Value1, value);
 			}
 		}
+		hTTPRequest2.RawData = War.Client.BackendActionCodec.Encode(fields);
+        hTTPRequest2.SetHeader("Content-Type", War.Client.BackendActionCodec.ContentType);
+        hTTPRequest2.SetHeader("Accept", War.Client.BackendActionCodec.ContentType);
 		return hTTPRequest2;
 	}
 
@@ -756,13 +792,10 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 		string fuseboxxConfigValue = Singleton<EventTrackingManager>.instance.fuseboxxService.GetFuseboxxConfigValue();
 		if (fuseboxxConfigValue != null)
 		{
-			Debug.LogError("Fuseboxx Config Value = " + fuseboxxConfigValue);
 			list2.Add(new Tuple<string, string>("FuseboxxConfigValue", fuseboxxConfigValue));
 		}
-		else
-		{
-			Debug.LogError("NO Fuseboxx Config Value during GETPLAYERDATA!");
-		}
+		// Saved Fuse overrides are optional in offline deployments. Their absence
+		// must not be reported as a failed player-data request or trigger a provider lookup.
 		LoadingDialog.ShowLoading(Localization.Localize("ID_DOWNLOADINGDATA"), showCancelButton: false, hideBackgroundElements: true);
 		StartCoroutine(RadicalRoutine.Run(CreateServerRequest(DatabaseAction.GetPlayerData, list2)));
 	}
@@ -2217,6 +2250,8 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 		hTTPRequest.DisableCache = true;
 		HTTPRequest hTTPRequest2 = hTTPRequest;
 		hTTPRequest2.CustomCertificationValidator += OnCertificationValidation;
+		hTTPRequest2.SetHeader("Content-Type", War.Client.BackendActionCodec.ContentType);
+        hTTPRequest2.SetHeader("Accept", War.Client.BackendActionCodec.ContentType);
 		return hTTPRequest2;
 	}
 
@@ -2240,14 +2275,16 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 			{
 				errorMessage = string.Empty;
 				HTTPRequest download = GetCheckRequest(i);
-				if (CachedApplicationInternetReachability.internetReachability != NetworkReachability.NotReachable)
+				if (SelfHostedBackendEndpoint.Resolve().IsLoopback ||
+                    CachedApplicationInternetReachability.internetReachability != NetworkReachability.NotReachable)
 				{
 					download.Send();
 					while (download.State <= HTTPRequestStates.Processing)
 					{
 						yield return null;
 					}
-					if (download.Response == null || string.IsNullOrEmpty(download.Response.DataAsText))
+					string responseText = ReadBackendResponse(download);
+					if (string.IsNullOrEmpty(responseText))
 					{
 						download.Exception = new SocketException(11001);
 					}
@@ -2274,7 +2311,7 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 						}
 						continue;
 					}
-					string text = download.Response.DataAsText;
+					string text = responseText;
 					Debug.Log("response: " + text);
 					dataDownloaded += download.Downloaded;
 					if (text == "ok")

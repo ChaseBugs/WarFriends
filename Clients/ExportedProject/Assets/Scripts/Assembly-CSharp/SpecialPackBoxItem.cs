@@ -274,10 +274,11 @@ public class SpecialPackBoxItem : Core_BaseScript
 
 	public void OverrideTweenPanels(float duration, float toAlpha)
 	{
+		if (allPanels == null) return;
 		UIPanel[] array = allPanels;
 		foreach (UIPanel uIPanel in array)
 		{
-			if (uIPanel.gameObject.activeSelf)
+			if (uIPanel != null && uIPanel.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(uIPanel.gameObject, duration, toAlpha);
 			}
@@ -286,10 +287,11 @@ public class SpecialPackBoxItem : Core_BaseScript
 
 	public void OverrideTweenPanels(float duration, float fromAlpha, float toAlpha)
 	{
+		if (allPanels == null) return;
 		UIPanel[] array = allPanels;
 		foreach (UIPanel uIPanel in array)
 		{
-			if (uIPanel.gameObject.activeSelf)
+			if (uIPanel != null && uIPanel.gameObject.activeSelf)
 			{
 				uIPanel.alpha1 = fromAlpha;
 				TweenAlpha.Begin(uIPanel.gameObject, duration, fromAlpha, toAlpha);

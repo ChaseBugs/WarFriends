@@ -6,6 +6,7 @@ param(
     [switch]$ExportStarterLoadout,
     [switch]$VerifyReturningPlayer,
     [switch]$VerifyNormalQueue,
+    [switch]$RenderUi,
     [string]$SecondUnityProject,
     [ValidateRange(5, 120)][Nullable[int]]$PairAdmissionSeconds,
     [switch]$KeepArtifacts
@@ -22,6 +23,7 @@ if (!$projectPath.StartsWith($validationRoot, [StringComparison]::OrdinalIgnoreC
 $editorFolder = Join-Path $projectPath 'Assets/Editor'
 New-Item -ItemType Directory -Path $editorFolder -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalClientBootAudit.cs') -Destination $editorFolder
+Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityOfflineStoreAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalMatchmakingReadinessAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalBattleEntryAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalBattleReconnectAudit.cs') -Destination $editorFolder
@@ -36,7 +38,7 @@ $processes = @()
 $variables = @(
     'TEMP', 'TMP', 'TMPDIR', 'ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database',
     'Battle__SigningKey', 'Battle__ControlKey', 'Legacy__ContentPath',
-    'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT', 'WAR_STARTER_LOADOUT_OUTPUT',
+    'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT', 'WAR_STARTER_LOADOUT_OUTPUT', 'WAR_UI_LOBBY_CAPTURE',
     'WAR_LOBBY_BOOT_IDENTITY', 'WAR_NORMAL_QUEUE_REPORT', 'WAR_NORMAL_BATTLE_SELF', 'WAR_NORMAL_BATTLE_PEER',
     'Battle__Port', 'Battle__ControlPort', 'Battle__ControlEndpoint', 'Battle__ServerId', 'Battle__PublicHost',
     'Battle__BindAddress', 'Battle__ResultOutboxPath', 'Battle__BackendResultEndpoint'
@@ -180,9 +182,17 @@ try {
         '-batchmode', '-nographics', '-noUpm', '-projectPath', ('"' + $projectPath + '"'),
         '-executeMethod', 'UnityNormalClientBootAudit.Run', '-logFile', ('"' + (Join-Path $runRoot 'Unity.log') + '"')
     )
+    if ($RenderUi) {
+        $env:WAR_UI_LOBBY_CAPTURE = Join-Path $runRoot 'lobby.png'
+        $unityArguments = @($unityArguments | Where-Object { $_ -ne '-nographics' }) +
+            @('-screen-width', '1440', '-screen-height', '810')
+    } else {
+        $env:WAR_UI_LOBBY_CAPTURE = $null
+    }
     $editor = Start-Process $UnityExecutable -ArgumentList $unityArguments -WindowStyle Hidden -PassThru
     $processes += $editor
-    if (!$editor.WaitForExit(150000)) { throw "Owned Editor timed out; inspect $runRoot" }
+    # A fresh disposable project imports all assets before the SplashScene can run.
+    if (!$editor.WaitForExit(600000)) { throw "Owned Editor timed out; inspect $runRoot" }
     if (Test-Path -LiteralPath $reportPath) {
         Copy-Item -LiteralPath $reportPath -Destination (Join-Path $runRoot 'report.json')
     }
@@ -247,6 +257,8 @@ try {
             '-executeMethod', 'UnityNormalClientBootAudit.Run',
             '-logFile', ('"' + (Join-Path $runRoot 'Unity-returning.log') + '"')
         )
+        # Render captures belong to the first boot; returning/queue verification stays headless.
+        $env:WAR_UI_LOBBY_CAPTURE = $null
         $returningEditor = Start-Process $UnityExecutable -ArgumentList $returningArguments `
             -WindowStyle Hidden -PassThru
         $processes += $returningEditor

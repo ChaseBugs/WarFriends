@@ -153,7 +153,7 @@ public class SoldierParts : Core_BaseScript
 		{
 			if ((!(aimTarget != null) || !(rigidbody.gameObject == aimTarget.gameObject)) && (!(headAimTarget != null) || !(rigidbody.gameObject == headAimTarget.gameObject)))
 			{
-				rigidbody.isKinematic = value;
+				RigidbodyKinematicMode.Set(rigidbody, value);
 			}
 		}
 	}
@@ -182,11 +182,11 @@ public class SoldierParts : Core_BaseScript
 			{
 				if (wasHeadshot)
 				{
-					rigidbody.isKinematic = false;
+					RigidbodyKinematicMode.Set(rigidbody, false);
 				}
 				else if (helmett == null || rigidbody.gameObject != helmett.RigidBodyObject)
 				{
-					rigidbody.isKinematic = false;
+					RigidbodyKinematicMode.Set(rigidbody, false);
 				}
 			}
 		}
