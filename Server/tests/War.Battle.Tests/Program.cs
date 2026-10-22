@@ -29,6 +29,18 @@ using War.Battle.Tests.Legacy.DogTags;
 using War.Battle.Tests.Legacy.Preferences;
 using War.Battle.Tests.Legacy.State;
 
+if (args is ["--daily-reward-store-only", var dailyRewardMongo])
+{
+    await DailyRewardTests.RunAsync(dailyRewardMongo);
+    return;
+}
+
+if (args is ["--offline-bot-store-only", var offlineBotMongo])
+{
+    await OfflineBotSyncTests.RunAsync(offlineBotMongo);
+    return;
+}
+
 if (args is ["--legacy-protobuf-http-only", var protobufBackend])
 {
     await War.Battle.Tests.Legacy.Dispatch.LegacyProtobufHttpTests.RunAsync(protobufBackend);
@@ -923,6 +935,11 @@ if (args is ["--seed-returning-boot-pair", var pairUri, var pairDatabase, var pa
 if (args is ["--watch-normal-unity-queue", var queueUri, var queueDatabase, var queueReport])
 {
     await War.Battle.Tests.NormalUnityQueueObserver.WatchAsync(queueUri, queueDatabase, queueReport);
+    return;
+}
+if (args is ["--watch-starter-unity-queue", var starterQueueUri, var starterQueueDatabase, var starterQueueReport])
+{
+    await War.Battle.Tests.NormalUnityQueueObserver.WatchAsync(starterQueueUri, starterQueueDatabase, starterQueueReport, 1);
     return;
 }
 if (args is ["--watch-initial-loadout", var initialMongoUri, var initialDatabase, var initialReport])

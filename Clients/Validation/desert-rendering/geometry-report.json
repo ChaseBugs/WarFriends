@@ -1,0 +1,6932 @@
+[
+  {
+    "RendererId": "1438",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[29]",
+    "Subsets": [
+      75
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 75,
+    "position": [
+      -41.19582,
+      -2.53949738,
+      -8.775336
+    ],
+    "bounds": [
+      -41.22548,
+      -2.536736,
+      -8.576301
+    ],
+    "extent": [
+      0.7087803,
+      0.0301727057,
+      0.304779053
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1439",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_03[12]",
+    "Subsets": [
+      172
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 172,
+    "position": [
+      -36.25968,
+      -2.3771472,
+      -5.00262
+    ],
+    "bounds": [
+      -36.2738571,
+      -2.01393843,
+      -5.002963
+    ],
+    "extent": [
+      0.110872269,
+      0.374786973,
+      0.114707708
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1440",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stones_patch_01[8]",
+    "Subsets": [
+      9
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 9,
+    "position": [
+      -19.8403473,
+      -2.522945,
+      -9.588531
+    ],
+    "bounds": [
+      -23.3405628,
+      -2.56218529,
+      -9.991342
+    ],
+    "extent": [
+      3.73031044,
+      0.113511443,
+      3.41021466
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1441",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[32]",
+    "Subsets": [
+      61
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 61,
+    "position": [
+      -42.6273041,
+      -2.88427639,
+      -1.44987679
+    ],
+    "bounds": [
+      -42.62728,
+      -2.49788713,
+      -1.44988692
+    ],
+    "extent": [
+      1.52134323,
+      0.3822161,
+      0.98347795
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1442",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[36]",
+    "Subsets": [
+      142
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 142,
+    "position": [
+      13.5247974,
+      -2.34051418,
+      -12.4978733
+    ],
+    "bounds": [
+      13.4415131,
+      -1.56473947,
+      -12.56822
+    ],
+    "extent": [
+      0.512190342,
+      0.776143849,
+      0.5029855
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1443",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[14]",
+    "Subsets": [
+      192
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 192,
+    "position": [
+      -27.7228317,
+      -2.568,
+      -4.39719343
+    ],
+    "bounds": [
+      -27.7267132,
+      -2.425257,
+      -4.42299175
+    ],
+    "extent": [
+      0.480827332,
+      0.167135954,
+      0.919873953
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1444",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[13]",
+    "Subsets": [
+      145
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 145,
+    "position": [
+      -22.1179829,
+      -2.63500023,
+      -14.2676811
+    ],
+    "bounds": [
+      -22.1179829,
+      -2.46449661,
+      -14.2689381
+    ],
+    "extent": [
+      1.137497,
+      0.214787364,
+      0.5589361
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1445",
+    "Path": "LevelRoot/desert_map[6]/rocks[7]/rock_02[3]",
+    "Subsets": [
+      0
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene) 2_1.asset",
+    "vertices": 12221,
+    "subMeshes": 9,
+    "isBatched": true,
+    "startIndex": 0,
+    "position": [
+      -38.58796,
+      -3.566308,
+      -18.2555447
+    ],
+    "bounds": [
+      -38.23536,
+      -0.171457529,
+      -19.2277756
+    ],
+    "extent": [
+      7.11992264,
+      4.132081,
+      6.772626
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1446",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_patch_01[16]",
+    "Subsets": [
+      153
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 153,
+    "position": [
+      -29.1005554,
+      -2.40351057,
+      -10.796751
+    ],
+    "bounds": [
+      -29.09767,
+      -2.35896635,
+      -10.796751
+    ],
+    "extent": [
+      3.4170475,
+      0.291355729,
+      1.23496151
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1447",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_3[7]",
+    "Subsets": [
+      56
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 56,
+    "position": [
+      -24.693861,
+      -2.66873074,
+      -15.5233173
+    ],
+    "bounds": [
+      -24.757618,
+      -1.5806098,
+      -15.5089321
+    ],
+    "extent": [
+      2.90338039,
+      1.08643436,
+      1.86230278
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1448",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_tree_01_LOD1[3]",
+    "Subsets": [
+      198
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 198,
+    "position": [
+      -45.5083771,
+      -2.1836102,
+      -5.936939
+    ],
+    "bounds": [
+      -45.34755,
+      -1.40783453,
+      -5.932843
+    ],
+    "extent": [
+      0.5134411,
+      0.776143849,
+      0.5203011
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1449",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[24]",
+    "Subsets": [
+      125
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 125,
+    "position": [
+      3.45863533,
+      -2.25897121,
+      -7.662302
+    ],
+    "bounds": [
+      3.45972633,
+      -2.059484,
+      -7.63661671
+    ],
+    "extent": [
+      0.6487045,
+      0.241566837,
+      0.303895235
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1450",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[1]/box_2[1]",
+    "Subsets": [
+      74
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 74,
+    "position": [
+      -34.329155,
+      -2.28251839,
+      -12.3949976
+    ],
+    "bounds": [
+      -34.36142,
+      -2.28251839,
+      -12.3143415
+    ],
+    "extent": [
+      0.298322678,
+      0.09667683,
+      0.186858177
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1452",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_03[11]",
+    "Subsets": [
+      200
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 200,
+    "position": [
+      -40.08567,
+      -2.511918,
+      -8.704956
+    ],
+    "bounds": [
+      -40.10176,
+      -1.97926116,
+      -8.687889
+    ],
+    "extent": [
+      0.1469593,
+      0.543093264,
+      0.154735565
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1453",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[23]",
+    "Subsets": [
+      129
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 129,
+    "position": [
+      4.74296761,
+      -2.32998562,
+      -7.07745552
+    ],
+    "bounds": [
+      4.72450256,
+      -2.13296819,
+      -7.04031038
+    ],
+    "extent": [
+      0.6471789,
+      0.203037262,
+      0.338968277
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1454",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[40]",
+    "Subsets": [
+      91
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 91,
+    "position": [
+      -40.03022,
+      1.60874557,
+      -14.2796669
+    ],
+    "bounds": [
+      -40.03021,
+      2.63448143,
+      -14.27973
+    ],
+    "extent": [
+      0.6553192,
+      1.02321625,
+      0.6602874
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1455",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[6]",
+    "Subsets": [
+      162
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 162,
+    "position": [
+      -17.94364,
+      -2.379943,
+      -6.23001575
+    ],
+    "bounds": [
+      -17.9385,
+      -2.349098,
+      -6.23903275
+    ],
+    "extent": [
+      0.178431511,
+      0.0585522652,
+      0.159190655
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1456",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/GameObject[0]/back_02[3]",
+    "Subsets": [
+      42
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 42,
+    "position": [
+      15.7679081,
+      -2.80807352,
+      -15.9818935
+    ],
+    "bounds": [
+      15.7679081,
+      -0.614989638,
+      -15.9818935
+    ],
+    "extent": [
+      0.0106420517,
+      2.18033361,
+      7.58136
+    ],
+    "shaders": [
+      "Unlit/Transparent"
+    ]
+  },
+  {
+    "RendererId": "1457",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_1[1]",
+    "Subsets": [
+      55
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 55,
+    "position": [
+      -20.103651,
+      -2.56677151,
+      -15.8629246
+    ],
+    "bounds": [
+      -20.1163864,
+      -1.63963509,
+      -15.8873
+    ],
+    "extent": [
+      0.8584938,
+      0.92632097,
+      1.982482
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1460",
+    "Path": "LevelRoot/desert_map[6]/props[6]/rock_02[34]",
+    "Subsets": [
+      220
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 220,
+    "position": [
+      -3.40932655,
+      -4.064723,
+      8.975204
+    ],
+    "bounds": [
+      -5.6346693,
+      0.6850357,
+      8.154856
+    ],
+    "extent": [
+      12.6396914,
+      6.440463,
+      6.202413
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1461",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[4]",
+    "Subsets": [
+      35
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 35,
+    "position": [
+      -19.796,
+      -2.26799965,
+      -6.408
+    ],
+    "bounds": [
+      -19.77678,
+      -2.3540988,
+      -6.382598
+    ],
+    "extent": [
+      0.263305664,
+      0.119313836,
+      0.2858975
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1462",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[28]",
+    "Subsets": [
+      138
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 138,
+    "position": [
+      -37.6278,
+      -2.32999945,
+      -8.358381
+    ],
+    "bounds": [
+      -37.6365662,
+      -2.13487959,
+      -8.407612
+    ],
+    "extent": [
+      0.6850815,
+      0.202471077,
+      0.201064587
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1466",
+    "Path": "LevelRoot/DefendPositions[5]/Allies[0]/DefendPositionSingleLeft3[3]/riot_shield[6]",
+    "Subsets": [
+      2
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene) 2_1.asset",
+    "vertices": 12221,
+    "subMeshes": 9,
+    "isBatched": true,
+    "startIndex": 2,
+    "position": [
+      -19.6063766,
+      -2.38430977,
+      -6.177664
+    ],
+    "bounds": [
+      -19.6124725,
+      -2.105363,
+      -6.17811966
+    ],
+    "extent": [
+      0.02599144,
+      0.278901517,
+      0.178211451
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1467",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_patch_01[15]",
+    "Subsets": [
+      169
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 169,
+    "position": [
+      -15.8146381,
+      -2.35821581,
+      -7.536907
+    ],
+    "bounds": [
+      -15.818121,
+      -2.299982,
+      -7.419118
+    ],
+    "extent": [
+      1.49447393,
+      0.0883549452,
+      1.7161262
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1468",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[2]/box_2[1]",
+    "Subsets": [
+      77
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 77,
+    "position": [
+      -23.7254848,
+      -2.30331182,
+      -4.01485538
+    ],
+    "bounds": [
+      -23.7014561,
+      -2.30331182,
+      -4.098335
+    ],
+    "extent": [
+      0.299432755,
+      0.09667683,
+      0.16250515
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1469",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (7)[6]",
+    "Subsets": [
+      21
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 21,
+    "position": [
+      -28.9740639,
+      -2.41692829,
+      -9.638668
+    ],
+    "bounds": [
+      -29.5312233,
+      -2.374783,
+      -9.181723
+    ],
+    "extent": [
+      0.621418953,
+      0.07686567,
+      0.7272582
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1470",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[22]",
+    "Subsets": [
+      175
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 175,
+    "position": [
+      -18.1011143,
+      -2.41200018,
+      -11.6585922
+    ],
+    "bounds": [
+      -18.1011143,
+      -2.29600644,
+      -11.6585922
+    ],
+    "extent": [
+      0.39553833,
+      0.148858786,
+      0.354554653
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1474",
+    "Path": "LevelRoot/DefendPositions[5]/Allies[0]/DefendPositionSingleLeft2[2]/riot_shield[6]",
+    "Subsets": [
+      3
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene) 2_1.asset",
+    "vertices": 12221,
+    "subMeshes": 9,
+    "isBatched": true,
+    "startIndex": 3,
+    "position": [
+      -19.6063766,
+      -2.3833096,
+      -7.69766426
+    ],
+    "bounds": [
+      -19.6124725,
+      -2.10436273,
+      -7.698119
+    ],
+    "extent": [
+      0.02599144,
+      0.278901517,
+      0.178211451
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1475",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[3]",
+    "Subsets": [
+      92
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 92,
+    "position": [
+      -19.6523647,
+      -2.196751,
+      -2.42280388
+    ],
+    "bounds": [
+      -19.7377758,
+      -2.196751,
+      -2.43865418
+    ],
+    "extent": [
+      0.137441635,
+      0.09667683,
+      0.2976544
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1476",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[31]",
+    "Subsets": [
+      65
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 65,
+    "position": [
+      4.01866341,
+      -2.4287405,
+      -15.065485
+    ],
+    "bounds": [
+      4.01866674,
+      -2.04235125,
+      -15.0654716
+    ],
+    "extent": [
+      1.47374153,
+      0.3822161,
+      0.886044
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1477",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[27]",
+    "Subsets": [
+      126
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 126,
+    "position": [
+      -36.2966728,
+      -2.32999945,
+      -8.73729
+    ],
+    "bounds": [
+      -36.2928,
+      -2.12862062,
+      -8.73016548
+    ],
+    "extent": [
+      0.6599636,
+      0.202954173,
+      0.2684374
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1478",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[22]",
+    "Subsets": [
+      99
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 99,
+    "position": [
+      -1.50846672,
+      1.717103,
+      -2.80929
+    ],
+    "bounds": [
+      -1.534965,
+      1.85189438,
+      -2.79170918
+    ],
+    "extent": [
+      0.4388435,
+      0.2463131,
+      0.24991107
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1479",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[30]",
+    "Subsets": [
+      59
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 59,
+    "position": [
+      -10.5591564,
+      -2.44943142,
+      -18.27495
+    ],
+    "bounds": [
+      -10.5591526,
+      -2.06304216,
+      -18.2749367
+    ],
+    "extent": [
+      1.467052,
+      0.3822161,
+      0.873167038
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1480",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[21]",
+    "Subsets": [
+      94
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 94,
+    "position": [
+      -2.503767,
+      1.24289036,
+      -1.3464222
+    ],
+    "bounds": [
+      -2.53237271,
+      1.37699318,
+      -1.326978
+    ],
+    "extent": [
+      0.209675789,
+      0.237987459,
+      0.456737578
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1481",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[50]",
+    "Subsets": [
+      123
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 123,
+    "position": [
+      -21.3923645,
+      -2.4217515,
+      -6.020804
+    ],
+    "bounds": [
+      -21.2626381,
+      -2.31667328,
+      -5.978955
+    ],
+    "extent": [
+      0.401450157,
+      0.127099633,
+      0.745636463
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1482",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[20]",
+    "Subsets": [
+      98
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 98,
+    "position": [
+      -14.0074291,
+      -2.46441555,
+      -2.5514698
+    ],
+    "bounds": [
+      -14.005476,
+      -2.26301956,
+      -2.55274153
+    ],
+    "extent": [
+      0.03898239,
+      0.2024194,
+      0.6861187
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1483",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[12]",
+    "Subsets": [
+      168
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 168,
+    "position": [
+      -15.7729464,
+      -2.32362866,
+      -11.2688255
+    ],
+    "bounds": [
+      -15.8107929,
+      -2.18088555,
+      -11.2494259
+    ],
+    "extent": [
+      0.8334317,
+      0.167135954,
+      0.615644
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1484",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[19]",
+    "Subsets": [
+      87
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 87,
+    "position": [
+      -2.824049,
+      -2.32998562,
+      -8.256685
+    ],
+    "bounds": [
+      -2.82738233,
+      -2.12860775,
+      -8.26407051
+    ],
+    "extent": [
+      0.6721091,
+      0.20295465,
+      0.2218275
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1485",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/cactus (1)[13]",
+    "Subsets": [
+      211
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 211,
+    "position": [
+      -10.4730473,
+      -2.39719748,
+      -8.297259
+    ],
+    "bounds": [
+      -10.4724073,
+      -1.90180254,
+      -8.343356
+    ],
+    "extent": [
+      0.166880608,
+      0.495458066,
+      0.2367506
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1486",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[18]",
+    "Subsets": [
+      96
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 96,
+    "position": [
+      -0.5901928,
+      1.75222874,
+      -3.05345345
+    ],
+    "bounds": [
+      -0.5889548,
+      1.88849545,
+      -3.02872276
+    ],
+    "extent": [
+      0.469822884,
+      0.152509987,
+      0.118374944
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1487",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stones_patch_01[7]",
+    "Subsets": [
+      17
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 17,
+    "position": [
+      -25.6671429,
+      -2.50268459,
+      -8.61445
+    ],
+    "bounds": [
+      -24.4156,
+      -2.54197979,
+      -4.942232
+    ],
+    "extent": [
+      3.90346622,
+      0.113530993,
+      3.94200134
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1488",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[26]",
+    "Subsets": [
+      107
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 107,
+    "position": [
+      -45.23731,
+      -2.7098217,
+      -9.860807
+    ],
+    "bounds": [
+      -45.20885,
+      -2.51609659,
+      -9.908062
+    ],
+    "extent": [
+      0.673992157,
+      0.232876182,
+      0.302586079
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1489",
+    "Path": "LevelRoot/desert_map[6]/rocks[7]/rock_02[2]",
+    "Subsets": [
+      221
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 221,
+    "position": [
+      -34.63438,
+      -4.064723,
+      -25.0752754
+    ],
+    "bounds": [
+      -32.2809639,
+      0.6850395,
+      -24.7887287
+    ],
+    "extent": [
+      12.6964579,
+      6.44045448,
+      6.27409935
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1490",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[17]",
+    "Subsets": [
+      76
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 76,
+    "position": [
+      7.27574348,
+      -2.38076687,
+      -5.82012367
+    ],
+    "bounds": [
+      7.263792,
+      -2.18101931,
+      -5.80073166
+    ],
+    "extent": [
+      0.623976231,
+      0.203143656,
+      0.366333
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1491",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/back_02[4]",
+    "Subsets": [
+      47
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 47,
+    "position": [
+      -49.98497,
+      -2.808106,
+      -15.9818935
+    ],
+    "bounds": [
+      -49.98497,
+      -0.615023255,
+      -15.9818935
+    ],
+    "extent": [
+      0.0106430054,
+      2.18033218,
+      6.27226639
+    ],
+    "shaders": [
+      "Unlit/Transparent"
+    ]
+  },
+  {
+    "RendererId": "1492",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[20]",
+    "Subsets": [
+      3
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 3,
+    "position": [
+      -28.456,
+      -2.49699974,
+      -6.28
+    ],
+    "bounds": [
+      -28.46289,
+      -2.444728,
+      -6.27656937
+    ],
+    "extent": [
+      0.155497551,
+      0.06316161,
+      0.331473351
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1493",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[25]",
+    "Subsets": [
+      72
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 72,
+    "position": [
+      -47.7491531,
+      -2.64926529,
+      -11.093
+    ],
+    "bounds": [
+      -47.7415771,
+      -2.44855928,
+      -11.1027679
+    ],
+    "extent": [
+      0.6016369,
+      0.202634931,
+      0.3942685
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1494",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[39]",
+    "Subsets": [
+      113
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 113,
+    "position": [
+      0.471483231,
+      1.608746,
+      -2.452814
+    ],
+    "bounds": [
+      0.471480548,
+      2.634482,
+      -2.45275068
+    ],
+    "extent": [
+      0.6672198,
+      1.02321637,
+      0.668401361
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1495",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[24]",
+    "Subsets": [
+      79
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 79,
+    "position": [
+      -22.7625465,
+      -2.56595135,
+      -4.02219343
+    ],
+    "bounds": [
+      -22.77539,
+      -2.36528635,
+      -4.023583
+    ],
+    "extent": [
+      0.04419422,
+      0.202672362,
+      0.686259747
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1496",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[21]",
+    "Subsets": [
+      143
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 143,
+    "position": [
+      -28.4517441,
+      -2.40500021,
+      -12.2929935
+    ],
+    "bounds": [
+      -28.42749,
+      -2.28961563,
+      -12.3557405
+    ],
+    "extent": [
+      0.402025223,
+      0.161674142,
+      0.3986578
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1497",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_2[6]",
+    "Subsets": [
+      64
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 64,
+    "position": [
+      -3.86424065,
+      -2.44241238,
+      -10.5294971
+    ],
+    "bounds": [
+      -3.82835436,
+      -1.776331,
+      -10.5566521
+    ],
+    "extent": [
+      0.708128,
+      0.664579868,
+      1.13936615
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1498",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_wind[6]",
+    "Subsets": [
+      157
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 157,
+    "position": [
+      -25.570282,
+      -2.65336227,
+      -3.699913
+    ],
+    "bounds": [
+      -25.2259769,
+      -0.974618435,
+      -3.70791268
+    ],
+    "extent": [
+      1.13320351,
+      1.67874384,
+      1.12013125
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1499",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[20]",
+    "Subsets": [
+      204
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 204,
+    "position": [
+      -4.91649055,
+      -2.338629,
+      -8.148211
+    ],
+    "bounds": [
+      -4.91985035,
+      -2.21973538,
+      -8.155205
+    ],
+    "extent": [
+      0.400759459,
+      0.152580261,
+      0.3599162
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1500",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[9]",
+    "Subsets": [
+      38
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 38,
+    "position": [
+      -28.361,
+      -2.26000023,
+      -9.51
+    ],
+    "bounds": [
+      -28.3798523,
+      -2.347032,
+      -9.480039
+    ],
+    "extent": [
+      0.223708153,
+      0.121242166,
+      0.27480793
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1501",
+    "Path": "LevelRoot/desert_map[6]/props[6]/rock_02[33]",
+    "Subsets": [
+      218
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 218,
+    "position": [
+      -8.648836,
+      -3.189941,
+      -24.2594051
+    ],
+    "bounds": [
+      -7.486537,
+      -0.504211664,
+      -23.8522758
+    ],
+    "extent": [
+      8.016247,
+      3.55156922,
+      8.249733
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1502",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[23]",
+    "Subsets": [
+      136
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 136,
+    "position": [
+      -48.9413643,
+      -2.6547513,
+      -11.7838039
+    ],
+    "bounds": [
+      -48.9220657,
+      -2.45555115,
+      -11.8033657
+    ],
+    "extent": [
+      0.609100342,
+      0.217046022,
+      0.4023223
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1503",
+    "Path": "LevelRoot/desert_map[6]/terrain_desert_extension[0]",
+    "Subsets": [
+      50
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 50,
+    "position": [
+      -31.9729042,
+      -2.28159332,
+      -6.89580536
+    ],
+    "bounds": [
+      0.468818665,
+      -2.34004259,
+      -6.94967461
+    ],
+    "extent": [
+      10.4238663,
+      0.100622535,
+      22.4198837
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1507",
+    "Path": "LevelRoot/DefendPositions[5]/Enemies[1]/DefendPositionSingleLeft3[3]/riot_shield[6]",
+    "Subsets": [
+      4
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene) 2_1.asset",
+    "vertices": 12221,
+    "subMeshes": 9,
+    "isBatched": true,
+    "startIndex": 4,
+    "position": [
+      -28.6530743,
+      -2.34130979,
+      -10.7869291
+    ],
+    "bounds": [
+      -28.6456,
+      -2.062363,
+      -10.7870064
+    ],
+    "extent": [
+      0.0230340958,
+      0.278901517,
+      0.178287029
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1508",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[49]",
+    "Subsets": [
+      83
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 83,
+    "position": [
+      -25.3883648,
+      -2.650751,
+      -11.0898037
+    ],
+    "bounds": [
+      -25.51659,
+      -2.53954935,
+      -11.121048
+    ],
+    "extent": [
+      0.3648386,
+      0.129631162,
+      0.7581048
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1509",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stone_1[4]",
+    "Subsets": [
+      10
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 10,
+    "position": [
+      -24.3091183,
+      -2.391461,
+      -16.8958912
+    ],
+    "bounds": [
+      -24.3063622,
+      -2.41139579,
+      -16.9023724
+    ],
+    "extent": [
+      0.103029251,
+      0.0483603477,
+      0.124401093
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1510",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[22]",
+    "Subsets": [
+      84
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 84,
+    "position": [
+      -34.9486275,
+      -2.33000088,
+      -12.87269
+    ],
+    "bounds": [
+      -34.9598923,
+      -2.12886477,
+      -12.880209
+    ],
+    "extent": [
+      0.468256,
+      0.203209519,
+      0.5617461
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1511",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[3]/box_2[1]",
+    "Subsets": [
+      100
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 100,
+    "position": [
+      -19.5140686,
+      -2.389194,
+      -2.278214
+    ],
+    "bounds": [
+      -19.5735741,
+      -2.389194,
+      -2.34150052
+    ],
+    "extent": [
+      0.26816082,
+      0.09667683,
+      0.259454
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1512",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[8]",
+    "Subsets": [
+      34
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 34,
+    "position": [
+      -28.363,
+      -2.27,
+      -9.05
+    ],
+    "bounds": [
+      -28.3780823,
+      -2.354433,
+      -9.063234
+    ],
+    "extent": [
+      0.230827332,
+      0.106467128,
+      0.285718441
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1513",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[0]/box_2[1]",
+    "Subsets": [
+      135
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 135,
+    "position": [
+      -23.8573,
+      -2.5436554,
+      -13.75273
+    ],
+    "bounds": [
+      -23.8259315,
+      -2.5436554,
+      -13.6717224
+    ],
+    "extent": [
+      0.298592567,
+      0.09667683,
+      0.184257984
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1514",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[48]",
+    "Subsets": [
+      93
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 93,
+    "position": [
+      -27.0163651,
+      -2.55075121,
+      -8.518805
+    ],
+    "bounds": [
+      -27.096981,
+      -2.44471455,
+      -8.523884
+    ],
+    "extent": [
+      0.190676689,
+      0.113401771,
+      0.805410862
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1518",
+    "Path": "LevelRoot/DefendPositions[5]/Enemies[1]/DefendPositionSingleLeft2[1]/riot_shield[6]",
+    "Subsets": [
+      1
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene) 2_1.asset",
+    "vertices": 12221,
+    "subMeshes": 9,
+    "isBatched": true,
+    "startIndex": 1,
+    "position": [
+      -28.6007843,
+      -2.41130972,
+      -9.277834
+    ],
+    "bounds": [
+      -28.5933113,
+      -2.13236284,
+      -9.277912
+    ],
+    "extent": [
+      0.0230340958,
+      0.278901517,
+      0.178287029
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1519",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[19]",
+    "Subsets": [
+      208
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 208,
+    "position": [
+      -15.8876467,
+      -2.361,
+      -6.05255747
+    ],
+    "bounds": [
+      -15.8423061,
+      -2.24500632,
+      -6.04836655
+    ],
+    "extent": [
+      0.3811822,
+      0.148858786,
+      0.40472436
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1520",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[31]",
+    "Subsets": [
+      185
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 185,
+    "position": [
+      -26.7657433,
+      -2.45,
+      -5.530282
+    ],
+    "bounds": [
+      -26.7684021,
+      -2.33400631,
+      -5.53343153
+    ],
+    "extent": [
+      0.397315025,
+      0.148858786,
+      0.35689497
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1522",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[11]",
+    "Subsets": [
+      141
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 141,
+    "position": [
+      -22.472744,
+      -2.61500025,
+      -12.004282
+    ],
+    "bounds": [
+      -22.5018539,
+      -2.45017886,
+      -12.0482674
+    ],
+    "extent": [
+      0.6899376,
+      0.224336624,
+      1.07427359
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1523",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[17]",
+    "Subsets": [
+      0
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 0,
+    "position": [
+      -19.627,
+      -2.43000031,
+      -9.158
+    ],
+    "bounds": [
+      -19.6338921,
+      -2.37772846,
+      -9.15457
+    ],
+    "extent": [
+      0.155497551,
+      0.06316161,
+      0.331473827
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1524",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[33]",
+    "Subsets": [
+      193
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 193,
+    "position": [
+      -26.7591057,
+      -2.51800013,
+      -13.6649141
+    ],
+    "bounds": [
+      -26.7401962,
+      -2.375257,
+      -13.6470556
+    ],
+    "extent": [
+      0.9487448,
+      0.167135954,
+      0.401753426
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1525",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[38]",
+    "Subsets": [
+      85
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 85,
+    "position": [
+      -23.6427689,
+      -2.586752,
+      -3.863532
+    ],
+    "bounds": [
+      -23.6428337,
+      -1.17288756,
+      -3.86347151
+    ],
+    "extent": [
+      0.6521368,
+      1.41039133,
+      0.678823948
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1526",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[2]",
+    "Subsets": [
+      86
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 86,
+    "position": [
+      -23.8419781,
+      -2.49681473,
+      -3.92941666
+    ],
+    "bounds": [
+      -23.77324,
+      -2.49681473,
+      -3.98252964
+    ],
+    "extent": [
+      0.243792534,
+      0.09667683,
+      0.279784083
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1527",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stones_patch_01[6]",
+    "Subsets": [
+      19
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 19,
+    "position": [
+      -21.7389946,
+      -2.54406166,
+      -8.897432
+    ],
+    "bounds": [
+      -24.40096,
+      -2.58335686,
+      -11.0386868
+    ],
+    "extent": [
+      3.481493,
+      0.113530993,
+      3.010075
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1528",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_01[0]",
+    "Subsets": [
+      161
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 161,
+    "position": [
+      -24.15951,
+      -2.63,
+      -3.377307
+    ],
+    "bounds": [
+      -24.3820667,
+      -2.45993948,
+      -3.3064754
+    ],
+    "extent": [
+      2.1835537,
+      0.19877243,
+      1.96488786
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1529",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[21]",
+    "Subsets": [
+      101
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 101,
+    "position": [
+      -46.5467,
+      -2.65531921,
+      -10.4345074
+    ],
+    "bounds": [
+      -46.53617,
+      -2.4555707,
+      -10.4547148
+    ],
+    "extent": [
+      0.6432514,
+      0.203143477,
+      0.323162079
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1531",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/GameObject[0]/back_01[2]",
+    "Subsets": [
+      45
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 45,
+    "position": [
+      15.69623,
+      -3.25843787,
+      4.46096039
+    ],
+    "bounds": [
+      15.6957741,
+      0.220557213,
+      4.003211
+    ],
+    "extent": [
+      4.76837158E-07,
+      3.478448,
+      7.42853928
+    ],
+    "shaders": [
+      "Unlit/Transparent"
+    ]
+  },
+  {
+    "RendererId": "1532",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[5]",
+    "Subsets": [
+      196
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 196,
+    "position": [
+      -21.79864,
+      -2.46934319,
+      -12.4841261
+    ],
+    "bounds": [
+      -21.814682,
+      -2.43262,
+      -12.4508162
+    ],
+    "extent": [
+      0.213082314,
+      0.06971085,
+      0.217935562
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1533",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[35]",
+    "Subsets": [
+      166
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 166,
+    "position": [
+      8.70717049,
+      -2.288848,
+      -6.36035347
+    ],
+    "bounds": [
+      8.553882,
+      -1.51307321,
+      -6.35214424
+    ],
+    "extent": [
+      0.589035034,
+      0.776143849,
+      0.5534494
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1534",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[37]",
+    "Subsets": [
+      119
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 119,
+    "position": [
+      -34.98027,
+      -2.38143063,
+      -8.391017
+    ],
+    "bounds": [
+      -34.98021,
+      -1.06975019,
+      -8.390959
+    ],
+    "extent": [
+      0.617048264,
+      1.30845845,
+      0.591733456
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1535",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[16]",
+    "Subsets": [
+      71
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 71,
+    "position": [
+      -13.3834057,
+      -2.50042629,
+      -3.25647163
+    ],
+    "bounds": [
+      -13.3674965,
+      -2.299683,
+      -3.248046
+    ],
+    "extent": [
+      0.6987872,
+      0.252912879,
+      0.07282078
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1536",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[15]",
+    "Subsets": [
+      30
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 30,
+    "position": [
+      -28.274,
+      -2.35,
+      -6.06
+    ],
+    "bounds": [
+      -28.2890816,
+      -2.434433,
+      -6.0732336
+    ],
+    "extent": [
+      0.230827332,
+      0.106467128,
+      0.285718679
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1537",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[10]",
+    "Subsets": [
+      156
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 156,
+    "position": [
+      -26.2287426,
+      -2.56000018,
+      -10.22599
+    ],
+    "bounds": [
+      -26.24233,
+      -2.43175673,
+      -10.2572536
+    ],
+    "extent": [
+      0.5413971,
+      0.188781261,
+      0.8820214
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1538",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[20]",
+    "Subsets": [
+      73
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 73,
+    "position": [
+      -23.4533558,
+      -2.56595135,
+      -4.751861
+    ],
+    "bounds": [
+      -23.4546165,
+      -2.36459064,
+      -4.760549
+    ],
+    "extent": [
+      0.685921669,
+      0.202997327,
+      0.0415854454
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1539",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stone_01_LOD1[2]",
+    "Subsets": [
+      23
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 23,
+    "position": [
+      -25.28,
+      -2.64,
+      -11.82
+    ],
+    "bounds": [
+      -25.277298,
+      -2.62902117,
+      -11.8312836
+    ],
+    "extent": [
+      0.240893364,
+      0.10246551,
+      0.2919836
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1540",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/back_01[3]",
+    "Subsets": [
+      41
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 41,
+    "position": [
+      -50.0566521,
+      -3.258436,
+      3.56391716
+    ],
+    "bounds": [
+      -50.0562,
+      0.22055769,
+      3.124581
+    ],
+    "extent": [
+      1.90734863E-06,
+      3.47844672,
+      7.129715
+    ],
+    "shaders": [
+      "Unlit/Transparent"
+    ]
+  },
+  {
+    "RendererId": "1541",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/tower[38]",
+    "Subsets": [
+      88
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 88,
+    "position": [
+      -4.43546867,
+      -2.446105,
+      -5.54854774
+    ],
+    "bounds": [
+      -4.435404,
+      -1.13442588,
+      -5.548483
+    ],
+    "extent": [
+      0.675092936,
+      1.30845809,
+      0.652540445
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1542",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (8)[7]",
+    "Subsets": [
+      15
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 15,
+    "position": [
+      -28.7110653,
+      -2.36692834,
+      -10.957
+    ],
+    "bounds": [
+      -29.2670555,
+      -2.37819529,
+      -10.498785
+    ],
+    "extent": [
+      0.6211004,
+      0.06536555,
+      0.7247181
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1543",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[19]",
+    "Subsets": [
+      109
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 109,
+    "position": [
+      -38.0040932,
+      1.717094,
+      -14.0748529
+    ],
+    "bounds": [
+      -37.9789276,
+      1.85188615,
+      -14.0943089
+    ],
+    "extent": [
+      0.4216652,
+      0.246313214,
+      0.279952526
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1544",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_patch_01[14]",
+    "Subsets": [
+      152
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 152,
+    "position": [
+      -19.630024,
+      -2.39957666,
+      -11.3737621
+    ],
+    "bounds": [
+      -19.5446815,
+      -2.341343,
+      -11.3704166
+    ],
+    "extent": [
+      1.75038433,
+      0.0883549452,
+      1.421433
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1545",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[4]",
+    "Subsets": [
+      180
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 180,
+    "position": [
+      -21.8240471,
+      -2.64407873,
+      -12.8131447
+    ],
+    "bounds": [
+      -21.8492851,
+      -2.6039114,
+      -12.7948065
+    ],
+    "extent": [
+      0.2470789,
+      0.103957295,
+      0.249959946
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1546",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stone_01_LOD1[1]",
+    "Subsets": [
+      16
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 16,
+    "position": [
+      -34.5788231,
+      -2.41155887,
+      -5.317886
+    ],
+    "bounds": [
+      -34.64029,
+      -2.39514017,
+      -5.274592
+    ],
+    "extent": [
+      0.398061752,
+      0.153235435,
+      0.4219141
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1547",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[21]",
+    "Subsets": [
+      7
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 7,
+    "position": [
+      -28.477,
+      -2.44,
+      -7.79
+    ],
+    "bounds": [
+      -28.48389,
+      -2.38772821,
+      -7.7865696
+    ],
+    "extent": [
+      0.155497551,
+      0.06316161,
+      0.3314736
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1548",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[30]",
+    "Subsets": [
+      149
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 149,
+    "position": [
+      -27.33124,
+      -2.535,
+      -9.066996
+    ],
+    "bounds": [
+      -27.3078918,
+      -2.41900635,
+      -9.129743
+    ],
+    "extent": [
+      0.400190353,
+      0.148858786,
+      0.3986578
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1549",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[3]",
+    "Subsets": [
+      144
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 144,
+    "position": [
+      -22.48824,
+      -2.554543,
+      -7.145416
+    ],
+    "bounds": [
+      -22.5158863,
+      -2.52824378,
+      -7.15583
+    ],
+    "extent": [
+      0.150245667,
+      0.04992342,
+      0.155175686
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1550",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/cactus[10]",
+    "Subsets": [
+      210
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 210,
+    "position": [
+      -24.7720051,
+      -2.54475927,
+      -3.62523746
+    ],
+    "bounds": [
+      -24.7908077,
+      -2.04936433,
+      -3.58965445
+    ],
+    "extent": [
+      0.161123276,
+      0.495458066,
+      0.200865149
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1551",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[1]/box_2[0]",
+    "Subsets": [
+      134
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 134,
+    "position": [
+      -34.2415581,
+      -2.28251839,
+      -12.6186218
+    ],
+    "bounds": [
+      -34.27382,
+      -2.28251839,
+      -12.5379658
+    ],
+    "extent": [
+      0.298322678,
+      0.09667683,
+      0.186858177
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1552",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/GameObject[0]/back_03[1]",
+    "Subsets": [
+      48
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 48,
+    "position": [
+      11.3124866,
+      -2.88588738,
+      -5.135155
+    ],
+    "bounds": [
+      11.3124886,
+      -1.06466615,
+      -5.13515472
+    ],
+    "extent": [
+      0.0426645279,
+      1.8437053,
+      25.1460171
+    ],
+    "shaders": [
+      "Unlit/Transparent"
+    ]
+  },
+  {
+    "RendererId": "1554",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[26]",
+    "Subsets": [
+      176
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 176,
+    "position": [
+      -23.50288,
+      -2.63900018,
+      -9.064588
+    ],
+    "bounds": [
+      -23.5440826,
+      -2.496257,
+      -9.046884
+    ],
+    "extent": [
+      0.801925659,
+      0.167135954,
+      0.65201664
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1555",
+    "Path": "LevelRoot/desert_map[6]/rocks[7]/rock_02[1]",
+    "Subsets": [
+      217
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 217,
+    "position": [
+      -33.9488525,
+      -3.46925926,
+      8.547789
+    ],
+    "bounds": [
+      -34.5171165,
+      -0.7835245,
+      7.735273
+    ],
+    "extent": [
+      7.38882351,
+      3.551569,
+      8.880455
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1556",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[29]",
+    "Subsets": [
+      187
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 187,
+    "position": [
+      -24.49714,
+      -2.62900019,
+      -9.117796
+    ],
+    "bounds": [
+      -24.482008,
+      -2.486257,
+      -9.072072
+    ],
+    "extent": [
+      0.6994705,
+      0.167135954,
+      0.750618935
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1557",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[18]",
+    "Subsets": [
+      179
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 179,
+    "position": [
+      -25.792902,
+      -2.51614,
+      -5.60702372
+    ],
+    "bounds": [
+      -25.7878456,
+      -2.36244822,
+      -5.614485
+    ],
+    "extent": [
+      0.5209303,
+      0.197237849,
+      0.4676063
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1558",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[36]",
+    "Subsets": [
+      112
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 112,
+    "position": [
+      -23.8254852,
+      -2.6398325,
+      -13.53191
+    ],
+    "bounds": [
+      -23.8254242,
+      -1.22596836,
+      -13.5319738
+    ],
+    "extent": [
+      0.655028343,
+      1.41039109,
+      0.681591034
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1559",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[18]",
+    "Subsets": [
+      110
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 110,
+    "position": [
+      -36.9200668,
+      1.02468014,
+      -16.4899426
+    ],
+    "bounds": [
+      -36.88005,
+      1.15399277,
+      -16.5192337
+    ],
+    "extent": [
+      0.113771439,
+      0.258943677,
+      0.4849329
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1560",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/box_2[39]",
+    "Subsets": [
+      68
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 68,
+    "position": [
+      -5.05180168,
+      -2.17150784,
+      -4.751398
+    ],
+    "bounds": [
+      -5.0673027,
+      -2.17150879,
+      -4.83686829
+    ],
+    "extent": [
+      0.29752326,
+      0.0966773,
+      0.136393309
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1561",
+    "Path": "LevelRoot/desert_map[6]/props[6]/light[30]",
+    "Subsets": [
+      108
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 108,
+    "position": [
+      -24.15054,
+      -0.5469065,
+      -13.1775284
+    ],
+    "bounds": [
+      -24.216713,
+      -0.587814569,
+      -13.1296215
+    ],
+    "extent": [
+      0.155287743,
+      0.164714962,
+      0.15003109
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1562",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/GameObject[0]/back_02[0]",
+    "Subsets": [
+      46
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 46,
+    "position": [
+      17.9437351,
+      -2.80807352,
+      12.9545918
+    ],
+    "bounds": [
+      17.9437351,
+      0.156686187,
+      12.9545918
+    ],
+    "extent": [
+      0.0143871307,
+      2.94752264,
+      8.479288
+    ],
+    "shaders": [
+      "Unlit/Transparent"
+    ]
+  },
+  {
+    "RendererId": "1563",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02_LOD1[8]",
+    "Subsets": [
+      151
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 151,
+    "position": [
+      -21.16594,
+      -2.475943,
+      -10.4430161
+    ],
+    "bounds": [
+      -21.1475067,
+      -2.474772,
+      -10.4065552
+    ],
+    "extent": [
+      0.190615654,
+      0.039178133,
+      0.165291309
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1564",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[15]",
+    "Subsets": [
+      106
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 106,
+    "position": [
+      2.05937386,
+      -2.32998562,
+      -7.863222
+    ],
+    "bounds": [
+      2.10341287,
+      -2.32722521,
+      -8.059579
+    ],
+    "extent": [
+      0.7137394,
+      0.0301727057,
+      0.350910425
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1565",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[2]",
+    "Subsets": [
+      181
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 181,
+    "position": [
+      -5.08948135,
+      -2.433302,
+      -11.3423586
+    ],
+    "bounds": [
+      -5.06284142,
+      -2.41217566,
+      -11.3320274
+    ],
+    "extent": [
+      0.197331667,
+      0.0412898064,
+      0.227772236
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1566",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[23]",
+    "Subsets": [
+      5
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 5,
+    "position": [
+      -28.569,
+      -2.37,
+      -10.8
+    ],
+    "bounds": [
+      -28.57589,
+      -2.317728,
+      -10.79657
+    ],
+    "extent": [
+      0.155497551,
+      0.06316161,
+      0.331473827
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1567",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[47]",
+    "Subsets": [
+      132
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 132,
+    "position": [
+      -21.5213642,
+      -2.499751,
+      -11.0778036
+    ],
+    "bounds": [
+      -21.3825817,
+      -2.3937254,
+      -11.0899658
+    ],
+    "extent": [
+      0.317085266,
+      0.1141448,
+      0.772223
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1568",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[9]",
+    "Subsets": [
+      184
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 184,
+    "position": [
+      -19.1165123,
+      -2.424,
+      -4.37341738
+    ],
+    "bounds": [
+      -19.0766411,
+      -2.281257,
+      -4.38378048
+    ],
+    "extent": [
+      0.658782,
+      0.167135954,
+      0.767040968
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1569",
+    "Path": "LevelRoot/desert_map[6]/props[6]/rock_02[32]",
+    "Subsets": [
+      219
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 219,
+    "position": [
+      0.3139248,
+      -3.189941,
+      -18.8999729
+    ],
+    "bounds": [
+      1.97113514,
+      -0.394608259,
+      -19.0617943
+    ],
+    "extent": [
+      8.607276,
+      3.65649438,
+      4.41729736
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1570",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_03[10]",
+    "Subsets": [
+      205
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 205,
+    "position": [
+      -2.59024239,
+      -2.309857,
+      -11.9797726
+    ],
+    "bounds": [
+      -2.579003,
+      -1.94664788,
+      -11.9779835
+    ],
+    "extent": [
+      0.106724977,
+      0.3747869,
+      0.110289574
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1571",
+    "Path": "LevelRoot/desert_map[6]/props[6]/rock_02[31]",
+    "Subsets": [
+      215
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 215,
+    "position": [
+      -0.417863846,
+      -3.566308,
+      1.68201065
+    ],
+    "bounds": [
+      -0.4943998,
+      -0.171463251,
+      3.04867268
+    ],
+    "extent": [
+      6.548335,
+      4.132085,
+      7.28858948
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1572",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[29]",
+    "Subsets": [
+      54
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 54,
+    "position": [
+      -20.2974072,
+      -2.497405,
+      -1.12047
+    ],
+    "bounds": [
+      -20.2974072,
+      -2.01441813,
+      -1.12048149
+    ],
+    "extent": [
+      0.999132156,
+      0.47777015,
+      1.78379154
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1573",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[14]",
+    "Subsets": [
+      130
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 130,
+    "position": [
+      2.13737679,
+      -2.19143581,
+      -8.036051
+    ],
+    "bounds": [
+      2.13899,
+      -1.99206722,
+      -8.009922
+    ],
+    "extent": [
+      0.6847522,
+      0.2276386,
+      0.1572032
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1574",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[5]",
+    "Subsets": [
+      40
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 40,
+    "position": [
+      -19.8332,
+      -2.258,
+      -7.494
+    ],
+    "bounds": [
+      -19.8003521,
+      -2.33111143,
+      -7.51400471
+    ],
+    "extent": [
+      0.219015121,
+      0.1171782,
+      0.2851603
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1575",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[3]",
+    "Subsets": [
+      33
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 33,
+    "position": [
+      -19.824,
+      -2.236,
+      -9.394
+    ],
+    "bounds": [
+      -19.8251343,
+      -2.31459355,
+      -9.371786
+    ],
+    "extent": [
+      0.2169733,
+      0.119401932,
+      0.274644852
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1576",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[28]",
+    "Subsets": [
+      148
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 148,
+    "position": [
+      -24.49714,
+      -2.614,
+      -8.032429
+    ],
+    "bounds": [
+      -24.4475727,
+      -2.471257,
+      -8.044497
+    ],
+    "extent": [
+      0.685464859,
+      0.167135954,
+      0.7456703
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1577",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_tree_01_LOD1[2]",
+    "Subsets": [
+      167
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 167,
+    "position": [
+      -48.0145454,
+      -2.2598033,
+      -7.48596954
+    ],
+    "bounds": [
+      -47.87227,
+      -1.48402762,
+      -7.47059155
+    ],
+    "extent": [
+      0.498659134,
+      0.776143849,
+      0.5069492
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1578",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[18]",
+    "Subsets": [
+      4
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 4,
+    "position": [
+      -19.627,
+      -2.43000031,
+      -7.686
+    ],
+    "bounds": [
+      -19.6338921,
+      -2.37772846,
+      -7.6825695
+    ],
+    "extent": [
+      0.155497551,
+      0.06316161,
+      0.3314736
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1579",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[8]",
+    "Subsets": [
+      191
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 191,
+    "position": [
+      -21.3307438,
+      -2.476,
+      -4.37005
+    ],
+    "bounds": [
+      -21.3195114,
+      -2.35055256,
+      -4.3231926
+    ],
+    "extent": [
+      0.7044296,
+      0.19850862,
+      0.735883236
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1580",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[27]",
+    "Subsets": [
+      173
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 173,
+    "position": [
+      -23.50288,
+      -2.59900022,
+      -8.032429
+    ],
+    "bounds": [
+      -23.5175362,
+      -2.456257,
+      -8.078925
+    ],
+    "extent": [
+      0.7073736,
+      0.167135954,
+      0.7406626
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1581",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[25]",
+    "Subsets": [
+      186
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 186,
+    "position": [
+      -19.5825882,
+      -2.43100023,
+      -6.037909
+    ],
+    "bounds": [
+      -19.5871658,
+      -2.31900167,
+      -6.0322485
+    ],
+    "extent": [
+      0.3212118,
+      0.13113749,
+      0.7451365
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1582",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[17]",
+    "Subsets": [
+      155
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 155,
+    "position": [
+      -16.5154877,
+      -2.28565216,
+      -10.0098295
+    ],
+    "bounds": [
+      -16.5095139,
+      -2.16965842,
+      -10.0061722
+    ],
+    "extent": [
+      0.3525896,
+      0.148858786,
+      0.3931465
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1583",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[35]",
+    "Subsets": [
+      67
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 67,
+    "position": [
+      -34.8860168,
+      -2.39331865,
+      -11.5552216
+    ],
+    "bounds": [
+      -34.88607,
+      -1.08163822,
+      -11.5552807
+    ],
+    "extent": [
+      0.6352482,
+      1.30845845,
+      0.6107383
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1584",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[46]",
+    "Subsets": [
+      133
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 133,
+    "position": [
+      -26.7153645,
+      -2.55375147,
+      -10.9818039
+    ],
+    "bounds": [
+      -26.8433762,
+      -2.4404273,
+      -11.0129128
+    ],
+    "extent": [
+      0.364091873,
+      0.141386151,
+      0.758173466
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1585",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/cactus[9]",
+    "Subsets": [
+      212
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 212,
+    "position": [
+      -22.1101418,
+      -2.54475927,
+      -12.9365387
+    ],
+    "bounds": [
+      -22.1095,
+      -2.04936433,
+      -12.9826717
+    ],
+    "extent": [
+      0.166885376,
+      0.495458066,
+      0.236757755
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1586",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[13]",
+    "Subsets": [
+      81
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 81,
+    "position": [
+      9.544512,
+      -2.36865139,
+      -4.280344
+    ],
+    "bounds": [
+      9.523857,
+      -2.16945219,
+      -4.262233
+    ],
+    "extent": [
+      0.5838585,
+      0.217046022,
+      0.4414116
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1587",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[17]",
+    "Subsets": [
+      111
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 111,
+    "position": [
+      -42.5829544,
+      -2.680479,
+      -9.015449
+    ],
+    "bounds": [
+      -42.61025,
+      -2.67771769,
+      -8.816074
+    ],
+    "extent": [
+      0.7076149,
+      0.0301727057,
+      0.2970724
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1588",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[12]",
+    "Subsets": [
+      115
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 115,
+    "position": [
+      3.42543221,
+      -2.32998562,
+      -7.523081
+    ],
+    "bounds": [
+      3.46713543,
+      -2.32722545,
+      -7.719947
+    ],
+    "extent": [
+      0.7131854,
+      0.0301725864,
+      0.343484163
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1589",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[34]",
+    "Subsets": [
+      199
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 199,
+    "position": [
+      8.95369148,
+      -2.25979519,
+      -8.654375
+    ],
+    "bounds": [
+      8.836603,
+      -1.48402047,
+      -8.676298
+    ],
+    "extent": [
+      0.500339031,
+      0.776143849,
+      0.495630264
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1590",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[6]",
+    "Subsets": [
+      27
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 27,
+    "position": [
+      -19.816,
+      -2.264,
+      -6.033
+    ],
+    "bounds": [
+      -19.81054,
+      -2.34056568,
+      -6.046407
+    ],
+    "extent": [
+      0.21549511,
+      0.0991495848,
+      0.284133434
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1591",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[16]",
+    "Subsets": [
+      1
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 1,
+    "position": [
+      -19.647,
+      -2.43000031,
+      -10.713
+    ],
+    "bounds": [
+      -19.6538887,
+      -2.37772846,
+      -10.70957
+    ],
+    "extent": [
+      0.155497551,
+      0.06316161,
+      0.331473827
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1592",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/tower[37]",
+    "Subsets": [
+      139
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 139,
+    "position": [
+      -4.11186028,
+      -2.43676662,
+      -8.697565
+    ],
+    "bounds": [
+      -4.11190033,
+      -1.1250875,
+      -8.697624
+    ],
+    "extent": [
+      0.658361435,
+      1.30845809,
+      0.634950161
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1593",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[0]/box_2[0]",
+    "Subsets": [
+      80
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 80,
+    "position": [
+      -23.7689819,
+      -2.5436554,
+      -13.5293789
+    ],
+    "bounds": [
+      -23.7376137,
+      -2.5436554,
+      -13.44837
+    ],
+    "extent": [
+      0.298592567,
+      0.09667683,
+      0.184257984
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1594",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02_LOD1[17]",
+    "Subsets": [
+      194
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 194,
+    "position": [
+      -24.1008015,
+      -2.61958027,
+      -9.44026
+    ],
+    "bounds": [
+      -24.0270767,
+      -2.61372757,
+      -9.477325
+    ],
+    "extent": [
+      0.359162331,
+      0.0560811758,
+      0.398848534
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1595",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[33]",
+    "Subsets": [
+      154
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 154,
+    "position": [
+      6.56654549,
+      -2.18362331,
+      -10.3811893
+    ],
+    "bounds": [
+      6.414612,
+      -1.4078486,
+      -10.3936348
+    ],
+    "extent": [
+      0.49833703,
+      0.776143849,
+      0.5109124
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1596",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_1[0]",
+    "Subsets": [
+      60
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 60,
+    "position": [
+      -27.3461742,
+      -2.59155178,
+      -1.18246651
+    ],
+    "bounds": [
+      -27.3574181,
+      -1.77278757,
+      -1.20399165
+    ],
+    "extent": [
+      0.758145332,
+      0.8180441,
+      1.75075126
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1597",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (5)[4]",
+    "Subsets": [
+      24
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 24,
+    "position": [
+      -28.8880653,
+      -2.48092842,
+      -5.729668
+    ],
+    "bounds": [
+      -28.55742,
+      -2.47289753,
+      -6.262128
+    ],
+    "extent": [
+      0.5784416,
+      0.0567555428,
+      0.6458907
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1598",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[28]",
+    "Subsets": [
+      53
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 53,
+    "position": [
+      4.04426765,
+      -2.4287405,
+      -13.2917118
+    ],
+    "bounds": [
+      4.044271,
+      -2.04235125,
+      -13.2916985
+    ],
+    "extent": [
+      1.47374153,
+      0.3822161,
+      0.886044
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1599",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[11]",
+    "Subsets": [
+      31
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 31,
+    "position": [
+      -28.39,
+      -2.19999981,
+      -10.55
+    ],
+    "bounds": [
+      -28.4143581,
+      -2.283877,
+      -10.5772457
+    ],
+    "extent": [
+      0.234472275,
+      0.129526973,
+      0.271443844
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1600",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[16]",
+    "Subsets": [
+      124
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 124,
+    "position": [
+      -42.6059761,
+      -2.73843718,
+      -8.874185
+    ],
+    "bounds": [
+      -42.6084251,
+      -2.538949,
+      -8.899626
+    ],
+    "extent": [
+      0.6650162,
+      0.2415669,
+      0.2576909
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1601",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[14]",
+    "Subsets": [
+      116
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 116,
+    "position": [
+      -36.78151,
+      0.8212528,
+      -17.39937
+    ],
+    "bounds": [
+      -36.7930069,
+      0.9564015,
+      -17.42791
+    ],
+    "extent": [
+      0.09003258,
+      0.232455075,
+      0.4899454
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1602",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/back_02[2]",
+    "Subsets": [
+      44
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 44,
+    "position": [
+      -47.8091431,
+      -2.808106,
+      12.95496
+    ],
+    "bounds": [
+      -47.8091431,
+      0.156653762,
+      12.95496
+    ],
+    "extent": [
+      0.0143852234,
+      2.94752264,
+      8.479282
+    ],
+    "shaders": [
+      "Unlit/Transparent"
+    ]
+  },
+  {
+    "RendererId": "1603",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[45]",
+    "Subsets": [
+      114
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 114,
+    "position": [
+      -21.504364,
+      -2.47775126,
+      -8.503804
+    ],
+    "bounds": [
+      -21.412405,
+      -2.37171459,
+      -8.49157
+    ],
+    "extent": [
+      0.223466873,
+      0.113401771,
+      0.802662849
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1604",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[7]",
+    "Subsets": [
+      178
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 178,
+    "position": [
+      -16.9378357,
+      -2.40800023,
+      -10.6463423
+    ],
+    "bounds": [
+      -16.9391937,
+      -2.26525712,
+      -10.6558275
+    ],
+    "extent": [
+      0.504387856,
+      0.167135954,
+      0.86192894
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1605",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[13]",
+    "Subsets": [
+      137
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 137,
+    "position": [
+      -24.82,
+      -2.633542,
+      -4.420096
+    ],
+    "bounds": [
+      -24.758913,
+      -2.49945021,
+      -4.282764
+    ],
+    "extent": [
+      0.6567669,
+      0.236495376,
+      0.4902706
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1609",
+    "Path": "LevelRoot/DefendPositions[5]/Enemies[1]/DefendPositionSingleLeft1[0]/riot_shield[6]",
+    "Subsets": [
+      7
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene) 2_1.asset",
+    "vertices": 12221,
+    "subMeshes": 9,
+    "isBatched": true,
+    "startIndex": 7,
+    "position": [
+      -28.5381546,
+      -2.42130971,
+      -7.75909138
+    ],
+    "bounds": [
+      -28.5306816,
+      -2.14236283,
+      -7.75916958
+    ],
+    "extent": [
+      0.0230340958,
+      0.278901517,
+      0.178287268
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1610",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[27]",
+    "Subsets": [
+      57
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 57,
+    "position": [
+      -10.5681286,
+      -2.44943142,
+      -20.0489826
+    ],
+    "bounds": [
+      -10.5681248,
+      -2.06304216,
+      -20.04897
+    ],
+    "extent": [
+      1.467052,
+      0.3822161,
+      0.873167038
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1611",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[1]",
+    "Subsets": [
+      182
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 182,
+    "position": [
+      -33.81329,
+      -2.37679577,
+      -5.824145
+    ],
+    "bounds": [
+      -33.83284,
+      -2.3556695,
+      -5.83332634
+    ],
+    "extent": [
+      0.194826126,
+      0.0412896872,
+      0.225756884
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1612",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[2]",
+    "Subsets": [
+      32
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 32,
+    "position": [
+      -19.819,
+      -2.264,
+      -8.978
+    ],
+    "bounds": [
+      -19.8135414,
+      -2.34056568,
+      -8.991407
+    ],
+    "extent": [
+      0.21549511,
+      0.0991495848,
+      0.284133434
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1613",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_01[1]",
+    "Subsets": [
+      171
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 171,
+    "position": [
+      -15.9631891,
+      -2.364,
+      -10.6592178
+    ],
+    "bounds": [
+      -15.67328,
+      -2.19393945,
+      -10.871172
+    ],
+    "extent": [
+      1.97128391,
+      0.19877249,
+      2.12583351
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1614",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[11]",
+    "Subsets": [
+      95
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 95,
+    "position": [
+      -1.46891594,
+      -2.32998562,
+      -8.537996
+    ],
+    "bounds": [
+      -1.46373129,
+      -2.13486671,
+      -8.488257
+    ],
+    "extent": [
+      0.688604832,
+      0.202471435,
+      0.152711868
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1615",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[12]",
+    "Subsets": [
+      78
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 78,
+    "position": [
+      -22.6489239,
+      -2.59335184,
+      -12.66297
+    ],
+    "bounds": [
+      -22.6477165,
+      -2.39212084,
+      -12.6657276
+    ],
+    "extent": [
+      0.6863947,
+      0.201824784,
+      0.04415655
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1616",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[1]",
+    "Subsets": [
+      66
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 66,
+    "position": [
+      -34.329155,
+      -2.10603714,
+      -12.3949976
+    ],
+    "bounds": [
+      -34.30748,
+      -2.10603714,
+      -12.3108768
+    ],
+    "extent": [
+      0.29920578,
+      0.09667683,
+      0.155379772
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1617",
+    "Path": "LevelRoot/desert_map[6]/terrain_desert1[1]",
+    "Subsets": [
+      209
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 209,
+    "position": [
+      -31.9729042,
+      -2.245967,
+      -6.895806
+    ],
+    "bounds": [
+      -31.9912758,
+      -3.57091427,
+      -6.906851
+    ],
+    "extent": [
+      22.4841652,
+      1.45419037,
+      22.4944382
+    ],
+    "shaders": [
+      "T4MShaders/ShaderModel2/Diffuse/T4M 4 Textures"
+    ]
+  },
+  {
+    "RendererId": "1621",
+    "Path": "LevelRoot/DefendPositions[5]/Allies[0]/DefendPositionSingleLeft1[1]/riot_shield[6]",
+    "Subsets": [
+      8
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene) 2_1.asset",
+    "vertices": 12221,
+    "subMeshes": 9,
+    "isBatched": true,
+    "startIndex": 8,
+    "position": [
+      -19.6063766,
+      -2.37730956,
+      -9.204664
+    ],
+    "bounds": [
+      -19.6124725,
+      -2.09836268,
+      -9.20512
+    ],
+    "extent": [
+      0.02599144,
+      0.278901517,
+      0.178211212
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1622",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[40]",
+    "Subsets": [
+      165
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 165,
+    "position": [
+      -13.8534069,
+      -2.436431,
+      -2.93547249
+    ],
+    "bounds": [
+      -14.07608,
+      -1.28922224,
+      -3.09508133
+    ],
+    "extent": [
+      0.730343342,
+      1.15100455,
+      0.755993962
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1623",
+    "Path": "LevelRoot/desert_map[6]/props[6]/well[51]",
+    "Subsets": [
+      49
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 49,
+    "position": [
+      -24.01632,
+      -2.69175148,
+      -8.601618
+    ],
+    "bounds": [
+      -23.9022942,
+      -3.25832176,
+      -8.585251
+    ],
+    "extent": [
+      1.0389452,
+      1.30737579,
+      0.9229231
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1624",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[11]",
+    "Subsets": [
+      105
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 105,
+    "position": [
+      -37.1175766,
+      1.24289513,
+      -15.6060867
+    ],
+    "bounds": [
+      -37.09074,
+      1.37699866,
+      -15.6275549
+    ],
+    "extent": [
+      0.177211761,
+      0.237987459,
+      0.468541145
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1626",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_wind[5]",
+    "Subsets": [
+      174
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 174,
+    "position": [
+      -27.7957439,
+      -2.42119741,
+      -14.4202824
+    ],
+    "bounds": [
+      -27.8168354,
+      -0.5146496,
+      -14.8120441
+    ],
+    "extent": [
+      1.27887344,
+      1.90654778,
+      1.311903
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1627",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[3]/box_2[0]",
+    "Subsets": [
+      70
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 70,
+    "position": [
+      -19.6798325,
+      -2.389194,
+      -2.48337126
+    ],
+    "bounds": [
+      -19.7393379,
+      -2.389194,
+      -2.5466578
+    ],
+    "extent": [
+      0.26816082,
+      0.09667683,
+      0.259454
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1628",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[10]",
+    "Subsets": [
+      82
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 82,
+    "position": [
+      -43.9293671,
+      -2.75586557,
+      -9.364291
+    ],
+    "bounds": [
+      -43.9053574,
+      -2.55967188,
+      -9.402678
+    ],
+    "extent": [
+      0.669836044,
+      0.229274869,
+      0.29460144
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1629",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[9]",
+    "Subsets": [
+      97
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 97,
+    "position": [
+      -37.462513,
+      1.44948435,
+      -14.7660246
+    ],
+    "bounds": [
+      -37.4218979,
+      1.58149469,
+      -14.776247
+    ],
+    "extent": [
+      0.2713318,
+      0.238611341,
+      0.426167965
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1630",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[34]",
+    "Subsets": [
+      207
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 207,
+    "position": [
+      -20.1997433,
+      -2.505,
+      -13.8901911
+    ],
+    "bounds": [
+      -20.1938362,
+      -2.36875129,
+      -13.8862228
+    ],
+    "extent": [
+      0.9495802,
+      0.1811006,
+      0.4113698
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1631",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_2[5]",
+    "Subsets": [
+      51
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 51,
+    "position": [
+      -35.0942841,
+      -2.37097073,
+      -6.54596138
+    ],
+    "bounds": [
+      -35.12799,
+      -1.70488977,
+      -6.516277
+    ],
+    "extent": [
+      0.6340523,
+      0.664579451,
+      1.10137033
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1632",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[0]",
+    "Subsets": [
+      177
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 177,
+    "position": [
+      -17.91364,
+      -2.379943,
+      -6.270016
+    ],
+    "bounds": [
+      -17.9376,
+      -2.37269783,
+      -6.28120136
+    ],
+    "extent": [
+      0.237271309,
+      0.0238096714,
+      0.2752521
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1633",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[0]",
+    "Subsets": [
+      102
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 102,
+    "position": [
+      -23.7689819,
+      -2.36717415,
+      -13.5293789
+    ],
+    "bounds": [
+      -23.6957855,
+      -2.36717415,
+      -13.4825974
+    ],
+    "extent": [
+      0.227337837,
+      0.09667683,
+      0.288178921
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1634",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_2[4]",
+    "Subsets": [
+      52
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 52,
+    "position": [
+      -12.927412,
+      -2.40740871,
+      -2.061472
+    ],
+    "bounds": [
+      -12.9615641,
+      -1.713574,
+      -2.029529
+    ],
+    "extent": [
+      0.6922178,
+      0.692270637,
+      1.16405928
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1635",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[24]",
+    "Subsets": [
+      160
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 160,
+    "position": [
+      -20.8317432,
+      -2.516,
+      -13.1712818
+    ],
+    "bounds": [
+      -20.8321,
+      -2.374433,
+      -13.1735535
+    ],
+    "extent": [
+      0.5671015,
+      0.277736068,
+      1.11725378
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1636",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_patch_01[13]",
+    "Subsets": [
+      189
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 189,
+    "position": [
+      -30.1377583,
+      -2.434054,
+      -5.70735455
+    ],
+    "bounds": [
+      -30.1437683,
+      -2.33699727,
+      -5.4606204
+    ],
+    "extent": [
+      2.60012531,
+      0.147258282,
+      2.800753
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1637",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stone_01_LOD1[0]",
+    "Subsets": [
+      12
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 12,
+    "position": [
+      -24.02587,
+      -2.67775273,
+      -7.17274427
+    ],
+    "bounds": [
+      -24.0483589,
+      -2.6717453,
+      -7.156904
+    ],
+    "extent": [
+      0.145643234,
+      0.056065917,
+      0.154370546
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1638",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[6]",
+    "Subsets": [
+      170
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 170,
+    "position": [
+      -23.6543827,
+      -2.67500019,
+      -12.8222857
+    ],
+    "bounds": [
+      -23.666563,
+      -2.532257,
+      -12.84799
+    ],
+    "extent": [
+      0.9559765,
+      0.167135954,
+      0.389976025
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1640",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[10]",
+    "Subsets": [
+      122
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 122,
+    "position": [
+      8.427263,
+      -2.37472439,
+      -5.07611275
+    ],
+    "bounds": [
+      8.419011,
+      -2.17401934,
+      -5.066919
+    ],
+    "extent": [
+      0.575995445,
+      0.202635229,
+      0.4340477
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1641",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_tree_01_LOD1[1]",
+    "Subsets": [
+      163
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 163,
+    "position": [
+      -47.93514,
+      -2.28883576,
+      -9.791835
+    ],
+    "bounds": [
+      -47.78296,
+      -1.51306009,
+      -9.798388
+    ],
+    "extent": [
+      0.5916424,
+      0.776143849,
+      0.550413132
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1642",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stones_patch_01[5]",
+    "Subsets": [
+      11
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 11,
+    "position": [
+      -18.4591713,
+      -2.35393167,
+      -9.311872
+    ],
+    "bounds": [
+      -21.35069,
+      -2.48852372,
+      -6.923253
+    ],
+    "extent": [
+      3.23795128,
+      0.213293076,
+      3.78132534
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1643",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[8]",
+    "Subsets": [
+      117
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 117,
+    "position": [
+      -41.2610741,
+      -2.65018225,
+      -8.59730148
+    ],
+    "bounds": [
+      -41.26442,
+      -2.45081258,
+      -8.623146
+    ],
+    "extent": [
+      0.6904011,
+      0.227638483,
+      0.107817173
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1644",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[32]",
+    "Subsets": [
+      197
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 197,
+    "position": [
+      -25.4036789,
+      -2.6005764,
+      -13.6690207
+    ],
+    "bounds": [
+      -25.3823166,
+      -2.48059988,
+      -13.6495628
+    ],
+    "extent": [
+      0.9420004,
+      0.215500236,
+      0.402860641
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1645",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[44]",
+    "Subsets": [
+      89
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 89,
+    "position": [
+      -26.6173649,
+      -2.53675127,
+      -6.178804
+    ],
+    "bounds": [
+      -26.7445221,
+      -2.43071461,
+      -6.135844
+    ],
+    "extent": [
+      0.4508667,
+      0.113401771,
+      0.7268996
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1647",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[16]",
+    "Subsets": [
+      150
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 150,
+    "position": [
+      -23.25716,
+      -2.555,
+      -5.501991
+    ],
+    "bounds": [
+      -23.2350082,
+      -2.43900633,
+      -5.566737
+    ],
+    "extent": [
+      0.395499229,
+      0.148858786,
+      0.394760132
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1649",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[5]",
+    "Subsets": [
+      203
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 203,
+    "position": [
+      -27.6383438,
+      -2.364985,
+      -10.7553892
+    ],
+    "bounds": [
+      -27.6373482,
+      -2.22224188,
+      -10.76235
+    ],
+    "extent": [
+      0.490208626,
+      0.167135954,
+      0.8817382
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1650",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_03[9]",
+    "Subsets": [
+      146
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 146,
+    "position": [
+      0.9572773,
+      -2.216578,
+      -8.013975
+    ],
+    "bounds": [
+      0.971047461,
+      -1.6839211,
+      -8.020044
+    ],
+    "extent": [
+      0.13886112,
+      0.543093264,
+      0.155207157
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1651",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[4]",
+    "Subsets": [
+      202
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 202,
+    "position": [
+      -23.4804382,
+      -2.57400012,
+      -4.384979
+    ],
+    "bounds": [
+      -23.528574,
+      -2.431257,
+      -4.371381
+    ],
+    "extent": [
+      0.7182083,
+      0.167135954,
+      0.72390914
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1652",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (1)[0]",
+    "Subsets": [
+      18
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 18,
+    "position": [
+      -19.419,
+      -2.378,
+      -10.957
+    ],
+    "bounds": [
+      -19.9741631,
+      -2.40384126,
+      -10.4983921
+    ],
+    "extent": [
+      0.6216755,
+      0.04095149,
+      0.7260022
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1653",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[1]",
+    "Subsets": [
+      39
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 39,
+    "position": [
+      -19.811,
+      -2.27400017,
+      -10.479
+    ],
+    "bounds": [
+      -19.7913857,
+      -2.3617692,
+      -10.5065689
+    ],
+    "extent": [
+      0.21897316,
+      0.117376566,
+      0.275087833
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1654",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_1[2]",
+    "Subsets": [
+      58
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 58,
+    "position": [
+      -24.0058727,
+      -2.6105032,
+      -2.00291634
+    ],
+    "bounds": [
+      -24.0303459,
+      -1.67711186,
+      -1.98997617
+    ],
+    "extent": [
+      1.9994812,
+      0.9325702,
+      0.872688055
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1655",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[12]",
+    "Subsets": [
+      29
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 29,
+    "position": [
+      -28.344,
+      -2.27999973,
+      -7.51
+    ],
+    "bounds": [
+      -28.3433685,
+      -2.35859323,
+      -7.532234
+    ],
+    "extent": [
+      0.212313652,
+      0.119401932,
+      0.272208929
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1656",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (3)[2]",
+    "Subsets": [
+      14
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 14,
+    "position": [
+      -20.163065,
+      -2.4299283,
+      -8.038669
+    ],
+    "bounds": [
+      -19.7499847,
+      -2.413735,
+      -7.429411
+    ],
+    "extent": [
+      0.750091553,
+      0.0473791361,
+      0.671659231
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1657",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[15]",
+    "Subsets": [
+      158
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 158,
+    "position": [
+      -16.72054,
+      -2.364,
+      -8.752689
+    ],
+    "bounds": [
+      -16.7840233,
+      -2.24800634,
+      -8.774702
+    ],
+    "extent": [
+      0.395595551,
+      0.148858786,
+      0.394806862
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1658",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[13]",
+    "Subsets": [
+      28
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 28,
+    "position": [
+      -28.331,
+      -2.27999973,
+      -7.92
+    ],
+    "bounds": [
+      -28.3361549,
+      -2.35656548,
+      -7.906473
+    ],
+    "extent": [
+      0.220329285,
+      0.0991495848,
+      0.286450624
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1659",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[3]",
+    "Subsets": [
+      188
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 188,
+    "position": [
+      -21.0504951,
+      -2.45100021,
+      -7.752807
+    ],
+    "bounds": [
+      -21.0502548,
+      -2.33900166,
+      -7.75449371
+    ],
+    "extent": [
+      0.364962578,
+      0.13113749,
+      0.7163384
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1660",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/cactus[11]",
+    "Subsets": [
+      214
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 214,
+    "position": [
+      -33.75,
+      -2.34,
+      -11.82
+    ],
+    "bounds": [
+      -33.796154,
+      -1.844605,
+      -11.8206406
+    ],
+    "extent": [
+      0.236755371,
+      0.495458066,
+      0.166883469
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1661",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/box_2[39]/box_2[1]",
+    "Subsets": [
+      90
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 90,
+    "position": [
+      -5.05180168,
+      -2.347991,
+      -4.751398
+    ],
+    "bounds": [
+      -5.01375961,
+      -2.34799,
+      -4.82949829
+    ],
+    "extent": [
+      0.29564476,
+      0.0966770649,
+      0.203346968
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1662",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[19]",
+    "Subsets": [
+      2
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 2,
+    "position": [
+      -19.622,
+      -2.43000031,
+      -6.144
+    ],
+    "bounds": [
+      -19.628891,
+      -2.37772846,
+      -6.140569
+    ],
+    "extent": [
+      0.155497551,
+      0.06316161,
+      0.331473351
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1663",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/back_03[1]",
+    "Subsets": [
+      43
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 43,
+    "position": [
+      -54.44039,
+      -2.885906,
+      -5.13515472
+    ],
+    "bounds": [
+      -54.44039,
+      -1.06468534,
+      -5.13515472
+    ],
+    "extent": [
+      0.0426635742,
+      1.84370494,
+      25.1460171
+    ],
+    "shaders": [
+      "Unlit/Transparent"
+    ]
+  },
+  {
+    "RendererId": "1667",
+    "Path": "LevelRoot/DefendPositions[5]/Allies[0]/DefendPositionSingleLeft0[0]/riot_shield[6]",
+    "Subsets": [
+      5
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene) 2_1.asset",
+    "vertices": 12221,
+    "subMeshes": 9,
+    "isBatched": true,
+    "startIndex": 5,
+    "position": [
+      -19.6063766,
+      -2.38430977,
+      -10.7196636
+    ],
+    "bounds": [
+      -19.6124725,
+      -2.105363,
+      -10.7201195
+    ],
+    "extent": [
+      0.02599144,
+      0.278901517,
+      0.178211212
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1668",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (4)[3]",
+    "Subsets": [
+      22
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 22,
+    "position": [
+      -19.2560654,
+      -2.38092828,
+      -5.96466827
+    ],
+    "bounds": [
+      -18.9247265,
+      -2.394021,
+      -6.495673
+    ],
+    "extent": [
+      0.5787182,
+      0.0275298357,
+      0.646494865
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1669",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[5]",
+    "Subsets": [
+      103
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 103,
+    "position": [
+      -38.9022026,
+      1.7522397,
+      -13.7646971
+    ],
+    "bounds": [
+      -38.9051361,
+      1.88850713,
+      -13.7893085
+    ],
+    "extent": [
+      0.4666996,
+      0.152509451,
+      0.151632309
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1670",
+    "Path": "LevelRoot/desert_map[6]/rocks[7]/rock_02[0]",
+    "Subsets": [
+      216
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 216,
+    "position": [
+      -42.1013527,
+      -3.46925926,
+      2.02146435
+    ],
+    "bounds": [
+      -43.7876968,
+      -0.673927069,
+      2.55810523
+    ],
+    "extent": [
+      8.43392,
+      3.65649247,
+      4.45269
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1671",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_tree_01_LOD1[0]",
+    "Subsets": [
+      147
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 147,
+    "position": [
+      -52.2947044,
+      -2.34050155,
+      -3.320899
+    ],
+    "bounds": [
+      -52.1935,
+      -1.56472588,
+      -3.2770977
+    ],
+    "extent": [
+      0.5072212,
+      0.776143849,
+      0.498990536
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1672",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[23]",
+    "Subsets": [
+      201
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 201,
+    "position": [
+      -21.5294018,
+      -2.50588274,
+      -13.1761951
+    ],
+    "bounds": [
+      -21.5197067,
+      -2.33019876,
+      -13.1864815
+    ],
+    "extent": [
+      0.6875429,
+      0.205705762,
+      1.01217651
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1673",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[9]",
+    "Subsets": [
+      104
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 104,
+    "position": [
+      -2.09876823,
+      1.44949436,
+      -2.15924263
+    ],
+    "bounds": [
+      -2.140005,
+      1.58150375,
+      -2.151538
+    ],
+    "extent": [
+      0.300321579,
+      0.2386117,
+      0.4078437
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1674",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[22]",
+    "Subsets": [
+      6
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 6,
+    "position": [
+      -28.523,
+      -2.44,
+      -9.27
+    ],
+    "bounds": [
+      -28.529892,
+      -2.38772821,
+      -9.266569
+    ],
+    "extent": [
+      0.155497551,
+      0.06316161,
+      0.331473827
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1675",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[35]",
+    "Subsets": [
+      195
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 195,
+    "position": [
+      -26.9377441,
+      -2.595,
+      -3.412282
+    ],
+    "bounds": [
+      -26.977005,
+      -2.48484135,
+      -3.39598417
+    ],
+    "extent": [
+      0.8805723,
+      0.236124039,
+      0.5344639
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1676",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[4]",
+    "Subsets": [
+      118
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 118,
+    "position": [
+      -33.5772247,
+      -2.317875,
+      -14.8287592
+    ],
+    "bounds": [
+      -33.5795326,
+      -2.116478,
+      -14.8290071
+    ],
+    "extent": [
+      0.4593773,
+      0.202418864,
+      0.5545387
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1677",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[26]",
+    "Subsets": [
+      63
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 63,
+    "position": [
+      -42.78154,
+      -2.88427639,
+      -3.21711922
+    ],
+    "bounds": [
+      -42.781517,
+      -2.49788713,
+      -3.21712923
+    ],
+    "extent": [
+      1.52134132,
+      0.382215977,
+      0.9834771
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1678",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/box_2[39]/box_2[0]",
+    "Subsets": [
+      121
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 121,
+    "position": [
+      -5.155409,
+      -2.347991,
+      -4.53472328
+    ],
+    "bounds": [
+      -5.117353,
+      -2.3479898,
+      -4.61282063
+    ],
+    "extent": [
+      0.29564476,
+      0.0966770649,
+      0.203346968
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1679",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (2)[1]",
+    "Subsets": [
+      13
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 13,
+    "position": [
+      -19.3100643,
+      -2.38592839,
+      -9.428668
+    ],
+    "bounds": [
+      -19.866581,
+      -2.395268,
+      -8.970362
+    ],
+    "extent": [
+      0.6227312,
+      0.0259068012,
+      0.7263074
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1680",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[43]",
+    "Subsets": [
+      128
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 128,
+    "position": [
+      -25.3363647,
+      -2.5927515,
+      -6.178804
+    ],
+    "bounds": [
+      -25.4635735,
+      -2.48639679,
+      -6.135845
+    ],
+    "extent": [
+      0.450652122,
+      0.117720962,
+      0.7269802
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1681",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02_LOD1[7]",
+    "Subsets": [
+      206
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 206,
+    "position": [
+      -24.063673,
+      -2.70031786,
+      -6.861755
+    ],
+    "bounds": [
+      -24.1026726,
+      -2.684845,
+      -6.798709
+    ],
+    "extent": [
+      0.381557465,
+      0.06552446,
+      0.428780317
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1682",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[42]",
+    "Subsets": [
+      120
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 120,
+    "position": [
+      -22.9063644,
+      -2.61675119,
+      -11.078804
+    ],
+    "bounds": [
+      -22.7715435,
+      -2.51234221,
+      -11.0903358
+    ],
+    "extent": [
+      0.30745697,
+      0.126652956,
+      0.7775707
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1683",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stones_patch_01[3]",
+    "Subsets": [
+      20
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 20,
+    "position": [
+      -35.29319,
+      -2.27235,
+      -9.150133
+    ],
+    "bounds": [
+      -31.6136971,
+      -2.35513,
+      -10.3593216
+    ],
+    "extent": [
+      3.94911957,
+      0.158419609,
+      3.890699
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1685",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[8]",
+    "Subsets": [
+      127
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 127,
+    "position": [
+      6.01143074,
+      -2.36743069,
+      -6.48732948
+    ],
+    "bounds": [
+      5.989007,
+      -2.17255735,
+      -6.44158
+    ],
+    "extent": [
+      0.650742769,
+      0.202381611,
+      0.3467152
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1686",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (6)[5]",
+    "Subsets": [
+      8
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 8,
+    "position": [
+      -28.5930653,
+      -2.4239285,
+      -8.416668
+    ],
+    "bounds": [
+      -28.1014824,
+      -2.46616459,
+      -7.92488861
+    ],
+    "extent": [
+      0.691678047,
+      0.0596678257,
+      0.5739374
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1687",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[2]",
+    "Subsets": [
+      140
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 140,
+    "position": [
+      -21.130743,
+      -2.404,
+      -12.0202818
+    ],
+    "bounds": [
+      -21.1133385,
+      -2.26440287,
+      -12.026226
+    ],
+    "extent": [
+      0.5928612,
+      0.171681881,
+      0.804202557
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1689",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_wind[7]",
+    "Subsets": [
+      164
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 164,
+    "position": [
+      -21.4826546,
+      -2.621914,
+      -13.5207243
+    ],
+    "bounds": [
+      -21.13835,
+      -0.9366007,
+      -13.19498
+    ],
+    "extent": [
+      1.13320351,
+      1.69306254,
+      1.12692547
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1690",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[2]/box_2[0]",
+    "Subsets": [
+      131
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 131,
+    "position": [
+      -23.6529732,
+      -2.49681473,
+      -4.077612
+    ],
+    "bounds": [
+      -23.5842323,
+      -2.49681473,
+      -4.130725
+    ],
+    "extent": [
+      0.243792534,
+      0.09667683,
+      0.279784083
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1691",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[41]",
+    "Subsets": [
+      190
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 190,
+    "position": [
+      -34.5891266,
+      -2.87252712,
+      -5.29122353
+    ],
+    "bounds": [
+      -34.8724022,
+      -1.45965683,
+      -4.9379487
+    ],
+    "extent": [
+      0.929103851,
+      1.41851532,
+      0.9243779
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1693",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[41]",
+    "Subsets": [
+      69
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 69,
+    "position": [
+      -22.6863632,
+      -2.512751,
+      -6.14880371
+    ],
+    "bounds": [
+      -22.5574989,
+      -2.40671444,
+      -6.124324
+    ],
+    "extent": [
+      0.32098484,
+      0.113401771,
+      0.7732551
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1694",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/cactus[12]",
+    "Subsets": [
+      213
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 213,
+    "position": [
+      -15.9969883,
+      -2.42701721,
+      -10.8158321
+    ],
+    "bounds": [
+      -16.04314,
+      -1.93162227,
+      -10.816473
+    ],
+    "extent": [
+      0.236755371,
+      0.495458066,
+      0.166883469
+    ],
+    "shaders": [
+      "Mobile/Diffuse"
+    ]
+  },
+  {
+    "RendererId": "1695",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[0]",
+    "Subsets": [
+      36
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 36,
+    "position": [
+      -19.809,
+      -2.269,
+      -10.94
+    ],
+    "bounds": [
+      -19.7942219,
+      -2.35343313,
+      -10.9264278
+    ],
+    "extent": [
+      0.2352829,
+      0.106467128,
+      0.287465572
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1696",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_2[3]",
+    "Subsets": [
+      62
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 62,
+    "position": [
+      -32.8720551,
+      -2.29910183,
+      -13.3027515
+    ],
+    "bounds": [
+      -32.90232,
+      -1.60526752,
+      -13.3384533
+    ],
+    "extent": [
+      1.15768528,
+      0.6922703,
+      0.6800151
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  },
+  {
+    "RendererId": "1697",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[10]",
+    "Subsets": [
+      37
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 37,
+    "position": [
+      -28.43,
+      -2.23,
+      -10.95
+    ],
+    "bounds": [
+      -28.4351559,
+      -2.30656576,
+      -10.9364719
+    ],
+    "extent": [
+      0.220329285,
+      0.0991495848,
+      0.286450863
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1698",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[7]",
+    "Subsets": [
+      26
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 26,
+    "position": [
+      -19.778,
+      -2.269,
+      -7.95
+    ],
+    "bounds": [
+      -19.7632217,
+      -2.35343313,
+      -7.93642759
+    ],
+    "extent": [
+      0.2352829,
+      0.106467128,
+      0.287465572
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1699",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[14]",
+    "Subsets": [
+      25
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 25,
+    "position": [
+      -28.31,
+      -2.34000015,
+      -6.52
+    ],
+    "bounds": [
+      -28.3289852,
+      -2.42776918,
+      -6.491994
+    ],
+    "extent": [
+      0.223726273,
+      0.117376566,
+      0.277082682
+    ],
+    "shaders": [
+      "MatCap/Vertex/Textured Multiply"
+    ]
+  },
+  {
+    "RendererId": "1700",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_wind[8]",
+    "Subsets": [
+      159
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 159,
+    "position": [
+      -19.0767441,
+      -2.59819746,
+      -1.9672823
+    ],
+    "bounds": [
+      -19.27779,
+      -0.7186109,
+      -1.737038
+    ],
+    "extent": [
+      1.23918247,
+      1.88801658,
+      1.16438615
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1701",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_wind[4]",
+    "Subsets": [
+      183
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene)_6.asset",
+    "vertices": 63444,
+    "subMeshes": 222,
+    "isBatched": true,
+    "startIndex": 183,
+    "position": [
+      -19.1167431,
+      -2.37319732,
+      -2.21328163
+    ],
+    "bounds": [
+      -19.2425289,
+      -0.116568208,
+      -2.688399
+    ],
+    "extent": [
+      1.50052261,
+      2.27215576,
+      1.48115182
+    ],
+    "shaders": [
+      "atsVegetation Unlit-Wind"
+    ]
+  },
+  {
+    "RendererId": "1705",
+    "Path": "LevelRoot/DefendPositions[5]/Enemies[1]/DefendPositionSingleLeft0[2]/riot_shield[6]",
+    "Subsets": [
+      6
+    ],
+    "mesh": "Assets/Mesh/Combined Mesh (root_ scene) 2_1.asset",
+    "vertices": 12221,
+    "subMeshes": 9,
+    "isBatched": true,
+    "startIndex": 6,
+    "position": [
+      -28.4858646,
+      -2.47130966,
+      -6.249997
+    ],
+    "bounds": [
+      -28.4783936,
+      -2.19236279,
+      -6.25007534
+    ],
+    "extent": [
+      0.0230340958,
+      0.278901517,
+      0.178287268
+    ],
+    "shaders": [
+      "AboutFun/LightMapDiffuse"
+    ]
+  }
+]

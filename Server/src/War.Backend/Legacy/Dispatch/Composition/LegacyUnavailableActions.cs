@@ -98,7 +98,6 @@ internal static class LegacyUnavailableActions
         return
         [
             Entry.Closed(Action.SendPlayerReport),
-            Entry.Closed(Action.GetNewAssignments),
             Entry.Closed(Action.GetLastWeeksPlayerLeague),
             Entry.Closed(Action.AddGameCenter),
             Entry.Closed(Action.AddVideoReward),
@@ -129,7 +128,6 @@ internal static class LegacyUnavailableActions
             Entry.Closed(Action.DebugAddScraps),
             Entry.Closed(Action.WarArenaEnded),
             Entry.Closed(Action.MaxAll),
-            Entry.Closed(Action.ClaimDailyReward),
             Entry.Closed(Action.DebugRenewRental),
             Entry.Closed(Action.RemoveOrUpdateGC),
             Entry.Closed(Action.RemoveFromLeague),

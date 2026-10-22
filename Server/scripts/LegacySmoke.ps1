@@ -206,6 +206,21 @@ try {
     # OnGetAllMessages casts mResponse["Items"] to a JArray with no presence check.
     Assert ($null -ne $messages.PSObject.Properties['Items']) 'an empty inbox still carries Items'
 
+    $assignments = SendJson -RequestId 149 -Token $token -PlayerId $playerId
+    Assert ($assignments.Result -eq 1) 'assignment availability does not force global maintenance'
+    $assignmentData = $assignments.AssignmentData | ConvertFrom-Json
+    Assert ($null -ne $assignmentData.PSObject.Properties['assignments']) 'the required AssignmentData string parses'
+    Assert ($assignmentData.assignments.Count -eq 0) 'unavailable assignments do not invent reward-bearing tasks'
+    $dailyReward = SendJson -RequestId 1001 -Token $token -PlayerId $playerId
+    Assert ($dailyReward.Result -eq 1 -and $dailyReward.dailyRewardData.canClaim -eq 1) 'daily rewards open one attendance credit'
+    Assert ($null -ne $dailyReward.dailyRewardData.config.Day1.Param -and $dailyReward.dailyRewardData.nextDay -gt 0) 'daily calendar supplies all recovered parser fields'
+    $calendarId = '{0:D4}-{1:D2}' -f [int]$dailyReward.dailyRewardData.year, [int]$dailyReward.dailyRewardData.month
+    $dailyClaim = SendJson -RequestId 1002 -Token $token -PlayerId $playerId -Fields @{ claimRweard = '1'; CalendarId = $calendarId }
+    Assert ($dailyClaim.Result -eq 1 -and $dailyClaim.dailyRewardData.added -eq 5 -and $dailyClaim.dailyRewardData.claimReward -eq 1) 'daily claim commits configured Gold and cursor'
+    $dailyReplay = SendJson -RequestId 1002 -Token $token -PlayerId $playerId -Fields @{ claimRweard = '1'; CalendarId = $calendarId }
+    Assert ($dailyReplay.Result -eq 1 -and $dailyReplay.dailyRewardData.added -eq 0 -and $dailyReplay.DailyRewardWallet.Gold -eq $dailyClaim.DailyRewardWallet.Gold) 'daily replay restores wallet without a second delta'
+    $data = SendJson -RequestId 34 -Token $token -PlayerId $playerId -Fields @{ Locale = 'en'; Buffers = 'null' }
+
     Write-Host "`nAuthentication"
     $rotated = SendJson -RequestId 34 -Token $created.Token -PlayerId $playerId
     Assert ($rotated.Result -eq 99990) 'the pre-rotation token is rejected as InvalidToken'
@@ -230,9 +245,9 @@ try {
 
     Write-Host "`nDirect-channel closure matrix"
     $dispatchEvidence = Get-Content (Join-Path $serverRoot 'docs/legacy-direct-extraction.json') -Raw | ConvertFrom-Json
-    # Preserve the historical extraction evidence; action 62 now owns authenticated settlement.
-    $blockedActions = @($dispatchEvidence.blockedDirectActions | Where-Object { $_.id -ne 62 })
-    Assert ($blockedActions.Count -eq 110) 'the remaining direct-channel closure matrix has all 110 actions'
+    # Preserve historical evidence; settlement and the two read-only availability probes are now routed.
+    $blockedActions = @($dispatchEvidence.blockedDirectActions | Where-Object { $_.id -notin @(62,149,1001,1002) })
+    Assert ($blockedActions.Count -eq 107) 'the remaining direct-channel closure matrix has all 107 actions'
     foreach ($blockedAction in $blockedActions) {
         $anonymousReply = SendJson -RequestId $blockedAction.id -Token 'null' -PlayerId 'null'
         Assert ($anonymousReply.Result -eq 99990) "$($blockedAction.name) requires a valid session before closure"

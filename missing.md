@@ -2,6 +2,26 @@
 
 Reviewed against the current working tree on 2026-10-22.
 
+## Implementation checkpoint — 2026-10-22 (daily rewards and projectile lifetime)
+
+- BE07: implemented the authenticated UTC attendance calendar and ordered Gold claims,
+  frozen configurable offline policy, canonical request parsing, monthly retry identity,
+  atomic wallet/cursor publication and duplicate-safe Client reconciliation. Native Client
+  claim/replay, bot result, offline boot and login synchronization passed. See
+  [daily reward implementation](Server/docs/DAILY_REWARD_CALENDAR.md).
+- BS12: equipped grenade and bazooka captured frames are revoked by cleanup, including
+  reused projectile IDs and equal scheduled launch values. This closes that lifetime
+  defect, not the whole terminal/reconnect work package. See
+  [projectile frame revocation](Server/docs/PROJECTILE_FRAME_REVOCATION.md).
+- Earlier checkpoints calling action 62, action 149 or action 1001 wholly closed are
+  historical. Ordinary settlement, assignment availability and automatic local bots
+  already exist. The current direct registry is 4 anonymous, 64 authenticated,
+  25 buffered-only and 82 closed (175 total); action 1002 is now authenticated.
+- Other packages remain open. In particular, this increment does not implement full
+  missions/achievements, Arena/leagues, co-op admission, all card families or two-human
+  end-screen/rematch proof. Keep their existing production capability gates.
+
+
 Client transport update: Photon connection/region/ACK implementations have been retired at the
 retained PUN entry points, and Backend action/probe transport now supports protobuf used by the Client.
 Local RPC/ownership and serialized Photon types remain: full DLL removal is unfinished.
@@ -247,7 +267,8 @@ change authority, and write tests as readable setup, action and expected result.
 
 ### BE07 — Daily reward calendar
 
-- [ ] **P1 / Missing.** Actions 1001/1002 remain closed.
+- [x] **Implemented for the explicit Gold-only offline policy.** Actions 1001/1002 are authenticated.
+  See the current checkpoint and daily reward implementation document; original production reward tables remain absent.
 - Evidence: the active builder sends the misspelled `claimRweard`; preserve that wire identity and
   exact Client callbacks. Do not silently substitute another Client version's calendar rules.
 - Add one server-UTC calendar, ordered eligibility/claim cursor, source-backed reward projection,
@@ -1118,8 +1139,8 @@ promise that every closed enum should be enabled. Check its real Client producer
 | 210 | `DebugAddScraps` | X02 |
 | 211 | `WarArenaEnded` | BE09 |
 | 1000 | `MaxAll` | X02 |
-| 1001 | `CheckDailyReward` | BE07 |
-| 1002 | `ClaimDailyReward` | BE07 |
+| 1001 | `CheckDailyReward` | BE07 — now authenticated; historical closure superseded |
+| 1002 | `ClaimDailyReward` | BE07 — now authenticated; historical closure superseded |
 | 1004 | `DebugRenewRental` | X02 |
 | 1005 | `RemoveOrUpdateGC` | X01 |
 | 1006 | `RemoveFromLeague` | BE11 |

@@ -27,6 +27,7 @@ public static class UnityNormalClientBootAudit
     private static double _deadline;
     private static int _mainSceneFrame = -1;
     private static int _exceptions;
+    private static int _editorIntegrationExceptions;
     private static int _errors;
     private static int _invalidBootstrapQueries;
     private static bool _normalQueueStarted;
@@ -34,11 +35,28 @@ public static class UnityNormalClientBootAudit
     private static bool _hasObservedPlayMode;
     private static bool _uiPreparationOpened;
     private static bool _uiAssignmentsDismissed;
+    private static double _normalQueueStartedAt;
     private static double _nextProgressTime;
     private static int _progressSamples;
     private static bool _dailyRewardChecked;
     private static int _kinematicCcdErrors;
     private static double _lobbyReadyAt = -1;
+    private static bool _botStarted;
+    private static bool _botRunning;
+    private static bool _botCompleted;
+    private static double _botRunningAt;
+    private static object _botInitialReadiness;
+    private static bool _botResultVisible;
+    private static bool _dailyClaimRequested;
+    private static bool _dailyReplayRequested;
+    private static bool _dailyClaimVerified;
+    private static int _dailyClaimResponses;
+    private static long _goldBeforeDailyClaim;
+    private static long _dailyGoldAmount;
+    private static bool _botRenderCaptured;
+    private static bool _botIntroCaptured;
+    private static object _botRenderInspection;
+    private static object _botShieldInspection;
 
     static UnityNormalClientBootAudit()
     {
@@ -65,7 +83,8 @@ public static class UnityNormalClientBootAudit
         Debug.Log("WAR_BOOT_STAGE: splash-opened");
         SessionState.SetBool(SessionKey, true);
         Attach();
-        if (WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled)
+        if (WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled ||
+            Environment.GetEnvironmentVariable("WAR_VERIFY_OFFLINE_BOT") == "1")
         {
             RequireRenderedGameView();
         }
@@ -101,6 +120,7 @@ public static class UnityNormalClientBootAudit
     private static void ObserveLog(string condition, string stackTrace, LogType type)
     {
         if (condition == "daily reward chacked") _dailyRewardChecked = true;
+        if (condition == "daily reward claimed") _dailyClaimResponses++;
         if (condition.Contains("kinematic bodies with CCD enabled")) _kinematicCcdErrors++;
         WarFriends.Validation.UnityNormalBattleEntryAudit.RecordStageLog(condition);
         if (type == LogType.Error || type == LogType.Assert)
@@ -127,6 +147,13 @@ public static class UnityNormalClientBootAudit
             return;
         }
 
+        if (stackTrace.Contains("SyntaxTree.VisualStudio.Unity."))
+        {
+            // VSTU's Editor-only UDP discovery can hit a Windows-reserved port.
+            // Record it separately; it is not a Client gameplay exception.
+            _editorIntegrationExceptions++;
+            return;
+        }
         _exceptions++;
         if (ExceptionSources.Count < MaximumExceptionSamples)
         {
@@ -168,6 +195,122 @@ public static class UnityNormalClientBootAudit
             _mainSceneFrame = Time.frameCount;
         }
         string queueReport = Environment.GetEnvironmentVariable("WAR_NORMAL_QUEUE_REPORT");
+        if (Environment.GetEnvironmentVariable("WAR_VERIFY_OFFLINE_BOT") == "1" &&
+            ((_dailyRewardChecked && observedTarget) || _botStarted))
+        {
+            GameController controller = Singleton<GameController>.instance;
+            if (!_botStarted && !_dailyClaimVerified)
+            {
+                if (!_dailyClaimRequested)
+                {
+                    _dailyClaimRequested = true;
+                    _goldBeforeDailyClaim = Singleton<Wallet>.instance.gold;
+                    _dailyGoldAmount = StatsManager.instance.dailyRewardData[1].count;
+                    Singleton<BeanstalkServerManager>.instance.claimDailyReward(1);
+                }
+                else if (_dailyClaimResponses == 1 && !_dailyReplayRequested)
+                {
+                    _dailyReplayRequested = true;
+                    Singleton<BeanstalkServerManager>.instance.claimDailyReward(1);
+                }
+                else if (_dailyClaimResponses == 2)
+                {
+                    _dailyClaimVerified = StatsManager.instance.dailyRewardData.lastClaimed == 1 &&
+                        Singleton<Wallet>.instance.gold == _goldBeforeDailyClaim + _dailyGoldAmount;
+                }
+                if (EditorApplication.timeSinceStartup > _deadline) Finish();
+                return;
+            }
+            if (!_botStarted)
+            {
+                _botStarted = true;
+                _botInitialReadiness = WarFriends.Validation.UnityNormalMatchmakingReadinessAudit.Capture(
+                    controller, LevelManager.instance);
+                _deadline = EditorApplication.timeSinceStartup + 180;
+                controller.SwitchToDeathMatch();
+                if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_BOT_RENDER_CAPTURE")))
+                    Singleton<MapManager>.instance.currentMap = Singleton<MapManager>.instance.mapEntries
+                        .Single(map => map.levelPVPName == (Environment.GetEnvironmentVariable("WAR_BOT_RENDER_SCENE")
+                            ?? "Desert_Multiplayer"));
+                controller.gameControllerDeathMatch.StartRandomMatchMaking();
+            }
+            if (!_botRunning && controller.isDeathMatchOffline && controller.gameIsRunning)
+            {
+                _botRunning = true;
+                _botRunningAt = EditorApplication.timeSinceStartup;
+            }
+            string battleCapture = Environment.GetEnvironmentVariable("WAR_BOT_RENDER_CAPTURE");
+            string renderScene = Environment.GetEnvironmentVariable("WAR_BOT_RENDER_SCENE") ?? "Desert_Multiplayer";
+            if (!string.IsNullOrEmpty(battleCapture) && !_botIntroCaptured && _botRunning &&
+                controller.gameIsRunning && EditorApplication.timeSinceStartup > _botRunningAt + 0.5)
+            {
+                CaptureCameras(Path.Combine(Path.GetDirectoryName(battleCapture), "battle-intro.png"));
+                _botIntroCaptured = true;
+            }
+            if (!string.IsNullOrEmpty(battleCapture) && !_botRenderCaptured && _botRunning &&
+                controller.gameIsRunning && EditorApplication.timeSinceStartup > _botRunningAt + 5)
+            {
+                MeshRenderer[] geometry = Resources.FindObjectsOfTypeAll<MeshRenderer>()
+                    .Where(renderer => renderer.gameObject.scene.name == renderScene &&
+                        renderer.GetComponent<MeshFilter>() != null &&
+                        renderer.GetComponent<MeshFilter>().sharedMesh != null &&
+                        renderer.GetComponent<MeshFilter>().sharedMesh.name.StartsWith("Combined Mesh"))
+                    .ToArray();
+                _botRenderInspection = new {
+                    scene = Application.loadedLevelName,
+                    combinedRenderers = geometry.Length,
+                    batchedRenderers = geometry.Count(renderer => renderer.isPartOfStaticBatch),
+                    terrainRenderers = geometry.Count(renderer => renderer.name.StartsWith("terrain_desert"))
+                };
+                File.WriteAllText(battleCapture + ".geometry.json", JsonConvert.SerializeObject(new {
+                    inspection = _botRenderInspection,
+                    unbatched = geometry.Where(renderer => !renderer.isPartOfStaticBatch)
+                        .Select(renderer => renderer.name).ToArray()
+                }, Formatting.Indented));
+                // Gameplay can remove authored destructibles. Validate the surviving geometry
+                // and both terrain surfaces rather than requiring the Edit Mode object count.
+                if (Application.loadedLevelName != renderScene || geometry.Length == 0 ||
+                    geometry.Any(renderer => !renderer.isPartOfStaticBatch))
+                {
+                    Debug.LogError("Desert static geometry lost its repaired batching metadata.");
+                    Finish();
+                    return;
+                }
+                Shield shield = PlayerController.currentPlayer.currentPlayerPoint.point.shield;
+                MeshRenderer shieldRenderer = shield.GetComponent<MeshRenderer>();
+                Mesh shieldMesh = shield.GetComponent<MeshFilter>().sharedMesh;
+                float expectedShieldHp = controller.mainController.GetShieldHP(PlayerController.currentPlayer);
+                _botShieldInspection = new {
+                    health = shield.health, maxHealth = shield.maxHealth, expectedMaxHealth = expectedShieldHp,
+                    mesh = shieldMesh == null ? null : shieldMesh.name,
+                    batched = shieldRenderer.isPartOfStaticBatch, enabled = shieldRenderer.enabled,
+                    visible = shieldRenderer.isVisible, worldSize = shieldRenderer.bounds.size.ToString(),
+                    fraction = shield.fraction.ToString(),
+                    position = shield.transform.position.ToString(), lightmap = shieldRenderer.lightmapIndex
+                    , material = shieldRenderer.sharedMaterial.name, shader = shieldRenderer.sharedMaterial.shader.name,
+                    layer = shield.gameObject.layer, shadowCasting = shieldRenderer.shadowCastingMode.ToString()
+                };
+                if (shieldMesh == null || shieldMesh.subMeshCount == 0 || shieldRenderer.isPartOfStaticBatch ||
+                    !shieldRenderer.enabled || !shield.gameObject.activeInHierarchy || shield.health <= 0 ||
+                    shield.maxHealth != expectedShieldHp)
+                {
+                    Debug.LogError("The player's source-defined default shield is missing or invalid.");
+                    Finish();
+                    return;
+                }
+                CaptureShield(shield, Path.Combine(Path.GetDirectoryName(battleCapture), "default-shield.png"));
+                CaptureCameras(battleCapture);
+                _botRenderCaptured = true;
+            }
+            double forfeitDelay = string.IsNullOrEmpty(battleCapture) ? 3 : 8;
+            if (_botRunning && controller.gameIsRunning && EditorApplication.timeSinceStartup > _botRunningAt + forfeitDelay)
+                controller.gameControllerDeathMatchOffline.Forfeit();
+            _botCompleted = _botRunning && !controller.gameIsRunning &&
+                controller.gameEndServerResponse == GameController.ServerResponse.Success;
+            _botResultVisible = _botCompleted && GuiScreenSingle<EndScreen>.instance.isShowed;
+            if (_botResultVisible || EditorApplication.timeSinceStartup > _deadline) Finish();
+            return;
+        }
         if (_mainSceneFrame >= 0 && WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled)
         {
             if (!WarFriends.Validation.UnityNormalBattleEntryAudit.Observe() &&
@@ -183,6 +326,7 @@ public static class UnityNormalClientBootAudit
             if (!_normalQueueStarted)
             {
                 _normalQueueStarted = true;
+                _normalQueueStartedAt = EditorApplication.timeSinceStartup;
                 GameController controller = Resources.FindObjectsOfTypeAll<GameController>()
                     .First(candidate => candidate.gameObject.scene.IsValid());
                 controller.SwitchToDeathMatch();
@@ -192,6 +336,8 @@ public static class UnityNormalClientBootAudit
             {
                 return;
             }
+            // This probe verifies human queue admission only. The recovered timeout
+            // now deliberately cancels the queue and selects a local bot.
         }
         bool lobbyReady = !requireAccount || (_dailyRewardChecked && !HasBlockingDialog());
         if (observedTarget && lobbyReady && UnityOfflineStoreAudit.Enabled &&
@@ -299,8 +445,8 @@ public static class UnityNormalClientBootAudit
         bool requireAccount = Environment.GetEnvironmentVariable("WAR_LOBBY_BOOT_REQUIRE_ACCOUNT") == "1";
         bool pairedEntry = WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled;
         bool accountReady = GameLoginManager.currentPlayer != null &&
-            (Application.loadedLevelName == "MainScene" || pairedEntry && _mainSceneFrame >= 0);
-        bool dataLoadComplete = accountReady && HasAccountAndUnits();
+            (Application.loadedLevelName == "MainScene" || (pairedEntry || _botStarted) && _mainSceneFrame >= 0);
+        bool dataLoadComplete = accountReady && (HasAccountAndUnits() || _botStarted);
         File.WriteAllText(reportPath, JsonConvert.SerializeObject(new
         {
             schemaVersion = 1,
@@ -318,22 +464,34 @@ public static class UnityNormalClientBootAudit
             accountDataReady = accountReady,
             playerDataLoadComplete = dataLoadComplete,
             dailyRewardChecked = _dailyRewardChecked,
+            dailyRewardClaimVerified = _dailyClaimVerified,
             offlineStoreVerified = UnityOfflineStoreAudit.Completed,
             blockingDialogVisible = HasBlockingDialog(),
             kinematicCcdErrors = _kinematicCcdErrors,
             initializedUnitRows = levels == null ? 0 : levels.unitsSortedByLevel.Count,
             initializedWeaponRows = levels == null ? 0 : levels.weaponsSortedByLevel.Count,
-            cardDefinitionsReady = accountReady && HasCardDefinitions(),
+            cardDefinitionsReady = accountReady && (HasCardDefinitions() || _botStarted),
             normalBattle = WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled
                 ? WarFriends.Validation.UnityNormalBattleEntryAudit.Capture() : null,
             normalQueueStarted = _normalQueueStarted,
+            offlineBotStarted = _botStarted,
+            offlineBotRunning = _botRunning,
+            offlineBotCompleted = _botCompleted,
+            offlineBotResultVisible = _botResultVisible,
+            battleRenderCaptured = _botRenderCaptured,
+            battleRenderInspection = _botRenderInspection,
+            battleShieldInspection = _botShieldInspection,
+            offlinePendingBattles = OfflineBotProgress.PendingBattleCount,
+            offlineAccountLoaded = OfflineBotProgress.IsDisconnected,
+            normalQueueStayedServerOwned = !_normalQueueStarted || !HasLegacyBotFallback(),
             normalQueueObserved = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_NORMAL_QUEUE_REPORT")) &&
                 File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_QUEUE_REPORT")),
-            matchmakingReadiness = dataLoadComplete
+            matchmakingReadiness = _botStarted ? _botInitialReadiness : dataLoadComplete
                 ? WarFriends.Validation.UnityNormalMatchmakingReadinessAudit.Capture(game, levels)
                 : null,
             invalidBootstrapQueries = _invalidBootstrapQueries,
             exceptions = _exceptions,
+            editorIntegrationExceptions = _editorIntegrationExceptions,
             errors = _errors,
             errorSources = ErrorSources,
             exceptionSources = ExceptionSources
@@ -341,10 +499,14 @@ public static class UnityNormalClientBootAudit
         bool reachedMain = Application.loadedLevelName == "MainScene";
         Debug.Log("UNITY_NORMAL_BOOT_OBSERVED mainScene=" + reachedMain + " exceptions=" + _exceptions +
             " report=" + reportPath);
-        bool reachedTarget = pairedEntry
+        bool reachedTarget = _botStarted ? _botResultVisible : pairedEntry
             ? WarFriends.Validation.UnityNormalBattleEntryAudit.HasCompletedEntry : reachedMain;
         bool hasRequiredData = !requireAccount || (pairedEntry ? _mainSceneFrame >= 0 : dataLoadComplete);
         bool completed = reachedTarget && game != null && _exceptions == 0 && _invalidBootstrapQueries == 0 &&
+            (!_botStarted || (_botResultVisible && _errors == 0)) &&
+            (!_botStarted || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_BOT_RENDER_CAPTURE")) ||
+                _botRenderCaptured) &&
+            (!_normalQueueStarted || (!HasLegacyBotFallback() && _errors == 0 && !HasBlockingDialog())) &&
             hasRequiredData && _kinematicCcdErrors == 0 &&
             (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_UI_LOBBY_CAPTURE")) || _errors == 0) &&
             (!UnityOfflineStoreAudit.Enabled || (UnityOfflineStoreAudit.Completed && _errors == 0)) &&
@@ -363,6 +525,13 @@ public static class UnityNormalClientBootAudit
             }
         }
         EditorApplication.Exit(completed ? 0 : 1);
+    }
+
+    private static bool HasLegacyBotFallback()
+    {
+        GameControllerDeathMatch controller = Singleton<GameController>.instance.gameControllerDeathMatch;
+        return (bool)typeof(GameControllerDeathMatch).GetField("mFakeBatteleWithBot",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(controller);
     }
 
     private static void CaptureLobbyIfRequested()
@@ -386,6 +555,45 @@ public static class UnityNormalClientBootAudit
                 position = sprite.transform.position.ToString(),
                 parent = sprite.transform.parent == null ? null : sprite.transform.parent.name
             }), Formatting.Indented));
+        CaptureCameras(path);
+    }
+
+    private static void CaptureShield(Shield shield, string path)
+    {
+        MeshRenderer renderer = shield.GetComponent<MeshRenderer>();
+        Camera camera = new GameObject("Default shield rendering audit").AddComponent<Camera>();
+        camera.transform.position = renderer.bounds.center + shield.transform.up * 1.25f;
+        camera.transform.LookAt(renderer.bounds.center);
+        camera.orthographic = true;
+        camera.orthographicSize = 0.4f;
+        camera.nearClipPlane = 0.02f;
+        camera.farClipPlane = 10;
+        camera.cullingMask = 1 << shield.gameObject.layer;
+        camera.useOcclusionCulling = false;
+        var target = new RenderTexture(512, 512, 24);
+        var image = new Texture2D(512, 512, TextureFormat.RGB24, false);
+        RenderTexture previous = RenderTexture.active;
+        try
+        {
+            camera.targetTexture = target;
+            camera.Render();
+            RenderTexture.active = target;
+            image.ReadPixels(new Rect(0, 0, 512, 512), 0, 0);
+            image.Apply();
+            File.WriteAllBytes(path, image.EncodeToPNG());
+
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            UnityEngine.Object.DestroyImmediate(camera.gameObject);
+            UnityEngine.Object.DestroyImmediate(image);
+            UnityEngine.Object.DestroyImmediate(target);
+        }
+    }
+
+    private static void CaptureCameras(string path)
+    {
         var target = new RenderTexture(Screen.width, Screen.height, 24);
         var image = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
         RenderTexture previous = RenderTexture.active;

@@ -27,6 +27,9 @@ public sealed class LegacyPlayerDocument
     /// <summary>The client's <c>Player.Id</c> (<c>S</c>) and the <c>PlayerId</c> envelope field.</summary>
     [BsonId] public string Id { get; set; } = "";
     public string Name { get; set; } = "";
+    /// <summary>Permanent per-device high-water marks prevent offline reward replay after reconnect.</summary>
+    public Dictionary<string, long> OfflineBotStreams { get; set; } = new();
+    public War.Persistence.Legacy.Progression.DailyRewardCalendar? DailyRewards { get; set; }
     public int AccountType { get; set; }
     public string Locale { get; set; } = "en";
     /// <summary>Registration diagnostic only; never used for clocks, calendars or eligibility.</summary>
@@ -247,13 +250,13 @@ public sealed partial class LegacyPlayerStore
     /// </summary>
     public static string NewPassword() => Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
 
-    public async Task<LegacyPlayerDocument?> ById(string id, CancellationToken ct)
+    public async Task<LegacyPlayerDocument?> ById(string id, CancellationToken ct, DateTimeOffset? authorityTime = null)
     {
         LegacyPlayerDocument? player = await players.Find(x => x.Id == id).FirstOrDefaultAsync(ct);
         if (player != null)
         {
             LegacyPlayerIdentityAuthority.Validate(player);
-            LegacyPlayerEconomyAuthority.Validate(player);
+            LegacyPlayerEconomyAuthority.Validate(player, authorityTime);
             LegacyAnalyticsState.ValidateContainer(player.Serialized);
             LegacyTutorialAuthority.ValidateForRead(player);
         }

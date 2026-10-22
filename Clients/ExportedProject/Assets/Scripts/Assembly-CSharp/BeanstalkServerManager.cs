@@ -316,6 +316,22 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 			counter++;
 			yield return null;
 		}
+        if (databaseAction == DatabaseAction.GetPlayerData)
+            OfflineBotProgress.AddPendingJournal(postData);
+        string localResponse;
+        if (OfflineBotProgress.TryReply(databaseAction, postData, out localResponse))
+        {
+            mIsSending = true;
+            try
+            {
+                // Preserve asynchronous callback order and prevent nested local replies
+                // from replacing ServerResponseHandler's current response dictionary.
+                yield return null;
+                mResponseHandler.ServerRequestFinished(databaseAction, localResponse, postData);
+            }
+            finally { mIsSending = false; }
+            yield break;
+        }
 		postParameters = JsonConvert.SerializeObject(postData);
 		if (counter > 0)
 		{
@@ -353,6 +369,12 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 					}
 					if (download.Exception != null)
 					{
+                        string cachedResponse;
+                        if (OfflineBotProgress.TryBootFallback(databaseAction, postData, out cachedResponse))
+                        {
+                            mResponseHandler.ServerRequestFinished(databaseAction, cachedResponse, postData);
+                            yield break;
+                        }
 						errorMessage = download.Exception.Message;
 						if (download.Exception is SocketException socketException && socketException.SocketErrorCode == SocketError.HostNotFound)
 						{
@@ -377,12 +399,20 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 						this.ActionUpdated(databaseAction, i, ActionStage.ProcessingOnClient);
 					}
 					result = mResponseHandler.ServerRequestFinished(databaseAction, text, postData);
+                    if (result == DatabaseResult.Success)
+                        OfflineBotProgress.ObserveResponse(databaseAction, text);
 					if (this.ActionUpdated != null)
 					{
 						this.ActionUpdated(databaseAction, i, ActionStage.Done);
 					}
 					break;
 				}
+                string offlineResponse;
+                if (OfflineBotProgress.TryBootFallback(databaseAction, postData, out offlineResponse))
+                {
+                    mResponseHandler.ServerRequestFinished(databaseAction, offlineResponse, postData);
+                    yield break;
+                }
 				Debug.LogError("Beanstalk: Application not reachable!");
 				errorMessage = "No connection.";
 				break;
@@ -596,16 +626,16 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 		case HTTPRequestStates.Finished:
 			break;
 		case HTTPRequestStates.Error:
-			Debug.LogError("Request Finished with Error! " + ((request.Exception == null) ? "No Exception" : (request.Exception.Message + "\n" + request.Exception.StackTrace)));
+			Debug.LogWarning("Request Finished with Error! " + ((request.Exception == null) ? "No Exception" : (request.Exception.Message + "\n" + request.Exception.StackTrace)));
 			break;
 		case HTTPRequestStates.Aborted:
 			Debug.LogWarning("Request Aborted!");
 			break;
 		case HTTPRequestStates.ConnectionTimedOut:
-			Debug.LogError("Connection Timed Out!");
+			Debug.LogWarning("Connection Timed Out!");
 			break;
 		case HTTPRequestStates.TimedOut:
-			Debug.LogError("Processing the request Timed Out!");
+			Debug.LogWarning("Processing the request Timed Out!");
 			break;
 		}
 	}
@@ -684,7 +714,7 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 		List<Tuple<string, string>> list = new List<Tuple<string, string>>();
 		list.Add(new Tuple<string, string>("PlayerAnalytics", JsonConvert.SerializeObject(PlayerAnalytics.instance.GetUpdates())));
 		List<Tuple<string, string>> postData = list;
-		Debug.LogError("Beanstalk: Update analytics");
+		Debug.Log("Beanstalk: Update analytics");
 		StartCoroutine(RadicalRoutine.Run(CreateServerRequest(DatabaseAction.UpdateAnalytics, postData)));
 	}
 
@@ -2140,6 +2170,13 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 	{
 		List<Tuple<string, string>> list = new List<Tuple<string, string>>();
 		list.Add(new Tuple<string, string>("claimRweard", index.ToString()));
+		// Bind retries to the displayed calendar; a delayed claim cannot consume next month's day.
+		var calendar = StatsManager.instance.dailyRewardData;
+		if (calendar != null)
+		{
+			list.Add(new Tuple<string, string>("CalendarId", string.Format(System.Globalization.CultureInfo.InvariantCulture,
+				"{0:D4}-{1:D2}", calendar.year, calendar.month)));
+		}
 		List<Tuple<string, string>> postData = list;
 		StartCoroutine(RadicalRoutine.Run(CreateServerRequest(DatabaseAction.ClaimDailyReward, postData)));
 	}
@@ -2289,7 +2326,12 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 						download.Exception = new SocketException(11001);
 					}
 					if (download.Exception != null)
-					{
+                    {
+                        if (OfflineBotProgress.TryUseSavedAccount())
+                        {
+                            succesContinue();
+                            yield break;
+                        }
 						errorMessage = download.Exception.Message;
 						if (download.Exception is SocketException socketException && socketException.SocketErrorCode == SocketError.HostNotFound)
 						{
@@ -2315,7 +2357,8 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 					Debug.Log("response: " + text);
 					dataDownloaded += download.Downloaded;
 					if (text == "ok")
-					{
+                    {
+                        OfflineBotProgress.Connected();
 						succesContinue();
 					}
 					else
@@ -2324,6 +2367,11 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 					}
 					break;
 				}
+                if (OfflineBotProgress.TryUseSavedAccount())
+                {
+                    succesContinue();
+                    yield break;
+                }
 				Debug.LogError("Beanstalk check: Application not reachable!");
 				errorMessage = "No connection.";
 				break;

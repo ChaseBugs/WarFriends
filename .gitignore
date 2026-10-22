@@ -142,3 +142,7 @@ Thumbs.db
 .DS_Store
 /Clients/ExportedProject_Compile
 /Server/tools/__pycache__
+
+# Python validation caches
+__pycache__/
+*.py[cod]

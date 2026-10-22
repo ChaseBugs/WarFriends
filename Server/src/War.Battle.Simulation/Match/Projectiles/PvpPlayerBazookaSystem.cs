@@ -11,6 +11,7 @@ internal sealed class PvpPlayerBazookaSystem
     private readonly Dictionary<ulong, FlightState> _active = [];
     private readonly List<PvpBazookaLaunch> _scheduled = [];
     private ulong _curveCounter;
+    private ulong _clearRevision;
 
     internal int Count => checked(_active.Count + _scheduled.Count);
 
@@ -86,6 +87,7 @@ internal sealed class PvpPlayerBazookaSystem
 
     internal void Clear()
     {
+        _clearRevision = checked(_clearRevision + 1);
         _active.Clear();
         _scheduled.Clear();
         // The previous engine cleanup retained the curve counter. Do not restart its sequence here.
@@ -117,19 +119,21 @@ internal sealed class PvpPlayerBazookaSystem
     {
         private readonly PvpPlayerBazookaSystem _system;
         private readonly PvpBazookaLaunch[] _launches;
+        private readonly ulong _clearRevision;
         private int _nextIndex;
 
         internal DueLaunchFrame(PvpPlayerBazookaSystem system, PvpBazookaLaunch[] launches)
         {
             _system = system;
             _launches = launches;
+            _clearRevision = system._clearRevision;
             _nextIndex = 0;
         }
 
         internal bool TryTakeNext(out PvpBazookaLaunch launch)
         {
             launch = null!;
-            if (_nextIndex >= _launches.Length)
+            if (_clearRevision != _system._clearRevision || _nextIndex >= _launches.Length)
             {
                 return false;
             }
@@ -146,6 +150,7 @@ internal sealed class PvpPlayerBazookaSystem
         private readonly PvpPlayerBazookaSystem _system;
         private readonly ulong _tick;
         private readonly KeyValuePair<ulong, FlightState>[] _flights;
+        private readonly ulong _clearRevision;
         private int _nextIndex;
         private bool _hasInvalidAuthority;
 
@@ -154,6 +159,7 @@ internal sealed class PvpPlayerBazookaSystem
             _system = system;
             _tick = tick;
             _flights = system._active.ToArray();
+            _clearRevision = system._clearRevision;
             _nextIndex = 0;
             _hasInvalidAuthority = false;
         }
@@ -161,7 +167,7 @@ internal sealed class PvpPlayerBazookaSystem
         internal bool TryAdvanceNext(out PvpBazookaStep step)
         {
             step = default;
-            while (!_hasInvalidAuthority && _nextIndex < _flights.Length)
+            while (_clearRevision == _system._clearRevision && !_hasInvalidAuthority && _nextIndex < _flights.Length)
             {
                 KeyValuePair<ulong, FlightState> entry = _flights[_nextIndex++];
                 if (entry.Value.Flight.CurrentTick == _tick)

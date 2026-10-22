@@ -10,6 +10,8 @@ public class GameControllerDeathMatch : GameControllerPVP
 
     private System.Threading.CancellationTokenSource _matchmakingRequest;
     private SelfHostedBattleClient _matchmakingClient;
+    private bool _switchingToBot;
+    private int _matchmakingGeneration;
 
 	private float mWaitingTime = 20f;
 
@@ -40,7 +42,7 @@ public class GameControllerDeathMatch : GameControllerPVP
         bool hasMeasuredHighPing = PhotonConnectionManager.HasMeasuredRegionPingAbove(
             (float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MaxPingToConnectRegion).FLOATVALUE);
 		mWaitingTime = Singleton<GameVariables>.instance.maxMatchmakingTime;
-        if (hasMeasuredHighPing || BotManager.useEasyBot || UserDeviceManager.instance.IsSlowDevice() ||
+        if (OfflineBotProgress.IsDisconnected || hasMeasuredHighPing || BotManager.useEasyBot || UserDeviceManager.instance.IsSlowDevice() ||
             StatsManager.instance.deathMatchLossesInRow >= 3f)
 		{
 			Reset();
@@ -85,7 +87,7 @@ public class GameControllerDeathMatch : GameControllerPVP
             _matchmakingClient = client;
             await client.MatchmakeWithRecoveredSession();
             request.Token.ThrowIfCancellationRequested();
-            if (_matchmakingRequest != request)
+            if (_matchmakingRequest != request || _switchingToBot)
             {
                 return;
             }
@@ -99,7 +101,7 @@ public class GameControllerDeathMatch : GameControllerPVP
         }
         catch (Exception exception)
         {
-            if (_matchmakingRequest == request && !request.IsCancellationRequested)
+            if (_matchmakingRequest == request && !request.IsCancellationRequested && !_switchingToBot)
             {
                 Debug.LogError("Self-hosted matchmaking failed: " + exception.GetType().Name);
                 MatchManager.matchState = MatchState.GameCancelled;
@@ -117,6 +119,52 @@ public class GameControllerDeathMatch : GameControllerPVP
             }
 
             request.Dispose();
+        }
+    }
+
+    private async void SwitchTimedOutSearchToBotAsync()
+    {
+        _switchingToBot = true;
+        var request = _matchmakingRequest;
+        float searchStarted = mRandomConnectTime;
+        int generation = _matchmakingGeneration;
+        try
+        {
+            // A queue timeout is not a cancellation receipt. Wait until the Backend
+            // confirms this search cannot also admit a human opponent.
+            SelfHostedBattleClient client = _matchmakingClient ?? SelfHostedBattleClient.Active;
+            if (client != null)
+            {
+                await client.CancelMatchmaking();
+            }
+            if (this == null || !isActiveAndEnabled || generation != _matchmakingGeneration || mRandomConnectTime != searchStarted ||
+                !isRandomMatchMaking || mBothPlayersConnected)
+            {
+                return;
+            }
+            if (request != null && _matchmakingRequest == request)
+            {
+                request.Cancel();
+            }
+            PhotonConnectionManager.Disconnect();
+            PhotonNetwork.offlineMode = true;
+            mFakeBatteleWithBot = true;
+            MatchManager.matchState = MatchState.WaitingForOpponent;
+            mFindBotAfter = Time.realtimeSinceStartup - searchStarted + 1f;
+            mBotChooseCardsAfter = Time.realtimeSinceStartup - searchStarted +
+                UnityEngine.Random.Range(1f, !DebugSettings.debugEnabled ? 10f : 2f);
+            Singleton<GameController>.instance.opponent = null;
+            Debug.Log("Starting match against bot after confirmed queue cancellation");
+        }
+        catch (Exception exception)
+        {
+            // Keep the queue owner on failure; starting another battle could double-admit.
+            Debug.LogWarning("Bot fallback is waiting for queue cancellation: " + exception.GetType().Name);
+            if (generation == _matchmakingGeneration) mRandomConnectTime = Time.realtimeSinceStartup;
+        }
+        finally
+        {
+            if (generation == _matchmakingGeneration) _switchingToBot = false;
         }
     }
 
@@ -234,23 +282,14 @@ public class GameControllerDeathMatch : GameControllerPVP
 
 	protected override void Update()
 	{
-		if (Time.realtimeSinceStartup > mRandomConnectTime + mWaitingTime && mRandomConnectTime != 0f && isRandomMatchMaking && !mBothPlayersConnected && !mFakeBatteleWithBot && Singleton<GameController>.instance.gameState == GameController.GameState.Menu)
-		{
-			if (!PhotonConnectionManager.isInRoom)
-			{
-				Singleton<EventTrackingManager>.instance.MatchMaking(40f);
-			}
-			PhotonConnectionManager.Disconnect();
-			PhotonNetwork.offlineMode = true;
-			StopAllCoroutines();
-			mFakeBatteleWithBot = true;
-			Singleton<BeanstalkServerManager>.instance.GetSquadsByExperience();
-			MatchManager.matchState = MatchState.WaitingForOpponent;
-			mFindBotAfter = mWaitingTime + UnityEngine.Random.Range(1f, 1f);
-			Singleton<GameController>.instance.opponent = null;
-			mBotChooseCardsAfter = mWaitingTime + UnityEngine.Random.Range(1f, (!DebugSettings.debugEnabled) ? 10f : 2f);
-			Debug.Log("Starting match against bot");
-		}
+        if (!_switchingToBot && !mFakeBatteleWithBot && !mBothPlayersConnected &&
+            isRandomMatchMaking && mRandomConnectTime != 0f &&
+            Time.realtimeSinceStartup > mRandomConnectTime + mWaitingTime &&
+            Singleton<GameController>.instance.gameState == GameController.GameState.Menu)
+        {
+            SwitchTimedOutSearchToBotAsync();
+        }
+
 		if (mFakeBatteleWithBot)
 		{
 			if (Time.realtimeSinceStartup > mRandomConnectTime + mFindBotAfter && mRandomConnectTime != 0f && MatchManager.matchState == MatchState.WaitingForOpponent && isRandomMatchMaking)
@@ -362,6 +401,8 @@ public class GameControllerDeathMatch : GameControllerPVP
 
 	protected override void Reset()
 	{
+        _matchmakingGeneration++;
+        _switchingToBot = false;
         CancelSelfHostedMatchmaking();
 		base.Reset();
 		mCardsChoosen = false;

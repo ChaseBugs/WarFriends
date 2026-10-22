@@ -1,5 +1,14 @@
 # WarFriends repository guidance
 
+## Owner direction — 2026-10-22
+
+- Latest offline synchronization decision: save progress locally when Backend is unavailable, then upload and merge offline progress at the next successful login. This supersedes the earlier separate-progress choice. Use atomic, replay-safe imports rather than overwriting server balances; distinguish locally reported bot outcomes from Worker-verified PvP outcomes. See the latest clarification in `Memory/CLIENT_SOURCE_OF_TRUTH.md`.
+
+- Read `Memory/README.md` and `Memory/CLIENT_SOURCE_OF_TRUTH.md` before Client, Backend or BattleServer work. These record the owner's latest requirement: preserve the recovered Client's gameplay and support **both offline and online play**.
+- The active Client C# is the behavioral source of truth. Adapt Backend and BattleServer to its rules, contracts and callback sequence; do not disable original gameplay to accommodate incomplete server implementation. Distinguish original recovered behavior from subsequent integration edits using provenance and history.
+- Restore the source-defined beginner and matchmaking-timeout bot paths through compatible server/offline integration. Their current disablement is an unresolved regression, not an accepted product requirement. Do not require a second human Client for every playable mode.
+- Online support means self-hosted networking as well as offline support; it does not authorize restoring Photon Cloud or retired service dependencies. Do not assume that offline always means local servers or always means serverless: document and verify each supported topology separately.
+
 ## Current server rebuild — 2026-09-19
 
 - The owner wants BattleServer code to be understandable to beginners. For new or edited Server code, prefer descriptive names, short methods, explicit steps and ordinary control flow over compressed one-line statements. Explain recovered Client rules at the point where they affect server authority. Keep tests readable enough to show the setup, action, and expected result without decoding dense expressions.

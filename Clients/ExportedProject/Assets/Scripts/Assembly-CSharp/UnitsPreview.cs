@@ -71,7 +71,8 @@ public static class UnitsPreview
 			for (int i = 0; i < soldiers.Count; i++)
 			{
 				EnemyController enemyController = (EnemyController)soldiers[i];
-				if (enemyController != null)
+				if (enemyController != null && enemyController.gameObject.activeInHierarchy &&
+                    enemyController.agent.navigationAgent.isOnNavMesh)
 				{
 					Transform transform = PlayerController.currentPlayer.currentPlayerPoint.point.transform;
 					Vector3 vector = GetCenter(PlayerController.currentPlayer) + transform.transform.rotation * Quaternion.Euler(0f, 90f, 0f) * positions[i];

@@ -11,13 +11,13 @@
     },
     {
       "path": "GameObject\\invetoryItem.prefab",
-      "fileID": 11407524,
-      "spriteName": "game-card-ico-explosivetiming"
+      "fileID": 11434916,
+      "spriteName": "game-card-ico-disarmed"
     },
     {
       "path": "GameObject\\invetoryItem.prefab",
-      "fileID": 11434916,
-      "spriteName": "game-card-ico-disarmed"
+      "fileID": 11407524,
+      "spriteName": "game-card-ico-explosivetiming"
     },
     {
       "path": "GameObject\\UnitIndicator.prefab",

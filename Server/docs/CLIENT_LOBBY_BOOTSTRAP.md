@@ -807,3 +807,48 @@ The final native run exited zero:
 Its Release build had zero warnings/errors. The preliminary run at
 `Server/.local/legacy-start-native-8ff905b7b04a4893bf9fcdfa22bc0b7c` also passed; the final run adds
 the required-ID, invalid-session and source Master field-presence checks.
+# Assignment availability and normal PvP routing — 2026-10-22
+
+The live Client log showed two application-level refusals, not an unreachable
+HTTP server: `GetNewAssignments` returned 503, followed by `GameStartedMaster`
+returning 3004 after the old rank/FPS/loss-streak shortcut selected a local bot.
+The recovered error handler labels 3004 as "server did not respond" even when
+it receives that result in a valid HTTP response.
+
+Authenticated action 149 now returns the required `AssignmentData` JSON string.
+It preserves existing serialized progress and, when no snapshot exists, exposes
+the recovered empty state without issuing tasks or rewards. This is read-only
+availability compatibility, not a completed daily-assignment lifecycle. Claim
+and issuance authority have not been fabricated or enabled by this change.
+
+Normal random PvP and its rematch path use the self-hosted queue. Rank, FPS,
+losses and the former matchmaking timeout can no longer manufacture a local
+opponent without a server assignment. A single Client waits for another Client;
+the explicit tutorial bot entry remains separate. The Backend still refuses
+unpublished or invalid battle-start authority rather than accepting fake IDs.
+
+The warning dialog's log-send capability and waitlist clearing are ordinary
+diagnostics, so they now use `Debug.Log`. Actual failure responses remain
+reported by the request handler.
+
+Verification adds action-149 empty/preserved-state and authentication checks,
+native HTTP contract assertions, and `ClientBootSmoke.ps1 -VerifyStarterQueue`.
+That smoke retains the fresh account's easy-bot/device history, observes its
+durable queue ticket and waits beyond the old bot-fallback timeout. It rejects
+warning dialogs, logged errors, and a switch to the legacy bot path. This is
+queue-admission/waiting evidence, not a full two-Unity-client battle proof.
+
+Verified run `client-boot-37238b5fb1fd4067803567537f83f636` passed with zero
+logged errors/exceptions, no warning dialog, and a durable server-owned queue
+admission retained beyond the former local-bot deadline. The registry suite
+passed 13 groups, the legacy HTTP smoke passed 561 assertions, and the native
+MongoDB/HTTP/protobuf/UDP smoke passed 74 checks alongside 1,365 protocol checks.
+
+## Superseding bot restoration — 2026-10-22
+
+The routing restriction in the preceding section was an intermediate regression,
+not the intended behavior. Automatic beginner/device/loss/timeout bot selection is
+restored. Local combat uses a durable result journal and imports supported progression
+at login under the owner's explicit offline-merge policy. The starter smoke now
+checks actual local combat/result UI, offline cached boot, and online acknowledgement.
+See [offline bot implementation and verification](OFFLINE_BOT_MATCHMAKING.md).

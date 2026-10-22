@@ -90,6 +90,13 @@ internal sealed class PvpPlayerGrenadeSystem
             while (!_hasInvalidAuthority && _nextIndex < _flights.Length)
             {
                 KeyValuePair<ulong, FlightState> entry = _flights[_nextIndex++];
+                // End() clears projectile authority before freezing terminal evidence.
+                // A previously captured frame must not simulate removed or replacement flights.
+                if (!_system._active.TryGetValue(entry.Key, out FlightState? current) ||
+                    !ReferenceEquals(current, entry.Value))
+                {
+                    continue;
+                }
                 if (entry.Value.Flight.CurrentTick == _tick)
                 {
                     continue;

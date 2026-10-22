@@ -18,7 +18,7 @@ public static class LegacyPlayerEconomyAuthority
     private const int MaximumLeagueIdLength = 256;
 
     /// <summary>Validates independent global/division medal counts and exact recovered rank/tier domains.</summary>
-    public static void Validate(LegacyPlayerDocument player)
+    public static void Validate(LegacyPlayerDocument player, DateTimeOffset? authorityTime = null)
     {
         if (player.Gold < 0 || player.WarBucks < 0 || player.Tickets < 0 || player.Scraps < 0 ||
             player.Level is < 0 or >= LegacyAccountCreation.RecoveredRankCount ||
@@ -31,6 +31,7 @@ public static class LegacyPlayerEconomyAuthority
             throw new InvalidDataException("Invalid stored legacy wallet/rank/progression authority.");
         }
 
+        player.DailyRewards?.Validate(authorityTime ?? DateTimeOffset.UtcNow);
         ValidateArmyPower(player.ArmyPower);
         ValidateLeagueId(player.LeagueId);
     }

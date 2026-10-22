@@ -15,8 +15,9 @@ internal static class PvpPlayerBazookaSystemTests
         CheckLaunchTickSkipAndInvalidFrameStop();
         CheckDetachedSnapshot();
         CheckClearRetainsCurveSequenceAndIsolation();
+        CheckCapturedFramesAreRevoked();
         CheckCompiledOwnership();
-        return 6;
+        return 7;
     }
 
     private static PvpBazookaLaunch Primary(ulong tick)
@@ -112,6 +113,27 @@ internal static class PvpPlayerBazookaSystemTests
         Require(first.Count == 0 && !first.HasActiveOrScheduled && !first.HasPendingLaunchFor(First) &&
             !first.CreateSnapshot().Any() && first.NextCurveSign() == -1 && second.Count == 1,
             "Clear leaked reservations, reset curve history or changed another match.");
+    }
+
+    private static void CheckCapturedFramesAreRevoked()
+    {
+        var system = new PvpPlayerBazookaSystem();
+        system.AddActive(1, Flight(1, 0), Payload());
+        system.ScheduleRemainingShots(Primary(0), Content.Bazookas!.Binding(M202));
+        PvpPlayerBazookaSystem.ActiveFrame active = system.BeginActiveFrame(1);
+        PvpPlayerBazookaSystem.DueLaunchFrame due = system.BeginDueLaunches(100);
+
+        system.Clear();
+        system.AddActive(1, Flight(1, 0), Payload());
+        system.ScheduleRemainingShots(Primary(0), Content.Bazookas.Binding(M202));
+        int reservations = system.ScheduledCount;
+
+        Require(!active.TryAdvanceNext(out _) && !due.TryTakeNext(out _) &&
+            system.ScheduledCount == reservations && system.CreateSnapshot().Single().Z == 0,
+            "A pre-cleanup frame moved a missile or consumed a replacement launch reservation.");
+        PvpPlayerBazookaSystem.DueLaunchFrame current = system.BeginDueLaunches(100);
+        Require(current.TryTakeNext(out _) && system.ScheduledCount == reservations - 1,
+            "Cleanup revocation prevented a new frame from consuming its own reservation.");
     }
 
     private static void CheckCompiledOwnership()

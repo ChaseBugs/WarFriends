@@ -14,6 +14,7 @@ SubShader {
 CGPROGRAM
 #pragma vertex vert
 #pragma fragment frag
+#pragma multi_compile __ LIGHTMAP_ON
 #include "UnityCG.cginc"
 
 struct appdata_t {
@@ -25,7 +26,6 @@ struct appdata_t {
 
 struct v2f {
 	float4 vertex : SV_POSITION;
-	fixed4 color : COLOR;
 	float2 texcoord : TEXCOORD0;
 	float2 lmap : TEXCOORD1;
 };
@@ -42,7 +42,6 @@ v2f vert (appdata_t v)
 	v.vertex.x += wind * 0.05;
 	v.vertex.z += wind * 0.03;
 	o.vertex = UnityObjectToClipPos(v.vertex);
-	o.color = v.color;
 	o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
 	o.lmap = v.texcoord1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
 	return o;
@@ -50,10 +49,13 @@ v2f vert (appdata_t v)
 
 fixed4 frag (v2f i) : SV_Target
 {
-	fixed4 col = tex2D(_MainTex, i.texcoord) * i.color;
+	// This uncolored variant reserves vertex color for wind weights.
+	fixed4 col = tex2D(_MainTex, i.texcoord);
 	clip(col.a - _Cutoff);
+#ifdef LIGHTMAP_ON
 	fixed3 lm = DecodeLightmap(UNITY_SAMPLE_TEX2D(unity_Lightmap, i.lmap));
 	col.rgb *= lm;
+#endif
 	return col;
 }
 ENDCG

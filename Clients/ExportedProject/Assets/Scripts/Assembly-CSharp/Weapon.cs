@@ -337,7 +337,9 @@ public abstract class Weapon : PoolableObject, TimeScaleIgnorable, IFraction
 		{
 			mIsReloading = true;
 			mReloadStartTime = TimeManager.realTimeWithoutPauses;
-			InvokeAfterRealTime(delegate
+            // The inventory HUD queries unequipped weapons too. Keep their reload
+            // clock, but an inactive weapon cannot run a sound coroutine in Unity.
+            if (gameObject.activeInHierarchy) InvokeAfterRealTime(delegate
 			{
 				Singleton<SoundsManager3D>.instance.PlayOneShot(base.gameObject, reloadSound);
 			}, 0.5f);

@@ -73,6 +73,8 @@ public static class BackendServiceCollectionExtensions
         BattleUnitProjection.Validate();
 
         services.AddSingleton(legacy.Catalog);
+        services.AddSingleton(legacy);
+        services.AddSingleton(legacy.DailyRewards);
         services.AddSingleton(legacy.Starter);
         services.AddSingleton<LegacyBufferProcessor>();
         services.AddSingleton<LegacyBattleStartService>();

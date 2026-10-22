@@ -1,0 +1,13 @@
+{
+  "supported": true,
+  "passes": [
+    "FORWARD",
+    "PREPASS",
+    "PREPASS",
+    "DEFERRED",
+    "Meta"
+  ],
+  "messages": [],
+  "controlPreservesRgba": true,
+  "controlIsLinearData": true
+}

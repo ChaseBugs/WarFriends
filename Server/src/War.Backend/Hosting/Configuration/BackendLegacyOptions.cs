@@ -23,6 +23,7 @@ public sealed class BackendLegacyOptions
 
     public bool AllowInsecureHttp { get; }
     public BattleRewardPolicy? Rewards { get; }
+    public War.Persistence.Legacy.Progression.DailyRewardPolicy DailyRewards { get; private init; } = null!;
 
     public static BackendLegacyOptions FromConfiguration(IConfiguration configuration)
     {
@@ -42,6 +43,9 @@ public sealed class BackendLegacyOptions
         bool allowInsecureHttp = DeploymentValueParser.ReadBoolean(configuration["Legacy:AllowInsecureHttp"],
             "Legacy:AllowInsecureHttp", false);
         BattleRewardPolicy? rewards = catalog.IsLoaded ? BattleRewardPolicy.Create(catalog, configuration) : null;
-        return new BackendLegacyOptions(catalog, starter, allowInsecureHttp, rewards);
+        return new BackendLegacyOptions(catalog, starter, allowInsecureHttp, rewards)
+        {
+            DailyRewards = BackendDailyRewardPolicy.Read(configuration)
+        };
     }
 }

@@ -31,8 +31,13 @@ internal static class LegacyPlayerActions
             services.GetRequiredService<LegacyStarterPolicy>());
         var data = new LegacyPlayerDataEndpoint(services.GetRequiredService<LegacyBufferProcessor>(),
             (player, now) => LegacyPlayerProjection.PlayerData(player, now, policy),
-            services.GetRequiredService<ILogger<LegacyPlayerDataEndpoint>>());
+            services.GetRequiredService<ILogger<LegacyPlayerDataEndpoint>>(),
+            offlineBots: services.GetService<War.Backend.Hosting.Configuration.BackendLegacyOptions>()?.Rewards
+                is { } rewards ? new OfflineBotSyncService(players, rewards) : null);
         var query = new LegacyPlayerQueryEndpoint(players);
+        var dailyRewards = new LegacyDailyRewardEndpoint(players,
+            services.GetService<War.Persistence.Legacy.Progression.DailyRewardPolicy>() ??
+            new War.Persistence.Legacy.Progression.DailyRewardPolicy(5, 25));
         return
         [
             Entry.Authenticated(Action.GetPlayerData, Feature.Player,
@@ -42,7 +47,11 @@ internal static class LegacyPlayerActions
             Entry.Authenticated(Action.GetAllMessages, Feature.Player,
                 (_, _, _) => Task.FromResult(LegacyInboxEndpoint.Read())),
             Entry.Authenticated(Action.CheckDailyReward, Feature.Player,
-                (_, _, _) => Task.FromResult(LegacyDailyRewardAvailabilityEndpoint.Read())),
+                dailyRewards.ExecuteAsync),
+            Entry.Authenticated(Action.ClaimDailyReward, Feature.Player,
+                dailyRewards.ExecuteAsync),
+            Entry.Authenticated(Action.GetNewAssignments, Feature.Player,
+                (_, player, _) => Task.FromResult(LegacyAssignmentAvailabilityEndpoint.Read(player))),
             Entry.Authenticated(Action.UpdateArmyPower, Feature.Player,
                 (request, player, token) => LegacyArmyPowerEndpoint.HandleAsync(request, player, players, token)),
         ];

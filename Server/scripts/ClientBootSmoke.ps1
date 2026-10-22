@@ -6,13 +6,17 @@ param(
     [switch]$ExportStarterLoadout,
     [switch]$VerifyReturningPlayer,
     [switch]$VerifyNormalQueue,
+    [Alias("VerifyStarterQueue")][switch]$VerifyStarterBot,
+    [switch]$VerifyBotBattleOnly,
     [switch]$RenderUi,
     [string]$SecondUnityProject,
     [ValidateRange(5, 120)][Nullable[int]]$PairAdmissionSeconds,
     [switch]$KeepArtifacts
 )
 $ErrorActionPreference = 'Stop'
-if ($VerifyNormalQueue) { $VerifyReturningPlayer = $true }
+if ($VerifyBotBattleOnly) { $VerifyStarterBot = $true }
+if ($VerifyStarterBot -and $VerifyNormalQueue) { throw "Choose bot verification or human queue verification." }
+if ($VerifyNormalQueue -or ($VerifyStarterBot -and !$VerifyBotBattleOnly)) { $VerifyReturningPlayer = $true }
 $serverRoot = Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'TestRun.ps1')
 $projectPath = (Resolve-Path -LiteralPath $UnityProject).Path
@@ -39,7 +43,7 @@ $variables = @(
     'TEMP', 'TMP', 'TMPDIR', 'ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database',
     'Battle__SigningKey', 'Battle__ControlKey', 'Legacy__ContentPath',
     'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT', 'WAR_STARTER_LOADOUT_OUTPUT', 'WAR_UI_LOBBY_CAPTURE',
-    'WAR_LOBBY_BOOT_IDENTITY', 'WAR_NORMAL_QUEUE_REPORT', 'WAR_NORMAL_BATTLE_SELF', 'WAR_NORMAL_BATTLE_PEER',
+    'WAR_VERIFY_OFFLINE_BOT', 'WAR_LOBBY_BOOT_IDENTITY', 'WAR_NORMAL_QUEUE_REPORT', 'WAR_NORMAL_BATTLE_SELF', 'WAR_NORMAL_BATTLE_PEER',
     'Battle__Port', 'Battle__ControlPort', 'Battle__ControlEndpoint', 'Battle__ServerId', 'Battle__PublicHost',
     'Battle__BindAddress', 'Battle__ResultOutboxPath', 'Battle__BackendResultEndpoint'
 )
@@ -53,6 +57,7 @@ $prior = @{}
 foreach ($name in $variables) {
     $prior[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
+if ($VerifyStarterBot) { $env:WAR_VERIFY_OFFLINE_BOT = '1' }
 function Get-FreePort {
     $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
     $listener.Start()
@@ -182,13 +187,14 @@ try {
         '-batchmode', '-nographics', '-noUpm', '-projectPath', ('"' + $projectPath + '"'),
         '-executeMethod', 'UnityNormalClientBootAudit.Run', '-logFile', ('"' + (Join-Path $runRoot 'Unity.log') + '"')
     )
-    if ($RenderUi) {
-        $env:WAR_UI_LOBBY_CAPTURE = Join-Path $runRoot 'lobby.png'
+    if ($RenderUi -or $VerifyStarterBot) {
+        $env:WAR_UI_LOBBY_CAPTURE = if ($RenderUi) { Join-Path $runRoot 'lobby.png' } else { $null }
         $unityArguments = @($unityArguments | Where-Object { $_ -ne '-nographics' }) +
             @('-screen-width', '1440', '-screen-height', '810')
     } else {
         $env:WAR_UI_LOBBY_CAPTURE = $null
     }
+    if ($VerifyStarterBot) { $unityArguments = @($unityArguments | Where-Object { $_ -ne '-batchmode' }) }
     $editor = Start-Process $UnityExecutable -ArgumentList $unityArguments -WindowStyle Hidden -PassThru
     $processes += $editor
     # A fresh disposable project imports all assets before the SplashScene can run.
@@ -206,13 +212,16 @@ try {
         throw "Initial account insertion evidence is incomplete; inspect $runRoot"
     }
     $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
-    if (!$report.mainSceneLoaded -or !$report.accountDataReady -or !$report.playerNetworkReady -or
+    if ((!$report.mainSceneLoaded -and !$report.offlineBotResultVisible) -or !$report.accountDataReady -or !$report.playerNetworkReady -or
         !$report.playerDataLoadComplete -or $report.initializedUnitRows -ne $report.recoveredUnitRows -or
         !$report.cardDefinitionsReady -or !$report.matchmakingReadiness.canEvaluate -or
         $report.invalidBootstrapQueries -ne 0 -or
         $report.initializedWeaponRows -ne $report.recoveredWeaponRows -or
         $report.recoveredUnitRows -le 0 -or $report.exceptions -ne 0) {
         throw "Client readiness evidence is incomplete; inspect $runRoot"
+    }
+    if ($VerifyStarterBot -and (!$report.dailyRewardClaimVerified -or !$report.offlineBotRunning -or !$report.offlineBotResultVisible -or $report.errors -ne 0)) {
+        throw "Normal automatic bot battle did not reach its result screen; inspect $runRoot"
     }
     if ($ExportStarterLoadout) {
         $starter = Get-Content -LiteralPath $env:WAR_STARTER_LOADOUT_OUTPUT -Raw | ConvertFrom-Json
@@ -229,15 +238,46 @@ try {
             -FirstProject $projectPath -SecondProject $SecondUnityProject -RunRoot $runRoot -TestDll $testDll
     }
     elseif ($VerifyReturningPlayer) {
-        dotnet $testDll --seed-returning-boot-player $env:Mongo__Uri $env:Mongo__Database `
-            (Join-Path $runRoot 'returning-player-fixture.json')
-        if ($LASTEXITCODE -ne 0) { throw 'Returning-player fixture creation failed.' }
+        $env:WAR_VERIFY_OFFLINE_BOT = $null
+        if ($VerifyStarterBot) {
+            # Same account and endpoint, with the owned Backend genuinely stopped.
+            Stop-Process -Id $backend.Id
+            $null = $backend.WaitForExit(5000)
+            $offlineArguments = @('-batchmode', '-nographics', '-noUpm', '-projectPath', ('"' + $projectPath + '"'),
+                '-executeMethod', 'UnityNormalClientBootAudit.Run', '-logFile', ('"' + (Join-Path $runRoot 'Unity-offline.log') + '"'))
+            $offlineEditor = Start-Process $UnityExecutable -ArgumentList $offlineArguments -WindowStyle Hidden -PassThru
+            $processes += $offlineEditor
+            if (!$offlineEditor.WaitForExit(150000) -or $offlineEditor.ExitCode -ne 0) {
+                throw "Saved-account boot without Backend failed; inspect $runRoot"
+            }
+            $offlineReport = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+            Copy-Item -LiteralPath $reportPath -Destination (Join-Path $runRoot 'offline-report.json')
+            if (!$offlineReport.offlineAccountLoaded -or $offlineReport.offlinePendingBattles -ne 1) {
+                throw "Offline boot lost the unacknowledged bot outcome; inspect $runRoot"
+            }
+            $backend = Start-Process dotnet -ArgumentList ('"' + $backendDll + '"') -WindowStyle Hidden -PassThru `
+                -WorkingDirectory (Split-Path $backendDll -Parent) `
+                -RedirectStandardOutput (Join-Path $runRoot 'Backend-restarted.log') `
+                -RedirectStandardError (Join-Path $runRoot 'Backend-restarted.error.log')
+            $processes += $backend
+            for ($attempt = 0; $attempt -lt 40; $attempt++) {
+                try { $null = Invoke-WebRequest "$($env:ASPNETCORE_URLS)/health/ready" -TimeoutSec 1; break }
+                catch { Start-Sleep -Milliseconds 250 }
+            }
+            Write-Output 'PASS: saved account boots without Backend and retains its pending bot outcome'
+        }
+        if (!$VerifyStarterBot) {
+            dotnet $testDll --seed-returning-boot-player $env:Mongo__Uri $env:Mongo__Database `
+                (Join-Path $runRoot 'returning-player-fixture.json')
+            if ($LASTEXITCODE -ne 0) { throw 'Returning-player fixture creation failed.' }
+        }
         if ($VerifyNormalQueue) {
             $env:WAR_NORMAL_QUEUE_REPORT = Join-Path $runRoot 'normal-queue.json'
             $queueArguments = @(
                 ('"' + $testDll + '"'), '--watch-normal-unity-queue', $env:Mongo__Uri, $env:Mongo__Database,
                 ('"' + $env:WAR_NORMAL_QUEUE_REPORT + '"')
             )
+
             $queueObserver = Start-Process dotnet -ArgumentList $queueArguments -WindowStyle Hidden -PassThru `
                 -RedirectStandardOutput (Join-Path $runRoot 'QueueObserver.log') `
                 -RedirectStandardError (Join-Path $runRoot 'QueueObserver.error.log')
@@ -270,12 +310,16 @@ try {
         $returning = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
         if (!$returning.playerDataLoadComplete -or $returning.exceptions -ne 0 -or
             !$returning.matchmakingReadiness.canEvaluate -or
-            !$returning.matchmakingReadiness.canUseSelfHostedMatchmaking -or
-            $returning.matchmakingReadiness.displayRank -ne 5 -or
-            $returning.matchmakingReadiness.averageFps -ne 30) {
+            (!$VerifyStarterBot -and !$returning.matchmakingReadiness.canUseSelfHostedMatchmaking) -or
+            (!$VerifyStarterBot -and ($returning.matchmakingReadiness.displayRank -ne 5 -or
+            $returning.matchmakingReadiness.averageFps -ne 30)) -or
+            ($VerifyStarterBot -and !$returning.matchmakingReadiness.usesEasyBot)) {
             throw "Returning-player normal data loading did not retain the fixture; inspect $runRoot"
         }
-        Write-Output 'PASS: returning-player normal login satisfies recovered self-hosted matchmaking conditions'
+        if ($VerifyStarterBot -and $returning.offlinePendingBattles -ne 0) {
+            throw "Returning login did not acknowledge the local bot journal; inspect $runRoot"
+        }
+        Write-Output 'PASS: returning-player normal login retained expected progression and synchronized pending bot outcomes'
         if ($VerifyNormalQueue) {
             if (!$queueObserver.WaitForExit(10000) -or $queueObserver.ExitCode -ne 0 -or
                 !$returning.normalQueueStarted -or !$returning.normalQueueObserved) {

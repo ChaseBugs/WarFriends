@@ -433,6 +433,12 @@ public class ServerResponseHandler
 				case DatabaseAction.ClaimDailyReward:
 					Debug.Log("daily reward claimed");
 					StatsManager.instance.DailyRewardDataLoaded((JToken)mResponse["dailyRewardData"]);
+					// Restore authoritative balances even after a lost claim response or duplicate callback.
+					if (mResponse.ContainsKey("DailyRewardWallet"))
+					{
+						JToken wallet = (JToken)mResponse["DailyRewardWallet"];
+						Singleton<Wallet>.instance.Init((long)wallet["Gold"], (long)wallet["WarBucks"]);
+					}
 					break;
 				case DatabaseAction.DebugRenewRental:
 					Debug.Log("rental data deleted, new rental after restart game (still need finished tutorial and level >= 4!!!!)");

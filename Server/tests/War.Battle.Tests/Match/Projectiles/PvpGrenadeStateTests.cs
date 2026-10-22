@@ -13,12 +13,13 @@ internal static class PvpGrenadeStateTests
         CheckOrdinaryCompletionOrder();
         CheckOrdinaryClockAndSnapshot();
         CheckOrdinaryClearIsolation();
+        CheckOrdinaryCapturedFrameRevocation();
         CheckBonusTransferAndLateSharedSetup();
         CheckBonusPreflightFailure();
         CheckUnpublishedBonusFailure();
         CheckBonusFrameCaptureAndPublication();
         CheckCompiledOwnership();
-        return 8;
+        return 9;
     }
 
     private static GrenadeFlight PlayerFlight(ulong id)
@@ -90,6 +91,24 @@ internal static class PvpGrenadeStateTests
         first.Clear();
         Require(first.Count == 0 && !first.CreateSnapshot().Any() && second.Count == 1,
             "Ordinary cleanup retained a flight or changed another match.");
+    }
+
+    private static void CheckOrdinaryCapturedFrameRevocation()
+    {
+        var system = new PvpPlayerGrenadeSystem();
+        GrenadeFlight removed = PlayerFlight(1);
+        system.AddActive(1, removed, Payload());
+        PvpPlayerGrenadeSystem.FlightFrame captured = system.BeginFlightFrame(1);
+
+        system.Clear();
+        GrenadeFlight replacement = PlayerFlight(1);
+        system.AddActive(1, replacement, Payload());
+
+        Require(!captured.TryAdvanceNext(out _) && removed.CurrentTick == 0 && replacement.CurrentTick == 0,
+            "A revoked frame advanced a removed projectile or a replacement with the same identity.");
+        PvpPlayerGrenadeSystem.FlightFrame next = system.BeginFlightFrame(1);
+        Require(next.TryAdvanceNext(out _) && replacement.CurrentTick == 1,
+            "Revoking the old frame prevented a new frame from advancing its own projectile.");
     }
 
     private static PvpBonusGrenadeFlightSystem PendingBonus()

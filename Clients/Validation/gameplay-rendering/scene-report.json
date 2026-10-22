@@ -1,0 +1,262 @@
+[
+  {
+    "scene": "Aztec_Multiplayer",
+    "staticRenderers": 208,
+    "dynamicShields": 8,
+    "shieldModel": "riot_shield",
+    "shaderErrors": 0,
+    "missingScripts": 0,
+    "shieldPixelChecks": 8,
+    "shieldGeometry": {
+      "vertices": 1316,
+      "indices": 2592,
+      "distinctVertices": 432,
+      "firstVertices": [
+        "(-0.1, 0.0, 0.5)",
+        "(-0.1, 0.0, 0.4)",
+        "(-0.1, 0.0, 0.4)"
+      ],
+      "indexRange": [
+        0,
+        1315
+      ],
+      "storedBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "actualBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "worldBounds": "Center: (4.4, 0.3, -2.1), Extents: (0.0, 0.3, 0.2)"
+    }
+  },
+  {
+    "scene": "Aztec_Single",
+    "staticRenderers": 188,
+    "dynamicShields": 4,
+    "shieldModel": "riot_shield",
+    "shaderErrors": 0,
+    "missingScripts": 0,
+    "shieldPixelChecks": 4,
+    "shieldGeometry": {
+      "vertices": 1316,
+      "indices": 2592,
+      "distinctVertices": 432,
+      "firstVertices": [
+        "(-0.1, 0.0, 0.5)",
+        "(-0.1, 0.0, 0.4)",
+        "(-0.1, 0.0, 0.4)"
+      ],
+      "indexRange": [
+        0,
+        1315
+      ],
+      "storedBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "actualBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "worldBounds": "Center: (4.8, 0.3, 0.8), Extents: (0.0, 0.3, 0.2)"
+    }
+  },
+  {
+    "scene": "City_Multiplayer",
+    "staticRenderers": 258,
+    "dynamicShields": 8,
+    "shieldModel": "riot_shield",
+    "shaderErrors": 0,
+    "missingScripts": 0,
+    "shieldPixelChecks": 8,
+    "shieldGeometry": {
+      "vertices": 1316,
+      "indices": 2592,
+      "distinctVertices": 432,
+      "firstVertices": [
+        "(-0.1, 0.0, 0.5)",
+        "(-0.1, 0.0, 0.4)",
+        "(-0.1, 0.0, 0.4)"
+      ],
+      "indexRange": [
+        0,
+        1315
+      ],
+      "storedBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "actualBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "worldBounds": "Center: (4.5, 0.3, -2.0), Extents: (0.0, 0.3, 0.2)"
+    }
+  },
+  {
+    "scene": "City_Single",
+    "staticRenderers": 250,
+    "dynamicShields": 4,
+    "shieldModel": "riot_shield",
+    "shaderErrors": 0,
+    "missingScripts": 0,
+    "shieldPixelChecks": 4,
+    "shieldGeometry": {
+      "vertices": 1316,
+      "indices": 2592,
+      "distinctVertices": 432,
+      "firstVertices": [
+        "(-0.1, 0.0, 0.5)",
+        "(-0.1, 0.0, 0.4)",
+        "(-0.1, 0.0, 0.4)"
+      ],
+      "indexRange": [
+        0,
+        1315
+      ],
+      "storedBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "actualBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "worldBounds": "Center: (4.5, 0.3, -2.0), Extents: (0.0, 0.3, 0.2)"
+    }
+  },
+  {
+    "scene": "Desert_Multiplayer",
+    "staticRenderers": 223,
+    "dynamicShields": 8,
+    "shieldModel": "riot_shield",
+    "shaderErrors": 0,
+    "missingScripts": 0,
+    "shieldPixelChecks": 8,
+    "shieldGeometry": {
+      "vertices": 1316,
+      "indices": 2592,
+      "distinctVertices": 432,
+      "firstVertices": [
+        "(-0.1, 0.0, 0.5)",
+        "(-0.1, 0.0, 0.4)",
+        "(-0.1, 0.0, 0.4)"
+      ],
+      "indexRange": [
+        0,
+        1315
+      ],
+      "storedBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "actualBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "worldBounds": "Center: (-19.6, -2.1, -10.7), Extents: (0.0, 0.3, 0.2)"
+    }
+  },
+  {
+    "scene": "Desert_New",
+    "staticRenderers": 189,
+    "dynamicShields": 4,
+    "shieldModel": "riot_shield",
+    "shaderErrors": 0,
+    "missingScripts": 0,
+    "shieldPixelChecks": 4,
+    "shieldGeometry": {
+      "vertices": 1316,
+      "indices": 2592,
+      "distinctVertices": 432,
+      "firstVertices": [
+        "(-0.1, 0.0, 0.5)",
+        "(-0.1, 0.0, 0.4)",
+        "(-0.1, 0.0, 0.4)"
+      ],
+      "indexRange": [
+        0,
+        1315
+      ],
+      "storedBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "actualBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "worldBounds": "Center: (-17.6, -2.1, -5.8), Extents: (0.0, 0.3, 0.2)"
+    }
+  },
+  {
+    "scene": "Park_Multiplayer",
+    "staticRenderers": 307,
+    "dynamicShields": 8,
+    "shieldModel": "riot_shield",
+    "shaderErrors": 0,
+    "missingScripts": 0,
+    "shieldPixelChecks": 8,
+    "shieldGeometry": {
+      "vertices": 1316,
+      "indices": 2592,
+      "distinctVertices": 432,
+      "firstVertices": [
+        "(-0.1, 0.0, 0.5)",
+        "(-0.1, 0.0, 0.4)",
+        "(-0.1, 0.0, 0.4)"
+      ],
+      "indexRange": [
+        0,
+        1315
+      ],
+      "storedBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "actualBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "worldBounds": "Center: (4.5, 0.3, -2.1), Extents: (0.0, 0.3, 0.2)"
+    }
+  },
+  {
+    "scene": "Park_Single",
+    "staticRenderers": 268,
+    "dynamicShields": 4,
+    "shieldModel": "riot_shield",
+    "shaderErrors": 0,
+    "missingScripts": 0,
+    "shieldPixelChecks": 4,
+    "shieldGeometry": {
+      "vertices": 1316,
+      "indices": 2592,
+      "distinctVertices": 432,
+      "firstVertices": [
+        "(-0.1, 0.0, 0.5)",
+        "(-0.1, 0.0, 0.4)",
+        "(-0.1, 0.0, 0.4)"
+      ],
+      "indexRange": [
+        0,
+        1315
+      ],
+      "storedBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "actualBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "worldBounds": "Center: (4.5, 0.3, -2.1), Extents: (0.0, 0.3, 0.2)"
+    }
+  },
+  {
+    "scene": "Snow_Multiplayer",
+    "staticRenderers": 206,
+    "dynamicShields": 8,
+    "shieldModel": "riot_shield",
+    "shaderErrors": 0,
+    "missingScripts": 0,
+    "shieldPixelChecks": 8,
+    "shieldGeometry": {
+      "vertices": 1316,
+      "indices": 2592,
+      "distinctVertices": 432,
+      "firstVertices": [
+        "(-0.1, 0.0, 0.5)",
+        "(-0.1, 0.0, 0.4)",
+        "(-0.1, 0.0, 0.4)"
+      ],
+      "indexRange": [
+        0,
+        1315
+      ],
+      "storedBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "actualBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "worldBounds": "Center: (4.5, 0.5, -2.2), Extents: (0.0, 0.3, 0.2)"
+    }
+  },
+  {
+    "scene": "Snow_Single",
+    "staticRenderers": 191,
+    "dynamicShields": 4,
+    "shieldModel": "riot_shield",
+    "shaderErrors": 0,
+    "missingScripts": 0,
+    "shieldPixelChecks": 4,
+    "shieldGeometry": {
+      "vertices": 1316,
+      "indices": 2592,
+      "distinctVertices": 432,
+      "firstVertices": [
+        "(-0.1, 0.0, 0.5)",
+        "(-0.1, 0.0, 0.4)",
+        "(-0.1, 0.0, 0.4)"
+      ],
+      "indexRange": [
+        0,
+        1315
+      ],
+      "storedBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "actualBounds": "Center: (0.0, 0.0, 0.3), Extents: (0.2, 0.0, 0.3)",
+      "worldBounds": "Center: (4.8, 0.5, 0.8), Extents: (0.0, 0.3, 0.2)"
+    }
+  }
+]

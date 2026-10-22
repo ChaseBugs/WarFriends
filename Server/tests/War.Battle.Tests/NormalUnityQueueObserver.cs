@@ -11,7 +11,7 @@ internal static class NormalUnityQueueObserver
     private const int MaximumObservationSeconds = 180;
 
     /// <summary>Watches only the isolated boot database and publishes no account credentials.</summary>
-    internal static async Task WatchAsync(string uri, string databaseName, string reportPath)
+    internal static async Task WatchAsync(string uri, string databaseName, string reportPath, int expectedLevel = 4)
     {
         const string databasePrefix = "war_client_boot_";
         if (!databaseName.StartsWith(databasePrefix, StringComparison.Ordinal) ||
@@ -35,7 +35,7 @@ internal static class NormalUnityQueueObserver
                     continue;
                 }
 
-                await RecordAdmissionAsync(database, change.FullDocument, reportPath);
+                await RecordAdmissionAsync(database, change.FullDocument, reportPath, expectedLevel);
                 return;
             }
         }
@@ -43,13 +43,13 @@ internal static class NormalUnityQueueObserver
     }
 
     private static async Task RecordAdmissionAsync(
-        IMongoDatabase database, BattleQueueTicketDocument ticket, string reportPath)
+        IMongoDatabase database, BattleQueueTicketDocument ticket, string reportPath, int expectedLevel)
     {
         LegacyPlayerDocument account = await database.GetCollection<LegacyPlayerDocument>("legacyPlayers")
             .Find(player => player.Id == ticket.PlayerId).SingleAsync();
         BattleAllocationProjection? allocation = await new BattleAllocationStore(database)
             .Get(ticket.PlayerId, CancellationToken.None);
-        if (account.Level != 4 || allocation == null || string.IsNullOrEmpty(ticket.AttemptId))
+        if (account.Level != expectedLevel || allocation == null || string.IsNullOrEmpty(ticket.AttemptId))
         {
             throw new InvalidDataException("The normal Unity ticket did not bind its returning account and allocation.");
         }

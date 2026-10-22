@@ -39,21 +39,41 @@ internal static class LegacyActionRegistryTests
         await CheckAuthenticatedDispatchAsync(registry);
         await CheckDamagedSessionAsync(registry);
         await CheckDailyRewardAvailabilityAsync(registry);
-        return 12;
+        await CheckAssignmentAvailabilityAsync(registry);
+        return 13;
     }
 
     private static async Task CheckDailyRewardAvailabilityAsync(LegacyActionRegistry registry)
     {
-        var authentication = new ObservedAuthentication { Player = new LegacyPlayerDocument() };
+        Require(registry.Get(DatabaseAction.CheckDailyReward).Disposition == LegacyActionDisposition.Authenticated,
+            "Daily calendar reads must authenticate.");
+        Require(registry.Get(DatabaseAction.ClaimDailyReward).Disposition == LegacyActionDisposition.Authenticated,
+            "Daily calendar claims must authenticate.");
+        await Task.CompletedTask;
+    }
+
+    private static async Task CheckAssignmentAvailabilityAsync(LegacyActionRegistry registry)
+    {
+        var player = new LegacyPlayerDocument();
+        var authentication = new ObservedAuthentication { Player = player };
         LegacyRequestDispatcher dispatcher = CreateDispatcher(registry, authentication);
-        IResult result = await dispatcher.DispatchAsync(Request(DatabaseAction.CheckDailyReward), CancellationToken.None);
+        IResult result = await dispatcher.DispatchAsync(Request(DatabaseAction.GetNewAssignments), CancellationToken.None);
         (string body, _) = await ReadAsync(result);
         JsonObject response = JsonNode.Parse(body)!.AsObject();
+        JsonObject data = JsonNode.Parse(response["AssignmentData"]!.GetValue<string>())!.AsObject();
         Require(authentication.Calls == 1 && response["Result"]!.GetValue<int>() == 1,
-            "The automatic daily-reward availability probe must preserve the authenticated lobby session.");
-        Require(!response.ContainsKey("dailyRewardData"), "An unavailable calendar must not offer a reward claim.");
-        Require(registry.Get(DatabaseAction.ClaimDailyReward).Disposition == LegacyActionDisposition.Closed,
-            "An availability response must not authorize reward mutations.");
+            "Assignment availability must remain authenticated without forcing global maintenance.");
+        Require(data["assignments"]!.AsArray().Count == 0 && player.Serialized.Count == 0,
+            "Unavailable assignments must neither issue tasks nor publish progression.");
+        const string existing = "{\"assignments\":[],\"rewardCounter\":7}";
+        player.Serialized["AssignmentData"] = existing;
+        result = await dispatcher.DispatchAsync(Request(DatabaseAction.GetNewAssignments), CancellationToken.None);
+        (body, _) = await ReadAsync(result);
+        Require(JsonNode.Parse(body)!["AssignmentData"]!.GetValue<string>() == existing &&
+            player.Serialized["AssignmentData"] == existing,
+            "A read-only availability check must not reset existing assignment progress.");
+        Require(registry.Get(DatabaseAction.ClaimAssignment).Disposition != LegacyActionDisposition.Authenticated,
+            "Availability must not enable direct reward claims.");
     }
 
     private static WebApplication CreateApplication()
@@ -74,11 +94,11 @@ internal static class LegacyActionRegistryTests
         Require(entries.Length == 175, "The reviewed legacy wire inventory changed.");
         Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.Anonymous) == 4,
             "The anonymous boundary changed.");
-        Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.Authenticated) == 62,
+        Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.Authenticated) == 64,
             "An implemented direct action disappeared or opened without review.");
         Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.BufferedOnly) == 25,
             "The buffer-only inventory changed.");
-        Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.Closed) == 84,
+        Require(entries.Count(entry => entry.Disposition == LegacyActionDisposition.Closed) == 82,
             "A closed action changed disposition without review.");
         Require(registry.Get(DatabaseAction.GameEnded).Disposition == LegacyActionDisposition.Authenticated,
             "Legacy GameEnded must require authentication before checking accepted host outcome authority.");
@@ -130,6 +150,8 @@ internal static class LegacyActionRegistryTests
         // Preserve the extraction baseline; action 62 was subsequently implemented over host authority.
         originalDirect.Add(nameof(DatabaseAction.GameEnded));
         originalDirect.Add(nameof(DatabaseAction.CheckDailyReward));
+        originalDirect.Add(nameof(DatabaseAction.ClaimDailyReward));
+        originalDirect.Add(nameof(DatabaseAction.GetNewAssignments));
         IEnumerable<string> direct = registry.Actions.Values
             .Where(entry => entry.Disposition == LegacyActionDisposition.Authenticated)
             .Select(entry => entry.Action.ToString());
@@ -143,7 +165,7 @@ internal static class LegacyActionRegistryTests
         {
             var action = (DatabaseAction)row.GetProperty("id").GetInt32();
             LegacyActionRegistration entry = registry.Get(action);
-            if (action == DatabaseAction.GameEnded || action == DatabaseAction.CheckDailyReward)
+            if (action == DatabaseAction.GameEnded || action == DatabaseAction.CheckDailyReward || action == DatabaseAction.ClaimDailyReward || action == DatabaseAction.GetNewAssignments)
             {
                 Require(entry.Disposition == LegacyActionDisposition.Authenticated,
                     "Host-backed settlement must keep its authenticated boundary.");

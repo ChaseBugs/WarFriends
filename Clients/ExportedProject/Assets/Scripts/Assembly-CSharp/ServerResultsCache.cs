@@ -130,7 +130,7 @@ public class ServerResultsCache : Singleton<ServerResultsCache>
 		};
 		Singleton<BeanstalkServerManager>.instance.ErrorReceived += delegate
 		{
-			Debug.LogError("Clearing Waitlist cache...");
+			Debug.Log("Clearing Waitlist cache...");
 			mWaitList.Clear();
 		};
 	}

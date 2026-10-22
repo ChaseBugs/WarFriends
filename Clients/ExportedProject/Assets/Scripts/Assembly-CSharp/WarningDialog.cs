@@ -233,7 +233,7 @@ public class WarningDialog : GuiElementSingle<WarningDialog>, IGuiDialog
 	{
 		mHiding = false;
 		bool flag = GameLoginManager.instance.canSendLogs || mCanSendLogs;
-		Debug.LogError("WarningDialog - Can send logs: " + flag);
+		Debug.Log("WarningDialog - Can send logs: " + flag);
 		sendLogsButton.SetActive(flag);
 		if (flag)
 		{

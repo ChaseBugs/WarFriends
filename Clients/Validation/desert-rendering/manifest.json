@@ -1,0 +1,1619 @@
+[
+  {
+    "RendererId": "1438",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[29]",
+    "Subsets": [
+      75
+    ]
+  },
+  {
+    "RendererId": "1439",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_03[12]",
+    "Subsets": [
+      172
+    ]
+  },
+  {
+    "RendererId": "1440",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stones_patch_01[8]",
+    "Subsets": [
+      9
+    ]
+  },
+  {
+    "RendererId": "1441",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[32]",
+    "Subsets": [
+      61
+    ]
+  },
+  {
+    "RendererId": "1442",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[36]",
+    "Subsets": [
+      142
+    ]
+  },
+  {
+    "RendererId": "1443",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[14]",
+    "Subsets": [
+      192
+    ]
+  },
+  {
+    "RendererId": "1444",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[13]",
+    "Subsets": [
+      145
+    ]
+  },
+  {
+    "RendererId": "1445",
+    "Path": "LevelRoot/desert_map[6]/rocks[7]/rock_02[3]",
+    "Subsets": [
+      0
+    ]
+  },
+  {
+    "RendererId": "1446",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_patch_01[16]",
+    "Subsets": [
+      153
+    ]
+  },
+  {
+    "RendererId": "1447",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_3[7]",
+    "Subsets": [
+      56
+    ]
+  },
+  {
+    "RendererId": "1448",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_tree_01_LOD1[3]",
+    "Subsets": [
+      198
+    ]
+  },
+  {
+    "RendererId": "1449",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[24]",
+    "Subsets": [
+      125
+    ]
+  },
+  {
+    "RendererId": "1450",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[1]/box_2[1]",
+    "Subsets": [
+      74
+    ]
+  },
+  {
+    "RendererId": "1452",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_03[11]",
+    "Subsets": [
+      200
+    ]
+  },
+  {
+    "RendererId": "1453",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[23]",
+    "Subsets": [
+      129
+    ]
+  },
+  {
+    "RendererId": "1454",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[40]",
+    "Subsets": [
+      91
+    ]
+  },
+  {
+    "RendererId": "1455",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[6]",
+    "Subsets": [
+      162
+    ]
+  },
+  {
+    "RendererId": "1456",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/GameObject[0]/back_02[3]",
+    "Subsets": [
+      42
+    ]
+  },
+  {
+    "RendererId": "1457",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_1[1]",
+    "Subsets": [
+      55
+    ]
+  },
+  {
+    "RendererId": "1460",
+    "Path": "LevelRoot/desert_map[6]/props[6]/rock_02[34]",
+    "Subsets": [
+      220
+    ]
+  },
+  {
+    "RendererId": "1461",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[4]",
+    "Subsets": [
+      35
+    ]
+  },
+  {
+    "RendererId": "1462",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[28]",
+    "Subsets": [
+      138
+    ]
+  },
+  {
+    "RendererId": "1466",
+    "Path": "LevelRoot/DefendPositions[5]/Allies[0]/DefendPositionSingleLeft3[3]/riot_shield[6]",
+    "Subsets": [
+      2
+    ]
+  },
+  {
+    "RendererId": "1467",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_patch_01[15]",
+    "Subsets": [
+      169
+    ]
+  },
+  {
+    "RendererId": "1468",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[2]/box_2[1]",
+    "Subsets": [
+      77
+    ]
+  },
+  {
+    "RendererId": "1469",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (7)[6]",
+    "Subsets": [
+      21
+    ]
+  },
+  {
+    "RendererId": "1470",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[22]",
+    "Subsets": [
+      175
+    ]
+  },
+  {
+    "RendererId": "1474",
+    "Path": "LevelRoot/DefendPositions[5]/Allies[0]/DefendPositionSingleLeft2[2]/riot_shield[6]",
+    "Subsets": [
+      3
+    ]
+  },
+  {
+    "RendererId": "1475",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[3]",
+    "Subsets": [
+      92
+    ]
+  },
+  {
+    "RendererId": "1476",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[31]",
+    "Subsets": [
+      65
+    ]
+  },
+  {
+    "RendererId": "1477",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[27]",
+    "Subsets": [
+      126
+    ]
+  },
+  {
+    "RendererId": "1478",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[22]",
+    "Subsets": [
+      99
+    ]
+  },
+  {
+    "RendererId": "1479",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[30]",
+    "Subsets": [
+      59
+    ]
+  },
+  {
+    "RendererId": "1480",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[21]",
+    "Subsets": [
+      94
+    ]
+  },
+  {
+    "RendererId": "1481",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[50]",
+    "Subsets": [
+      123
+    ]
+  },
+  {
+    "RendererId": "1482",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[20]",
+    "Subsets": [
+      98
+    ]
+  },
+  {
+    "RendererId": "1483",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[12]",
+    "Subsets": [
+      168
+    ]
+  },
+  {
+    "RendererId": "1484",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[19]",
+    "Subsets": [
+      87
+    ]
+  },
+  {
+    "RendererId": "1485",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/cactus (1)[13]",
+    "Subsets": [
+      211
+    ]
+  },
+  {
+    "RendererId": "1486",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[18]",
+    "Subsets": [
+      96
+    ]
+  },
+  {
+    "RendererId": "1487",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stones_patch_01[7]",
+    "Subsets": [
+      17
+    ]
+  },
+  {
+    "RendererId": "1488",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[26]",
+    "Subsets": [
+      107
+    ]
+  },
+  {
+    "RendererId": "1489",
+    "Path": "LevelRoot/desert_map[6]/rocks[7]/rock_02[2]",
+    "Subsets": [
+      221
+    ]
+  },
+  {
+    "RendererId": "1490",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[17]",
+    "Subsets": [
+      76
+    ]
+  },
+  {
+    "RendererId": "1491",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/back_02[4]",
+    "Subsets": [
+      47
+    ]
+  },
+  {
+    "RendererId": "1492",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[20]",
+    "Subsets": [
+      3
+    ]
+  },
+  {
+    "RendererId": "1493",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[25]",
+    "Subsets": [
+      72
+    ]
+  },
+  {
+    "RendererId": "1494",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[39]",
+    "Subsets": [
+      113
+    ]
+  },
+  {
+    "RendererId": "1495",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[24]",
+    "Subsets": [
+      79
+    ]
+  },
+  {
+    "RendererId": "1496",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[21]",
+    "Subsets": [
+      143
+    ]
+  },
+  {
+    "RendererId": "1497",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_2[6]",
+    "Subsets": [
+      64
+    ]
+  },
+  {
+    "RendererId": "1498",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_wind[6]",
+    "Subsets": [
+      157
+    ]
+  },
+  {
+    "RendererId": "1499",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[20]",
+    "Subsets": [
+      204
+    ]
+  },
+  {
+    "RendererId": "1500",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[9]",
+    "Subsets": [
+      38
+    ]
+  },
+  {
+    "RendererId": "1501",
+    "Path": "LevelRoot/desert_map[6]/props[6]/rock_02[33]",
+    "Subsets": [
+      218
+    ]
+  },
+  {
+    "RendererId": "1502",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[23]",
+    "Subsets": [
+      136
+    ]
+  },
+  {
+    "RendererId": "1503",
+    "Path": "LevelRoot/desert_map[6]/terrain_desert_extension[0]",
+    "Subsets": [
+      50
+    ]
+  },
+  {
+    "RendererId": "1507",
+    "Path": "LevelRoot/DefendPositions[5]/Enemies[1]/DefendPositionSingleLeft3[3]/riot_shield[6]",
+    "Subsets": [
+      4
+    ]
+  },
+  {
+    "RendererId": "1508",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[49]",
+    "Subsets": [
+      83
+    ]
+  },
+  {
+    "RendererId": "1509",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stone_1[4]",
+    "Subsets": [
+      10
+    ]
+  },
+  {
+    "RendererId": "1510",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[22]",
+    "Subsets": [
+      84
+    ]
+  },
+  {
+    "RendererId": "1511",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[3]/box_2[1]",
+    "Subsets": [
+      100
+    ]
+  },
+  {
+    "RendererId": "1512",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[8]",
+    "Subsets": [
+      34
+    ]
+  },
+  {
+    "RendererId": "1513",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[0]/box_2[1]",
+    "Subsets": [
+      135
+    ]
+  },
+  {
+    "RendererId": "1514",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[48]",
+    "Subsets": [
+      93
+    ]
+  },
+  {
+    "RendererId": "1518",
+    "Path": "LevelRoot/DefendPositions[5]/Enemies[1]/DefendPositionSingleLeft2[1]/riot_shield[6]",
+    "Subsets": [
+      1
+    ]
+  },
+  {
+    "RendererId": "1519",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[19]",
+    "Subsets": [
+      208
+    ]
+  },
+  {
+    "RendererId": "1520",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[31]",
+    "Subsets": [
+      185
+    ]
+  },
+  {
+    "RendererId": "1522",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[11]",
+    "Subsets": [
+      141
+    ]
+  },
+  {
+    "RendererId": "1523",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[17]",
+    "Subsets": [
+      0
+    ]
+  },
+  {
+    "RendererId": "1524",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[33]",
+    "Subsets": [
+      193
+    ]
+  },
+  {
+    "RendererId": "1525",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[38]",
+    "Subsets": [
+      85
+    ]
+  },
+  {
+    "RendererId": "1526",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[2]",
+    "Subsets": [
+      86
+    ]
+  },
+  {
+    "RendererId": "1527",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stones_patch_01[6]",
+    "Subsets": [
+      19
+    ]
+  },
+  {
+    "RendererId": "1528",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_01[0]",
+    "Subsets": [
+      161
+    ]
+  },
+  {
+    "RendererId": "1529",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[21]",
+    "Subsets": [
+      101
+    ]
+  },
+  {
+    "RendererId": "1531",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/GameObject[0]/back_01[2]",
+    "Subsets": [
+      45
+    ]
+  },
+  {
+    "RendererId": "1532",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[5]",
+    "Subsets": [
+      196
+    ]
+  },
+  {
+    "RendererId": "1533",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[35]",
+    "Subsets": [
+      166
+    ]
+  },
+  {
+    "RendererId": "1534",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[37]",
+    "Subsets": [
+      119
+    ]
+  },
+  {
+    "RendererId": "1535",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[16]",
+    "Subsets": [
+      71
+    ]
+  },
+  {
+    "RendererId": "1536",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[15]",
+    "Subsets": [
+      30
+    ]
+  },
+  {
+    "RendererId": "1537",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[10]",
+    "Subsets": [
+      156
+    ]
+  },
+  {
+    "RendererId": "1538",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[20]",
+    "Subsets": [
+      73
+    ]
+  },
+  {
+    "RendererId": "1539",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stone_01_LOD1[2]",
+    "Subsets": [
+      23
+    ]
+  },
+  {
+    "RendererId": "1540",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/back_01[3]",
+    "Subsets": [
+      41
+    ]
+  },
+  {
+    "RendererId": "1541",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/tower[38]",
+    "Subsets": [
+      88
+    ]
+  },
+  {
+    "RendererId": "1542",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (8)[7]",
+    "Subsets": [
+      15
+    ]
+  },
+  {
+    "RendererId": "1543",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[19]",
+    "Subsets": [
+      109
+    ]
+  },
+  {
+    "RendererId": "1544",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_patch_01[14]",
+    "Subsets": [
+      152
+    ]
+  },
+  {
+    "RendererId": "1545",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[4]",
+    "Subsets": [
+      180
+    ]
+  },
+  {
+    "RendererId": "1546",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stone_01_LOD1[1]",
+    "Subsets": [
+      16
+    ]
+  },
+  {
+    "RendererId": "1547",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[21]",
+    "Subsets": [
+      7
+    ]
+  },
+  {
+    "RendererId": "1548",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[30]",
+    "Subsets": [
+      149
+    ]
+  },
+  {
+    "RendererId": "1549",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[3]",
+    "Subsets": [
+      144
+    ]
+  },
+  {
+    "RendererId": "1550",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/cactus[10]",
+    "Subsets": [
+      210
+    ]
+  },
+  {
+    "RendererId": "1551",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[1]/box_2[0]",
+    "Subsets": [
+      134
+    ]
+  },
+  {
+    "RendererId": "1552",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/GameObject[0]/back_03[1]",
+    "Subsets": [
+      48
+    ]
+  },
+  {
+    "RendererId": "1554",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[26]",
+    "Subsets": [
+      176
+    ]
+  },
+  {
+    "RendererId": "1555",
+    "Path": "LevelRoot/desert_map[6]/rocks[7]/rock_02[1]",
+    "Subsets": [
+      217
+    ]
+  },
+  {
+    "RendererId": "1556",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[29]",
+    "Subsets": [
+      187
+    ]
+  },
+  {
+    "RendererId": "1557",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[18]",
+    "Subsets": [
+      179
+    ]
+  },
+  {
+    "RendererId": "1558",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[36]",
+    "Subsets": [
+      112
+    ]
+  },
+  {
+    "RendererId": "1559",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[18]",
+    "Subsets": [
+      110
+    ]
+  },
+  {
+    "RendererId": "1560",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/box_2[39]",
+    "Subsets": [
+      68
+    ]
+  },
+  {
+    "RendererId": "1561",
+    "Path": "LevelRoot/desert_map[6]/props[6]/light[30]",
+    "Subsets": [
+      108
+    ]
+  },
+  {
+    "RendererId": "1562",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/GameObject[0]/back_02[0]",
+    "Subsets": [
+      46
+    ]
+  },
+  {
+    "RendererId": "1563",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02_LOD1[8]",
+    "Subsets": [
+      151
+    ]
+  },
+  {
+    "RendererId": "1564",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[15]",
+    "Subsets": [
+      106
+    ]
+  },
+  {
+    "RendererId": "1565",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[2]",
+    "Subsets": [
+      181
+    ]
+  },
+  {
+    "RendererId": "1566",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[23]",
+    "Subsets": [
+      5
+    ]
+  },
+  {
+    "RendererId": "1567",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[47]",
+    "Subsets": [
+      132
+    ]
+  },
+  {
+    "RendererId": "1568",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[9]",
+    "Subsets": [
+      184
+    ]
+  },
+  {
+    "RendererId": "1569",
+    "Path": "LevelRoot/desert_map[6]/props[6]/rock_02[32]",
+    "Subsets": [
+      219
+    ]
+  },
+  {
+    "RendererId": "1570",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_03[10]",
+    "Subsets": [
+      205
+    ]
+  },
+  {
+    "RendererId": "1571",
+    "Path": "LevelRoot/desert_map[6]/props[6]/rock_02[31]",
+    "Subsets": [
+      215
+    ]
+  },
+  {
+    "RendererId": "1572",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[29]",
+    "Subsets": [
+      54
+    ]
+  },
+  {
+    "RendererId": "1573",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[14]",
+    "Subsets": [
+      130
+    ]
+  },
+  {
+    "RendererId": "1574",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[5]",
+    "Subsets": [
+      40
+    ]
+  },
+  {
+    "RendererId": "1575",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[3]",
+    "Subsets": [
+      33
+    ]
+  },
+  {
+    "RendererId": "1576",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[28]",
+    "Subsets": [
+      148
+    ]
+  },
+  {
+    "RendererId": "1577",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_tree_01_LOD1[2]",
+    "Subsets": [
+      167
+    ]
+  },
+  {
+    "RendererId": "1578",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[18]",
+    "Subsets": [
+      4
+    ]
+  },
+  {
+    "RendererId": "1579",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[8]",
+    "Subsets": [
+      191
+    ]
+  },
+  {
+    "RendererId": "1580",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[27]",
+    "Subsets": [
+      173
+    ]
+  },
+  {
+    "RendererId": "1581",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[25]",
+    "Subsets": [
+      186
+    ]
+  },
+  {
+    "RendererId": "1582",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[17]",
+    "Subsets": [
+      155
+    ]
+  },
+  {
+    "RendererId": "1583",
+    "Path": "LevelRoot/desert_map[6]/props[6]/tower[35]",
+    "Subsets": [
+      67
+    ]
+  },
+  {
+    "RendererId": "1584",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[46]",
+    "Subsets": [
+      133
+    ]
+  },
+  {
+    "RendererId": "1585",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/cactus[9]",
+    "Subsets": [
+      212
+    ]
+  },
+  {
+    "RendererId": "1586",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[13]",
+    "Subsets": [
+      81
+    ]
+  },
+  {
+    "RendererId": "1587",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[17]",
+    "Subsets": [
+      111
+    ]
+  },
+  {
+    "RendererId": "1588",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[12]",
+    "Subsets": [
+      115
+    ]
+  },
+  {
+    "RendererId": "1589",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[34]",
+    "Subsets": [
+      199
+    ]
+  },
+  {
+    "RendererId": "1590",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[6]",
+    "Subsets": [
+      27
+    ]
+  },
+  {
+    "RendererId": "1591",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[16]",
+    "Subsets": [
+      1
+    ]
+  },
+  {
+    "RendererId": "1592",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/tower[37]",
+    "Subsets": [
+      139
+    ]
+  },
+  {
+    "RendererId": "1593",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[0]/box_2[0]",
+    "Subsets": [
+      80
+    ]
+  },
+  {
+    "RendererId": "1594",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02_LOD1[17]",
+    "Subsets": [
+      194
+    ]
+  },
+  {
+    "RendererId": "1595",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[33]",
+    "Subsets": [
+      154
+    ]
+  },
+  {
+    "RendererId": "1596",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_1[0]",
+    "Subsets": [
+      60
+    ]
+  },
+  {
+    "RendererId": "1597",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (5)[4]",
+    "Subsets": [
+      24
+    ]
+  },
+  {
+    "RendererId": "1598",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[28]",
+    "Subsets": [
+      53
+    ]
+  },
+  {
+    "RendererId": "1599",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[11]",
+    "Subsets": [
+      31
+    ]
+  },
+  {
+    "RendererId": "1600",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[16]",
+    "Subsets": [
+      124
+    ]
+  },
+  {
+    "RendererId": "1601",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[14]",
+    "Subsets": [
+      116
+    ]
+  },
+  {
+    "RendererId": "1602",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/back_02[2]",
+    "Subsets": [
+      44
+    ]
+  },
+  {
+    "RendererId": "1603",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[45]",
+    "Subsets": [
+      114
+    ]
+  },
+  {
+    "RendererId": "1604",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[7]",
+    "Subsets": [
+      178
+    ]
+  },
+  {
+    "RendererId": "1605",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[13]",
+    "Subsets": [
+      137
+    ]
+  },
+  {
+    "RendererId": "1609",
+    "Path": "LevelRoot/DefendPositions[5]/Enemies[1]/DefendPositionSingleLeft1[0]/riot_shield[6]",
+    "Subsets": [
+      7
+    ]
+  },
+  {
+    "RendererId": "1610",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[27]",
+    "Subsets": [
+      57
+    ]
+  },
+  {
+    "RendererId": "1611",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[1]",
+    "Subsets": [
+      182
+    ]
+  },
+  {
+    "RendererId": "1612",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[2]",
+    "Subsets": [
+      32
+    ]
+  },
+  {
+    "RendererId": "1613",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_01[1]",
+    "Subsets": [
+      171
+    ]
+  },
+  {
+    "RendererId": "1614",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[11]",
+    "Subsets": [
+      95
+    ]
+  },
+  {
+    "RendererId": "1615",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[12]",
+    "Subsets": [
+      78
+    ]
+  },
+  {
+    "RendererId": "1616",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[1]",
+    "Subsets": [
+      66
+    ]
+  },
+  {
+    "RendererId": "1617",
+    "Path": "LevelRoot/desert_map[6]/terrain_desert1[1]",
+    "Subsets": [
+      209
+    ]
+  },
+  {
+    "RendererId": "1621",
+    "Path": "LevelRoot/DefendPositions[5]/Allies[0]/DefendPositionSingleLeft1[1]/riot_shield[6]",
+    "Subsets": [
+      8
+    ]
+  },
+  {
+    "RendererId": "1622",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[40]",
+    "Subsets": [
+      165
+    ]
+  },
+  {
+    "RendererId": "1623",
+    "Path": "LevelRoot/desert_map[6]/props[6]/well[51]",
+    "Subsets": [
+      49
+    ]
+  },
+  {
+    "RendererId": "1624",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[11]",
+    "Subsets": [
+      105
+    ]
+  },
+  {
+    "RendererId": "1626",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_wind[5]",
+    "Subsets": [
+      174
+    ]
+  },
+  {
+    "RendererId": "1627",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[3]/box_2[0]",
+    "Subsets": [
+      70
+    ]
+  },
+  {
+    "RendererId": "1628",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[10]",
+    "Subsets": [
+      82
+    ]
+  },
+  {
+    "RendererId": "1629",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[9]",
+    "Subsets": [
+      97
+    ]
+  },
+  {
+    "RendererId": "1630",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[34]",
+    "Subsets": [
+      207
+    ]
+  },
+  {
+    "RendererId": "1631",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_2[5]",
+    "Subsets": [
+      51
+    ]
+  },
+  {
+    "RendererId": "1632",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02[0]",
+    "Subsets": [
+      177
+    ]
+  },
+  {
+    "RendererId": "1633",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[0]",
+    "Subsets": [
+      102
+    ]
+  },
+  {
+    "RendererId": "1634",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_2[4]",
+    "Subsets": [
+      52
+    ]
+  },
+  {
+    "RendererId": "1635",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[24]",
+    "Subsets": [
+      160
+    ]
+  },
+  {
+    "RendererId": "1636",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_patch_01[13]",
+    "Subsets": [
+      189
+    ]
+  },
+  {
+    "RendererId": "1637",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stone_01_LOD1[0]",
+    "Subsets": [
+      12
+    ]
+  },
+  {
+    "RendererId": "1638",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[6]",
+    "Subsets": [
+      170
+    ]
+  },
+  {
+    "RendererId": "1640",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[10]",
+    "Subsets": [
+      122
+    ]
+  },
+  {
+    "RendererId": "1641",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_tree_01_LOD1[1]",
+    "Subsets": [
+      163
+    ]
+  },
+  {
+    "RendererId": "1642",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stones_patch_01[5]",
+    "Subsets": [
+      11
+    ]
+  },
+  {
+    "RendererId": "1643",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[8]",
+    "Subsets": [
+      117
+    ]
+  },
+  {
+    "RendererId": "1644",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[32]",
+    "Subsets": [
+      197
+    ]
+  },
+  {
+    "RendererId": "1645",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[44]",
+    "Subsets": [
+      89
+    ]
+  },
+  {
+    "RendererId": "1647",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[16]",
+    "Subsets": [
+      150
+    ]
+  },
+  {
+    "RendererId": "1649",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[5]",
+    "Subsets": [
+      203
+    ]
+  },
+  {
+    "RendererId": "1650",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_03[9]",
+    "Subsets": [
+      146
+    ]
+  },
+  {
+    "RendererId": "1651",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[4]",
+    "Subsets": [
+      202
+    ]
+  },
+  {
+    "RendererId": "1652",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (1)[0]",
+    "Subsets": [
+      18
+    ]
+  },
+  {
+    "RendererId": "1653",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[1]",
+    "Subsets": [
+      39
+    ]
+  },
+  {
+    "RendererId": "1654",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_1[2]",
+    "Subsets": [
+      58
+    ]
+  },
+  {
+    "RendererId": "1655",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[12]",
+    "Subsets": [
+      29
+    ]
+  },
+  {
+    "RendererId": "1656",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (3)[2]",
+    "Subsets": [
+      14
+    ]
+  },
+  {
+    "RendererId": "1657",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_03[15]",
+    "Subsets": [
+      158
+    ]
+  },
+  {
+    "RendererId": "1658",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[13]",
+    "Subsets": [
+      28
+    ]
+  },
+  {
+    "RendererId": "1659",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[3]",
+    "Subsets": [
+      188
+    ]
+  },
+  {
+    "RendererId": "1660",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/cactus[11]",
+    "Subsets": [
+      214
+    ]
+  },
+  {
+    "RendererId": "1661",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/box_2[39]/box_2[1]",
+    "Subsets": [
+      90
+    ]
+  },
+  {
+    "RendererId": "1662",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[19]",
+    "Subsets": [
+      2
+    ]
+  },
+  {
+    "RendererId": "1663",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/additional_objects[0]/back_03[1]",
+    "Subsets": [
+      43
+    ]
+  },
+  {
+    "RendererId": "1667",
+    "Path": "LevelRoot/DefendPositions[5]/Allies[0]/DefendPositionSingleLeft0[0]/riot_shield[6]",
+    "Subsets": [
+      5
+    ]
+  },
+  {
+    "RendererId": "1668",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (4)[3]",
+    "Subsets": [
+      22
+    ]
+  },
+  {
+    "RendererId": "1669",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[5]",
+    "Subsets": [
+      103
+    ]
+  },
+  {
+    "RendererId": "1670",
+    "Path": "LevelRoot/desert_map[6]/rocks[7]/rock_02[0]",
+    "Subsets": [
+      216
+    ]
+  },
+  {
+    "RendererId": "1671",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_tree_01_LOD1[0]",
+    "Subsets": [
+      147
+    ]
+  },
+  {
+    "RendererId": "1672",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[23]",
+    "Subsets": [
+      201
+    ]
+  },
+  {
+    "RendererId": "1673",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[9]",
+    "Subsets": [
+      104
+    ]
+  },
+  {
+    "RendererId": "1674",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandpile[22]",
+    "Subsets": [
+      6
+    ]
+  },
+  {
+    "RendererId": "1675",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[35]",
+    "Subsets": [
+      195
+    ]
+  },
+  {
+    "RendererId": "1676",
+    "Path": "LevelRoot/desert_map[6]/props[6]/fence[4]",
+    "Subsets": [
+      118
+    ]
+  },
+  {
+    "RendererId": "1677",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/hangar[26]",
+    "Subsets": [
+      63
+    ]
+  },
+  {
+    "RendererId": "1678",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/box_2[39]/box_2[0]",
+    "Subsets": [
+      121
+    ]
+  },
+  {
+    "RendererId": "1679",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (2)[1]",
+    "Subsets": [
+      13
+    ]
+  },
+  {
+    "RendererId": "1680",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[43]",
+    "Subsets": [
+      128
+    ]
+  },
+  {
+    "RendererId": "1681",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/plants[1]/plants_02_LOD1[7]",
+    "Subsets": [
+      206
+    ]
+  },
+  {
+    "RendererId": "1682",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[42]",
+    "Subsets": [
+      120
+    ]
+  },
+  {
+    "RendererId": "1683",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/stones_patch_01[3]",
+    "Subsets": [
+      20
+    ]
+  },
+  {
+    "RendererId": "1685",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/fence[8]",
+    "Subsets": [
+      127
+    ]
+  },
+  {
+    "RendererId": "1686",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/stones[1]/Metal[9]/stones_patch_01 (6)[5]",
+    "Subsets": [
+      8
+    ]
+  },
+  {
+    "RendererId": "1687",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/grass[0]/grass_patch_big_02[2]",
+    "Subsets": [
+      140
+    ]
+  },
+  {
+    "RendererId": "1689",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_wind[7]",
+    "Subsets": [
+      164
+    ]
+  },
+  {
+    "RendererId": "1690",
+    "Path": "LevelRoot/desert_map[6]/props[6]/box_2[2]/box_2[0]",
+    "Subsets": [
+      131
+    ]
+  },
+  {
+    "RendererId": "1691",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/palm_tree_01_LOD1[41]",
+    "Subsets": [
+      190
+    ]
+  },
+  {
+    "RendererId": "1693",
+    "Path": "LevelRoot/desert_map[6]/props[6]/barier[41]",
+    "Subsets": [
+      69
+    ]
+  },
+  {
+    "RendererId": "1694",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/cactus[12]",
+    "Subsets": [
+      213
+    ]
+  },
+  {
+    "RendererId": "1695",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[0]",
+    "Subsets": [
+      36
+    ]
+  },
+  {
+    "RendererId": "1696",
+    "Path": "LevelRoot/desert_map[6]/buildings[3]/building_2[3]",
+    "Subsets": [
+      62
+    ]
+  },
+  {
+    "RendererId": "1697",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[10]",
+    "Subsets": [
+      37
+    ]
+  },
+  {
+    "RendererId": "1698",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[7]",
+    "Subsets": [
+      26
+    ]
+  },
+  {
+    "RendererId": "1699",
+    "Path": "LevelRoot/desert_map[6]/sand[8]/sandbag[14]",
+    "Subsets": [
+      25
+    ]
+  },
+  {
+    "RendererId": "1700",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_wind[8]",
+    "Subsets": [
+      159
+    ]
+  },
+  {
+    "RendererId": "1701",
+    "Path": "LevelRoot/desert_map[6]/plants_enviro[5]/vegetation[2]/trees[2]/palm_wind[4]",
+    "Subsets": [
+      183
+    ]
+  },
+  {
+    "RendererId": "1705",
+    "Path": "LevelRoot/DefendPositions[5]/Enemies[1]/DefendPositionSingleLeft0[2]/riot_shield[6]",
+    "Subsets": [
+      6
+    ]
+  }
+]

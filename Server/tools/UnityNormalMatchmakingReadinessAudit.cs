@@ -44,8 +44,7 @@ namespace WarFriends.Validation
                     usesEasyBot,
                     isSlowDevice,
                     hasRepeatedLosses,
-                    canUseSelfHostedMatchmaking = !hasMeasuredHighPing && !usesEasyBot &&
-                        !isSlowDevice && !hasRepeatedLosses,
+                    canUseSelfHostedMatchmaking = !hasMeasuredHighPing && !usesEasyBot && !isSlowDevice && !hasRepeatedLosses,
                     activeController = game.mainController == null ? "" : game.mainController.GetType().Name
                 };
             }
